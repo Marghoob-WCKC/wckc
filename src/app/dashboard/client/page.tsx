@@ -10,8 +10,8 @@ export default function ClientsPage() {
   const [modalOpened, setModalOpened] = useState(false);
   return (
     <div className="p-8 space-y-4">
-      <h1 className="text-2xl font-semibold">All Clients</h1>
-      <div className="flex justify-end">
+      <div className="flex justify-between">
+        <h1 className="text-2xl font-semibold">All Clients</h1>
         <Button onClick={() => setModalOpened(true)}>Add Client</Button>
       </div>
       <ClientsTable />
