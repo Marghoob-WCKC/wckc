@@ -18,6 +18,7 @@ import {
   ClientType,
 } from "@/zod/client.schema";
 import { zodResolver } from "@/utils/zodResolver/zodResolver";
+import { useEffect } from "react";
 
 interface EditClientModalProps {
   opened: boolean;
@@ -77,7 +78,23 @@ export default function EditClient({
       });
     },
   });
-
+  useEffect(() => {
+    if (opened) {
+      form.setValues({
+        lastName: client.lastName,
+        firstName: client.firstName ?? "",
+        street: client.street ?? "",
+        city: client.city ?? "",
+        province: client.province ?? "",
+        zip: client.zip ?? "",
+        phone1: client.phone1 ?? "",
+        phone2: client.phone2 ?? "",
+        email1: client.email1 ?? "",
+        email2: client.email2 ?? "",
+      });
+      form.resetDirty();
+    }
+  }, [client, opened]);
   return (
     <Modal opened={opened} onClose={onClose} title="Edit Client" size="xl">
       <form
