@@ -19,16 +19,16 @@ export const SupabaseContext = createContext<SupabaseClient | null>(null);
  * </SupabaseProvider>
  */
 export function SupabaseProvider({ children }: { children: ReactNode }) {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
   useEffect(() => {
     const initializeSupabase = async () => {
       try {
         const supabaseToken = await getToken({ template: 'supabase' });
-
-        if (!supabaseToken) {
-          throw new Error('Supabase token not found. Ensure Clerk JWT template is configured.');
+		let headers = {};
+        if (supabaseToken) {
+			headers = { Authorization: `Bearer ${supabaseToken}` };
         }
 
         const client = createClient(
@@ -36,9 +36,7 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
           {
             global: {
-              headers: {
-                Authorization: `Bearer ${supabaseToken}`,
-              },
+              headers,
             },
           }
         );
@@ -51,7 +49,7 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
     };
 
     initializeSupabase();
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   return (
     <SupabaseContext.Provider value={supabase}>
