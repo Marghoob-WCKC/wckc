@@ -52,7 +52,7 @@ export default function ClientsTable() {
     pageIndex: 0,
     pageSize: 17,
   });
-  const supabase = useSupabase();
+  const { supabase, token } = useSupabase();
   const [editModalOpened, { open: editModalOpen, close: editModalClose }] =
     useDisclosure(false);
   const [addModalOpened, { open: openAddModal, close: closeAddModal }] =
@@ -87,7 +87,7 @@ export default function ClientsTable() {
     isError,
     error,
   } = useQuery<ClientType[]>({
-    queryKey: ["clients"],
+    queryKey: ["clients", token],
     queryFn: async () => {
       if (!supabase) {
         throw new Error("Supabase not initialized...");

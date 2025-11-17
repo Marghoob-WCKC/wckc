@@ -23,7 +23,7 @@ interface AddClientModalProps {
 }
 export default function AddClient({ opened, onClose }: AddClientModalProps) {
   const { user, isLoaded } = useUser();
-  const supabase = useSupabase();
+  const { supabase } = useSupabase();
   const queryClient = useQueryClient();
 
   const form = useForm<ClientType>({
