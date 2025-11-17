@@ -53,6 +53,9 @@ export default function EditClient({
   const editMutation = useMutation({
     mutationFn: async (values: ClientInput) => {
       const validated = ClientInputSchema.partial().parse(values);
+      if (!supabase) {
+        throw new Error("Supabase not initialized...");
+      }
       const { data: updatedClient, error: dbError } = await supabase
         .from("client")
         .update(validated)

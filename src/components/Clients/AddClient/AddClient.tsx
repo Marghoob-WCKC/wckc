@@ -49,7 +49,7 @@ export default function AddClient({ opened, onClose }: AddClientModalProps) {
 
   const addMutation = useMutation({
     mutationFn: async (values: ClientType) => {
-      if (!isLoaded || !user?.username) {
+      if (!isLoaded || !user?.username || !supabase) {
         throw new Error("User info not loaded yet. Please wait...");
       }
       const validatedInput = ClientSchema.parse(values);
