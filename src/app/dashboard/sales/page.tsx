@@ -120,6 +120,7 @@ export default function NewSalesOrderPage() {
         glaze: "",
         top_drawer_front: "",
         interior: "",
+        drawer_box: "",
         drawer_hardware: "",
         box: "",
         piece_count: "",
@@ -365,7 +366,7 @@ export default function NewSalesOrderPage() {
     submitMutation.mutate(values);
   };
   return (
-    <Container size="100%" p="md" bg={"gray.3"}>
+    <Container size="100%" p="md" bg={"gray.5"}>
       {/* ... Render structure ... */}
 
       <form
@@ -921,35 +922,35 @@ export default function NewSalesOrderPage() {
           </Paper>
 
           {/* SUBMIT BAR */}
-          <Paper
-            withBorder
-            p="md"
-            radius="md"
-            pos="sticky"
-            bottom={0}
-            style={{ zIndex: 10 }}
-          >
-            <Group justify="flex-end">
-              <Button
-                color="red"
-                size="md"
-                variant="outline"
-                onClick={() => router.back()}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                size="md"
-                loading={submitMutation.isPending}
-                color={form.values.stage === "SOLD" ? "green" : "blue"}
-                form="single-order-form"
-              >
-                {form.values.stage === "SOLD" ? "Process Sale" : "Save Quote"}
-              </Button>
-            </Group>
-          </Paper>
         </Stack>
+        <Paper
+          withBorder
+          p="md"
+          radius="md"
+          pos="sticky"
+          bottom={0}
+          style={{ zIndex: 10 }}
+        >
+          <Group justify="flex-end">
+            <Button
+              color="red"
+              size="md"
+              variant="outline"
+              onClick={() => router.back()}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              size="md"
+              loading={submitMutation.isPending}
+              color={form.values.stage === "SOLD" ? "green" : "blue"}
+              form="single-order-form"
+            >
+              {form.values.stage === "SOLD" ? "Process Sale" : "Save Quote"}
+            </Button>
+          </Group>
+        </Paper>
       </form>
       <AddClient
         opened={isAddClientModalOpen}
