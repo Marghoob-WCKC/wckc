@@ -85,7 +85,6 @@ export default function Sidebar({ links }: SidebarProps) {
   return (
     <Box
       style={{
-        marginRight: rem(20),
         width: rem(250),
         height: "100vh", // FORCE exact viewport height
         overflowY: "auto", // PREVENT overflow issues

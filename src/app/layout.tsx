@@ -54,7 +54,14 @@ export default function RootLayout({
                     }}
                   >
                     {showSidebar && <Sidebar links={dashboardLinks} />}
-                    <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+                    <div
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                      }}
+                    >
+                      {children}
+                    </div>
                   </div>
                 </MantineProvider>
               </QueryProvider>

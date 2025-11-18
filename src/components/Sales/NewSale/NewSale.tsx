@@ -348,13 +348,30 @@ export default function NewSale() {
     submitMutation.mutate(values);
   };
   return (
-    <Container size="100%" p="md" bg={"gray.5"}>
+    <Container
+      size="100%"
+      pl={10}
+      w={"100%"}
+      style={{
+        height: "100vh", // full viewport height
+        display: "flex",
+        flexDirection: "column",
+        paddingRight: 0,
+        background: "linear-gradient(135deg, #DDE6F5 0%, #E7D9F0 100%)",
+      }}
+    >
       {/* ... Render structure ... */}
 
       <form
         noValidate
         onSubmit={form.onSubmit(handleSubmit)}
         id="single-order-form"
+        style={{
+          flex: 1, // take all remaining height
+          display: "flex",
+          flexDirection: "column",
+          overflowY: "auto",
+        }}
       >
         <Stack>
           {/* 1. MASTER DETAILS (Client & Stage) */}
