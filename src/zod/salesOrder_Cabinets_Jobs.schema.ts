@@ -30,20 +30,20 @@ export const ShippingSchema = z.object({
   shipping_zip: z.string().optional(),
   shipping_phone_1: z.string().optional(),
   shipping_phone_2: z.string().optional(),
-  shipping_email_1: z.email().optional(),
-  shipping_email_2: z.email().optional(),
+  shipping_email_1: z.email().or(z.literal("")).optional(),
+  shipping_email_2: z.email().or(z.literal("")).optional(),
 });
 
 // 3. Checklist Items
 export const ChecklistSchema = z.object({
-  layout_date: z.date().nullable().optional(),
-  client_meeting_date: z.date().nullable().optional(),
-  follow_up_date: z.date().nullable().optional(),
-  appliance_specs_date: z.date().nullable().optional(),
-  selections_date: z.date().nullable().optional(),
-  markout_date: z.date().nullable().optional(),
-  review_date: z.date().nullable().optional(),
-  second_markout_date: z.date().nullable().optional(),
+  layout_date: z.coerce.date().nullable().optional(),
+  client_meeting_date: z.coerce.date().nullable().optional(),
+  follow_up_date: z.coerce.date().nullable().optional(),
+  appliance_specs_date: z.coerce.date().nullable().optional(),
+  selections_date: z.coerce.date().nullable().optional(),
+  markout_date: z.coerce.date().nullable().optional(),
+  review_date: z.coerce.date().nullable().optional(),
+  second_markout_date: z.coerce.date().nullable().optional(),
   flooring_type: z.string().optional(),
   flooring_clearance: z.string().optional(),
 });

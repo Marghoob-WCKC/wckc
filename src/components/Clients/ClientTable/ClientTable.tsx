@@ -116,11 +116,6 @@ export default function ClientsTable() {
       size: 220,
       minSize: 100,
     }),
-    columnHelper.accessor("designer", {
-      header: "Created By",
-      size: 120,
-      minSize: 90,
-    }),
     columnHelper.accessor("street", {
       header: "Street",
       size: 150,
@@ -158,6 +153,11 @@ export default function ClientsTable() {
       header: "Email 2",
       size: 250,
       minSize: 120,
+    }),
+    columnHelper.accessor("designer", {
+      header: "Created By",
+      size: 120,
+      minSize: 90,
     }),
     columnHelper.accessor("createdAt", {
       header: "Created",
