@@ -81,6 +81,12 @@ export default function NewSalesOrderPage() {
     label: string;
     original: ClientType;
   };
+  type JobResult = {
+    out_job_id: number; // bigint from DB
+    out_job_suffix: string | null; // text from DB
+    out_job_base_number: number; // int from DB
+    out_job_number: string; // text (the calculated full job number)
+  };
   const clientSelectOptions = useMemo(() => {
     const safeClients = clientsData || [];
 
@@ -152,8 +158,13 @@ export default function NewSalesOrderPage() {
     validate: zodResolver(MasterOrderSchema),
   });
 
+  // Inside NewSalesOrderPage.tsx
+
+  // Inside NewSalesOrderPage.tsx
+
   const submitMutation = useMutation({
     mutationFn: async (values: MasterOrderInput) => {
+      // --- 1. DESTRUCTURING AND AUTH CHECK ---
       if (!user) throw new Error("User not authenticated");
 
       const {
@@ -168,40 +179,13 @@ export default function NewSalesOrderPage() {
         cabinet,
         shipping,
         checklist,
-        parent_job_number_input,
+        // parent_job_number_input is handled via state/prop, but we destructure for clarity if it existed here
       } = values;
 
-      let jobId: number | null = null;
-      let jobDataForReturn = null;
+      // --- 2. SEQUENCE INSERTS (SO is created first) ---
       let prefix = "Q";
 
-      if (stage === "SOLD") {
-        prefix = "S";
-        let baseNumberToReuse: number | null = null;
-
-        if (parentBaseSelection) {
-          const base = Number(parentBaseSelection);
-          if (!isNaN(base) && base > 0) {
-            baseNumberToReuse = base;
-          } else {
-            throw new Error("Invalid job base number selected.");
-          }
-        }
-
-        const { data: jobResult, error: rpcError } = await supabase.rpc(
-          "create_job_single",
-          { p_existing_base_number: baseNumberToReuse }
-        );
-
-        if (rpcError)
-          throw new Error(`Job Creation Failed: ${rpcError.message}`);
-        if (!jobResult || jobResult.length === 0)
-          throw new Error("No job data returned from RPC.");
-
-        jobDataForReturn = jobResult[0];
-        jobId = jobResult[0].out_job_id;
-      }
-
+      // A. Insert Cabinet Specs
       const { data: cabinetResult, error: cabError } = await supabase
         .from("cabinets")
         .insert(cabinet)
@@ -211,42 +195,83 @@ export default function NewSalesOrderPage() {
       if (cabError) throw new Error(`Cabinet Error: ${cabError.message}`);
       const cabinetId = cabinetResult.id;
 
+      // B. Generate Sales Order Number (Prefix-YYMM-UniqueID)
       const now = new Date();
       const year = now.getFullYear().toString().slice(-2);
       const month = (now.getMonth() + 1).toString().padStart(2, "0");
 
       const uniqueIdPortion = cabinetId;
+      prefix = stage === "SOLD" ? "S" : "Q"; // Determine prefix based on stage
       const salesOrderNum = `${prefix}-${year}${month}-${uniqueIdPortion}`;
 
-      if (!jobId) {
-        throw new Error("Cannot insert sales order: Job ID is invalid.");
-      }
-      const { error: soError } = await supabase.from("sales_orders").insert({
-        sales_order_number: salesOrderNum,
-        client_id: client_id,
-        cabinet_id: cabinetId,
-        job_id: jobId,
-        stage: stage,
-        total: total,
-        deposit: deposit,
-        invoice_balance: (total || 0) - (deposit || 0),
-        designer: user?.username || "Staff",
-        comments: comments,
-        install: install,
-        order_type: order_type,
-        delivery_type: delivery_type,
-        ...shipping,
-        ...checklist,
-      });
+      // C. Insert Sales Order Record (CRITICAL: Commits SO first, Job link is missing/null)
+      const { data: soData, error: soError } = await supabase
+        .from("sales_orders")
+        .insert({
+          sales_order_number: salesOrderNum,
+          client_id: client_id,
+          cabinet_id: cabinetId,
+          stage: stage,
+          total: total,
+          deposit: deposit,
+          invoice_balance: (total || 0) - (deposit || 0),
+          designer: user?.username || "Staff",
+          comments: comments,
+          install: install,
+          order_type: order_type,
+          delivery_type: delivery_type,
+          ...shipping,
+          ...checklist,
+        })
+        .select("id")
+        .single();
 
       if (soError) throw new Error(`Sales Order Error: ${soError.message}`);
+      const salesOrderId = soData.id; // Capture the committed SO ID
 
+      // --- 4. JOB CREATION & BACKWARD LINKING (Only if SOLD) ---
+      let jobDataForReturn: JobResult | null = null;
+      let finalJobNumber: string | null = null;
+
+      if (stage === "SOLD") {
+        // 1. Determine base number to reuse from local state
+        let baseNumberToReuse: number | null = null;
+        if (parentBaseSelection) {
+          const base = Number(parentBaseSelection);
+          if (!isNaN(base) && base > 0) {
+            baseNumberToReuse = base;
+          } else {
+            throw new Error("Invalid job base number selected.");
+          }
+        }
+
+        // 2. Call RPC to create job record and link back to the SO
+        const { data: jobResult, error: rpcError } = await supabase.rpc(
+          "create_job_and_link_so", // Renamed RPC
+          {
+            p_sales_order_id: salesOrderId,
+            p_existing_base_number: baseNumberToReuse,
+          }
+        );
+
+        if (rpcError)
+          throw new Error(`Job Creation Failed: ${rpcError.message}`);
+        if (!jobResult || jobResult.length === 0)
+          throw new Error("No job data returned from RPC.");
+
+        jobDataForReturn = jobResult[0] as JobResult;
+        finalJobNumber = jobDataForReturn.out_job_number;
+      }
+
+      // Return confirmation payload for onSuccess handler
       return {
         success: true,
         salesOrderNum: salesOrderNum,
-        jobData: jobDataForReturn,
+        finalJobNum: finalJobNumber, // Return the final formatted job number
       };
     },
+
+    // --- ON SUCCESS HANDLER ---
     onSuccess: (data) => {
       notifications.show({
         title: "Order Processed",
@@ -254,22 +279,28 @@ export default function NewSalesOrderPage() {
         color: "green",
       });
 
-      if (data.jobData) {
-        setSuccessBannerData({ jobNum: data.jobData.out_job_number });
-        setTimeout(() => {
-          setSuccessBannerData(null);
+      if (data.finalJobNum) {
+        // Set state to trigger the auto-dismissing success banner
+        setSuccessBannerData({
+          jobNum: data.finalJobNum || "N/A",
+        });
+        // Cleanup/redirect is handled by the setTimeout watching successBannerData
+        const timer = setTimeout(() => {
           form.reset();
           setSelectedClientData(null);
           queryClient.invalidateQueries({ queryKey: ["sales_orders"] });
           router.push("/dashboard/sales");
-        }, 3000);
+        }, 5000);
       } else {
         form.reset();
         setSelectedClientData(null);
         queryClient.invalidateQueries({ queryKey: ["sales_orders"] });
         router.push("/dashboard/sales");
       }
+      // Handle QUOTE completion (no job created, redirect immediately)
     },
+
+    // --- ON ERROR HANDLER ---
     onError: (err) => {
       notifications.show({
         title: "Error",
