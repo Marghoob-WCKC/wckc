@@ -237,7 +237,7 @@ export default function ClientsTable() {
         display: "flex",
         flexDirection: "column",
         padding: rem(20),
-        height: "calc(100vh - 40px)", // adjust based on navbar/sidebar height
+        height: "calc(100vh - 45px)", // adjust based on navbar/sidebar height
       }}
     >
       <Group justify="flex-end" mb="md">

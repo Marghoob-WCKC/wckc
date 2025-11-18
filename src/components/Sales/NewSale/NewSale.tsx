@@ -715,7 +715,7 @@ export default function NewSale() {
                   {/* Row 2: Box, Drawers, and Interior Details */}
                   <SimpleGrid cols={4} mt="md">
                     <TextInput
-                      label="Box Type"
+                      label="Box"
                       {...form.getInputProps(`cabinet.box`)}
                     />
                     <TextInput

@@ -85,7 +85,7 @@ export default function Sidebar({ links }: SidebarProps) {
   return (
     <Box
       style={{
-        width: rem(250),
+        width: rem(200),
         height: "100vh", // FORCE exact viewport height
         overflowY: "auto", // PREVENT overflow issues
         background: "linear-gradient(180deg, #7b2ff7, #2b86c5)",
