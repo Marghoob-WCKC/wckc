@@ -13,7 +13,6 @@ import {
   Stack,
   Group,
   Text,
-  TextInput,
   Switch,
   Button,
   SimpleGrid,
@@ -22,6 +21,7 @@ import {
   Badge,
   Divider,
   Accordion,
+  Select,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
@@ -72,15 +72,6 @@ type SalesOrderType = {
   cabinet: CabinetType;
 };
 
-type JobType = {
-  id: number;
-  job_number: string;
-  job_base_number: number;
-  job_suffix?: string;
-  sales_orders: SalesOrderType;
-  production_schedule: SchedulingFormValues;
-};
-
 type SchedulingFormValues = {
   rush: boolean;
   placement_date: string | null;
@@ -92,9 +83,17 @@ type SchedulingFormValues = {
   paint_out_schedule: string | null;
   assembly_schedule: string | null;
   ship_schedule: string | null;
-  box_assembled_count: number;
-  ship_status: string;
-  ship_confirmed_date: string | null;
+  in_plant_actual: string | null;
+  ship_status: "unprocessed" | "tentative" | "confirmed";
+};
+
+type JobType = {
+  id: number;
+  job_number: string;
+  job_base_number: number;
+  job_suffix?: string;
+  sales_orders: SalesOrderType;
+  production_schedule: SchedulingFormValues;
 };
 
 // ---------- Component ----------
@@ -108,7 +107,6 @@ export default function EditProductionSchedulePage({
   const { user } = useUser();
   const queryClient = useQueryClient();
 
-  // ---- Fetch job + production_schedule + sales_orders → client + cabinet ----
   const { data, isLoading } = useQuery({
     queryKey: ["production-schedule", jobId],
     queryFn: async (): Promise<JobType> => {
@@ -134,7 +132,6 @@ export default function EditProductionSchedulePage({
     enabled: isAuthenticated && !!jobId,
   });
 
-  // ---- Form ----
   const form = useForm<SchedulingFormValues>({
     initialValues: {
       rush: false,
@@ -147,9 +144,8 @@ export default function EditProductionSchedulePage({
       paint_out_schedule: null,
       assembly_schedule: null,
       ship_schedule: null,
-      box_assembled_count: 0,
+      in_plant_actual: null,
       ship_status: "unprocessed",
-      ship_confirmed_date: null,
     },
     validate: zodResolver({} as any),
   });
@@ -160,7 +156,6 @@ export default function EditProductionSchedulePage({
     }
   }, [data]);
 
-  // ---- Update Mutation ----
   const updateMutation = useMutation({
     mutationFn: async (values: SchedulingFormValues) => {
       if (!user) throw new Error("User not authenticated");
@@ -216,7 +211,7 @@ export default function EditProductionSchedulePage({
             p="md"
             radius="md"
             shadow="sm"
-            style={{ backgroundColor: "#e3e3e3" }}
+            style={{ background: "#e3e3e3" }}
           >
             <Group>
               <Text fw={600} size="lg">
@@ -228,7 +223,7 @@ export default function EditProductionSchedulePage({
               </Badge>
             </Group>
 
-            <Divider my="sm" />
+            <Divider my="sm" color="purple" />
 
             {/* CLIENT INFO */}
             {client && (
@@ -239,10 +234,7 @@ export default function EditProductionSchedulePage({
               >
                 <Accordion.Item
                   value="client-details"
-                  style={{
-                    backgroundColor: "white",
-                    borderRadius: "20px",
-                  }}
+                  style={{ backgroundColor: "white", borderRadius: "20px" }}
                 >
                   <Accordion.Control styles={{ label: { fontWeight: "bold" } }}>
                     Client Details
@@ -281,7 +273,8 @@ export default function EditProductionSchedulePage({
                 </Accordion.Item>
               </Accordion>
             )}
-            <Divider mb="sm" />
+            <Divider mb="sm" color="white" />
+
             {/* CABINET INFO */}
             {cabinet && (
               <Accordion
@@ -414,18 +407,18 @@ export default function EditProductionSchedulePage({
                   {...form.getInputProps("ship_schedule")}
                 />
                 <DateInput
-                  label="Ship Confirmed Date"
-                  {...form.getInputProps("ship_confirmed_date")}
+                  label="In Plant Actual"
+                  {...form.getInputProps("in_plant_actual")}
                 />
               </SimpleGrid>
 
-              <TextInput
-                label="Box Assembled Count"
-                type="number"
-                {...form.getInputProps("box_assembled_count")}
-              />
-              <TextInput
+              <Select
                 label="Ship Status"
+                data={[
+                  { value: "unprocessed", label: "Unprocessed" },
+                  { value: "tentative", label: "Tentative" },
+                  { value: "confirmed", label: "Confirmed" },
+                ]}
                 {...form.getInputProps("ship_status")}
               />
             </Stack>
@@ -433,7 +426,12 @@ export default function EditProductionSchedulePage({
 
           {/* BUTTONS */}
           <Group>
-            <Button color="blue" type="submit">
+            <Button
+              variant="gradient"
+              gradient={{ from: "#8e44ad", to: "#6a11cb" }}
+              color="purple"
+              type="submit"
+            >
               Update Schedule
             </Button>
             <Button variant="outline" onClick={() => router.back()}>
