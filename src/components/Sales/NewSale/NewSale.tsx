@@ -381,9 +381,8 @@ export default function NewSale() {
                 <Switch
                   offLabel="Quote"
                   onLabel="Sold"
-                  thumbIcon={<FaCheckCircle />}
                   size="xl"
-                  color="green"
+                  thumbIcon={<FaCheckCircle />}
                   styles={{
                     track: {
                       background:
@@ -767,7 +766,7 @@ export default function NewSale() {
                     <Stack gap={5}>
                       <Switch
                         label="Glass Doors Required"
-                        color="green"
+                        color="#4a00e0"
                         {...form.getInputProps(`cabinet.glass`)}
                       />
                       <TextInput
@@ -782,7 +781,7 @@ export default function NewSale() {
                     <Stack gap={5}>
                       <Switch
                         label="Doors/Parts Only Order"
-                        color="green"
+                        color="#4a00e0"
                         {...form.getInputProps(`cabinet.doors_parts_only`)}
                       />
                       <TextInput
@@ -802,19 +801,19 @@ export default function NewSale() {
                       <Switch
                         label="Soft Close Hinges"
                         size="md"
-                        color="green"
+                        color="#4a00e0"
                         {...form.getInputProps(`cabinet.hinge_soft_close`)}
                       />
                       <Switch
                         label="Handles Supplied"
                         size="md"
-                        color="green"
+                        color="#4a00e0"
                         {...form.getInputProps(`cabinet.handles_supplied`)}
                       />
                       <Switch
                         label="Handles Selected"
                         size="md"
-                        color="green"
+                        color="#4a00e0"
                         {...form.getInputProps(`cabinet.handles_selected`)}
                       />
                     </Group>
@@ -936,7 +935,7 @@ export default function NewSale() {
                     />
                   </SimpleGrid>
                   <Switch
-                    color="green"
+                    color="#4a00e0"
                     mt="md"
                     label="Installation Required"
                     {...form.getInputProps(`install`)}
