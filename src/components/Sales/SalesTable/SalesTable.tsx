@@ -45,6 +45,7 @@ import {
 } from "react-icons/fa";
 import { useDisclosure } from "@mantine/hooks";
 import { useSupabase } from "@/hooks/useSupabase";
+import dayjs from "dayjs";
 
 interface SalesOrderView {
   id: number;
@@ -214,7 +215,10 @@ export default function SalesTable() {
         header: "Created",
         size: 130,
         minSize: 60,
-        cell: (info) => new Date(info.getValue<string>()).toLocaleDateString(),
+        cell: (info) => {
+          const date = info.getValue<string>();
+          return date ? dayjs(date).format("YYYY-MM-DD") : "—";
+        },
       }),
       columnHelper.display({
         id: "actions",

@@ -47,6 +47,7 @@ import { useDisclosure } from "@mantine/hooks";
 import EditClient from "../EditClient/EditClient";
 import AddClient from "../AddClient/AddClient";
 import { useSupabase } from "@/hooks/useSupabase";
+import dayjs from "dayjs";
 
 export default function ClientsTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -164,7 +165,10 @@ export default function ClientsTable() {
       header: "Created",
       size: 130,
       minSize: 100,
-      cell: (info) => new Date(info.getValue<string>()).toLocaleDateString(),
+      cell: (info) => {
+        const date = info.getValue<string>();
+        return date ? dayjs(date).format("YYYY-MM-DD") : "—";
+      },
     }),
 
     columnHelper.display({

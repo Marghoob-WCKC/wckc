@@ -33,6 +33,7 @@ import {
   Stack,
   Accordion,
   SimpleGrid,
+  Select,
 } from "@mantine/core";
 import {
   FaSearch,
@@ -45,6 +46,8 @@ import {
   FaRegCircle,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
+import dayjs from "dayjs";
+import { DateInput, DatePicker } from "@mantine/dates";
 
 // --- 1. Types ---
 interface ClientType {
@@ -115,7 +118,14 @@ export default function ProdTable() {
   });
   const { supabase, isAuthenticated } = useSupabase();
   const router = useRouter();
+  const getFilterValue = (id: string): string => {
+    // Find the filter object, access its value, and ensure it's converted to a string.
+    const filter = columnFilters.find((f) => f.id === id);
+    const value = filter?.value;
 
+    // Handle null/undefined or any odd types by forcing an empty string fallback
+    return String(value ?? "");
+  };
   // --- 4. Fetch data from jobs ---
   const {
     data: productionJobs,
@@ -174,17 +184,19 @@ export default function ProdTable() {
     }),
 
     columnHelper.accessor("production_schedule.placement_date", {
+      id: "placement_date",
       header: "Placement Date",
       size: 140,
       minSize: 120,
       cell: (info) => {
         const date = info.getValue();
         if (!date) return <Text c="orange">TBD</Text>;
-        return new Date(date).toLocaleDateString();
+        return dayjs(date).format("YYYY-MM-DD");
       },
     }),
 
     columnHelper.accessor("production_schedule.ship_schedule", {
+      id: "ship_schedule",
       header: "Ship Date",
       size: 600,
       minSize: 650,
@@ -219,7 +231,7 @@ export default function ProdTable() {
                 color: date ? undefined : "orange",
               }}
             >
-              {date ? new Date(date).toLocaleDateString() : "TBD"}
+              {date ? dayjs(date).format("YYYY-MM-DD") : "TBD"}
             </Text>
             <Badge
               variant="filled"
@@ -309,7 +321,7 @@ export default function ProdTable() {
                   c="dimmed"
                   style={{ display: "flex", alignItems: "center" }}
                 >
-                  {!done ? (
+                  {done ? (
                     <FaCheckCircle
                       color="green"
                       size={12}
@@ -339,7 +351,6 @@ export default function ProdTable() {
       cell: (info) => {
         const order = info.row.original.sales_orders;
         if (!order) return <Text c="dimmed">—</Text>;
-
         const address = [
           order.shipping_street,
           order.shipping_city,
@@ -348,14 +359,27 @@ export default function ProdTable() {
         ]
           .filter(Boolean)
           .join(", ");
-
         return (
           <Text size="sm" c="dimmed" lineClamp={1}>
             {address}
           </Text>
         );
       },
-      enableColumnFilter: false,
+      enableColumnFilter: true, // enable filtering
+      filterFn: (row, columnId, filterValue) => {
+        const order = row.original.sales_orders;
+        if (!order || !filterValue) return true;
+        const address = [
+          order.shipping_street,
+          order.shipping_city,
+          order.shipping_province,
+          order.shipping_zip,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return address.includes(String(filterValue).toLowerCase());
+      },
     }),
   ];
   // --- 6. Table setup ---
@@ -398,31 +422,94 @@ export default function ProdTable() {
         Production Schedule Overview
       </Text>
       {/* SEARCH/FILTER ACCORDION */}
-      <Accordion variant="contained" radius="md" mb="md">
+      <Accordion
+        variant="contained"
+        radius="md"
+        mb="md"
+        defaultValue="search-filters"
+      >
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
             Search Filters
           </Accordion.Control>
           <Accordion.Panel>
             <SimpleGrid
-              cols={{ base: 1, sm: 2 }}
+              cols={{ base: 1, sm: 3, md: 5, lg: 6 }} // Expanded grid for more filters
               mt="sm"
-              spacing="xs"
-              display={"flex"}
+              spacing="md"
             >
+              {/* Filter 1: Job Number */}
               <TextInput
-                placeholder="Job Number..."
-                w={rem(200)}
+                label="Job Number"
+                placeholder="e.g., 202401"
+                value={getFilterValue("job_number")}
                 onChange={(e) =>
                   table.getColumn("job_number")?.setFilterValue(e.target.value)
                 }
               />
+              {/* Filter 2: Client Name */}
               <TextInput
-                w={rem(200)}
-                placeholder="Client Name..."
+                label="Client"
+                placeholder="e.g., Smith"
+                value={getFilterValue("clientlastName")}
                 onChange={(e) =>
                   table
                     .getColumn("clientlastName")
+                    ?.setFilterValue(e.target.value)
+                }
+              />
+              {/* Filter 5: Placement Date (Text search for simplicity) */}
+              <DateInput
+                label="Placement Date"
+                placeholder="Filter by Date"
+                clearable
+                value={
+                  getFilterValue("placement_date")
+                    ? dayjs(getFilterValue("placement_date")).toDate()
+                    : null
+                }
+                onChange={(date) => {
+                  // Safely format the Date object back to YYYY-MM-DD using Day.js
+                  const formattedDate = date
+                    ? dayjs(date).format("YYYY-MM-DD")
+                    : undefined;
+
+                  table
+                    .getColumn("placement_date")
+                    ?.setFilterValue(formattedDate);
+                }}
+                valueFormat="YYYY-MM-DD"
+              />
+              <DateInput
+                label="Ship Date"
+                placeholder="Filter by Date" // Added placeholder for clarity
+                clearable
+                value={
+                  getFilterValue("ship_schedule")
+                    ? dayjs(getFilterValue("ship_schedule")).toDate() // FIX 1: Use dayjs to parse the filter string into a Date object
+                    : null
+                }
+                onChange={(date) => {
+                  // FIX 2: Use dayjs to safely format the Date object back to a YYYY-MM-DD string
+                  const formattedDate = date
+                    ? dayjs(date).format("YYYY-MM-DD")
+                    : undefined;
+
+                  table
+                    .getColumn("ship_schedule")
+                    ?.setFilterValue(formattedDate);
+                }}
+                // Added valueFormat for clarity, though Day.js handles the output formatting
+                valueFormat="YYYY-MM-DD"
+              />
+              {/* Filter 7: Site Address (Text search) */}
+              <TextInput
+                label="Site Address"
+                placeholder="Street or City"
+                value={getFilterValue("site_address")}
+                onChange={(e) =>
+                  table
+                    .getColumn("site_address")
                     ?.setFilterValue(e.target.value)
                 }
               />
@@ -441,7 +528,7 @@ export default function ProdTable() {
             background: "linear-gradient(135deg, #8E2DE2, #4A00E0)",
           },
         }}
-        type="hover"
+        type="always"
       >
         <Table
           striped
