@@ -525,7 +525,8 @@ export default function ProdTable() {
         }}
         styles={{
           thumb: {
-            background: "linear-gradient(135deg, #8E2DE2, #4A00E0)",
+            cursor: "pointer",
+            background: "linear-gradient(135deg, #dfc9f2, #ba9bfa)",
           },
         }}
         type="always"
