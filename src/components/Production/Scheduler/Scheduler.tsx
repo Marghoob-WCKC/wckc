@@ -766,9 +766,7 @@ export default function EditProductionSchedulePage({
                         }}
                       >
                         <Text size="xs" c="dimmed">
-                          {step.isCompleted
-                            ? "Completed:"
-                            : "Scheduled/Pending"}
+                          {step.isCompleted ? "Completed:" : "Pending"}
                         </Text>
                         <Text size="sm" fw={500}>
                           {step.date
