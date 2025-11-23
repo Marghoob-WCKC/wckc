@@ -2,6 +2,7 @@ import { RichTextEditor, Link } from "@mantine/tiptap";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Box, Text } from "@mantine/core";
+import { useEffect } from "react";
 
 interface RichTextEditorProps {
   content: string;
@@ -23,7 +24,13 @@ export default function CustomRichTextEditor({
       onChange(editor.getHTML());
     },
   });
-
+  useEffect(() => {
+    if (editor && content && editor.getHTML() !== content) {
+      editor.commands.setContent(content, {
+        emitUpdate: false,
+      });
+    }
+  }, [editor, content]);
   return (
     <Box>
       {label && (
