@@ -542,13 +542,18 @@ export default function ProdTable() {
                     key={header.id}
                     colSpan={header.colSpan}
                     onClick={header.column.getToggleSortingHandler()}
-                    style={{ cursor: "pointer" }}
+                    style={{
+                      position: "relative",
+                      width: header.getSize(),
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
                   >
                     {flexRender(
                       header.column.columnDef.header,
                       header.getContext()
                     )}
-                    <span>
+                    <span className="inline-block ml-1">
                       {header.column.getIsSorted() === "asc" && <FaSortUp />}
                       {header.column.getIsSorted() === "desc" && <FaSortDown />}
                       {!header.column.getIsSorted() && <FaSort opacity={0.1} />}

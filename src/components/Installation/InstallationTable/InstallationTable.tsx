@@ -29,6 +29,7 @@ import {
   rem,
   Accordion,
   SimpleGrid,
+  Tooltip,
 } from "@mantine/core";
 import {
   FaSearch,
@@ -38,6 +39,7 @@ import {
   FaCheckCircle,
   FaRegCircle,
   FaCalendarCheck,
+  FaFire,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import { Tables } from "@/types/db";
@@ -55,6 +57,7 @@ type InstallationJobView = Tables<"jobs"> & {
         installer: Tables<"installers"> | null;
       })
     | null;
+  production_schedule: Pick<Tables<"production_schedule">, "rush"> | null;
 };
 
 const genericFilter: FilterFn<InstallationJobView> = (
@@ -103,7 +106,8 @@ export default function InstallationTable() {
               installation_id, installation_date, installation_completed,
               wrap_date, has_shipped, inspection_date, inspection_completed,
               installer:installer_id (company_name, first_name, last_name, phone_number)
-            )
+            ),
+            production_schedule:production_schedule (rush)
           `
         )
         .not("installation_id", "is", null)
@@ -127,9 +131,16 @@ export default function InstallationTable() {
       size: 150,
       minSize: 100,
       cell: (info) => (
-        <Text fw={600} size="sm">
-          {info.getValue()}
-        </Text>
+        <Group gap={4}>
+          <Text fw={600} size="sm">
+            {info.getValue()}
+          </Text>
+          {info.row.original.production_schedule?.rush && (
+            <Tooltip label="RUSH JOB">
+              <FaFire size={12} color="red" />
+            </Tooltip>
+          )}
+        </Group>
       ),
       enableColumnFilter: true,
       filterFn: genericFilter as any,
@@ -388,13 +399,18 @@ export default function InstallationTable() {
                     key={header.id}
                     colSpan={header.colSpan}
                     onClick={header.column.getToggleSortingHandler()}
-                    style={{ cursor: "pointer" }}
+                    style={{
+                      position: "relative",
+                      width: header.getSize(),
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
                   >
                     {flexRender(
                       header.column.columnDef.header,
                       header.getContext()
                     )}
-                    <span>
+                    <span className="inline-block ml-1">
                       {header.column.getIsSorted() === "asc" && <FaSortUp />}
                       {header.column.getIsSorted() === "desc" && <FaSortDown />}
                       {!header.column.getIsSorted() && <FaSort opacity={0.1} />}
