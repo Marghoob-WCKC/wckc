@@ -148,15 +148,24 @@ export default function ServiceOrdersTable() {
   const columnHelper = createColumnHelper<ServiceOrderRow>();
   const columns = [
     columnHelper.accessor("service_order_number", {
-      header: "SO #",
+      header: "Service Order #",
       size: 120,
       minSize: 100,
+      cell: (info) => (
+        <Text fw={600} size="sm">
+          {info.getValue()}
+        </Text>
+      ),
     }),
     columnHelper.accessor("jobs.job_number", {
-      header: "Job #",
+      header: "Job No.",
       size: 120,
       minSize: 100,
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => (
+        <Text fw={600} size="sm">
+          {info.getValue()}
+        </Text>
+      ),
     }),
     // ... (Keep existing columns: Client Name, Site Address, Date Entered, Date Due)
     columnHelper.accessor("jobs.sales_orders.client.lastName", {
