@@ -31,6 +31,9 @@ import {
   Stack,
   Title,
   ThemeIcon,
+  Modal,
+  Textarea,
+  Menu,
 } from "@mantine/core";
 import {
   FaSearch,
@@ -41,6 +44,9 @@ import {
   FaSortUp,
   FaSortDown,
   FaFileInvoiceDollar,
+  FaPencilAlt,
+  FaEllipsisH,
+  FaBan,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
@@ -70,10 +76,21 @@ export default function InvoicesTable() {
     pageIndex: 0,
     pageSize: 15,
   });
+
+  // Modal States
   const [addModalOpened, { open: openAddModal, close: closeAddModal }] =
     useDisclosure(false);
 
-  // 2. Fetch Invoices with Stable Sorting
+  const [
+    commentModalOpened,
+    { open: openCommentModal, close: closeCommentModal },
+  ] = useDisclosure(false);
+  const [editingComment, setEditingComment] = useState<{
+    id: number;
+    text: string;
+  } | null>(null);
+
+  // 2. Fetch Invoices
   const { data: invoices, isLoading } = useQuery<InvoiceRow[]>({
     queryKey: ["invoices_list"],
     queryFn: async () => {
@@ -94,16 +111,13 @@ export default function InvoicesTable() {
           )
         `
         )
-        // Primary Sort: Date Entered
         .order("date_entered", { ascending: false })
-        // Secondary Sort: Stable ID (Prevents jumping rows on update)
         .order("invoice_id", { ascending: false });
 
       if (error) throw error;
       return data as unknown as InvoiceRow[];
     },
     enabled: isAuthenticated,
-    // Keep data visible while refetching to prevent UI flash
     placeholderData: (previousData) => previousData,
   });
 
@@ -120,11 +134,65 @@ export default function InvoicesTable() {
       if (error) throw error;
     },
     onSuccess: () => {
-      // Refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ["invoices_list"] });
       notifications.show({
         title: "Success",
         message: "Invoice payment status updated.",
+        color: "green",
+      });
+    },
+    onError: (err: any) => {
+      notifications.show({
+        title: "Error",
+        message: err.message,
+        color: "red",
+      });
+    },
+  });
+
+  // 4. Mutation to Update Comment
+  const updateCommentMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingComment) return;
+      const { error } = await supabase
+        .from("invoices")
+        .update({ comments: editingComment.text })
+        .eq("invoice_id", editingComment.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices_list"] });
+      notifications.show({
+        title: "Success",
+        message: "Comment updated successfully.",
+        color: "green",
+      });
+      closeCommentModal();
+    },
+    onError: (err: any) => {
+      notifications.show({
+        title: "Error",
+        message: err.message,
+        color: "red",
+      });
+    },
+  });
+
+  // 5. Mutation to Toggle No Charge
+  const toggleNoChargeMutation = useMutation({
+    mutationFn: async ({ id, noCharge }: { id: number; noCharge: boolean }) => {
+      const { error } = await supabase
+        .from("invoices")
+        .update({ no_charge: noCharge })
+        .eq("invoice_id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices_list"] });
+      notifications.show({
+        title: "Updated",
+        message: "Invoice charge status updated.",
         color: "green",
       });
     },
@@ -246,7 +314,7 @@ export default function InvoicesTable() {
             </Badge>
           );
         return (
-          <Badge color="yellow" variant="light">
+          <Badge color="red" variant="light">
             Pending
           </Badge>
         );
@@ -270,51 +338,89 @@ export default function InvoicesTable() {
         ),
     }),
 
-    // --- Comments ---
+    // --- Comments (Editable) ---
     columnHelper.accessor("comments", {
       header: "Comments",
       size: 200,
       cell: (info) => (
-        <Tooltip label={info.getValue() || ""}>
-          <Text size="sm" c="dimmed" lineClamp={1}>
+        <Box
+          onClick={() => {
+            setEditingComment({
+              id: info.row.original.invoice_id,
+              text: info.getValue() || "",
+            });
+            openCommentModal();
+          }}
+          style={{
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            minHeight: "24px",
+          }}
+        >
+          <Text size="sm" c="dimmed" lineClamp={1} style={{ flex: 1 }}>
             {info.getValue() || ""}
           </Text>
-        </Tooltip>
+          <FaPencilAlt size={12} color="gray" style={{ opacity: 0.5 }} />
+        </Box>
       ),
     }),
 
-    // --- Actions ---
+    // --- Actions (Menu) ---
     columnHelper.display({
       id: "actions",
       header: "Actions",
-      size: 100,
+      size: 80,
       cell: (info) => {
         const isPaid = !!info.row.original.paid_at;
         const isNoCharge = info.row.original.no_charge;
 
-        if (isNoCharge) return null;
-
         return (
-          <Tooltip label={isPaid ? "Mark as Unpaid" : "Mark as Paid"}>
-            <ActionIcon
-              variant={isPaid ? "gradient" : "default"}
-              gradient={
-                isPaid ? { from: "teal", to: "lime", deg: 90 } : undefined
-              }
-              color={isPaid ? undefined : "gray"}
-              size="lg"
-              radius="md"
-              loading={togglePaidMutation.isPending}
-              onClick={() =>
-                togglePaidMutation.mutate({
-                  id: info.row.original.invoice_id,
-                  isPaid: !isPaid,
-                })
-              }
-            >
-              <FaDollarSign size="1rem" />
-            </ActionIcon>
-          </Tooltip>
+          <Menu withinPortal position="bottom-end" shadow="sm">
+            <Menu.Target>
+              <ActionIcon variant="subtle" color="gray">
+                <FaEllipsisH />
+              </ActionIcon>
+            </Menu.Target>
+
+            <Menu.Dropdown>
+              <Menu.Item
+                leftSection={<FaDollarSign size={14} />}
+                onClick={() =>
+                  togglePaidMutation.mutate({
+                    id: info.row.original.invoice_id,
+                    isPaid: !isPaid,
+                  })
+                }
+                disabled={isNoCharge ? true : false}
+                color={isPaid ? "red" : "green"}
+              >
+                {isPaid ? "Mark Unpaid" : "Mark Paid"}
+              </Menu.Item>
+
+              <Menu.Divider />
+
+              <Menu.Item
+                leftSection={
+                  isNoCharge ? (
+                    <FaFileInvoiceDollar size={14} />
+                  ) : (
+                    <FaBan size={14} />
+                  )
+                }
+                onClick={() =>
+                  toggleNoChargeMutation.mutate({
+                    id: info.row.original.invoice_id,
+                    noCharge: !isNoCharge,
+                  })
+                }
+                color={isNoCharge ? "blue" : "gray"}
+              >
+                {isNoCharge ? "Revert to Chargeable" : "Mark as No Charge"}
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
         );
       },
     }),
@@ -474,7 +580,43 @@ export default function InvoicesTable() {
           color="#4A00E0"
         />
       </Center>
+
       <AddInvoice opened={addModalOpened} onClose={closeAddModal} />
+
+      {/* --- Edit Comment Modal --- */}
+      <Modal
+        opened={commentModalOpened}
+        onClose={closeCommentModal}
+        title="Edit Invoice Comment"
+        centered
+      >
+        <Stack>
+          <Textarea
+            label="Comment"
+            minRows={4}
+            value={editingComment?.text || ""}
+            onChange={(e) => {
+              const val = e.currentTarget.value;
+              setEditingComment((prev) =>
+                prev ? { ...prev, text: val } : null
+              );
+            }}
+            data-autofocus
+          />
+          <Group justify="flex-end">
+            <Button variant="default" onClick={closeCommentModal}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => updateCommentMutation.mutate()}
+              loading={updateCommentMutation.isPending}
+              color="purple"
+            >
+              Save
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Box>
   );
 }

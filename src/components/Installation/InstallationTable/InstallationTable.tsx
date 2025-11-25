@@ -493,7 +493,7 @@ export default function InstallationTable() {
         style={{
           position: "fixed",
           bottom: 0,
-          left: rem(200),
+          left: rem(250),
           right: 0,
           padding: "1rem 0",
           background: "white",
