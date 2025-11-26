@@ -3,6 +3,10 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Box, Text } from "@mantine/core";
 import { useEffect } from "react";
+import TextAlign from "@tiptap/extension-text-align";
+import Document from "@tiptap/extension-document";
+import { BulletList, ListItem } from "@tiptap/extension-list";
+import Paragraph from "@tiptap/extension-paragraph";
 
 interface RichTextEditorProps {
   content: string;
@@ -17,7 +21,15 @@ export default function CustomRichTextEditor({
   label,
 }: RichTextEditorProps) {
   const editor = useEditor({
-    extensions: [StarterKit, Link],
+    extensions: [
+      StarterKit.configure({ link: false }),
+      Link,
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      BulletList,
+      ListItem,
+      Document,
+      Paragraph,
+    ],
     content,
     immediatelyRender: false,
     onUpdate({ editor }) {

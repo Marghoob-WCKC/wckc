@@ -142,9 +142,9 @@ interface PdfProps {
 }
 
 export const ServiceOrderPdf = ({ data }: PdfProps) => {
+  console.log(data);
   const job = data.jobs || {};
   const so = job.sales_orders || {};
-  const client = so.client || {};
   const cab = so.cabinet || {};
   const installer = data.installers || {};
 
@@ -187,11 +187,7 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Customer:</Text>
-              <Text style={{ ...styles.value }}>
-                {client.company_name
-                  ? client.company_name
-                  : `${client.firstName} ${client.lastName}`}
-              </Text>
+              <Text style={{ ...styles.value }}>{so.shipping_client_name}</Text>
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Address:</Text>
@@ -203,7 +199,9 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
             {/* Cabinet Specs - Fully Stacked */}
             <View style={styles.row}>
               <Text style={styles.label}>Species:</Text>
-              <Text style={{ ...styles.value }}>{cab.species || "—"}</Text>
+              <Text style={{ ...styles.value }}>
+                {cab.species.Species || "—"}
+              </Text>
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Color:</Text>
@@ -213,7 +211,7 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
                   textTransform: "uppercase",
                 }}
               >
-                {cab.color || "—"}
+                {cab.colors.Name || "—"}
               </Text>
             </View>
             <View style={styles.row}>
@@ -224,7 +222,7 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
                   textTransform: "uppercase",
                 }}
               >
-                {cab.door_style || "—"}
+                {cab.door_styles.name || "—"}
               </Text>
             </View>
             <View style={styles.row}>

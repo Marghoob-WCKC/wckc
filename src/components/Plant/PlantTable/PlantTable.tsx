@@ -638,7 +638,7 @@ export default function PlantTable() {
       </Group>
 
       {/* Search Filters */}
-      <Accordion variant="contained" radius="md" mb="md" defaultValue="filters">
+      <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
             Filters
@@ -738,7 +738,12 @@ export default function PlantTable() {
                     </Group>
                   </Accordion.Control>
                   <Accordion.Panel>
-                    <Table striped stickyHeader highlightOnHover withColumnBorders>
+                    <Table
+                      striped
+                      stickyHeader
+                      highlightOnHover
+                      withColumnBorders
+                    >
                       <Table.Thead>
                         <Table.Tr>
                           {table

@@ -426,12 +426,7 @@ export default function ProdTable() {
         </Stack>
       </Group>
       {/* SEARCH/FILTER ACCORDION */}
-      <Accordion
-        variant="contained"
-        radius="md"
-        mb="md"
-        defaultValue="search-filters"
-      >
+      <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
             Search Filters
@@ -561,7 +556,7 @@ export default function ProdTable() {
           highlightOnHover
           stickyHeader
           withColumnBorders
-          style={{ minWidth: "2800px" }}
+          style={{ minWidth: "2300px" }}
         >
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (

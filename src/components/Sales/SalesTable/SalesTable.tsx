@@ -175,7 +175,7 @@ export default function SalesTable() {
               minSize: 60,
               enableColumnFilter: true,
               filterFn: genericFilter as any,
-              cell: (info) => <Text>{info.getValue() || "—"}</Text>,
+              cell: (info) => <Text fw={600}>{info.getValue() || "—"}</Text>,
             }),
           ]
         : []),
@@ -343,7 +343,7 @@ export default function SalesTable() {
         display: "flex",
         flexDirection: "column",
         padding: rem(20),
-        height: "calc(100vh - 40px)",
+        height: "calc(100vh - 45px)",
       }}
     >
       <Group mb="md">
@@ -363,7 +363,40 @@ export default function SalesTable() {
             Track sales
           </Text>
         </Stack>
+        {/* SEARCH/FILTER ACCORDION */}
       </Group>
+      <Accordion variant="contained" radius="md" mb="md" w={"100%"}>
+        <Accordion.Item value="search-filters">
+          <Accordion.Control icon={<FaSearch size={16} />}>
+            Search Filters
+          </Accordion.Control>
+          <Accordion.Panel>
+            <SimpleGrid
+              cols={{ base: 1, sm: 2 }}
+              mt="sm"
+              spacing="xs"
+              display={"flex"}
+            >
+              <TextInput
+                placeholder="Job Number..."
+                w={rem(200)}
+                onChange={(e) =>
+                  table.getColumn("job_number")?.setFilterValue(e.target.value)
+                }
+              />
+              <TextInput
+                w={rem(200)}
+                placeholder="Client Name..."
+                onChange={(e) =>
+                  table
+                    .getColumn("clientlastName")
+                    ?.setFilterValue(e.target.value)
+                }
+              />
+            </SimpleGrid>
+          </Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
       {/* --- STATUS FILTER PILLS --- */}
 
       <Group mb="md" align="center" style={{ width: "100%" }}>
@@ -442,40 +475,6 @@ export default function SalesTable() {
         </Button>
       </Group>
 
-      {/* SEARCH/FILTER ACCORDION */}
-      <Accordion variant="contained" radius="md" mb="md">
-        <Accordion.Item value="search-filters">
-          <Accordion.Control icon={<FaSearch size={16} />}>
-            Search Filters
-          </Accordion.Control>
-          <Accordion.Panel>
-            <SimpleGrid
-              cols={{ base: 1, sm: 2 }}
-              mt="sm"
-              spacing="xs"
-              display={"flex"}
-            >
-              <TextInput
-                placeholder="Job Number..."
-                w={rem(200)}
-                onChange={(e) =>
-                  table.getColumn("job_number")?.setFilterValue(e.target.value)
-                }
-              />
-              <TextInput
-                w={rem(200)}
-                placeholder="Client Name..."
-                onChange={(e) =>
-                  table
-                    .getColumn("clientlastName")
-                    ?.setFilterValue(e.target.value)
-                }
-              />
-            </SimpleGrid>
-          </Accordion.Panel>
-        </Accordion.Item>
-      </Accordion>
-
       {/* DATA TABLE */}
       <ScrollArea
         style={{
@@ -490,7 +489,13 @@ export default function SalesTable() {
         }}
         type="hover"
       >
-        <Table striped stickyHeader highlightOnHover withColumnBorders layout="fixed">
+        <Table
+          striped
+          stickyHeader
+          highlightOnHover
+          withColumnBorders
+          layout="fixed"
+        >
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>
@@ -614,7 +619,6 @@ export default function SalesTable() {
           background: "white",
           borderTop: "1px solid #eee",
           zIndex: 100,
-
           display: "flex",
           justifyContent: "center",
           alignItems: "center",

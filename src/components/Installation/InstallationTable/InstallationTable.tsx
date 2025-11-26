@@ -186,7 +186,7 @@ export default function InstallationTable() {
 
     columnHelper.accessor("installation.installation_date", {
       id: "installation_date",
-      header: "Scheduled Date",
+      header: "Scheduled Inst. Date",
       size: 150,
       minSize: 120,
       cell: (info) => {
@@ -330,12 +330,7 @@ export default function InstallationTable() {
       </Group>
 
       {/* SEARCH/FILTER ACCORDION */}
-      <Accordion
-        variant="contained"
-        radius="md"
-        mb="md"
-        defaultValue="search-filters"
-      >
+      <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
             Search Filters
@@ -375,7 +370,7 @@ export default function InstallationTable() {
               />
               {/* Filter 4: Scheduled Date */}
               <DateInput
-                label="Scheduled Date"
+                label="Scheduled Inst. Date"
                 placeholder="Filter by Date"
                 clearable
                 value={
