@@ -415,6 +415,7 @@ export default function InstallationTable() {
         <Table
           striped
           highlightOnHover
+          stickyHeader
           withColumnBorders
           style={{ minWidth: "1000px" }}
         >

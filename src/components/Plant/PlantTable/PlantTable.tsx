@@ -738,7 +738,7 @@ export default function PlantTable() {
                     </Group>
                   </Accordion.Control>
                   <Accordion.Panel>
-                    <Table striped highlightOnHover withColumnBorders>
+                    <Table striped stickyHeader highlightOnHover withColumnBorders>
                       <Table.Thead>
                         <Table.Tr>
                           {table

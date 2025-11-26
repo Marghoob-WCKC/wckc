@@ -34,6 +34,7 @@ import {
   ThemeIcon,
   Title,
 } from "@mantine/core";
+import { GrEmergency } from "react-icons/gr";
 import { useDisclosure } from "@mantine/hooks";
 import {
   FaSearch,
@@ -44,23 +45,29 @@ import {
   FaTruckLoading,
   FaPencilAlt,
   FaShoppingBag,
+  FaWarehouse,
+  FaDolly,
+  FaHome,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import { Tables } from "@/types/db";
 import dayjs from "dayjs";
 import { notifications } from "@mantine/notifications";
 
-// --- Types ---
+type DoorStyles = Tables<"door_styles">;
+type Cabinet = Tables<"cabinets"> & {
+  door_styles: DoorStyles | null;
+};
+type SalesOrderWithCabinet = Tables<"sales_orders"> & {
+  client: Tables<"client"> | null;
+  cabinet: Cabinet[] | null;
+};
 type PurchaseTrackingRow = Tables<"purchase_tracking"> & {
   job: Tables<"jobs"> & {
     production_schedule: Tables<"production_schedule"> | null;
-    sales_orders: Tables<"sales_orders"> & {
-      client: Tables<"client"> | null;
-    };
+    sales_orders: SalesOrderWithCabinet[] | null;
   };
 };
-
-// --- Helper Component for Cells ---
 const StatusCell = ({
   orderedAt,
   receivedAt,
@@ -167,7 +174,10 @@ export default function PurchasingTable() {
               ship_schedule
             ),
             sales_orders (
-              shipping_client_name
+              shipping_client_name,
+                cabinet:cabinets (
+                  door_styles(name, is_made_in_house)
+                )
             )
           )
         `
@@ -220,34 +230,61 @@ export default function PurchasingTable() {
   const columnHelper = createColumnHelper<PurchaseTrackingRow>();
 
   // Helper to create Status Columns (Updated to be Sortable Accessors)
+  const toArray = <T,>(value: T | T[] | null | undefined): T[] =>
+    Array.isArray(value) ? value : value ? [value] : [];
+
   const createStatusColumn = (keyPrefix: string, headerTitle: string) =>
     columnHelper.accessor(
-      // We use the '_received_at' date as the sorting value
       (row) =>
         row[`${keyPrefix}_received_at` as keyof PurchaseTrackingRow] as string,
       {
         id: keyPrefix,
         header: headerTitle,
         size: 100,
+
         cell: (info) => {
           const row = info.row.original;
           const ordKey = `${keyPrefix}_ordered_at` as keyof PurchaseTrackingRow;
           const recKey =
             `${keyPrefix}_received_at` as keyof PurchaseTrackingRow;
 
+          // Normalize sales_orders → cabinets → door_styles
+          const soList = toArray(row.job?.sales_orders);
+
+          const isMadeInHouse = soList.some((so) =>
+            toArray(so.cabinet).some((cab) => cab.door_styles?.is_made_in_house)
+          );
+          const isValidStyle = soList.some((so) =>
+            toArray(so.cabinet).some((cab) => cab.door_styles?.name)
+          );
+
           return (
-            <StatusCell
-              label={headerTitle}
-              orderedAt={row[ordKey] as string}
-              receivedAt={row[recKey] as string}
-              onUpdate={(type, val) => {
-                const field = type === "ordered" ? ordKey : recKey;
-                updateMutation.mutate({
-                  id: row.purchase_check_id,
-                  updates: { [field]: val },
-                });
+            <Box
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
               }}
-            />
+            >
+              <StatusCell
+                label={headerTitle}
+                orderedAt={row[ordKey] as string}
+                receivedAt={row[recKey] as string}
+                onUpdate={(type, val) => {
+                  const field = type === "ordered" ? ordKey : recKey;
+                  updateMutation.mutate({
+                    id: row.purchase_check_id,
+                    updates: { [field]: val },
+                  });
+                }}
+              />
+
+              {keyPrefix === "doors" && isValidStyle && !isMadeInHouse && (
+                <Tooltip label="Needs Ordering">
+                  <GrEmergency size={10} color="#ff0000ff" />
+                </Tooltip>
+              )}
+            </Box>
           );
         },
       }
@@ -370,7 +407,7 @@ export default function PurchasingTable() {
       </Group>
 
       <ScrollArea style={{ flex: 1 }}>
-        <Table striped highlightOnHover withColumnBorders>
+        <Table striped stickyHeader highlightOnHover withColumnBorders>
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>

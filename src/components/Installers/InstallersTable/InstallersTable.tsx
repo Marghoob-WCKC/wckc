@@ -270,7 +270,7 @@ export default function InstallersTable() {
         style={{ flex: 1, minHeight: 0, padding: rem(10) }}
         type="hover"
       >
-        <Table striped highlightOnHover withColumnBorders layout="fixed">
+        <Table striped stickyHeader highlightOnHover withColumnBorders layout="fixed">
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>

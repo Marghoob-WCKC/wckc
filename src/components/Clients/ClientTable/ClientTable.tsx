@@ -366,7 +366,7 @@ export default function ClientsTable() {
         }}
         type="hover"
       >
-        <Table striped highlightOnHover withColumnBorders layout="fixed">
+        <Table striped highlightOnHover stickyHeader withColumnBorders layout="fixed">
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>

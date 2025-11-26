@@ -247,28 +247,6 @@ export default function ProdTable() {
     }),
 
     columnHelper.display({
-      id: "cabinet_info",
-      header: "Cabinet",
-      size: 180,
-      minSize: 150,
-      cell: (info) => {
-        const cabinet = info.row.original.sales_orders?.cabinet;
-        if (!cabinet) return <Text c="dimmed">—</Text>;
-        const parts = [
-          cabinet.species?.Species,
-          cabinet.colors?.Name,
-          cabinet.door_styles?.name,
-        ].filter(Boolean);
-
-        return (
-          <Text size="sm" c="dimmed" lineClamp={1} tt="capitalize">
-            {parts.join(" • ")}
-          </Text>
-        );
-      },
-      enableColumnFilter: false,
-    }),
-    columnHelper.display({
       id: "production_status",
       header: "Progress Steps",
       size: 500,
@@ -328,6 +306,28 @@ export default function ProdTable() {
               );
             })}
           </Group>
+        );
+      },
+      enableColumnFilter: false,
+    }),
+    columnHelper.display({
+      id: "cabinet_info",
+      header: "Cabinet",
+      size: 180,
+      minSize: 150,
+      cell: (info) => {
+        const cabinet = info.row.original.sales_orders?.cabinet;
+        if (!cabinet) return <Text c="dimmed">—</Text>;
+        const parts = [
+          cabinet.species?.Species,
+          cabinet.colors?.Name,
+          cabinet.door_styles?.name,
+        ].filter(Boolean);
+
+        return (
+          <Text size="sm" c="dimmed" lineClamp={1} tt="capitalize">
+            {parts.join(" • ")}
+          </Text>
         );
       },
       enableColumnFilter: false,
@@ -559,6 +559,7 @@ export default function ProdTable() {
         <Table
           striped
           highlightOnHover
+          stickyHeader
           withColumnBorders
           style={{ minWidth: "2800px" }}
         >
