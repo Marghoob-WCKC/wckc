@@ -41,32 +41,16 @@ import {
   FaEye,
   FaHome,
 } from "react-icons/fa";
-import { useDisclosure } from "@mantine/hooks";
 import dayjs from "dayjs";
+import { useQuery } from "@tanstack/react-query"; // Import useQuery
+import { useSupabase } from "@/hooks/useSupabase"; // Ensure Supabase hook is imported
 import { useSalesTable } from "@/hooks/useSalesTable";
-import { Tables } from "@/types/db";
-interface SalesOrderView
-  extends Pick<
-    Tables<"sales_orders">,
-    | "id"
-    | "sales_order_number"
-    | "stage"
-    | "invoice_balance"
-    | "designer"
-    | "created_at"
-    | "shipping_client_name"
-    | "shipping_street"
-    | "shipping_city"
-    | "shipping_province"
-    | "shipping_zip"
-    | "shipping_phone_1"
-    | "shipping_email_1"
-  > {
-  job_ref: Pick<Tables<"jobs">, "job_number"> | null;
-}
+import { Views } from "@/types/db";
 
+type SalesTableView = Views<"sales_table_view">;
 export default function SalesTable() {
   const router = useRouter();
+  const { supabase, isAuthenticated } = useSupabase(); // Access Supabase client
 
   // --- 1. Table State ---
   const [pagination, setPagination] = useState<PaginationState>({
@@ -74,14 +58,10 @@ export default function SalesTable() {
     pageSize: 20,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
-
-  // inputFilters: Bound to the input fields (immediate update)
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
-
-  // activeFilters: Sent to the server (updated only on Search click)
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
 
-  // Helpers to manage filter state safely
+  // Helpers
   const setInputFilterValue = (id: string, value: string) => {
     setInputFilters((prev) => {
       const existing = prev.filter((f) => f.id !== id);
@@ -94,10 +74,36 @@ export default function SalesTable() {
     return (inputFilters.find((f) => f.id === id)?.value as string) || "";
   };
 
-  // --- 2. Data Fetching ---
+  const { data: stats } = useQuery({
+    queryKey: ["sales_stats_global"],
+    queryFn: async () => {
+      const [allRes, quoteRes, soldRes] = await Promise.all([
+        supabase
+          .from("sales_orders")
+          .select("*", { count: "exact", head: true }),
+        supabase
+          .from("sales_orders")
+          .select("*", { count: "exact", head: true })
+          .eq("stage", "QUOTE"),
+        supabase
+          .from("sales_orders")
+          .select("*", { count: "exact", head: true })
+          .eq("stage", "SOLD"),
+      ]);
+
+      return {
+        ALL: allRes.count || 0,
+        QUOTE: quoteRes.count || 0,
+        SOLD: soldRes.count || 0,
+      };
+    },
+    enabled: isAuthenticated,
+    staleTime: 1000 * 60 * 5,
+  });
+
   const { data, isLoading, isError, error } = useSalesTable({
     pagination,
-    columnFilters: activeFilters, // Hook listens to "active", not "input"
+    columnFilters: activeFilters,
     sorting,
   });
 
@@ -105,26 +111,20 @@ export default function SalesTable() {
   const totalCount = data?.count || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
-  // --- 3. Search Action ---
+  // --- 4. Search Actions ---
   const handleSearch = () => {
-    // 1. Reset to page 1 when searching to avoid empty pages
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-    // 2. Commit inputs to active filters
     setActiveFilters(inputFilters);
   };
+
   const clearFilters = () => {
     setInputFilters([]);
     setActiveFilters([]);
   };
 
-  // Handle Stage Pills (Quick Filters)
-  // These should probably trigger immediately or update inputs.
-  // Let's make them trigger immediately for better UX.
   const setStageFilter = (stage: string) => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-    setInputFilterValue("stage", stage);
-
-    // Immediate update for pills
+    // Update active filters directly to trigger server refetch
     setActiveFilters((prev) => {
       const existing = prev.filter((f) => f.id !== "stage");
       if (stage === "ALL") return existing;
@@ -132,12 +132,11 @@ export default function SalesTable() {
     });
   };
 
-  // Get current stage for UI highlighting
   const currentStage =
     activeFilters.find((f) => f.id === "stage")?.value || "ALL";
 
-  // --- 4. Columns ---
-  const columnHelper = createColumnHelper<SalesOrderView>();
+  // --- 5. Columns ---
+  const columnHelper = createColumnHelper<SalesTableView>();
 
   const columns = useMemo(
     () => [
@@ -153,7 +152,7 @@ export default function SalesTable() {
           </Text>
         ),
       }),
-      columnHelper.accessor("job_ref.job_number", {
+      columnHelper.accessor("job_number", {
         header: "Job Number",
         size: 100,
         cell: (info) => <Text fw={600}>{info.getValue() || "—"}</Text>,
@@ -242,7 +241,7 @@ export default function SalesTable() {
     [router]
   );
 
-  // --- 5. Table Instance ---
+  // --- 6. Table Instance ---
   const table = useReactTable({
     data: tableData,
     columns,
@@ -250,7 +249,7 @@ export default function SalesTable() {
     state: {
       pagination,
       sorting,
-      columnFilters: activeFilters, // Pass active filters so headers show filter state if needed
+      columnFilters: activeFilters,
     },
     manualPagination: true,
     manualFiltering: true,
@@ -361,16 +360,19 @@ export default function SalesTable() {
               key: "ALL",
               label: "All Orders",
               color: "gray",
+              count: stats?.ALL || 0, // Using DB Stats
             },
             {
               key: "QUOTE",
               label: "Quotes",
               color: "blue",
+              count: stats?.QUOTE || 0, // Using DB Stats
             },
             {
               key: "SOLD",
               label: "Jobs",
               color: "green",
+              count: stats?.SOLD || 0, // Using DB Stats
             },
           ].map((item) => {
             const isActive = currentStage === item.key;
@@ -408,6 +410,20 @@ export default function SalesTable() {
                   <Text fw={600} size="sm">
                     {item.label}
                   </Text>
+
+                  <Badge
+                    autoContrast
+                    variant="filled"
+                    radius="xl"
+                    size="sm"
+                    style={{
+                      cursor: "inherit",
+                      background: "white",
+                      color: "black",
+                    }}
+                  >
+                    {item.count}
+                  </Badge>
                 </Group>
               </Button>
             );
