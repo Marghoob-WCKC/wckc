@@ -782,6 +782,13 @@ export type Database = {
             referencedRelation: "service_orders"
             referencedColumns: ["service_order_id"]
           },
+          {
+            foreignKeyName: "service_order_parts_service_order_id_fkey"
+            columns: ["service_order_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders_table_view"
+            referencedColumns: ["service_order_id"]
+          },
         ]
       }
       service_orders: {
@@ -964,6 +971,22 @@ export type Database = {
           shipping_zip: string | null
           stage: Database["public"]["Enums"]["SalesStage"] | null
           total: number | null
+        }
+        Relationships: []
+      }
+      service_orders_table_view: {
+        Row: {
+          client_name: string | null
+          completed_at: string | null
+          date_entered: string | null
+          due_date: string | null
+          installer_company: string | null
+          installer_first: string | null
+          installer_last: string | null
+          job_number: string | null
+          service_order_id: number | null
+          service_order_number: string | null
+          site_address: string | null
         }
         Relationships: []
       }
