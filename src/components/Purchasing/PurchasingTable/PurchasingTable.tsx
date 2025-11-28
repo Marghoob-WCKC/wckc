@@ -54,22 +54,51 @@ import dayjs from "dayjs";
 import { notifications } from "@mantine/notifications";
 import { Views } from "@/types/db";
 
-type PurchasingTableView = Views<"purchasing_table_view">;
+// Extend the View type with the new incomplete receipt columns
+type PurchasingTableView = Views<"purchasing_table_view"> & {
+  doors_received_incomplete_at: string | null;
+  glass_received_incomplete_at: string | null;
+  handles_received_incomplete_at: string | null;
+  acc_received_incomplete_at: string | null;
+};
+
+// Data needed to process an incomplete update
+type IncompleteUpdateData = {
+  id: number;
+  keyPrefix: "doors" | "glass" | "handles" | "acc";
+  orderedAt: string | null;
+  initialComment: string;
+};
+
+/**
+ * StatusCell Component
+ * Renders the status badge and the dropdown menu for changing status.
+ */
 const StatusCell = ({
   orderedAt,
   receivedAt,
+  receivedIncompleteAt,
   onUpdate,
+  onUpdateIncomplete,
   label,
 }: {
   orderedAt: string | null;
   receivedAt: string | null;
-  onUpdate: (field: "ordered" | "received", val: string | null) => void;
+  receivedIncompleteAt: string | null;
+  onUpdate: (
+    field: "ordered" | "received" | "clear",
+    val: string | null
+  ) => void;
+  onUpdateIncomplete: () => void;
   label: string;
 }) => {
   let badgeColor = "red";
   let statusText = "—";
 
-  if (receivedAt) {
+  if (receivedIncompleteAt) {
+    badgeColor = "orange";
+    statusText = "Incomplete";
+  } else if (receivedAt) {
     badgeColor = "green";
     statusText = "Received";
   } else if (orderedAt) {
@@ -78,7 +107,7 @@ const StatusCell = ({
   }
 
   return (
-    <Menu shadow="md" width={200} withinPortal>
+    <Menu shadow="md" width={220} withinPortal>
       <Menu.Target>
         <Badge
           color={badgeColor}
@@ -93,26 +122,38 @@ const StatusCell = ({
         <Menu.Item
           leftSection={<FaTruckLoading size={14} />}
           onClick={() => onUpdate("ordered", new Date().toISOString())}
-          disabled={!!orderedAt}
+          // Disable only if it is strictly "Ordered" (no receipt activity yet).
+          // Allows resetting to "Ordered" if it was previously marked Received or Incomplete.
+          disabled={!!orderedAt && !receivedAt && !receivedIncompleteAt}
         >
           Mark Ordered
         </Menu.Item>
+
         <Menu.Item
           leftSection={<FaCheck size={14} />}
           color="green"
           onClick={() => onUpdate("received", new Date().toISOString())}
-          disabled={!!receivedAt}
+          // FIX: Removed `!!receivedIncompleteAt` check.
+          // Now allows marking as "Complete" even if currently "Incomplete".
+          disabled={!!receivedAt || !orderedAt}
         >
-          Mark Received
+          Mark Received Complete
         </Menu.Item>
-        <Menu.Divider />
+
         <Menu.Item
-          color="red"
-          onClick={() => {
-            onUpdate("received", null);
-            onUpdate("ordered", null);
-          }}
+          leftSection={<FaCheck size={14} />}
+          color="orange"
+          onClick={onUpdateIncomplete}
+          // Enable this even if already incomplete, so users can add sequential notes
+          // (e.g., "Received 5 more, still missing 2").
+          disabled={!!receivedAt || !orderedAt}
         >
+          Received Incomplete
+        </Menu.Item>
+
+        <Menu.Divider />
+
+        <Menu.Item color="red" onClick={() => onUpdate("clear", null)}>
           Clear All
         </Menu.Item>
       </Menu.Dropdown>
@@ -133,7 +174,7 @@ export default function PurchasingTable() {
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
 
-  // Modal State
+  // Modal State - for general comment editing
   const [
     commentModalOpened,
     { open: openCommentModal, close: closeCommentModal },
@@ -142,6 +183,15 @@ export default function PurchasingTable() {
     id: number;
     text: string;
   } | null>(null);
+
+  // Modal State - for "Received Incomplete" details
+  const [
+    incompleteModalOpened,
+    { open: openIncompleteModal, close: closeIncompleteModal },
+  ] = useDisclosure(false);
+  const [incompleteUpdateData, setIncompleteUpdateData] =
+    useState<IncompleteUpdateData | null>(null);
+  const [incompleteDetail, setIncompleteDetail] = useState("");
 
   // Helper Filters
   const setInputFilterValue = (
@@ -170,34 +220,93 @@ export default function PurchasingTable() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
 
-  // 1. Fetch Data (Server Side)
+  // 1. Fetch Data
   const { data, isLoading, isError, error } = usePurchasingTable({
     pagination,
     columnFilters: activeFilters,
     sorting,
   });
 
-  const tableData = (data?.data as unknown as PurchasingTableView[]) || [];
-  const totalCount = data?.count || 0;
-  const pageCount = Math.ceil(totalCount / pagination.pageSize);
+  const tableData = (data?.data as PurchasingTableView[]) || [];
+  const pageCount = Math.ceil((data?.count || 0) / pagination.pageSize);
 
-  // 2. Mutation (Updates logic remains similar, but invalidates new view key)
+  // 2. Mutation Logic with Comment Logging
   const updateMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
+    mutationFn: async ({
+      id,
+      updates,
+      isStatusChange = false,
+      keyPrefix,
+      initialComment,
+      detail,
+    }: {
+      id: number;
+      updates: any;
+      isStatusChange?: boolean;
+      keyPrefix?: string;
+      initialComment?: string;
+      detail?: string;
+    }) => {
+      let commentUpdate: string | undefined = undefined;
+
+      // If this is a status change, we automatically append a log line to comments
+      if (isStatusChange && keyPrefix) {
+        const timestamp = dayjs().format("YYYY-MM-DD HH:mm");
+        const statusField = Object.keys(updates).find(
+          (k) => updates[k] !== undefined && updates[k] !== null
+        );
+
+        let newCommentLine = "";
+
+        // Determine log message based on field update
+        if (statusField?.endsWith("ordered_at") && updates[statusField]) {
+          newCommentLine = `${keyPrefix.toUpperCase()} Ordered at: [${timestamp}]`;
+        } else if (
+          statusField?.endsWith("received_at") &&
+          updates[statusField]
+        ) {
+          newCommentLine = `${keyPrefix.toUpperCase()} Received fully at: [${timestamp}]`;
+        } else if (
+          statusField?.endsWith("received_incomplete_at") &&
+          updates[statusField]
+        ) {
+          // Incomplete logic includes detail
+          newCommentLine = `${keyPrefix.toUpperCase()} Received partially at: [${timestamp}] - ${
+            detail || "No detail provided"
+          }`;
+        } else if (Object.values(updates).every((val) => val === null)) {
+          newCommentLine = `${keyPrefix.toUpperCase()} Status Cleared at: [${timestamp}]`;
+        }
+
+        // Append log line
+        if (newCommentLine) {
+          commentUpdate = initialComment
+            ? `${initialComment}\n${newCommentLine}`
+            : newCommentLine;
+
+          updates.purchasing_comments = commentUpdate;
+        }
+      }
+
+      // Perform the update
       const { error } = await supabase
         .from("purchase_tracking")
         .update(updates)
         .eq("purchase_check_id", id);
+
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchasing_table_view"] });
       notifications.show({
         title: "Updated",
-        message: "Saved successfully",
+        message: "Status and comments updated successfully",
         color: "green",
       });
+      // Reset Modals
       closeCommentModal();
+      closeIncompleteModal();
+      setIncompleteDetail("");
     },
     onError: (err: any) => {
       notifications.show({
@@ -208,15 +317,66 @@ export default function PurchasingTable() {
     },
   });
 
+  // Save manual comment edit
   const handleSaveComment = () => {
     if (!editingComment) return;
     updateMutation.mutate({
       id: editingComment.id,
       updates: { purchasing_comments: editingComment.text },
+      isStatusChange: false,
     });
   };
 
-  // 3. Columns
+  // Open "Received Incomplete" modal
+  const handleIncompleteReceipt = (
+    row: PurchasingTableView,
+    keyPrefix: "doors" | "glass" | "handles" | "acc"
+  ) => {
+    if (row.purchase_check_id === null) return;
+
+    setIncompleteUpdateData({
+      id: row.purchase_check_id,
+      keyPrefix,
+      orderedAt: row[`${keyPrefix}_ordered_at`] as string | null,
+      initialComment: row.purchasing_comments || "",
+    });
+
+    openIncompleteModal();
+  };
+
+  // Submit "Received Incomplete" status
+  const submitIncompleteReceipt = () => {
+    if (!incompleteUpdateData) return;
+
+    const { id, keyPrefix, initialComment } = incompleteUpdateData;
+
+    // DB Column Names
+    const incompleteField = `${keyPrefix}_received_incomplete_at`;
+    const completeField = `${keyPrefix}_received_at`;
+    const orderedField = `${keyPrefix}_ordered_at`;
+
+    const updates: any = {};
+    // Set incomplete timestamp
+    updates[incompleteField] = new Date().toISOString();
+    // Ensure complete timestamp is cleared (cannot be both)
+    updates[completeField] = null;
+
+    // Consistency: If not marked ordered yet, mark it ordered now
+    if (!incompleteUpdateData.orderedAt) {
+      updates[orderedField] = new Date().toISOString();
+    }
+
+    updateMutation.mutate({
+      id,
+      updates,
+      isStatusChange: true,
+      keyPrefix,
+      initialComment,
+      detail: incompleteDetail,
+    });
+  };
+
+  // 3. Table Column Definitions
   const columnHelper = createColumnHelper<PurchasingTableView>();
 
   const createStatusColumn = (
@@ -229,13 +389,53 @@ export default function PurchasingTable() {
       size: 100,
       cell: (info) => {
         const row = info.row.original;
-        // Access fields safely from the view type
+
         const ordKey = `${keyPrefix}_ordered_at` as keyof PurchasingTableView;
         const recKey = `${keyPrefix}_received_at` as keyof PurchasingTableView;
+        const incKey =
+          `${keyPrefix}_received_incomplete_at` as keyof PurchasingTableView;
 
-        // Logic for "Needs Ordering" tooltip
+        // General Status Update Handler
+        const handleUpdate = (
+          type: "ordered" | "received" | "clear",
+          val: string | null
+        ) => {
+          if (row.purchase_check_id === null) return;
+
+          let updates: any = {};
+
+          if (type === "ordered") {
+            // Setting Ordered clears any received status (reset flow)
+            updates = {
+              [ordKey]: val,
+              [recKey]: null,
+              [incKey]: null,
+            };
+          } else if (type === "received") {
+            // Setting Received Complete clears incomplete status
+            updates = {
+              [recKey]: val,
+              [incKey]: null,
+            };
+          } else if (type === "clear") {
+            // Clear all
+            updates = {
+              [ordKey]: null,
+              [recKey]: null,
+              [incKey]: null,
+            };
+          }
+
+          updateMutation.mutate({
+            id: row.purchase_check_id,
+            updates,
+            isStatusChange: true,
+            keyPrefix,
+            initialComment: row.purchasing_comments || "",
+          });
+        };
+
         const isDoorColumn = keyPrefix === "doors";
-        // Check if style exists but is NOT made in house
         const showWarning =
           isDoorColumn && row.door_style_name && !row.door_made_in_house;
 
@@ -245,14 +445,9 @@ export default function PurchasingTable() {
               label={headerTitle}
               orderedAt={row[ordKey] as string}
               receivedAt={row[recKey] as string}
-              onUpdate={(type, val) => {
-                if (row.purchase_check_id === null) return;
-                const field = type === "ordered" ? ordKey : recKey;
-                updateMutation.mutate({
-                  id: row.purchase_check_id,
-                  updates: { [field]: val },
-                });
-              }}
+              receivedIncompleteAt={row[incKey] as string}
+              onUpdate={handleUpdate}
+              onUpdateIncomplete={() => handleIncompleteReceipt(row, keyPrefix)}
             />
             {showWarning && (
               <Tooltip label="Needs Ordering (Outsourced)">
@@ -275,7 +470,6 @@ export default function PurchasingTable() {
             style={{ color: "#6100bbff", fontWeight: "bold" }}
             onClick={(e) => e.stopPropagation()}
           >
-            {" "}
             {info.getValue()}
           </Anchor>
         </Text>
@@ -306,7 +500,8 @@ export default function PurchasingTable() {
     createStatusColumn("acc", "Accessories"),
     columnHelper.accessor("purchasing_comments", {
       header: "Comments",
-      size: 200,
+      // IMPORTANT: Define a size so fixed layout knows how wide to make this
+      size: 250,
       cell: (info) => (
         <Box
           onClick={() => {
@@ -323,18 +518,37 @@ export default function PurchasingTable() {
             alignItems: "center",
             gap: "8px",
             minHeight: "24px",
+            // Crucial for text truncation in Flexbox:
+            maxWidth: "100%",
           }}
         >
-          <Text size="xs" truncate c="dimmed" style={{ flex: 1 }}>
-            {info.getValue() || "—"}
-          </Text>
-          <FaPencilAlt size={10} color="#adb5bd" style={{ opacity: 0.5 }} />
+          <Tooltip
+            label={info.getValue()}
+            multiline
+            w={300}
+            withinPortal
+            disabled={!info.getValue()}
+          >
+            <Text
+              size="xs"
+              truncate // This adds the '...'
+              c="dimmed"
+              style={{ flex: 1 }}
+            >
+              {info.getValue() || "—"}
+            </Text>
+          </Tooltip>
+          <FaPencilAlt
+            size={10}
+            color="#adb5bd"
+            style={{ opacity: 0.5, flexShrink: 0 }}
+          />
         </Box>
       ),
     }),
   ];
 
-  // 4. Table Instance
+  // 4. React Table Instance
   const table = useReactTable({
     data: tableData,
     columns,
@@ -373,6 +587,7 @@ export default function PurchasingTable() {
         height: "calc(100vh - 45px)",
       }}
     >
+      {/* HEADER */}
       <Group mb="md">
         <ThemeIcon
           size={50}
@@ -455,8 +670,15 @@ export default function PurchasingTable() {
         </Accordion.Item>
       </Accordion>
 
+      {/* TABLE CONTENT */}
       <ScrollArea style={{ flex: 1 }}>
-        <Table striped stickyHeader highlightOnHover withColumnBorders>
+        <Table
+          striped
+          stickyHeader
+          highlightOnHover
+          withColumnBorders
+          layout="fixed"
+        >
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>
@@ -509,6 +731,7 @@ export default function PurchasingTable() {
         </Table>
       </ScrollArea>
 
+      {/* PAGINATION */}
       <Box
         style={{
           borderTop: "1px solid #eee",
@@ -525,7 +748,7 @@ export default function PurchasingTable() {
         />
       </Box>
 
-      {/* COMMENT MODAL */}
+      {/* MODAL 1: General Comments */}
       <Modal
         opened={commentModalOpened}
         onClose={closeCommentModal}
@@ -534,11 +757,12 @@ export default function PurchasingTable() {
       >
         <Stack>
           <Text size="sm" c="dimmed">
-            Add notes regarding materials, delays, or specific order details.
+            Edit full comment history manually.
           </Text>
           <Textarea
-            minRows={4}
+            minRows={12}
             placeholder="Enter comments..."
+            styles={{ input: { minHeight: "200px" } }}
             value={editingComment?.text || ""}
             onChange={(e) => {
               const newVal = e.currentTarget.value;
@@ -558,6 +782,48 @@ export default function PurchasingTable() {
               loading={updateMutation.isPending}
             >
               Save Comment
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* MODAL 2: Received Incomplete Detail */}
+      <Modal
+        opened={incompleteModalOpened}
+        onClose={closeIncompleteModal}
+        title={`Incomplete Receipt: ${
+          incompleteUpdateData?.keyPrefix.toUpperCase() || "ITEM"
+        }`}
+        centered
+      >
+        <Stack>
+          <Text size="sm" c="red" fw={500}>
+            Action Required: Provide details about the missing items.
+          </Text>
+          <Text size="xs" c="dimmed">
+            This note will be automatically logged in the comments field with a
+            timestamp.
+          </Text>
+          <Textarea
+            minRows={3}
+            label="Missing / Damaged Details"
+            placeholder="e.g. Missing 5 door fronts, 1 drawer box damaged..."
+            value={incompleteDetail}
+            onChange={(e) => setIncompleteDetail(e.currentTarget.value)}
+            data-autofocus
+            withAsterisk
+          />
+          <Group justify="flex-end">
+            <Button variant="default" onClick={closeIncompleteModal}>
+              Cancel
+            </Button>
+            <Button
+              color="orange"
+              onClick={submitIncompleteReceipt}
+              loading={updateMutation.isPending}
+              disabled={!incompleteDetail.trim()}
+            >
+              Log Incomplete Receipt
             </Button>
           </Group>
         </Stack>

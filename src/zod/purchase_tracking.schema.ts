@@ -6,15 +6,19 @@ export const PurchaseTrackingSchema = z.object({
 
   doors_ordered_at: z.string().nullable(),
   doors_received_at: z.string().nullable(),
+  doors_received_incomplete_at: z.string().nullable().optional(),
 
   glass_ordered_at: z.string().nullable(),
   glass_received_at: z.string().nullable(),
+  glass_received_incomplete_at: z.string().nullable().optional(),
 
   handles_ordered_at: z.string().nullable(),
   handles_received_at: z.string().nullable(),
+  handles_received_incomplete_at: z.string().nullable().optional(),
 
   acc_ordered_at: z.string().nullable(),
   acc_received_at: z.string().nullable(),
+  acc_received_incomplete_at: z.string().nullable().optional(),
 
   laminate_ordered_at: z.string().optional().nullable(),
   laminate_received_at: z.string().optional().nullable(),

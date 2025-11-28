@@ -565,12 +565,16 @@ export type Database = {
         Row: {
           acc_ordered_at: string | null
           acc_received_at: string | null
+          acc_received_incomplete_at: string | null
           doors_ordered_at: string | null
           doors_received_at: string | null
+          doors_received_incomplete_at: string | null
           glass_ordered_at: string | null
           glass_received_at: string | null
+          glass_received_incomplete_at: string | null
           handles_ordered_at: string | null
           handles_received_at: string | null
+          handles_received_incomplete_at: string | null
           job_id: number
           purchase_check_id: number
           purchasing_comments: string | null
@@ -579,12 +583,16 @@ export type Database = {
         Insert: {
           acc_ordered_at?: string | null
           acc_received_at?: string | null
+          acc_received_incomplete_at?: string | null
           doors_ordered_at?: string | null
           doors_received_at?: string | null
+          doors_received_incomplete_at?: string | null
           glass_ordered_at?: string | null
           glass_received_at?: string | null
+          glass_received_incomplete_at?: string | null
           handles_ordered_at?: string | null
           handles_received_at?: string | null
+          handles_received_incomplete_at?: string | null
           job_id: number
           purchase_check_id?: number
           purchasing_comments?: string | null
@@ -593,12 +601,16 @@ export type Database = {
         Update: {
           acc_ordered_at?: string | null
           acc_received_at?: string | null
+          acc_received_incomplete_at?: string | null
           doors_ordered_at?: string | null
           doors_received_at?: string | null
+          doors_received_incomplete_at?: string | null
           glass_ordered_at?: string | null
           glass_received_at?: string | null
+          glass_received_incomplete_at?: string | null
           handles_ordered_at?: string | null
           handles_received_at?: string | null
+          handles_received_incomplete_at?: string | null
           job_id?: number
           purchase_check_id?: number
           purchasing_comments?: string | null
@@ -1043,15 +1055,19 @@ export type Database = {
         Row: {
           acc_ordered_at: string | null
           acc_received_at: string | null
+          acc_received_incomplete_at: string | null
           client_name: string | null
           door_made_in_house: boolean | null
           door_style_name: string | null
           doors_ordered_at: string | null
           doors_received_at: string | null
+          doors_received_incomplete_at: string | null
           glass_ordered_at: string | null
           glass_received_at: string | null
+          glass_received_incomplete_at: string | null
           handles_ordered_at: string | null
           handles_received_at: string | null
+          handles_received_incomplete_at: string | null
           job_id: number | null
           job_number: string | null
           purchase_check_id: number | null
