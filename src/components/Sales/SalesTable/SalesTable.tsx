@@ -2,20 +2,14 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import {
   createColumnHelper,
   getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
   useReactTable,
   flexRender,
   PaginationState,
-  getPaginationRowModel,
   ColumnFiltersState,
-  FilterFn,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
+  SortingState,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -31,12 +25,12 @@ import {
   Tooltip,
   ActionIcon,
   Button,
-  SimpleGrid,
   Badge,
   rem,
   Stack,
   ThemeIcon,
   Title,
+  SimpleGrid,
 } from "@mantine/core";
 import {
   FaPlus,
@@ -48,10 +42,9 @@ import {
   FaHome,
 } from "react-icons/fa";
 import { useDisclosure } from "@mantine/hooks";
-import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
+import { useSalesTable } from "@/hooks/useSalesTable";
 import { Tables } from "@/types/db";
-
 interface SalesOrderView
   extends Pick<
     Tables<"sales_orders">,
@@ -72,91 +65,85 @@ interface SalesOrderView
   job_ref: Pick<Tables<"jobs">, "job_number"> | null;
 }
 
-const genericFilter: FilterFn<SalesOrderView> = (
-  row,
-  columnId,
-  filterValue
-) => {
-  const filterText = String(filterValue).toLowerCase();
-  let cellValue;
-
-  if (columnId.includes(".")) {
-    const keys = columnId.split(".");
-    const parentObject = row.original[keys[0] as keyof SalesOrderView];
-
-    if (parentObject && typeof parentObject === "object" && keys.length === 2) {
-      cellValue = parentObject[keys[1] as keyof typeof parentObject];
-    }
-  } else {
-    cellValue = row.getValue(columnId);
-  }
-
-  const val = String(cellValue ?? "").toLowerCase();
-  return val.includes(filterText);
-};
-
 export default function SalesTable() {
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const router = useRouter();
+
+  // --- 1. Table State ---
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 20,
   });
-  const { supabase, isAuthenticated } = useSupabase();
-  const router = useRouter();
+  const [sorting, setSorting] = useState<SortingState>([]);
 
-  const [viewModalOpened, { open: viewModalOpen, close: viewModalClose }] =
-    useDisclosure(false);
-  const [selectedOrder, setSelectedOrder] = useState<SalesOrderView | null>(
-    null
-  );
+  // inputFilters: Bound to the input fields (immediate update)
+  const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
 
-  const [stageFilter, setStageFilter] = useState<"ALL" | "QUOTE" | "SOLD">(
-    "ALL"
-  );
+  // activeFilters: Sent to the server (updated only on Search click)
+  const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
 
-  const {
-    data: orders,
-    isLoading: loading,
-    isError,
-    error,
-  } = useQuery<SalesOrderView[]>({
-    queryKey: ["sales_orders_full_list"],
-    queryFn: async () => {
-      const { data, error: dbError } = await supabase
-        .from("sales_orders")
-        .select(
-          `
-            id, sales_order_number, stage, total, deposit, invoice_balance, designer, created_at,
-            shipping_client_name, shipping_street, shipping_city, shipping_province, shipping_zip,
-            job_ref:jobs (job_number) 
-        `
-        )
-        .order("created_at", { ascending: false });
+  // Helpers to manage filter state safely
+  const setInputFilterValue = (id: string, value: string) => {
+    setInputFilters((prev) => {
+      const existing = prev.filter((f) => f.id !== id);
+      if (!value) return existing;
+      return [...existing, { id, value }];
+    });
+  };
 
-      if (dbError)
-        throw new Error(dbError.message || "Failed to fetch sales orders");
-      return data as unknown as SalesOrderView[];
-    },
-    enabled: isAuthenticated,
-    placeholderData: (previousData) => previousData,
+  const getInputFilterValue = (id: string) => {
+    return (inputFilters.find((f) => f.id === id)?.value as string) || "";
+  };
+
+  // --- 2. Data Fetching ---
+  const { data, isLoading, isError, error } = useSalesTable({
+    pagination,
+    columnFilters: activeFilters, // Hook listens to "active", not "input"
+    sorting,
   });
 
-  const filteredOrders = useMemo(() => {
-    if (!orders) return [];
-    if (stageFilter === "ALL") return orders;
+  const tableData = data?.data || [];
+  const totalCount = data?.count || 0;
+  const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
-    return orders.filter((order) => order.stage === stageFilter);
-  }, [orders, stageFilter]);
+  // --- 3. Search Action ---
+  const handleSearch = () => {
+    // 1. Reset to page 1 when searching to avoid empty pages
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    // 2. Commit inputs to active filters
+    setActiveFilters(inputFilters);
+  };
+  const clearFilters = () => {
+    setInputFilters([]);
+    setActiveFilters([]);
+  };
 
+  // Handle Stage Pills (Quick Filters)
+  // These should probably trigger immediately or update inputs.
+  // Let's make them trigger immediately for better UX.
+  const setStageFilter = (stage: string) => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    setInputFilterValue("stage", stage);
+
+    // Immediate update for pills
+    setActiveFilters((prev) => {
+      const existing = prev.filter((f) => f.id !== "stage");
+      if (stage === "ALL") return existing;
+      return [...existing, { id: "stage", value: stage }];
+    });
+  };
+
+  // Get current stage for UI highlighting
+  const currentStage =
+    activeFilters.find((f) => f.id === "stage")?.value || "ALL";
+
+  // --- 4. Columns ---
   const columnHelper = createColumnHelper<SalesOrderView>();
+
   const columns = useMemo(
     () => [
       columnHelper.accessor("sales_order_number", {
         header: "Id",
-        size: 50,
-        minSize: 60,
-        enableColumnFilter: true,
-        filterFn: "includesString" as any,
+        size: 80,
         cell: (info) => (
           <Text
             size="sm"
@@ -166,23 +153,14 @@ export default function SalesTable() {
           </Text>
         ),
       }),
-      ...(stageFilter !== "QUOTE"
-        ? [
-            columnHelper.accessor("job_ref.job_number", {
-              id: "job_number",
-              header: "Job Number",
-              size: 50,
-              minSize: 60,
-              enableColumnFilter: true,
-              filterFn: genericFilter as any,
-              cell: (info) => <Text fw={600}>{info.getValue() || "—"}</Text>,
-            }),
-          ]
-        : []),
+      columnHelper.accessor("job_ref.job_number", {
+        header: "Job Number",
+        size: 100,
+        cell: (info) => <Text fw={600}>{info.getValue() || "—"}</Text>,
+      }),
       columnHelper.accessor("stage", {
         header: "Status",
-        size: 40,
-        minSize: 40,
+        size: 80,
         cell: (info) => (
           <Badge
             style={{ cursor: "inherit" }}
@@ -192,22 +170,15 @@ export default function SalesTable() {
             {info.getValue()}
           </Badge>
         ),
-        enableColumnFilter: false,
       }),
       columnHelper.accessor("designer", {
         header: "Designer",
-        size: 60,
-        minSize: 30,
-        filterFn: "includesString" as any,
+        size: 100,
       }),
       columnHelper.accessor("shipping_client_name", {
         id: "clientlastName",
         header: "Client Name",
         size: 150,
-        minSize: 60,
-        enableColumnFilter: true,
-        filterFn: genericFilter as any,
-        cell: (info) => info.getValue(),
       }),
       columnHelper.accessor(
         (row) =>
@@ -223,9 +194,6 @@ export default function SalesTable() {
           id: "shippingAddress",
           header: "Shipping Address",
           size: 200,
-          minSize: 80,
-          enableColumnFilter: true,
-          filterFn: genericFilter as any,
           cell: (info) => (
             <Tooltip label={info.getValue()}>
               <Text size="sm" truncate>
@@ -238,13 +206,11 @@ export default function SalesTable() {
       columnHelper.accessor("invoice_balance", {
         header: "Balance",
         size: 100,
-        minSize: 60,
         cell: (info) => `$${(info.getValue() as number)?.toFixed(2) || "0.00"}`,
       }),
       columnHelper.accessor("created_at", {
         header: "Created",
-        size: 80,
-        minSize: 60,
+        size: 100,
         cell: (info) => {
           const date = info.getValue<string>();
           return date ? dayjs(date).format("YYYY-MM-DD") : "—";
@@ -253,8 +219,7 @@ export default function SalesTable() {
       columnHelper.display({
         id: "actions",
         header: "Actions",
-        size: 40,
-        minSize: 40,
+        size: 60,
         cell: (info) => (
           <Group justify="center">
             <Tooltip label="View Details / Edit">
@@ -262,8 +227,9 @@ export default function SalesTable() {
                 variant="subtle"
                 color="gray"
                 onClick={() => {
-                  setSelectedOrder(info.row.original);
-                  viewModalOpen();
+                  router.push(
+                    `/dashboard/sales/editsale/${info.row.original.id}`
+                  );
                 }}
               >
                 <FaEye size={16} />
@@ -273,56 +239,28 @@ export default function SalesTable() {
         ),
       }),
     ],
-    [columnHelper]
+    [router]
   );
 
+  // --- 5. Table Instance ---
   const table = useReactTable({
-    data: filteredOrders,
+    data: tableData,
     columns,
+    pageCount: pageCount,
     state: {
-      columnFilters,
       pagination,
+      sorting,
+      columnFilters: activeFilters, // Pass active filters so headers show filter state if needed
     },
-    enableColumnResizing: true,
-    columnResizeMode: "onChange",
-    onColumnFiltersChange: setColumnFilters,
+    manualPagination: true,
+    manualFiltering: true,
+    manualSorting: true,
     onPaginationChange: setPagination,
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
-  type StageKey = "ALL" | "QUOTE" | "SOLD";
 
-  const stageItems: {
-    key: StageKey;
-    label: string;
-    color: string;
-    count: number;
-  }[] = [
-    {
-      key: "ALL",
-      label: "All Orders",
-      color: "black",
-      count: orders?.length || 0,
-    },
-    {
-      key: "QUOTE",
-      label: "Quotes",
-      color: "blue",
-      count: orders?.filter((o) => o.stage === "QUOTE").length || 0,
-    },
-    {
-      key: "SOLD",
-      label: "Jobs",
-      color: "green",
-      count: orders?.filter((o) => o.stage === "SOLD").length || 0,
-    },
-  ];
-
-  if (!isAuthenticated || loading) {
+  if (isLoading) {
     return (
       <Center style={{ height: "300px" }}>
         <Loader />
@@ -332,7 +270,7 @@ export default function SalesTable() {
   if (isError) {
     return (
       <Center style={{ height: "300px" }}>
-        <Text c="red">Error: {error?.message}</Text>
+        <Text c="red">Error: {(error as Error).message}</Text>
       </Center>
     );
   }
@@ -346,6 +284,7 @@ export default function SalesTable() {
         height: "calc(100vh - 45px)",
       }}
     >
+      {/* Header */}
       <Group mb="md">
         <ThemeIcon
           size={50}
@@ -363,48 +302,78 @@ export default function SalesTable() {
             Track sales
           </Text>
         </Stack>
-        {/* SEARCH/FILTER ACCORDION */}
       </Group>
+
+      {/* Filter Section */}
       <Accordion variant="contained" radius="md" mb="md" w={"100%"}>
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
             Search Filters
           </Accordion.Control>
           <Accordion.Panel>
-            <SimpleGrid
-              cols={{ base: 1, sm: 2 }}
-              mt="sm"
-              spacing="xs"
-              display={"flex"}
-            >
+            <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} mt="sm" spacing="xs">
               <TextInput
-                placeholder="Job Number..."
-                w={rem(200)}
+                label="Job Number"
+                placeholder="e.g. 202401"
+                value={getInputFilterValue("job_number")}
                 onChange={(e) =>
-                  table.getColumn("job_number")?.setFilterValue(e.target.value)
+                  setInputFilterValue("job_number", e.target.value)
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
               <TextInput
-                w={rem(200)}
-                placeholder="Client Name..."
+                label="Client Name"
+                placeholder="Search Client..."
+                value={getInputFilterValue("clientlastName")}
                 onChange={(e) =>
-                  table
-                    .getColumn("clientlastName")
-                    ?.setFilterValue(e.target.value)
+                  setInputFilterValue("clientlastName", e.target.value)
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
             </SimpleGrid>
+            <Group justify="flex-end" mt="md">
+              <Button
+                leftSection={<FaSearch size={14} />}
+                onClick={clearFilters}
+                color="red"
+                variant="filled"
+              >
+                Clear Filters
+              </Button>
+              <Button
+                leftSection={<FaSearch size={14} />}
+                onClick={handleSearch}
+                color="blue"
+                variant="filled"
+              >
+                Apply Filters
+              </Button>
+            </Group>
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
-      {/* --- STATUS FILTER PILLS --- */}
 
+      {/* Status Pills */}
       <Group mb="md" align="center" style={{ width: "100%" }}>
-        {/* Pills container */}
         <Group wrap="wrap">
-          {stageItems.map((item) => {
-            const isActive = stageFilter === item.key;
-
+          {[
+            {
+              key: "ALL",
+              label: "All Orders",
+              color: "gray",
+            },
+            {
+              key: "QUOTE",
+              label: "Quotes",
+              color: "blue",
+            },
+            {
+              key: "SOLD",
+              label: "Jobs",
+              color: "green",
+            },
+          ].map((item) => {
+            const isActive = currentStage === item.key;
             const gradients: Record<string, string> = {
               ALL: "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
               QUOTE: "linear-gradient(135deg, #4da0ff 0%, #0066cc 100%)",
@@ -420,7 +389,7 @@ export default function SalesTable() {
             return (
               <Button
                 key={item.key}
-                variant="filled"
+                variant={isActive ? "filled" : "light"}
                 radius="xl"
                 size="sm"
                 onClick={() => setStageFilter(item.key)}
@@ -439,27 +408,12 @@ export default function SalesTable() {
                   <Text fw={600} size="sm">
                     {item.label}
                   </Text>
-
-                  <Badge
-                    autoContrast
-                    variant="filled"
-                    radius="xl"
-                    size="sm"
-                    style={{
-                      cursor: "inherit",
-                      background: "white",
-                      color: "black",
-                    }}
-                  >
-                    {item.count}
-                  </Badge>
                 </Group>
               </Button>
             );
           })}
         </Group>
 
-        {/* Spacer pushes button to the far right */}
         <div style={{ flex: 1 }} />
 
         <Button
@@ -475,7 +429,7 @@ export default function SalesTable() {
         </Button>
       </Group>
 
-      {/* DATA TABLE */}
+      {/* Data Table */}
       <ScrollArea
         style={{
           flex: 1,
@@ -500,7 +454,7 @@ export default function SalesTable() {
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const resizeHandler = header.getResizeHandler();
+                  const isSorted = header.column.getIsSorted();
                   return (
                     <Table.Th
                       key={header.id}
@@ -511,53 +465,20 @@ export default function SalesTable() {
                         width: header.getSize(),
                         cursor: "pointer",
                         whiteSpace: "nowrap",
+                        userSelect: "none",
                       }}
                     >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-
-                      <span className="inline-block ml-1">
-                        {header.column.getIsSorted() === "asc" && <FaSortUp />}
-                        {header.column.getIsSorted() === "desc" && (
-                          <FaSortDown />
+                      <Group gap="xs" wrap="nowrap">
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
                         )}
-                        {!header.column.getIsSorted() && (
-                          <FaSort opacity={0.1} />
+                        {isSorted === "asc" && <FaSortUp size={12} />}
+                        {isSorted === "desc" && <FaSortDown size={12} />}
+                        {!isSorted && (
+                          <FaSort size={12} style={{ opacity: 0.2 }} />
                         )}
-                      </span>
-                      {header.column.getCanResize() && (
-                        <div
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            resizeHandler(e);
-                          }}
-                          onTouchStart={(e) => {
-                            e.stopPropagation();
-                            resizeHandler(e);
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          className={`resizer ${
-                            header.column.getIsResizing() ? "isResizing" : ""
-                          }`}
-                          style={{
-                            position: "absolute",
-                            right: 0,
-                            top: 0,
-                            height: "100%",
-                            width: "5px",
-                            background: header.column.getIsResizing()
-                              ? "blue"
-                              : "transparent",
-                            cursor: "col-resize",
-                            userSelect: "none",
-                            touchAction: "none",
-                          }}
-                        />
-                      )}
+                      </Group>
                     </Table.Th>
                   );
                 })}
@@ -565,13 +486,12 @@ export default function SalesTable() {
             ))}
           </Table.Thead>
           <Table.Tbody>
-            {/* Show message if filter results in no data */}
             {table.getRowModel().rows.length === 0 ? (
               <Table.Tr>
                 <Table.Td colSpan={columns.length}>
-                  <Center>
+                  <Center py="xl">
                     <Text c="dimmed">
-                      No orders found matching the filters/selection.
+                      No orders found matching the filters.
                     </Text>
                   </Center>
                 </Table.Td>
@@ -608,7 +528,7 @@ export default function SalesTable() {
         </Table>
       </ScrollArea>
 
-      {/* PAGINATION */}
+      {/* Pagination */}
       <Box
         style={{
           position: "fixed",

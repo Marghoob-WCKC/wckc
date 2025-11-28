@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:sync": "npx supabase migration up && npx supabase db push && npx supabase gen types typescript --project-id \"hpozlzlbtznwggmjzxbj\" --schema public > src/types/supabase.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.35.1",
