@@ -30,6 +30,7 @@ import {
   ThemeIcon,
   Title,
   Button,
+  Anchor,
 } from "@mantine/core";
 import {
   FaSearch,
@@ -106,7 +107,13 @@ export default function InstallationTable() {
       cell: (info) => (
         <Group gap={4}>
           <Text fw={600} size="sm">
-            {info.getValue()}
+            <Anchor
+              href={`/dashboard/sales/editsale/${info.row.original.sales_order_id}`}
+              style={{ color: "#6100bbff", fontWeight: "bold" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {info.getValue()}
+            </Anchor>
           </Text>
           {info.row.original.rush && (
             <Tooltip label="RUSH JOB">

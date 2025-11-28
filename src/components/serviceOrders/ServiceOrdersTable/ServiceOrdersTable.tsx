@@ -31,6 +31,7 @@ import {
   ThemeIcon,
   Title,
   SimpleGrid,
+  Anchor,
 } from "@mantine/core";
 import {
   FaPencilAlt,
@@ -129,7 +130,13 @@ export default function ServiceOrdersTable() {
       minSize: 100,
       cell: (info) => (
         <Text fw={600} size="sm">
-          {info.getValue()}
+          <Anchor
+            href={`/dashboard/sales/editsale/${info.row.original.sales_order_id}`}
+            style={{ color: "#6100bbff", fontWeight: "bold" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {info.getValue()}
+          </Anchor>
         </Text>
       ),
     }),

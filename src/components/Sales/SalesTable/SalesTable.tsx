@@ -140,22 +140,20 @@ export default function SalesTable() {
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor("sales_order_number", {
-        header: "Id",
-        size: 80,
-        cell: (info) => (
-          <Text
-            size="sm"
-            c={info.row.original.stage === "SOLD" ? "green.8" : "blue.8"}
-          >
-            {info.getValue()}
-          </Text>
-        ),
-      }),
       columnHelper.accessor("job_number", {
         header: "Job Number",
         size: 100,
-        cell: (info) => <Text fw={600}>{info.getValue() || "—"}</Text>,
+        cell: (info) => {
+          if (info.getValue()) {
+            return <Text fw={600}>{info.getValue()}</Text>;
+          } else {
+            return (
+              <Text c="gray" size="xs">
+                Unassigned (Quote)
+              </Text>
+            );
+          }
+        },
       }),
       columnHelper.accessor("stage", {
         header: "Status",
@@ -285,23 +283,25 @@ export default function SalesTable() {
     >
       {/* Header */}
       <Group mb="md" justify="space-between">
-        <Group><ThemeIcon
-          size={50}
-          radius="md"
-          variant="gradient"
-          gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
-        >
-          <FaHome size={26} />
-        </ThemeIcon>
-        <Stack gap={0}>
-          <Title order={2} style={{ color: "#343a40" }}>
-            Sales
-          </Title>
-          <Text size="sm" c="dimmed">
-            Track sales
-          </Text>
-        </Stack></Group>
-        
+        <Group>
+          <ThemeIcon
+            size={50}
+            radius="md"
+            variant="gradient"
+            gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
+          >
+            <FaHome size={26} />
+          </ThemeIcon>
+          <Stack gap={0}>
+            <Title order={2} style={{ color: "#343a40" }}>
+              Sales
+            </Title>
+            <Text size="sm" c="dimmed">
+              Track sales
+            </Text>
+          </Stack>
+        </Group>
+
         <Button
           onClick={() => router.push("/dashboard/sales/newsale")}
           leftSection={<FaPlus size={14} />}

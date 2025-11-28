@@ -942,6 +942,7 @@ export type Database = {
           job_id: number | null
           job_number: string | null
           rush: boolean | null
+          sales_order_id: number | null
           ship_schedule: string | null
           shipping_client_name: string | null
           wrap_date: string | null
@@ -953,6 +954,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "installers"
             referencedColumns: ["installer_id"]
+          },
+          {
+            foreignKeyName: "fk_jobs_sales_order_id"
+            columns: ["sales_order_id"]
+            isOneToOne: true
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_jobs_sales_order_id"
+            columns: ["sales_order_id"]
+            isOneToOne: true
+            referencedRelation: "sales_table_view"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1001,12 +1016,28 @@ export type Database = {
           prod_id: number | null
           received_date: string | null
           rush: boolean | null
+          sales_order_id: number | null
           ship_schedule: string | null
           ship_status: Database["public"]["Enums"]["ShippingStatus"] | null
           shipping_client_name: string | null
           site_address: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_jobs_sales_order_id"
+            columns: ["sales_order_id"]
+            isOneToOne: true
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_jobs_sales_order_id"
+            columns: ["sales_order_id"]
+            isOneToOne: true
+            referencedRelation: "sales_table_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       purchasing_table_view: {
         Row: {
@@ -1025,9 +1056,24 @@ export type Database = {
           job_number: string | null
           purchase_check_id: number | null
           purchasing_comments: string | null
+          sales_order_id: number | null
           ship_schedule: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_jobs_sales_order_id"
+            columns: ["sales_order_id"]
+            isOneToOne: true
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_jobs_sales_order_id"
+            columns: ["sales_order_id"]
+            isOneToOne: true
+            referencedRelation: "sales_table_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_tracking_job_id_fkey"
             columns: ["job_id"]
@@ -1087,11 +1133,27 @@ export type Database = {
           installer_first: string | null
           installer_last: string | null
           job_number: string | null
+          sales_order_id: number | null
           service_order_id: number | null
           service_order_number: string | null
           site_address: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_jobs_sales_order_id"
+            columns: ["sales_order_id"]
+            isOneToOne: true
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_jobs_sales_order_id"
+            columns: ["sales_order_id"]
+            isOneToOne: true
+            referencedRelation: "sales_table_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {

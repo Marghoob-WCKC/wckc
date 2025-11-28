@@ -32,6 +32,7 @@ import {
   Title,
   ThemeIcon,
   Button,
+  Anchor,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { FaSearch, FaCalendarAlt, FaBoxOpen, FaCheck } from "react-icons/fa";
@@ -172,7 +173,13 @@ export default function PlantTable() {
       size: 100,
       cell: (info) => (
         <Text fw={600} size="sm">
-          {info.getValue()}
+          <Anchor
+            href={`/dashboard/installation/${info.row.original.job_id}`}
+            style={{ color: "#6100bbff", fontWeight: "bold" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {info.getValue()}
+          </Anchor>
         </Text>
       ),
     }),

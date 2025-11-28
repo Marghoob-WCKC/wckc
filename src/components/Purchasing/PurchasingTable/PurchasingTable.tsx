@@ -33,6 +33,7 @@ import {
   Title,
   Accordion,
   SimpleGrid,
+  Anchor,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { GrEmergency } from "react-icons/gr";
@@ -269,7 +270,14 @@ export default function PurchasingTable() {
       size: 120,
       cell: (info) => (
         <Text fw={600} size="sm">
-          {info.getValue()}
+          <Anchor
+            href={`/dashboard/sales/editsale/${info.row.original.sales_order_id}`}
+            style={{ color: "#6100bbff", fontWeight: "bold" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {" "}
+            {info.getValue()}
+          </Anchor>
         </Text>
       ),
     }),
