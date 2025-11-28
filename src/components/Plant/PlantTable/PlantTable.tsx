@@ -1,18 +1,15 @@
 "use client";
 
-import { useState, useMemo, Fragment } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createColumnHelper,
   getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
   useReactTable,
   flexRender,
   PaginationState,
-  getPaginationRowModel,
   ColumnFiltersState,
-  FilterFn,
+  SortingState,
   Row,
 } from "@tanstack/react-table";
 import {
@@ -31,279 +28,48 @@ import {
   SimpleGrid,
   Tooltip,
   Checkbox,
-  Modal,
   Stack,
   Title,
-  Divider,
-  Paper,
   ThemeIcon,
+  Button,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
-import { useDisclosure } from "@mantine/hooks";
-import {
-  FaSearch,
-  FaSort,
-  FaSortDown,
-  FaSortUp,
-  FaCheck,
-  FaCalendarAlt,
-  FaBoxOpen,
-  FaShoppingBag,
-} from "react-icons/fa";
+import { FaSearch, FaCalendarAlt, FaBoxOpen, FaCheck } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
-import { Tables } from "@/types/db";
 import dayjs from "dayjs";
-import isBetween from "dayjs/plugin/isBetween";
 import { notifications } from "@mantine/notifications";
-
-dayjs.extend(isBetween);
-
-// --- Standardized Type Definition (No extensions) ---
-type PlantJobView = Tables<"jobs"> & {
-  sales_orders:
-    | (Tables<"sales_orders"> & {
-        client: Tables<"client"> | null;
-        cabinet:
-          | (Tables<"cabinets"> & {
-              species: Tables<"species"> | null;
-              colors: Tables<"colors"> | null;
-              door_styles: Tables<"door_styles"> | null;
-            })
-          | null;
-      })
-    | null;
-  installation: Tables<"installation"> | null;
-  production_schedule: Tables<"production_schedule"> | null;
-};
-
-// --- Custom Filter Logic ---
-const genericFilter: FilterFn<PlantJobView> = (row, columnId, filterValue) => {
-  const val = String(row.getValue(columnId) ?? "").toLowerCase();
-  return val.includes(String(filterValue).toLowerCase());
-};
-
-// --- Job Detail Modal Component ---
-const JobDetailModal = ({
-  job,
-  onClose,
-}: {
-  job: PlantJobView;
-  onClose: () => void;
-}) => {
-  const install = job.installation;
-  const client = job.sales_orders;
-  const cabinet = job.sales_orders?.cabinet;
-  const prod = job.production_schedule;
-  const jobNum = job.job_number;
-
-  return (
-    <Modal
-      opened={!!job}
-      onClose={onClose}
-      title={
-        <Text fw={700} size="lg">
-          Job #{jobNum}
-        </Text>
-      }
-      size="lg"
-      centered
-      overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
-    >
-      <Stack gap="md">
-        {/* Client & Location */}
-        <Paper withBorder p="sm" bg="gray.0">
-          <Group justify="space-between" mb={5}>
-            <Text size="sm" c="dimmed" fw={600}>
-              CLIENT
-            </Text>
-            <Text size="sm" fw={700}>
-              {client?.shipping_client_name || "Unknown"}
-            </Text>
-          </Group>
-          <Divider mb={5} />
-          <Text size="sm">
-            {job.sales_orders?.shipping_street || "No Street Address"}
-          </Text>
-          <Text size="sm" c="dimmed">
-            {job.sales_orders?.shipping_city},{" "}
-            {job.sales_orders?.shipping_province}{" "}
-            {job.sales_orders?.shipping_zip}
-          </Text>
-        </Paper>
-
-        {/* Cabinet Specs */}
-        <Box>
-          <Text size="sm" c="dimmed" fw={600} mb={4}>
-            CABINET SPECIFICATIONS
-          </Text>
-          <SimpleGrid cols={2} spacing="xs" verticalSpacing="xs">
-            <Paper withBorder p="xs">
-              <Text size="xs" c="dimmed">
-                Box
-              </Text>
-              <Text size="sm" fw={500}>
-                {cabinet?.box || "—"}
-              </Text>
-            </Paper>
-            <Paper withBorder p="xs">
-              <Text size="xs" c="dimmed">
-                Species
-              </Text>
-              <Text size="sm" fw={500}>
-                {cabinet?.species?.Species || "—"}
-              </Text>
-            </Paper>
-            <Paper withBorder p="xs">
-              <Text size="xs" c="dimmed">
-                Door Style
-              </Text>
-              <Text size="sm" fw={500}>
-                {cabinet?.door_styles?.name || "—"}
-              </Text>
-            </Paper>
-            <Paper withBorder p="xs">
-              <Text size="xs" c="dimmed">
-                Color
-              </Text>
-              <Text size="sm" fw={500}>
-                {cabinet?.colors?.Name || "—"}
-              </Text>
-            </Paper>
-          </SimpleGrid>
-        </Box>
-
-        {/* Dates & Notes */}
-        <Box>
-          <Text size="sm" c="dimmed" fw={600} mb={4}>
-            SCHEDULE & NOTES
-          </Text>
-          <SimpleGrid cols={2} mb="xs">
-            <Paper withBorder p="xs">
-              <Text size="xs" c="dimmed">
-                Wrap Date
-              </Text>
-              <Text size="sm">
-                {install?.wrap_date
-                  ? dayjs(install.wrap_date).format("YYYY-MM-DD")
-                  : "—"}
-              </Text>
-            </Paper>
-            <Paper withBorder p="xs">
-              <Text size="xs" c="dimmed">
-                Install Date
-              </Text>
-              <Text size="sm">
-                {install?.installation_date
-                  ? dayjs(install.installation_date).format("YYYY-MM-DD")
-                  : "—"}
-              </Text>
-            </Paper>
-          </SimpleGrid>
-
-          <Paper withBorder p="xs" bg="gray.0">
-            <Text size="xs" c="dimmed" mb={2}>
-              Installation Notes
-            </Text>
-            <Text size="sm" style={{ whiteSpace: "pre-wrap" }}>
-              {install?.installation_notes || "No notes recorded."}
-            </Text>
-          </Paper>
-        </Box>
-
-        {/* Status Badges */}
-        <Group gap="xs">
-          {prod?.doors_completed_actual && (
-            <Badge color="green" variant="dot">
-              Doors Done
-            </Badge>
-          )}
-          {prod?.cut_finish_completed_actual && (
-            <Badge color="green" variant="dot">
-              Panels Done
-            </Badge>
-          )}
-          {prod?.custom_finish_completed_actual && (
-            <Badge color="green" variant="dot">
-              Custom Finish Done
-            </Badge>
-          )}
-          {prod?.paint_completed_actual && (
-            <Badge color="green" variant="dot">
-              Paint Done
-            </Badge>
-          )}
-          {prod?.assembly_completed_actual && (
-            <Badge color="green" variant="dot">
-              Assembly Done
-            </Badge>
-          )}
-          {install?.wrap_completed && (
-            <Badge color="violet" variant="filled">
-              Wrap Complete
-            </Badge>
-          )}
-        </Group>
-      </Stack>
-    </Modal>
-  );
-};
-
+import { usePlantTable } from "@/hooks/usePlantTable";
+import { Views } from "@/types/db";
+type PlantTableView = Views<"plant_table_view">;
 export default function PlantTable() {
   const { supabase, isAuthenticated } = useSupabase();
   const queryClient = useQueryClient();
 
-  // State
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 50,
   });
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "wrap_date", desc: false },
+  ]);
+
+  const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
+  const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
     null,
     null,
   ]);
 
-  // Modal State
-  const [
-    detailModalOpened,
-    { open: openDetailModal, close: closeDetailModal },
-  ] = useDisclosure(false);
-  const [selectedJob, setSelectedJob] = useState<PlantJobView | null>(null);
-
-  // --- 1. Fetch Data ---
-  const {
-    data: plantJobs,
-    isLoading,
-    isError,
-    error,
-  } = useQuery<PlantJobView[]>({
-    queryKey: ["plant_jobs_list"],
-    queryFn: async () => {
-      const { data, error: dbError } = await supabase
-        .from("jobs")
-        .select(
-          `id,job_number,sales_orders:sales_orders(shipping_street,shipping_city,shipping_province,shipping_zip,
-          shipping_client_name,cabinet:cabinets(
-          box,
-          door_styles(name),
-          species(Species),
-          colors(Name))
-        ),
-        installation!inner(installation_id,wrap_date,wrap_completed,installation_notes),production_schedule:production_schedule(*)`
-        )
-        .not("installation.wrap_date", "is", null)
-        .order("wrap_date", {
-          referencedTable: "installation",
-          ascending: false,
-        });
-
-      if (dbError) throw new Error(dbError.message);
-      return data as unknown as PlantJobView[];
-    },
-    enabled: isAuthenticated,
+  const { data, isLoading, isError, error } = usePlantTable({
+    pagination,
+    columnFilters: activeFilters,
+    sorting,
   });
 
-  // --- 2. Mutation for Wrap Complete Toggle ---
+  const tableData = (data?.data as unknown as PlantTableView[]) || [];
+  const totalCount = data?.count || 0;
+  const pageCount = Math.ceil(totalCount / pagination.pageSize);
+
   const toggleWrapMutation = useMutation({
     mutationFn: async ({
       installId,
@@ -321,7 +87,7 @@ export default function PlantTable() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plant_jobs_list"] });
+      queryClient.invalidateQueries({ queryKey: ["plant_table_view"] });
       notifications.show({
         title: "Updated",
         message: "Wrap status updated successfully",
@@ -337,48 +103,49 @@ export default function PlantTable() {
     },
   });
 
-  // --- 3. Filter Helper ---
-  const getFilterValue = (id: string): string => {
-    const filter = columnFilters.find((f) => f.id === id);
-    return String(filter?.value ?? "");
+  const setInputFilterValue = (id: string, value: any) => {
+    setInputFilters((prev) => {
+      const existing = prev.filter((f) => f.id !== id);
+      if (!value) return existing;
+      return [...existing, { id, value }];
+    });
   };
 
-  // --- 4. Apply Date Range Filter Manually ---
-  const filteredData = useMemo(() => {
-    if (!plantJobs) return [];
-    let processed = plantJobs;
+  const getInputFilterValue = (id: string) => {
+    return (inputFilters.find((f) => f.id === id)?.value as string) || "";
+  };
 
+  const handleApplyFilters = () => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+
+    let filters = [...inputFilters];
     if (dateRange[0] && dateRange[1]) {
-      const start = dayjs(dateRange[0]).startOf("day");
-      const end = dayjs(dateRange[1]).endOf("day");
-      processed = processed.filter((row) => {
-        const wrapDate = row.installation?.wrap_date;
-        if (!wrapDate) return false;
-        return dayjs(wrapDate).isBetween(start, end, "day", "[]");
-      });
+      filters = filters.filter((f) => f.id !== "wrap_date_range");
+      filters.push({ id: "wrap_date_range", value: dateRange });
     }
+    setActiveFilters(filters);
+  };
 
-    return processed;
-  }, [plantJobs, dateRange]);
+  const handleClearFilters = () => {
+    setInputFilters([]);
+    setActiveFilters([]);
+    setDateRange([null, null]);
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  };
 
-  // --- 5. Column Definitions ---
-  const columnHelper = createColumnHelper<PlantJobView>();
+  const columnHelper = createColumnHelper<PlantTableView>();
 
   const columns = [
-    // Hidden Wrap Date Column
-    columnHelper.accessor("installation.wrap_date", {
-      id: "wrap_date",
+    columnHelper.accessor("wrap_date", {
       header: "Wrap Date",
       size: 0,
     }),
-
-    columnHelper.accessor("installation.wrap_completed", {
-      id: "wrap_completed",
+    columnHelper.accessor("wrap_completed", {
       header: "Wrapped",
       size: 70,
       cell: (info) => {
         const isComplete = !!info.getValue();
-        const installId = info.row.original.installation?.installation_id;
+        const installId = info.row.original.installation_id;
         return (
           <Center onClick={(e) => e.stopPropagation()}>
             <Checkbox
@@ -400,7 +167,6 @@ export default function PlantTable() {
         );
       },
     }),
-
     columnHelper.accessor("job_number", {
       header: "Job #",
       size: 100,
@@ -409,11 +175,8 @@ export default function PlantTable() {
           {info.getValue()}
         </Text>
       ),
-      filterFn: genericFilter,
     }),
-
-    columnHelper.accessor("sales_orders.shipping_client_name", {
-      id: "client",
+    columnHelper.accessor("client_name", {
       header: "Client",
       size: 140,
       cell: (info) => (
@@ -421,65 +184,31 @@ export default function PlantTable() {
           {info.getValue() || "—"}
         </Text>
       ),
-      filterFn: genericFilter,
     }),
-
-    columnHelper.accessor(
-      (row) => {
-        const so = row.sales_orders;
-        if (!so) return "";
-        return [so.shipping_city, so.shipping_province]
-          .filter(Boolean)
-          .join(", ");
-      },
-      {
-        id: "address",
-        header: "Location",
-        size: 160,
-        cell: (info) => (
-          <Tooltip label={info.row.original.sales_orders?.shipping_street}>
+    columnHelper.accessor("shipping_city", {
+      id: "address",
+      header: "Location",
+      size: 160,
+      cell: (info) => {
+        const city = info.row.original.shipping_city;
+        const prov = info.row.original.shipping_province;
+        return (
+          <Tooltip label={info.row.original.shipping_street}>
             <Text size="sm" truncate>
-              {info.getValue()}
+              {[city, prov].filter(Boolean).join(", ")}
             </Text>
           </Tooltip>
-        ),
-        filterFn: genericFilter,
-      }
-    ),
-
-    columnHelper.accessor("sales_orders.cabinet.box", {
-      header: "Box",
-      size: 90,
+        );
+      },
     }),
-    columnHelper.accessor("sales_orders.cabinet.door_styles.name", {
+    columnHelper.accessor("cabinet_box", { header: "Box", size: 90 }),
+    columnHelper.accessor("cabinet_door_style", {
       header: "Door Style",
       size: 140,
-      cell: (info) => (
-        <Tooltip label={info.getValue()}>
-          <Text size="sm" truncate>
-            {info.getValue()}
-          </Text>
-        </Tooltip>
-      ),
     }),
-    columnHelper.accessor("sales_orders.cabinet.species.Species", {
-      header: "Species",
-      size: 110,
-    }),
-    columnHelper.accessor("sales_orders.cabinet.colors.Name", {
-      header: "Color",
-      size: 110,
-      cell: (info) => (
-        <Tooltip label={info.getValue()}>
-          <Text size="sm" truncate>
-            {info.getValue()}
-          </Text>
-        </Tooltip>
-      ),
-    }),
-
-    // Production Actuals (Compact)
-    columnHelper.accessor("production_schedule.doors_completed_actual", {
+    columnHelper.accessor("cabinet_species", { header: "Species", size: 110 }),
+    columnHelper.accessor("cabinet_color", { header: "Color", size: 110 }),
+    columnHelper.accessor("doors_completed_actual", {
       header: "D",
       size: 40,
       cell: (info) =>
@@ -491,7 +220,7 @@ export default function PlantTable() {
           </Text>
         ),
     }),
-    columnHelper.accessor("production_schedule.cut_finish_completed_actual", {
+    columnHelper.accessor("cut_finish_completed_actual", {
       header: "P",
       size: 40,
       cell: (info) =>
@@ -503,22 +232,19 @@ export default function PlantTable() {
           </Text>
         ),
     }),
-    columnHelper.accessor(
-      "production_schedule.custom_finish_completed_actual",
-      {
-        header: "F/C",
-        size: 40,
-        cell: (info) =>
-          info.getValue() ? (
-            <FaCheck color="green" size={10} />
-          ) : (
-            <Text c="dimmed" size="xs">
-              -
-            </Text>
-          ),
-      }
-    ),
-    columnHelper.accessor("production_schedule.paint_completed_actual", {
+    columnHelper.accessor("custom_finish_completed_actual", {
+      header: "F/C",
+      size: 40,
+      cell: (info) =>
+        info.getValue() ? (
+          <FaCheck color="green" size={10} />
+        ) : (
+          <Text c="dimmed" size="xs">
+            -
+          </Text>
+        ),
+    }),
+    columnHelper.accessor("paint_completed_actual", {
       header: "P/S",
       size: 40,
       cell: (info) =>
@@ -530,7 +256,7 @@ export default function PlantTable() {
           </Text>
         ),
     }),
-    columnHelper.accessor("production_schedule.assembly_completed_actual", {
+    columnHelper.accessor("assembly_completed_actual", {
       header: "A",
       size: 40,
       cell: (info) =>
@@ -542,9 +268,7 @@ export default function PlantTable() {
           </Text>
         ),
     }),
-
-    // Notes
-    columnHelper.accessor("installation.installation_notes", {
+    columnHelper.accessor("installation_notes", {
       header: "Notes",
       size: 180,
       cell: (info) => (
@@ -557,44 +281,37 @@ export default function PlantTable() {
     }),
   ];
 
-  // --- 6. Table Setup ---
   const table = useReactTable({
-    data: filteredData,
+    data: tableData,
     columns,
-    state: { columnFilters, pagination },
-    onColumnFiltersChange: setColumnFilters,
+    pageCount: pageCount,
+    state: { pagination, sorting, columnFilters: activeFilters },
+    manualPagination: true,
+    manualFiltering: true,
+    manualSorting: true,
     onPaginationChange: setPagination,
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      sorting: [{ id: "wrap_date", desc: true }], // Sync initial state with query
-    },
   });
 
-  // Memoized grouped rows
   const groupedRows = useMemo(() => {
     if (!table.getRowModel().rows) return {};
     return table.getRowModel().rows.reduce((acc, row) => {
-      const job: PlantJobView = row.original;
-      const wrapDate = job.installation?.wrap_date
-        ? dayjs(job.installation.wrap_date).format("YYYY-MM-DD")
+      const job = row.original;
+      const wrapDate = job.wrap_date
+        ? dayjs(job.wrap_date).format("YYYY-MM-DD")
         : "No Date";
-      if (!acc[wrapDate]) {
-        acc[wrapDate] = [];
-      }
+      if (!acc[wrapDate]) acc[wrapDate] = [];
       acc[wrapDate].push(row);
       return acc;
-    }, {} as Record<string, Row<PlantJobView>[]>);
+    }, {} as Record<string, Row<PlantTableView>[]>);
   }, [table.getRowModel().rows]);
 
-  // Sorted Dates Keys: Farthest Future -> Past
   const sortedGroupKeys = useMemo(() => {
     return Object.keys(groupedRows).sort((a, b) => {
       if (a === "No Date") return 1;
       if (b === "No Date") return -1;
-      return dayjs(b).diff(dayjs(a)); // Descending order
+      return dayjs(a).isAfter(dayjs(b)) ? -1 : 1;
     });
   }, [groupedRows]);
 
@@ -637,7 +354,6 @@ export default function PlantTable() {
         </Stack>
       </Group>
 
-      {/* Search Filters */}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -648,44 +364,56 @@ export default function PlantTable() {
               <TextInput
                 label="Job Number"
                 placeholder="Search..."
-                value={getFilterValue("job_number")}
+                value={getInputFilterValue("job_number")}
                 onChange={(e) =>
-                  table.getColumn("job_number")?.setFilterValue(e.target.value)
+                  setInputFilterValue("job_number", e.target.value)
                 }
               />
               <TextInput
                 label="Client Name"
                 placeholder="Search..."
-                value={getFilterValue("client")}
-                onChange={(e) =>
-                  table.getColumn("client")?.setFilterValue(e.target.value)
-                }
+                value={getInputFilterValue("client")}
+                onChange={(e) => setInputFilterValue("client", e.target.value)}
               />
               <TextInput
                 label="Address"
                 placeholder="Street, City..."
-                value={getFilterValue("address")}
-                onChange={(e) =>
-                  table.getColumn("address")?.setFilterValue(e.target.value)
-                }
+                value={getInputFilterValue("address")}
+                onChange={(e) => setInputFilterValue("address", e.target.value)}
               />
               <DatePickerInput
                 type="range"
                 label="Wrap Date Range"
                 placeholder="Pick dates range"
                 value={dateRange}
-                onChange={(value) =>
-                  setDateRange(value as [Date | null, Date | null])
+                onChange={(val) =>
+                  setDateRange(val as [Date | null, Date | null])
                 }
                 clearable
                 leftSection={<FaCalendarAlt size={14} />}
               />
             </SimpleGrid>
+            <Group justify="flex-end" mt="md">
+              <Button variant="default" onClick={handleClearFilters}>
+                Clear Filters
+              </Button>
+              <Button
+                variant="filled"
+                color="blue"
+                onClick={handleApplyFilters}
+                leftSection={<FaSearch size={14} />}
+                style={{
+                  background:
+                    "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
+                }}
+              >
+                Apply Filters
+              </Button>
+            </Group>
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
 
-      {/* Table Area */}
       <ScrollArea style={{ flex: 1 }} type="always">
         {table.getRowModel().rows.length === 0 ? (
           <Center py="xl">
@@ -704,11 +432,8 @@ export default function PlantTable() {
             {sortedGroupKeys.map((wrapDate) => {
               const jobsInGroup = groupedRows[wrapDate];
               const isPastDue = dayjs(wrapDate).isBefore(dayjs(), "day");
-
-              // Calculate total boxes
               const totalBoxes = jobsInGroup.reduce((sum, row) => {
-                const boxVal = row.original.sales_orders?.cabinet?.box;
-                const parsed = parseInt(boxVal || "0", 10);
+                const parsed = parseInt(row.original.cabinet_box || "0", 10);
                 return isNaN(parsed) ? sum : sum + parsed;
               }, 0);
 
@@ -748,7 +473,7 @@ export default function PlantTable() {
                         <Table.Tr>
                           {table
                             .getFlatHeaders()
-                            .slice(1) // Skip hidden first column
+                            .slice(2)
                             .map((header) => (
                               <Table.Th
                                 key={header.id}
@@ -764,17 +489,10 @@ export default function PlantTable() {
                       </Table.Thead>
                       <Table.Tbody>
                         {jobsInGroup.map((row) => (
-                          <Table.Tr
-                            key={row.id}
-                            style={{ cursor: "pointer" }}
-                            onClick={() => {
-                              setSelectedJob(row.original);
-                              openDetailModal();
-                            }}
-                          >
+                          <Table.Tr key={row.id}>
                             {row
                               .getVisibleCells()
-                              .slice(1) // Skip hidden first column
+                              .slice(2)
                               .map((cell) => (
                                 <Table.Td
                                   key={cell.id}
@@ -818,16 +536,6 @@ export default function PlantTable() {
           color="#4A00E0"
         />
       </Box>
-
-      {selectedJob && (
-        <JobDetailModal
-          job={selectedJob}
-          onClose={() => {
-            closeDetailModal();
-            setSelectedJob(null);
-          }}
-        />
-      )}
     </Box>
   );
 }

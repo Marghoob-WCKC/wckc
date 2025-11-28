@@ -379,6 +379,13 @@ export type Database = {
             foreignKeyName: "invoices_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "invoices_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "prod_table_view"
             referencedColumns: ["id"]
           },
@@ -431,6 +438,13 @@ export type Database = {
             columns: ["installation_id"]
             isOneToOne: true
             referencedRelation: "installation_table_view"
+            referencedColumns: ["installation_id"]
+          },
+          {
+            foreignKeyName: "fk_installation_id"
+            columns: ["installation_id"]
+            isOneToOne: true
+            referencedRelation: "plant_table_view"
             referencedColumns: ["installation_id"]
           },
           {
@@ -604,6 +618,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "jobs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
           },
           {
             foreignKeyName: "purchase_tracking_job_id_fkey"
@@ -866,6 +887,13 @@ export type Database = {
             foreignKeyName: "service_orders_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "prod_table_view"
             referencedColumns: ["id"]
           },
@@ -928,6 +956,31 @@ export type Database = {
           },
         ]
       }
+      plant_table_view: {
+        Row: {
+          assembly_completed_actual: string | null
+          cabinet_box: string | null
+          cabinet_color: string | null
+          cabinet_door_style: string | null
+          cabinet_species: string | null
+          client_name: string | null
+          custom_finish_completed_actual: string | null
+          cut_finish_completed_actual: string | null
+          doors_completed_actual: string | null
+          installation_id: number | null
+          installation_notes: string | null
+          job_id: number | null
+          job_number: string | null
+          paint_completed_actual: string | null
+          shipping_city: string | null
+          shipping_province: string | null
+          shipping_street: string | null
+          shipping_zip: string | null
+          wrap_completed: string | null
+          wrap_date: string | null
+        }
+        Relationships: []
+      }
       prod_table_view: {
         Row: {
           assembly_completed_actual: string | null
@@ -954,6 +1007,56 @@ export type Database = {
           site_address: string | null
         }
         Relationships: []
+      }
+      purchasing_table_view: {
+        Row: {
+          acc_ordered_at: string | null
+          acc_received_at: string | null
+          client_name: string | null
+          door_made_in_house: boolean | null
+          door_style_name: string | null
+          doors_ordered_at: string | null
+          doors_received_at: string | null
+          glass_ordered_at: string | null
+          glass_received_at: string | null
+          handles_ordered_at: string | null
+          handles_received_at: string | null
+          job_id: number | null
+          job_number: string | null
+          purchase_check_id: number | null
+          purchasing_comments: string | null
+          ship_schedule: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "installation_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "prod_table_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sales_table_view: {
         Row: {
