@@ -499,7 +499,7 @@ export default function PurchasingTable() {
     createStatusColumn("handles", "Handles"),
     createStatusColumn("acc", "Accessories"),
     columnHelper.accessor("purchasing_comments", {
-      header: "Comments",
+      header: "History",
       // IMPORTANT: Define a size so fixed layout knows how wide to make this
       size: 250,
       cell: (info) => (
