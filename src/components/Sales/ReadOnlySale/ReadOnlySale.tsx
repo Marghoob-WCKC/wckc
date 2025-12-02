@@ -39,6 +39,7 @@ import {
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
 import { Tables } from "@/types/db";
+import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/RelatedServiceOrders";
 
 // --- Types ---
 type ReadOnlySaleProps = {
@@ -217,7 +218,6 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
   return (
     <Container
       size="100%"
-      px={10}
       w={"100%"}
       style={{
         height: "100vh",
@@ -229,6 +229,7 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
     >
       <Stack
         gap="lg"
+        px={10}
         style={{
           flex: 1,
           display: "flex",
@@ -385,82 +386,7 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
                 </Stack>
               </Paper>
 
-              {jobId && (
-                <Paper p="md" radius="md" shadow="xs" withBorder>
-                  <SectionTitle
-                    icon={FaTools}
-                    title="Associated Service Orders"
-                  />
-
-                  {serviceOrders && serviceOrders.length > 0 ? (
-                    <Table
-                      striped
-                      highlightOnHover
-                      withRowBorders
-                      verticalSpacing="sm"
-                      mt="md"
-                    >
-                      <Table.Thead>
-                        <Table.Tr>
-                          <Table.Th>SO Number</Table.Th>
-                          <Table.Th>Date Entered</Table.Th>
-                          <Table.Th>Status</Table.Th>
-                        </Table.Tr>
-                      </Table.Thead>
-                      <Table.Tbody>
-                        {serviceOrders.map((so: Tables<"service_orders">) => (
-                          <Table.Tr
-                            key={so.service_order_id}
-                            style={{ cursor: "pointer" }}
-                            onClick={() =>
-                              router.push(
-                                `/dashboard/serviceorders/${so.service_order_id}`
-                              )
-                            }
-                          >
-                            <Table.Td>
-                              <Group gap="xs">
-                                <ThemeIcon
-                                  size="sm"
-                                  variant="light"
-                                  color={so.completed_at ? "green" : "blue"}
-                                >
-                                  <FaTools size={10} />
-                                </ThemeIcon>
-                                <Text fw={600} size="sm" c="blue">
-                                  {so.service_order_number}
-                                </Text>
-                              </Group>
-                            </Table.Td>
-                            <Table.Td>
-                              {dayjs(so.date_entered).format("MMM D, YYYY")}
-                            </Table.Td>
-                            <Table.Td>
-                              <Badge
-                                color={so.completed_at ? "green" : "blue"}
-                                variant="light"
-                              >
-                                {so.completed_at ? "Completed" : "Open"}
-                              </Badge>
-                            </Table.Td>
-                          </Table.Tr>
-                        ))}
-                      </Table.Tbody>
-                    </Table>
-                  ) : (
-                    <Center
-                      h={80}
-                      bg="gray.0"
-                      style={{ borderRadius: 6 }}
-                      mt="md"
-                    >
-                      <Text c="dimmed" size="sm" fs="italic">
-                        No service orders found for this job.
-                      </Text>
-                    </Center>
-                  )}
-                </Paper>
-              )}
+              {jobId && <RelatedServiceOrders jobId={jobId} />}
             </Stack>
           </Grid.Col>
 
@@ -483,10 +409,10 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
                 <InfoRow label="Glaze" value={cab.glaze} />
                 <InfoRow label="Top Drawer" value={cab.top_drawer_front} />
 
-                <InfoRow label="Box Material" value={cab.box} />
+                <InfoRow label="Box" value={cab.box} />
                 <InfoRow label="Interior" value={cab.interior} />
                 <InfoRow label="Drawer Box" value={cab.drawer_box} />
-                <InfoRow label="Hardware" value={cab.drawer_hardware} />
+                <InfoRow label="Drawer Hardware" value={cab.drawer_hardware} />
 
                 <Text size="xs" fw={700} c="violet" mt="md">
                   FEATURES & PARTS
@@ -510,13 +436,7 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
                 />
 
                 {(cab.glass || cab.doors_parts_only) && (
-                  <Stack
-                    gap={4}
-                    mt="xs"
-                    p="xs"
-                    bg="gray.0"
-                    style={{ borderRadius: 6 }}
-                  >
+                  <Stack gap={4}>
                     {cab.glass && (
                       <InfoRow label="Glass Type" value={cab.glass_type} />
                     )}
