@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@mantine/form";
@@ -24,17 +24,16 @@ import {
   TimelineItem,
   Grid,
   Textarea,
-  Table,
   Badge,
+  Modal,
   Tooltip,
-  ActionIcon,
+  ThemeIcon,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import dayjs from "dayjs";
 import { notifications } from "@mantine/notifications";
 import {
   FaCalendarCheck,
-  FaCheck,
   FaCheckCircle,
   FaCogs,
   FaCut,
@@ -43,23 +42,19 @@ import {
   FaPaintBrush,
   FaTools,
   FaTruckLoading,
-  FaUser,
-  FaExternalLinkAlt,
-  FaEye,
-  FaPlus,
 } from "react-icons/fa";
-import { MdOutlineDoorSliding } from "react-icons/md";
 
 import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
 import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
 import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/RelatedServiceOrders";
+import AddBackorderModal from "../AddBOModal/AddBOModal";
+import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 
-// --- Type Definitions using Supabase Types ---
-type InstallationType = Tables<"installation">;
+type InstallationType = Tables<"installation"> & {
+  partially_shipped?: boolean;
+};
 type ProductionScheduleType = Tables<"production_schedule">;
 
-// Combined form values for Installation + Production Schedule shipping fields
-// Override date fields to use Date objects for form compatibility
 type CombinedInstallFormValues = Omit<
   TablesUpdate<"installation">,
   "wrap_date" | "installation_date" | "inspection_date"
@@ -70,6 +65,7 @@ type CombinedInstallFormValues = Omit<
   prod_id: number;
   ship_schedule: Date | null;
   ship_status: "unprocessed" | "tentative" | "confirmed";
+  partially_shipped?: boolean;
 };
 
 type InstallerLookup = Tables<"installers">;
@@ -89,13 +85,14 @@ type JobData = Tables<"jobs"> & {
   };
 };
 
-// --- Component ---
 export default function InstallationEditor({ jobId }: { jobId: number }) {
   const router = useRouter();
   const { supabase, isAuthenticated } = useSupabase();
   const queryClient = useQueryClient();
 
-  // --- 1. Fetch Job and Installation Data (UPDATED QUERY) ---
+  const [isBackorderPromptOpen, setIsBackorderPromptOpen] = useState(false);
+  const [isAddBackorderModalOpen, setIsAddBackorderModalOpen] = useState(false);
+
   const { data: jobData, isLoading: isJobLoading } = useQuery<JobData>({
     queryKey: ["installation-editor", jobId],
     queryFn: async () => {
@@ -182,7 +179,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     }));
   }, [installers]);
 
-  // --- 3. Form Initialization ---
   const form = useForm<CombinedInstallFormValues>({
     initialValues: {
       installer_id: null,
@@ -190,20 +186,18 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
       wrap_date: null,
       wrap_completed: null,
       has_shipped: false,
+      partially_shipped: false,
       installation_date: null,
       installation_completed: null,
       inspection_date: null,
       inspection_completed: null,
       legacy_ref: "",
-
-      // Only Shipping Schedule fields are editable here now
       prod_id: 0,
       ship_schedule: null,
       ship_status: "unprocessed",
     },
   });
 
-  // Prefill form when data is loaded
   useEffect(() => {
     if (jobData) {
       const install = jobData.installation;
@@ -217,6 +211,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             ? dayjs(install.wrap_date).toDate()
             : null,
           has_shipped: install.has_shipped,
+          partially_shipped: install.partially_shipped || false,
           installation_date: install.installation_date
             ? dayjs(install.installation_date).toDate()
             : null,
@@ -226,8 +221,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             : null,
           inspection_completed: install.inspection_completed,
           legacy_ref: install.legacy_ref ?? "",
-
-          // Merge production fields (Shipping only)
           prod_id: prod?.prod_id || 0,
           ship_schedule: prod?.ship_schedule
             ? dayjs(prod.ship_schedule).toDate()
@@ -297,7 +290,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     }));
   }, [jobData]);
 
-  // --- 4. Mutation (Multi-Table Update) ---
   const updateMutation = useMutation({
     mutationFn: async (values: CombinedInstallFormValues) => {
       if (!jobData?.installation?.installation_id) {
@@ -309,7 +301,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
 
       const { prod_id, ship_schedule, ship_status, ...installValues } = values;
 
-      // 4a. Update Installation Table
       const installPayload = {
         ...installValues,
         wrap_date: installValues.wrap_date
@@ -323,15 +314,15 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           : null,
         installation_notes: installValues.installation_notes || null,
         legacy_ref: installValues.legacy_ref || null,
+        partially_shipped: installValues.partially_shipped,
       };
 
       const { error: installError } = await supabase
         .from("installation")
-        .update(installPayload)
+        .update(installPayload as any)
         .eq("installation_id", jobData.installation.installation_id);
       if (installError) throw installError;
 
-      // 4b. Update Production Schedule Table (Only Shipping info)
       const prodPayload = {
         ship_schedule: ship_schedule
           ? dayjs(ship_schedule).format("YYYY-MM-DD")
@@ -360,7 +351,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
       queryClient.invalidateQueries({
         queryKey: ["production_schedule_list"],
       });
-      router.push("/dashboard/installation");
     },
     onError: (err: any) =>
       notifications.show({
@@ -393,6 +383,32 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     );
   }
 
+  const handleBackorderPromptDecision = (isCompleteShipment: boolean) => {
+    setIsBackorderPromptOpen(false);
+
+    if (isCompleteShipment) {
+      const newValues = {
+        ...form.values,
+        has_shipped: true,
+        partially_shipped: false,
+      };
+      form.setFieldValue("has_shipped", true);
+      form.setFieldValue("partially_shipped", false);
+      updateMutation.mutate(newValues);
+    } else {
+      setIsAddBackorderModalOpen(true);
+    }
+  };
+
+  const handleShippedChange = (isChecked: boolean) => {
+    if (isChecked) {
+      setIsBackorderPromptOpen(true);
+    } else {
+      form.setFieldValue("has_shipped", false);
+      form.setFieldValue("partially_shipped", false);
+    }
+  };
+
   const handleSubmit = (values: CombinedInstallFormValues) => {
     if (Object.keys(form.errors).length > 0) {
       notifications.show({
@@ -416,7 +432,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     }
   };
 
-  // Array for Read-Only Production Schedule Dates (Context only)
   const productionScheduledSteps: {
     key: keyof ProductionScheduleType;
     label: string;
@@ -485,7 +500,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         <Grid gutter="xs">
           <Grid.Col span={10}>
             <Stack>
-              {/* HEADER: Job Number & Basic Info */}
               <Paper p="md" radius="md" shadow="sm" mb="md" bg={"gray.1"}>
                 <Group justify="space-between" align="center">
                   <Text
@@ -497,15 +511,9 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                   </Text>
                 </Group>
                 <Divider my="sm" color="violet" />
-
-                {/* DETAILED INFO: CLIENT, SHIPPING, CABINET */}
                 <SimpleGrid cols={3}>
-                  {/* CLIENT & CONTACTS */}
                   <ClientInfo shipping={shipping} />
-
-                  {/* CABINET SPECS */}
                   <CabinetSpecs cabinet={cabinet} />
-
                   <Paper
                     p="md"
                     radius="md"
@@ -524,7 +532,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           <FaCogs style={{ marginRight: 8 }} /> Production
                           Schedule
                         </Text>
-
                         <Stack gap="xs">
                           {productionScheduledSteps.map((step) => (
                             <Group
@@ -562,9 +569,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             <Paper bg={"gray.1"} p="md" radius="md">
               <Paper p="md" radius="md" pb={30}>
                 <Stack gap="xl">
-                  {/* ---------------------------------------------------- */}
-                  {/* 1. INSTALLER & SCHEDULE */}
-                  {/* ---------------------------------------------------- */}
                   <Box>
                     <Group mb={8} style={{ color: "#4A00E0" }}>
                       <FaTools size={18} />
@@ -604,9 +608,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
 
                   <Divider />
 
-                  {/* ---------------------------------------------------- */}
-                  {/* 2. SHIPPING MANAGEMENT */}
-                  {/* ---------------------------------------------------- */}
                   <Box>
                     <Group mb={8} style={{ color: "#218838" }}>
                       <FaTruckLoading size={18} />
@@ -646,48 +647,54 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                         />
                       </SimpleGrid>
                       <Box style={{ alignSelf: "flex-end" }}>
-                        <Switch
-                          size="xl"
-                          offLabel="Not Shipped"
-                          onLabel="SHIPPED"
-                          thumbIcon={<FaTruckLoading />}
-                          color="green"
-                          {...form.getInputProps("has_shipped", {
-                            type: "checkbox",
-                          })}
-                          checked={form.values.has_shipped}
-                          styles={{
-                            track: {
-                              padding: "5px",
-                              cursor: "pointer",
-                              background: form.values.has_shipped
-                                ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
-                                : "linear-gradient(135deg, #0010eeff 0%, #af26ffff 100%)",
-                              border: "none",
-                              color: form.values.has_shipped
-                                ? "white"
-                                : "black",
-                              transition: "background 200ms ease",
-                            },
-                            thumb: {
-                              background: form.values.has_shipped
-                                ? "#218838"
-                                : "#fff",
-                            },
-                            trackLabel: {
-                              color: "white",
-                            },
-                          }}
-                        />
+                        <Group>
+                          <Switch
+                            size="xl"
+                            offLabel="Not Shipped"
+                            onLabel="SHIPPED"
+                            thumbIcon={<FaTruckLoading />}
+                            color="green"
+                            checked={form.values.has_shipped}
+                            onChange={(e) =>
+                              handleShippedChange(e.currentTarget.checked)
+                            }
+                            styles={{
+                              track: {
+                                padding: "5px",
+                                cursor: "pointer",
+                                background: form.values.has_shipped
+                                  ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
+                                  : "linear-gradient(135deg, #0010eeff 0%, #af26ffff 100%)",
+                                border: "none",
+                                color: form.values.has_shipped
+                                  ? "white"
+                                  : "black",
+                                transition: "background 200ms ease",
+                              },
+                              thumb: {
+                                background: form.values.has_shipped
+                                  ? "#218838"
+                                  : "#fff",
+                              },
+                              trackLabel: {
+                                color: "white",
+                              },
+                            }}
+                          />
+                          {form.values.partially_shipped && (
+                            <Tooltip label="This job has been partially shipped. Check Related Backorders for more information...">
+                              <Badge color="orange" size="sm" variant="light">
+                                Partially Shipped
+                              </Badge>
+                            </Tooltip>
+                          )}
+                        </Group>
                       </Box>
                     </Group>
                   </Box>
 
                   <Divider />
 
-                  {/* ---------------------------------------------------- */}
-                  {/* 3. NOTES & REFERENCE */}
-                  {/* ---------------------------------------------------- */}
                   <Box>
                     <Group mb={8}>
                       <FaCalendarCheck size={18} />
@@ -697,7 +704,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                       <Textarea
                         label="Installation/Site Notes"
                         placeholder="Document site conditions, issues, or specific instructions here."
-                        rows={4}
                         {...form.getInputProps("installation_notes")}
                       />
                     </Stack>
@@ -705,13 +711,17 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                 </Stack>
               </Paper>
             </Paper>
+            {jobId && (
+              <RelatedBackorders
+                jobId={String(jobId)}
+                onAddBackorder={() => setIsAddBackorderModalOpen(true)}
+              />
+            )}
             {jobId && <RelatedServiceOrders jobId={jobId} />}
           </Grid.Col>
 
-          {/* RIGHT COLUMN: STICKY SIDEBAR FOR STATUS */}
           <Grid.Col span={2} style={{ borderLeft: "1px solid #ccc" }}>
             <Box pt="md" pos="sticky" style={{ justifyItems: "center" }}>
-              {/* INSTALLATION PHASE TIMELINE */}
               <Text
                 fw={600}
                 size="lg"
@@ -933,7 +943,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         </Grid>
       </form>
 
-      {/* Footer Buttons */}
       <Paper
         p="md"
         bg={"gray.1"}
@@ -975,6 +984,101 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           </Button>
         </Group>
       </Paper>
+
+      <Modal
+        opened={isBackorderPromptOpen}
+        onClose={() => {
+          setIsBackorderPromptOpen(false);
+          if (!form.values.has_shipped && !form.values.partially_shipped) {
+            form.setFieldValue("has_shipped", false);
+          }
+        }}
+        withCloseButton={false}
+        centered
+        radius="lg"
+        padding="lg"
+        overlayProps={{ blur: 4, opacity: 0.55 }}
+        transitionProps={{ transition: "pop", duration: 200 }}
+      >
+        <Stack align="center" gap="md">
+          {/* Visual Icon */}
+          <ThemeIcon
+            size={80}
+            radius="100%"
+            variant="light"
+            color="blue"
+            style={{ border: "1px solid var(--mantine-color-blue-2)" }}
+          >
+            <FaTruckLoading size={40} />
+          </ThemeIcon>
+
+          {/* Text Content */}
+          <Stack gap={4} align="center">
+            <Text size="lg" fw={700} ta="center">
+              Confirm Shipment Status
+            </Text>
+            <Text size="sm" c="dimmed" ta="center" style={{ maxWidth: 300 }}>
+              Is this a complete shipment, or are items missing?
+            </Text>
+          </Stack>
+
+          {/* Action Buttons */}
+          <Group w="100%" grow mt="md">
+            <Button
+              variant="outline"
+              color="orange"
+              size="md"
+              radius="md"
+              style={{ borderColor: "var(--mantine-color-orange-3)" }}
+              onClick={() => handleBackorderPromptDecision(false)}
+            >
+              Partial
+            </Button>
+            <Button
+              variant="gradient"
+              gradient={{ from: "teal", to: "green", deg: 105 }}
+              size="md"
+              radius="md"
+              leftSection={<FaCheckCircle />}
+              onClick={() => handleBackorderPromptDecision(true)}
+            >
+              Complete
+            </Button>
+          </Group>
+
+          <Text
+            size="xs"
+            c="dimmed"
+            style={{ cursor: "pointer", textDecoration: "underline" }}
+            onClick={() => {
+              setIsBackorderPromptOpen(false);
+              form.setFieldValue("has_shipped", false);
+            }}
+          >
+            Cancel
+          </Text>
+        </Stack>
+      </Modal>
+
+      {jobData && (
+        <AddBackorderModal
+          opened={isAddBackorderModalOpen}
+          onClose={() => setIsAddBackorderModalOpen(false)}
+          jobId={String(jobData.id)}
+          jobNumber={jobData.job_number}
+          onSuccess={() => {
+            const newValues = {
+              ...form.values,
+              has_shipped: false,
+              partially_shipped: true,
+            };
+            form.setFieldValue("has_shipped", false);
+            form.setFieldValue("partially_shipped", true);
+
+            updateMutation.mutate(newValues);
+          }}
+        />
+      )}
     </Container>
   );
 }

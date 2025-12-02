@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      backorders: {
+        Row: {
+          comments: string | null
+          complete: boolean
+          created_at: string
+          date_entered: string | null
+          due_date: string | null
+          id: number
+          job_id: number
+        }
+        Insert: {
+          comments?: string | null
+          complete?: boolean
+          created_at?: string
+          date_entered?: string | null
+          due_date?: string | null
+          id?: number
+          job_id: number
+        }
+        Update: {
+          comments?: string | null
+          complete?: boolean
+          created_at?: string
+          date_entered?: string | null
+          due_date?: string | null
+          id?: number
+          job_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "installation_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "prod_table_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cabinets: {
         Row: {
           box: string | null
@@ -225,6 +284,7 @@ export type Database = {
           installation_notes: string | null
           installer_id: number | null
           legacy_ref: string | null
+          partially_shipped: boolean | null
           wrap_completed: string | null
           wrap_date: string | null
         }
@@ -239,6 +299,7 @@ export type Database = {
           installation_notes?: string | null
           installer_id?: number | null
           legacy_ref?: string | null
+          partially_shipped?: boolean | null
           wrap_completed?: string | null
           wrap_date?: string | null
         }
@@ -253,6 +314,7 @@ export type Database = {
           installation_notes?: string | null
           installer_id?: number | null
           legacy_ref?: string | null
+          partially_shipped?: boolean | null
           wrap_completed?: string | null
           wrap_date?: string | null
         }
@@ -836,6 +898,7 @@ export type Database = {
           due_date: string | null
           hours_estimated: number | null
           installer_id: number | null
+          is_warranty_so: boolean | null
           job_id: number
           service_by: string | null
           service_by_detail: string | null
@@ -852,6 +915,7 @@ export type Database = {
           due_date?: string | null
           hours_estimated?: number | null
           installer_id?: number | null
+          is_warranty_so?: boolean | null
           job_id: number
           service_by?: string | null
           service_by_detail?: string | null
@@ -868,6 +932,7 @@ export type Database = {
           due_date?: string | null
           hours_estimated?: number | null
           installer_id?: number | null
+          is_warranty_so?: boolean | null
           job_id?: number
           service_by?: string | null
           service_by_detail?: string | null

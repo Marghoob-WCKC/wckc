@@ -6,10 +6,11 @@ export const installationSchema = z.object({
   installation_notes: z.string().nullable(),
   wrap_date: z.coerce.date().nullable(),
   has_shipped: z.boolean(),
+  partially_shipped: z.boolean().optional(),
   installation_date: z.coerce.date().nullable(),
-  installation_completed: z.string().nullable(), // ISO String timestamp for completion
+  installation_completed: z.string().nullable(),
   inspection_date: z.coerce.date().nullable(),
-  inspection_completed: z.string().nullable(), // ISO String timestamp for inspection sign-off
+  inspection_completed: z.string().nullable(),
   legacy_ref: z.string().nullable(),
 });
 
