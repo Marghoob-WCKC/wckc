@@ -703,8 +703,10 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                   </Box>
                 </Stack>
               </Paper>
-              {jobId && (
-                <Paper p="md" radius="md" shadow="sm" withBorder bg={"gray.1"}>
+            </Paper>
+            {jobId && (
+              <Paper p="md" radius="md" mt={"md"} bg={"gray.1"}>
+                <Paper p="md" radius="md" bg={"white"}>
                   <Group mb="md">
                     <FaTools size={18} color="#4A00E0" />
                     <Text fw={600} size="lg">
@@ -789,8 +791,8 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                     </Center>
                   )}
                 </Paper>
-              )}
-            </Paper>
+              </Paper>
+            )}
           </Grid.Col>
 
           {/* RIGHT COLUMN: STICKY SIDEBAR FOR STATUS */}
@@ -808,7 +810,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                 <FaTools size={14} style={{ marginRight: "4px" }} />
                 Installation Phase
               </Text>
-              <Paper shadow="sm" p="md" radius="md" w={"100%"}>
+              <Paper p="md" radius="md" w={"100%"}>
                 <Timeline
                   bulletSize={24}
                   lineWidth={2}
@@ -952,7 +954,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
               >
                 <FaCalendarCheck style={{ marginRight: 8 }} /> Actual Progress
               </Text>
-              <Paper shadow="sm" p="md" radius="md" w={"100%"}>
+              <Paper p="md" radius="md" w={"100%"}>
                 <Timeline
                   bulletSize={24}
                   lineWidth={2}
