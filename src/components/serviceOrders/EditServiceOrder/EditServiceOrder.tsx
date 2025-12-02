@@ -597,7 +597,7 @@ export default function EditServiceOrder({
                 color: "white",
                 border: "none",
               }}
-              onClick={() => router.push(`/dashboard/serviceorders`)}
+              onClick={() => router.back()}
             >
               Cancel
             </Button>

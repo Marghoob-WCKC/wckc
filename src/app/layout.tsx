@@ -47,7 +47,7 @@ const dashboardLinks: SidebarLink[] = [
     label: "Plant",
     links: [
       {
-        iconName: "FaCalender",
+        iconName: "GrSchedules",
         label: "Master Table",
         path: "/dashboard/plant/master",
       },
