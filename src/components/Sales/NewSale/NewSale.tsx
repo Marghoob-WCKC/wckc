@@ -328,6 +328,7 @@ export default function NewSale() {
       delivery_type: "",
       manual_job_base: undefined,
       manual_job_suffix: "",
+      is_memo: false,
       cabinet: {
         species: "", // Now stores ID as string
         color: "", // Now stores ID as string
@@ -398,6 +399,7 @@ export default function NewSale() {
         checklist,
         manual_job_base,
         manual_job_suffix,
+        is_memo,
       } = values;
 
       if (stage === "SOLD" && !manual_job_base) {
@@ -453,6 +455,7 @@ export default function NewSale() {
         manual_job_suffix: manual_job_suffix
           ? manual_job_suffix.trim().toUpperCase()
           : null,
+        is_memo: is_memo,
       };
 
       const { data: transactionResult, error: rpcError } = await supabase.rpc(
@@ -609,6 +612,31 @@ export default function NewSale() {
             >
               <Group align="end">
                 <Switch
+                  onLabel="Memo"
+                  offLabel="Memo ?"
+                  size="xl"
+                  thumbIcon={<FaCheckCircle />}
+                  checked={form.values.is_memo}
+                  onChange={(e) =>
+                    form.setFieldValue("is_memo", e.currentTarget.checked)
+                  }
+                  styles={{
+                    track: {
+                      cursor: "pointer",
+                      background: form.values.is_memo
+                        ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
+                        : "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
+                      color: "white",
+                      border: "none",
+                      padding: "0 0.2rem",
+                      width: "6rem",
+                    },
+                    thumb: {
+                      background: form.values.is_memo ? "#218838" : "#4a00e0",
+                    },
+                  }}
+                />
+                <Switch
                   offLabel="Quote"
                   onLabel="Sold"
                   size="xl"
@@ -622,6 +650,8 @@ export default function NewSale() {
                           : "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
                       color: "white",
                       border: "none",
+                      padding: "0 0.2rem",
+                      width: "6rem",
                     },
                     thumb: {
                       background:

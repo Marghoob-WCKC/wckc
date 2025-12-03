@@ -733,6 +733,7 @@ export type Database = {
           id: number
           install: boolean
           invoice_balance: number | null
+          is_memo: boolean | null
           layout_date: string | null
           markout_date: string | null
           order_type: string | null
@@ -773,6 +774,7 @@ export type Database = {
           id?: number
           install?: boolean
           invoice_balance?: number | null
+          is_memo?: boolean | null
           layout_date?: string | null
           markout_date?: string | null
           order_type?: string | null
@@ -813,6 +815,7 @@ export type Database = {
           id?: number
           install?: boolean
           invoice_balance?: number | null
+          is_memo?: boolean | null
           layout_date?: string | null
           markout_date?: string | null
           order_type?: string | null

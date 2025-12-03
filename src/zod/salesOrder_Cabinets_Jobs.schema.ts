@@ -64,6 +64,7 @@ export const MasterOrderSchema = z.object({
   parent_job_number_input: z.string().optional().nullable(),
   manual_job_base: z.number().optional(),
   manual_job_suffix: z.string().optional(),
+  is_memo: z.boolean().default(false),
 });
 
 export type MasterOrderInput = z.infer<typeof MasterOrderSchema>;

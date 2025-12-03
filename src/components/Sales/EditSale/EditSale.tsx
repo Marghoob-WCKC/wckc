@@ -35,7 +35,7 @@ import {
   Collapse,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
-import { FaCopy, FaPlus, FaTools, FaEye } from "react-icons/fa";
+import { FaCopy, FaPlus, FaTools, FaEye, FaCheckCircle } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import {
   MasterOrderInput,
@@ -374,6 +374,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
       delivery_type: "",
       manual_job_base: undefined,
       manual_job_suffix: "",
+      is_memo: false,
       cabinet: {
         species: "",
         color: "",
@@ -434,6 +435,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         delivery_type: salesOrderData.delivery_type,
         manual_job_base: salesOrderData.job?.job_base_number,
         manual_job_suffix: salesOrderData.job?.job_suffix || "",
+        is_memo: salesOrderData.is_memo,
         cabinet: {
           species: String(cabinet.species_id || ""),
           color: String(cabinet.color_id || ""),
@@ -544,6 +546,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
           comments: values.comments,
           order_type: values.order_type,
           delivery_type: values.delivery_type,
+          is_memo: values.is_memo,
           ...values.shipping,
           ...values.checklist,
         })
@@ -682,13 +685,42 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
       >
         <Stack>
           <Paper p="md" radius="md" shadow="xl">
-            <Text fw={600} size="md" c="#4c00ffff">
-              {salesOrderData
-                ? salesOrderData.stage === "SOLD"
-                  ? `Editing Job # ${salesOrderData.job?.job_number || "—"}`
-                  : `Editing Quote #${salesOrderData.sales_order_number || "—"}`
-                : "Loading..."}
-            </Text>
+            <Group>
+              <Text fw={600} size="md" c="#4c00ffff">
+                {salesOrderData
+                  ? salesOrderData.stage === "SOLD"
+                    ? `Editing Job # ${salesOrderData.job?.job_number || "—"}`
+                    : `Editing Quote #${
+                        salesOrderData.sales_order_number || "—"
+                      }`
+                  : "Loading..."}
+              </Text>
+              <Switch
+                onLabel="Memo"
+                offLabel="Memo ?"
+                size="xl"
+                thumbIcon={<FaCheckCircle />}
+                checked={form.values.is_memo}
+                onChange={(e) =>
+                  form.setFieldValue("is_memo", e.currentTarget.checked)
+                }
+                styles={{
+                  track: {
+                    cursor: "pointer",
+                    background: form.values.is_memo
+                      ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
+                      : "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
+                    color: "white",
+                    border: "none",
+                    padding: "0 0.2rem",
+                    width: "6rem",
+                  },
+                  thumb: {
+                    background: form.values.is_memo ? "#218838" : "#4a00e0",
+                  },
+                }}
+              />
+            </Group>
             <Group align="end" mt="md" style={{ width: "100%" }}>
               {salesOrderData?.stage !== "SOLD" && (
                 <Paper p="xs" px="md" shadow="0">

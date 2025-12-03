@@ -176,22 +176,6 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
 
   const jobId = order?.job?.id;
 
-  // 2. Fetch Related Service Orders
-  const { data: serviceOrders } = useQuery({
-    queryKey: ["related-service-orders-readonly", jobId],
-    queryFn: async () => {
-      if (!jobId) return [];
-      const { data, error } = await supabase
-        .from("service_orders")
-        .select("*")
-        .eq("job_id", jobId)
-        .order("date_entered", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    enabled: isAuthenticated && !!jobId,
-  });
-
   if (isLoading || !order) {
     return (
       <Center h="100vh">
@@ -271,6 +255,15 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
                   >
                     {order.stage}
                   </Badge>
+                  {order.is_memo && (
+                    <Badge
+                      size="md"
+                      variant="gradient"
+                      gradient={{ from: "blue", to: "cyan", deg: 90 }}
+                    >
+                      Memo
+                    </Badge>
+                  )}
                 </Group>
                 <Text size="sm" c="dimmed">
                   Created by {order.designer || "Unknown"} on{" "}
