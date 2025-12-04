@@ -27,8 +27,8 @@ import {
   Box,
   Switch,
   Tooltip,
-  Collapse,
   rem,
+  Collapse,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { FaPlus, FaTrash, FaTools, FaSave } from "react-icons/fa";
@@ -321,14 +321,23 @@ export default function NewServiceOrder({
               </Text>
             </Group>
           </Paper>
-          <Paper p="md" radius="md" shadow="xs" style={{ background: "#fff" }}>
-            <SimpleGrid cols={2}>
-              {/* CLIENT INFO */}
-              {client && <ClientInfo shipping={client} />}
 
-              {cabinet && <CabinetSpecs cabinet={cabinet} />}
-            </SimpleGrid>
-          </Paper>
+          <Collapse in={client || cabinet} transitionDuration={200}>
+            <Paper
+              p="md"
+              radius="md"
+              shadow="xs"
+              style={{ background: "#fff" }}
+            >
+              <SimpleGrid cols={2}>
+                {/* CLIENT INFO */}
+                {client && <ClientInfo shipping={client} />}
+
+                {cabinet && <CabinetSpecs cabinet={cabinet} />}
+              </SimpleGrid>
+            </Paper>
+          </Collapse>
+
           <Paper p="md" radius="md" shadow="xl" bg="gray.1">
             <Stack>
               <Fieldset legend="Job & Identifier" variant="filled" bg="white">
@@ -338,8 +347,10 @@ export default function NewServiceOrder({
                     placeholder="Search by Job Number"
                     data={jobOptions || []}
                     searchable
+                    clearable
                     withAsterisk
                     {...form.getInputProps("job_id")}
+                    onClear={() => setJobData(null)}
                   />
 
                   <TextInput
