@@ -166,7 +166,7 @@ export default function ServiceOrdersTable() {
       ),
     }),
     columnHelper.accessor("installer_company", {
-      header: "Installer",
+      header: "Service Technician",
       size: 180,
       minSize: 140,
       cell: (info) => {
