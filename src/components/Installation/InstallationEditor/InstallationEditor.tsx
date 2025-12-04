@@ -92,7 +92,13 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
 
   const [isBackorderPromptOpen, setIsBackorderPromptOpen] = useState(false);
   const [isAddBackorderModalOpen, setIsAddBackorderModalOpen] = useState(false);
-
+  const [completionModalOpen, setCompletionModalOpen] = useState(false);
+  const [targetCompletionField, setTargetCompletionField] = useState<
+    "installation_completed" | "inspection_completed" | null
+  >(null);
+  const [completionDateInput, setCompletionDateInput] = useState<Date | null>(
+    new Date()
+  );
   const { data: jobData, isLoading: isJobLoading } = useQuery<JobData>({
     queryKey: ["installation-editor", jobId],
     queryFn: async () => {
@@ -351,6 +357,10 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
       queryClient.invalidateQueries({
         queryKey: ["production_schedule_list"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["installation_table_view"],
+      });
+      router.push(`/dashboard/installation`);
     },
     onError: (err: any) =>
       notifications.show({
@@ -425,10 +435,27 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     field: "installation_completed" | "inspection_completed"
   ) => {
     const currentValue = form.values[field];
+
     if (currentValue) {
+      // If already set, clear it immediately (Reset behavior)
       form.setFieldValue(field, null);
     } else {
-      form.setFieldValue(field, new Date().toISOString());
+      // If empty, open modal to prompt for date
+      setTargetCompletionField(field);
+      setCompletionDateInput(new Date()); // Default to today
+      setCompletionModalOpen(true);
+    }
+  };
+
+  const confirmCompletionDate = () => {
+    if (targetCompletionField && completionDateInput) {
+      // Use dayjs to ensure consistent ISO formatting
+      form.setFieldValue(
+        targetCompletionField,
+        dayjs(completionDateInput).toISOString()
+      );
+      setCompletionModalOpen(false);
+      setTargetCompletionField(null);
     }
   };
 
@@ -783,7 +810,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                     <Text size="xs" fw={500}>
                       {form.values.installation_completed
                         ? dayjs(form.values.installation_completed).format(
-                            "YYYY-MM-DD HH:mm"
+                            "YYYY-MM-DD"
                           )
                         : "—"}
                     </Text>
@@ -847,7 +874,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                     <Text size="xs" fw={500}>
                       {form.values.inspection_completed
                         ? dayjs(form.values.inspection_completed).format(
-                            "YYYY-MM-DD HH:mm"
+                            "YYYY-MM-DD"
                           )
                         : "—"}
                     </Text>
@@ -1079,6 +1106,39 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           }}
         />
       )}
+      {/* Completion Date Modal */}
+      <Modal
+        opened={completionModalOpen}
+        onClose={() => setCompletionModalOpen(false)}
+        title="Set Completion Date"
+        centered
+        size="sm"
+      >
+        <Stack>
+          <DateInput
+            label="Select Date"
+            placeholder="Pick a date"
+            value={completionDateInput}
+            onChange={(date) =>
+              setCompletionDateInput(date ? dayjs(date).toDate() : null)
+            }
+            valueFormat="YYYY-MM-DD"
+            allowDeselect={false}
+            data-autofocus
+          />
+          <Group justify="flex-end" mt="md">
+            <Button
+              variant="default"
+              onClick={() => setCompletionModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={confirmCompletionDate} color="green">
+              Confirm
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Container>
   );
 }

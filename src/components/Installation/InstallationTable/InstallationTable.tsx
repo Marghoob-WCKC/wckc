@@ -155,17 +155,6 @@ export default function InstallationTable() {
       },
     }),
 
-    columnHelper.accessor("installation_date", {
-      header: "Installation Date",
-      size: 150,
-      minSize: 120,
-      cell: (info) => {
-        const date = info.getValue();
-        if (!date) return <Text c="orange">TBD</Text>;
-        return dayjs(date).format("YYYY-MM-DD");
-      },
-    }),
-
     columnHelper.accessor("wrap_date", {
       header: "Wrap Date",
       size: 150,
@@ -207,42 +196,73 @@ export default function InstallationTable() {
         );
       },
     }),
-
-    columnHelper.accessor("installation_completed", {
-      id: "installation_status",
-      header: "Completion Status",
-      size: 200,
-      minSize: 180,
+    columnHelper.accessor("installation_date", {
+      header: "Installation Date",
+      size: 150,
+      minSize: 120,
       cell: (info) => {
-        const installCompleted = info.row.original.installation_completed;
-        const inspectionCompleted = info.row.original.inspection_completed;
-
-        const isInstallDone = !!installCompleted;
-        const isInspectionDone = !!inspectionCompleted;
-
-        let statusText;
-        let statusColor;
-        let icon;
-
-        if (isInstallDone && isInspectionDone) {
-          statusText = "Inst. & Insp. Complete";
-          statusColor = "green.8";
-          icon = <FaCheckCircle color="green" size={14} />;
-        } else if (isInstallDone && !isInspectionDone) {
-          statusText = "Pending Inspection";
-          statusColor = "orange.8";
-          icon = <FaCalendarCheck color="orange" size={14} />;
-        } else {
-          statusText = "In Progress";
-          statusColor = "gray.6";
-          icon = <FaRegCircle color="gray" size={14} />;
+        const date = info.getValue();
+        if (!date) return <Text c="orange">TBD</Text>;
+        return dayjs(date).format("YYYY-MM-DD");
+      },
+    }),
+    columnHelper.accessor("inspection_date", {
+      header: "Inspection Date",
+      size: 150,
+      minSize: 120,
+      cell: (info) => {
+        const date = info.getValue();
+        if (!date) return <Text c="orange">TBD</Text>;
+        return dayjs(date).format("YYYY-MM-DD");
+      },
+    }),
+    columnHelper.accessor("installation_completed", {
+      header: "Installation",
+      size: 160,
+      minSize: 140,
+      cell: (info) => {
+        const date = info.getValue();
+        if (date) {
+          return (
+            <Group gap={6}>
+              <FaCheckCircle color="var(--mantine-color-green-6)" size={14} />
+              <Text size="sm" c="green.8" fw={600}>
+                {dayjs(date).format("YYYY-MM-DD")}
+              </Text>
+            </Group>
+          );
         }
-
         return (
-          <Group gap={4}>
-            {icon}
-            <Text size="sm" c={statusColor} fw={isInstallDone ? 600 : 400}>
-              {statusText}
+          <Group gap={6}>
+            <FaRegCircle color="gray" size={14} />
+            <Text size="sm" c="dimmed">
+              Pending
+            </Text>
+          </Group>
+        );
+      },
+    }),
+    columnHelper.accessor("inspection_completed", {
+      header: "Inspection",
+      size: 160,
+      minSize: 140,
+      cell: (info) => {
+        const date = info.getValue();
+        if (date) {
+          return (
+            <Group gap={6}>
+              <FaCalendarCheck color="var(--mantine-color-blue-6)" size={14} />
+              <Text size="sm" c="blue.8" fw={600}>
+                {dayjs(date).format("YYYY-MM-DD")}
+              </Text>
+            </Group>
+          );
+        }
+        return (
+          <Group gap={6}>
+            <FaRegCircle color="gray" size={14} />
+            <Text size="sm" c="dimmed">
+              Pending
             </Text>
           </Group>
         );
@@ -416,7 +436,7 @@ export default function InstallationTable() {
             background: "linear-gradient(135deg, #dfc9f2, #ba9bfa)",
           },
         }}
-        type="always"
+        type="auto"
       >
         <Table
           striped
