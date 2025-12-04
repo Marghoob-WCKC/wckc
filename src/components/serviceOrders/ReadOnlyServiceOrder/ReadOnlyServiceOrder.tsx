@@ -16,12 +16,12 @@ import {
   Box,
   Grid,
   Title,
-  Table,
   Divider,
   Avatar,
   Card,
   rem,
   Typography,
+  Table,
 } from "@mantine/core";
 import {
   FaUser,
@@ -33,8 +33,6 @@ import {
   FaHammer,
   FaBoxOpen,
   FaMapMarkerAlt,
-  FaDollarSign,
-  FaShieldAlt,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
@@ -302,17 +300,16 @@ export default function ReadOnlyServiceOrder({
                   />
                   <Stack gap="xs">
                     <InfoRow
-                      label="Assigned Installer"
+                      label="Assigned Service Tech"
                       value={
                         installer ? (
-                          <Group gap={6} justify="flex-end">
-                            <Avatar size={20} color="orange" radius="xl">
-                              {installer.first_name?.[0]}
-                            </Avatar>
-                            <Text size="sm">
-                              {installer.first_name} {installer.last_name}
-                            </Text>
-                          </Group>
+                          <Text size="sm">
+                            {installer.first_name} {installer.last_name}
+                          </Text>
+                        ) : so.installer_requested ? (
+                          <Badge color="orange" variant="light">
+                            Installer Requested
+                          </Badge>
                         ) : (
                           <Badge color="gray" variant="dot">
                             Unassigned

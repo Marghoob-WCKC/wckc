@@ -58,6 +58,9 @@ export function useServiceOrdersTable({
           case "site_address":
             query = query.ilike("site_address", `%${valStr}%`);
             break;
+          case "installer_requested":
+            query = query.eq("installer_requested", valStr);
+            break;
           case "date_entered":
             query = query.eq("date_entered", valStr);
             break;

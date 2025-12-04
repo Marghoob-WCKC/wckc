@@ -25,7 +25,7 @@ export const ServiceOrderSchema = z.object({
   is_warranty_so: z.boolean().optional().default(false),
   warranty_order_cost: z.number().optional(),
   comments: z.string().optional(),
-
+  installer_requested: z.boolean().optional().default(false),
   parts: z.array(ServiceOrderPartSchema).optional().default([]),
   completed_at: z.coerce.date().nullable().optional(),
 });

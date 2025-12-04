@@ -31,7 +31,7 @@ import {
   Collapse,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
-import { FaPlus, FaTrash, FaTools, FaSave } from "react-icons/fa";
+import { FaPlus, FaTrash, FaTools, FaSave, FaCheck } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import {
   ServiceOrderFormValues,
@@ -94,6 +94,7 @@ export default function NewServiceOrder({
       hours_estimated: 0,
       chargeable: false,
       is_warranty_so: false,
+      installer_requested: false,
       warranty_order_cost: undefined,
       comments: `
 <p><strong>Service Scheduled:</strong></p>
@@ -227,6 +228,7 @@ export default function NewServiceOrder({
           hours_estimated: values.hours_estimated,
           chargeable: values.chargeable,
           is_warranty_so: values.is_warranty_so,
+          installer_requested: values.installer_requested,
           warranty_order_cost: values.warranty_order_cost,
           comments: values.comments,
         })
@@ -376,11 +378,16 @@ export default function NewServiceOrder({
                 <SimpleGrid cols={{ base: 1, sm: 3 }}>
                   <Group align="flex-end" gap="xs" style={{ width: "100%" }}>
                     <Select
-                      label="Assign Installer"
-                      placeholder="Select Installer"
+                      label="Assign Service Tech"
+                      placeholder={
+                        form.values.installer_requested
+                          ? "Installer Requested"
+                          : "Select Service Tech"
+                      }
                       data={installerOptions}
                       searchable
                       clearable
+                      disabled={form.values.installer_requested}
                       style={{ flex: 1 }}
                       {...form.getInputProps("installer_id")}
                     />
@@ -389,10 +396,36 @@ export default function NewServiceOrder({
                         variant="filled"
                         color="#4A00E0"
                         size="lg"
-                        mb={2}
                         onClick={openAddInstaller}
                       >
                         <FaPlus size={12} />
+                      </ActionIcon>
+                    </Tooltip>
+                    <Tooltip
+                      label={
+                        form.values.installer_requested
+                          ? "Installer Requested"
+                          : "Request Installer"
+                      }
+                    >
+                      <ActionIcon
+                        variant="filled"
+                        color={
+                          form.values.installer_requested ? "#00722cff" : "gray"
+                        }
+                        size="lg"
+                        onClick={() =>
+                          form.setFieldValue(
+                            "installer_requested",
+                            !form.values.installer_requested
+                          )
+                        }
+                      >
+                        {form.values.installer_requested ? (
+                          <FaCheck size={12} />
+                        ) : (
+                          <FaTools size={12} />
+                        )}
                       </ActionIcon>
                     </Tooltip>
                   </Group>

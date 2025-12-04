@@ -32,6 +32,9 @@ import {
   Title,
   SimpleGrid,
   Anchor,
+  Indicator,
+  Checkbox,
+  Switch,
 } from "@mantine/core";
 import {
   FaPencilAlt,
@@ -161,6 +164,25 @@ export default function ServiceOrdersTable() {
           </Text>
         </Tooltip>
       ),
+    }),
+    columnHelper.accessor("installer_company", {
+      header: "Installer",
+      size: 180,
+      minSize: 140,
+      cell: (info) => {
+        const installerRequested = info.row.original.installer_requested;
+        return installerRequested ? (
+          <Group>
+            {" "}
+            <Text size="sm" c="red" fw={600}>
+              Installer Requested
+            </Text>
+            <Indicator inline processing color="red" size={8} />
+          </Group>
+        ) : (
+          info.getValue() || "—"
+        );
+      },
     }),
     columnHelper.accessor("date_entered", {
       header: "Date Entered",
@@ -362,6 +384,35 @@ export default function ServiceOrdersTable() {
                   setInputFilterValue("site_address", e.target.value)
                 }
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+              />
+              <Switch
+                label="Installer Requested"
+                size="lg"
+                thumbIcon={<FaCheckCircle />}
+                styles={{
+                  track: {
+                    cursor: "pointer",
+                    background:
+                      getInputFilterValue("installer_requested") === "true"
+                        ? "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)"
+                        : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
+                    color: "white",
+                    border: "none",
+                  },
+                  thumb: {
+                    background:
+                      getInputFilterValue("installer_requested") === "true"
+                        ? "#6e54ffff"
+                        : "#d1d1d1ff",
+                  },
+                }}
+                checked={getInputFilterValue("installer_requested") === "true"}
+                onChange={(e) =>
+                  setInputFilterValue(
+                    "installer_requested",
+                    e.currentTarget.checked ? "true" : ""
+                  )
+                }
               />
             </SimpleGrid>
 

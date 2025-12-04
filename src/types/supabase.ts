@@ -901,6 +901,7 @@ export type Database = {
           due_date: string | null
           hours_estimated: number | null
           installer_id: number | null
+          installer_requested: boolean | null
           is_warranty_so: boolean | null
           job_id: number
           service_by: string | null
@@ -919,6 +920,7 @@ export type Database = {
           due_date?: string | null
           hours_estimated?: number | null
           installer_id?: number | null
+          installer_requested?: boolean | null
           is_warranty_so?: boolean | null
           job_id: number
           service_by?: string | null
@@ -937,6 +939,7 @@ export type Database = {
           due_date?: string | null
           hours_estimated?: number | null
           installer_id?: number | null
+          installer_requested?: boolean | null
           is_warranty_so?: boolean | null
           job_id?: number
           service_by?: string | null
@@ -1234,6 +1237,7 @@ export type Database = {
           installer_company: string | null
           installer_first: string | null
           installer_last: string | null
+          installer_requested: boolean | null
           job_number: string | null
           sales_order_id: number | null
           service_order_id: number | null
