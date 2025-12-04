@@ -909,6 +909,7 @@ export type Database = {
           service_order_number: string
           service_type: string | null
           service_type_detail: string | null
+          warranty_order_cost: number | null
         }
         Insert: {
           chargeable?: boolean | null
@@ -926,6 +927,7 @@ export type Database = {
           service_order_number: string
           service_type?: string | null
           service_type_detail?: string | null
+          warranty_order_cost?: number | null
         }
         Update: {
           chargeable?: boolean | null
@@ -943,6 +945,7 @@ export type Database = {
           service_order_number?: string
           service_type?: string | null
           service_type_detail?: string | null
+          warranty_order_cost?: number | null
         }
         Relationships: [
           {

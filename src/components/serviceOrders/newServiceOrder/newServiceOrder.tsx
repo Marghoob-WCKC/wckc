@@ -27,6 +27,8 @@ import {
   Box,
   Switch,
   Tooltip,
+  Collapse,
+  rem,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { FaPlus, FaTrash, FaTools, FaSave } from "react-icons/fa";
@@ -90,6 +92,7 @@ export default function NewServiceOrder({
       hours_estimated: 0,
       chargeable: false,
       is_warranty_so: false,
+      warranty_order_cost: undefined,
       comments: `
 <p><strong>Service Scheduled:</strong></p>
 <ul>
@@ -171,6 +174,7 @@ export default function NewServiceOrder({
           hours_estimated: values.hours_estimated,
           chargeable: values.chargeable,
           is_warranty_so: values.is_warranty_so,
+          warranty_order_cost: values.warranty_order_cost,
           comments: values.comments,
         })
         .select("service_order_id")
@@ -339,7 +343,7 @@ export default function NewServiceOrder({
                   <Stack gap={5}>
                     <TextInput
                       label="Service Type"
-                      placeholder="e.g. Warranty, Deficiency"
+                      placeholder="e.g. Ext., Int., etc."
                       {...form.getInputProps("service_type")}
                     />
                     <TextInput
@@ -377,12 +381,21 @@ export default function NewServiceOrder({
                 <Switch
                   size="md"
                   color="violet"
-                  mt="md"
+                  my="md"
                   label="Warranty Order"
                   {...form.getInputProps("is_warranty_so", {
                     type: "checkbox",
                   })}
                 />
+                <Collapse in={form.values.is_warranty_so}>
+                  <NumberInput
+                    w={rem(200)}
+                    label="Warranty Cost"
+                    placeholder="e.g. 99.99"
+                    leftSection="$"
+                    {...form.getInputProps("warranty_order_cost")}
+                  />
+                </Collapse>
               </Fieldset>
             </Stack>
           </Paper>

@@ -31,6 +31,7 @@ import {
   Grid,
   Modal,
   Collapse,
+  rem,
 } from "@mantine/core";
 import dayjs from "dayjs";
 import { DateInput } from "@mantine/dates";
@@ -192,6 +193,7 @@ export default function EditServiceOrder({
       hours_estimated: 0,
       chargeable: false,
       is_warranty_so: false,
+      warranty_order_cost: undefined,
       comments: "",
       parts: [],
     },
@@ -217,6 +219,7 @@ export default function EditServiceOrder({
         hours_estimated: serviceOrderData.hours_estimated || 0,
         chargeable: serviceOrderData.chargeable || false,
         is_warranty_so: serviceOrderData.is_warranty_so || false,
+        warranty_order_cost: serviceOrderData.warranty_order_cost || undefined,
         comments: serviceOrderData.comments || "",
         completed_at: serviceOrderData.completed_at
           ? new Date(serviceOrderData.completed_at)
@@ -252,6 +255,7 @@ export default function EditServiceOrder({
           hours_estimated: values.hours_estimated,
           chargeable: values.chargeable,
           is_warranty_so: values.is_warranty_so,
+          warranty_order_cost: values.warranty_order_cost,
           comments: values.comments,
           completed_at: values.completed_at,
         })
@@ -476,43 +480,59 @@ export default function EditServiceOrder({
                   />
                 </Box>
 
-                <Group mt="md">
-                  <Switch
-                    size="md"
-                    color="violet"
-                    label="Chargeable"
-                    {...form.getInputProps("chargeable", { type: "checkbox" })}
-                  />
-                  <Switch
-                    size="md"
-                    color="violet"
-                    label="Warranty Order"
-                    {...form.getInputProps("is_warranty_so", {
-                      type: "checkbox",
-                    })}
-                  />
-                  <Switch
-                    label="Mark as Completed"
-                    size="md"
-                    color="violet"
-                    checked={!!form.values.completed_at}
-                    onChange={(event) => {
-                      const isChecked = event.currentTarget.checked;
-                      form.setFieldValue(
-                        "completed_at",
-                        isChecked ? new Date() : null
-                      );
-                    }}
-                  />
-                  <Collapse in={!!form.values.completed_at}>
-                    <Text size="sm" c="dimmed">
-                      Completed on:{" "}
-                      {dayjs(form.values.completed_at).format(
-                        "YYYY-MM-DD HH:mm"
-                      )}
-                    </Text>
-                  </Collapse>
-                </Group>
+                <SimpleGrid cols={2} p="md" mih={rem(100)}>
+                  <Group>
+                    <Switch
+                      size="md"
+                      color="violet"
+                      label="Chargeable"
+                      {...form.getInputProps("chargeable", {
+                        type: "checkbox",
+                      })}
+                    />
+
+                    <Switch
+                      size="md"
+                      color="violet"
+                      label="Warranty Order"
+                      {...form.getInputProps("is_warranty_so", {
+                        type: "checkbox",
+                      })}
+                    />
+                    <Collapse in={form.values.is_warranty_so} keepMounted>
+                      <NumberInput
+                        w={rem(200)}
+                        label="Warranty Cost"
+                        placeholder="e.g. 99.99"
+                        leftSection="$"
+                        {...form.getInputProps("warranty_order_cost")}
+                      />
+                    </Collapse>
+                  </Group>
+                  <Group justify="end">
+                    <Switch
+                      label="Mark as Completed"
+                      size="md"
+                      color="violet"
+                      checked={!!form.values.completed_at}
+                      onChange={(event) => {
+                        const isChecked = event.currentTarget.checked;
+                        form.setFieldValue(
+                          "completed_at",
+                          isChecked ? new Date() : null
+                        );
+                      }}
+                    />
+                    <Collapse in={!!form.values.completed_at} keepMounted>
+                      <Text size="sm" c="dimmed" w={rem(250)}>
+                        Completed on:
+                        {dayjs(form.values.completed_at).format(
+                          "YYYY-MM-DD HH:mm"
+                        )}
+                      </Text>
+                    </Collapse>
+                  </Group>
+                </SimpleGrid>
               </Fieldset>
             </Stack>
           </Paper>
