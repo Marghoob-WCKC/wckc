@@ -90,7 +90,20 @@ export default function NewServiceOrder({
       hours_estimated: 0,
       chargeable: false,
       is_warranty_so: false,
-      comments: "",
+      comments: `
+<p><strong>Service Scheduled:</strong></p>
+<ul>
+  <li>Inspect inside each cabs and drws - inside &amp; out</li>
+  <li>Adjustments - alignment &amp; slides/hinges functioning</li>
+  <li>Touch ups - inside &amp; outside of ALL cabs/drws</li>
+  <li>Install Toe kicks - cut &amp; on site</li>
+  <li>Fill nail/pin holes - kicks, soffit/riser, etc…</li>
+  <li>Dapping - Bumpers - Screw caps – hinge stops – nail fills (kick/riser/drwboxes)</li>
+  <li>Secure panels if require – check L brackets on island</li>
+</ul>
+<p></p>
+<p><em>*Not inspected when final typed</em></p>
+`,
       parts: [],
     },
     validate: zodResolver(ServiceOrderSchema),
