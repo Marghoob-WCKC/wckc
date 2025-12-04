@@ -59,7 +59,7 @@ export function useProdTable({
         const dbColumn = id === "client" ? "shipping_client_name" : id;
         query = query.order(dbColumn, { ascending: !desc });
       } else {
-        query = query.order("ship_schedule", { ascending: true });
+        query = query.order("job_number", { ascending: false });
       }
       const from = pagination.pageIndex * pagination.pageSize;
       const to = from + pagination.pageSize - 1;

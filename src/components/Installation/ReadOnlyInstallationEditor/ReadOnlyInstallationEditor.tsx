@@ -42,6 +42,7 @@ import {
 import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
 import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
 import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/RelatedServiceOrders";
+import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 
 // --- Types ---
 type JoinedCabinet = Tables<"cabinets"> & {
@@ -508,6 +509,11 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
                     >
                       {install?.has_shipped ? "YES" : "NO"}
                     </Badge>
+                    {install?.partially_shipped && (
+                      <Badge color="orange" variant="outline" mx={4}>
+                        Partially Shipped
+                      </Badge>
+                    )}
                   </Box>
                 </SimpleGrid>
               </Card>
@@ -526,6 +532,7 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
 
               {/* Related Service Orders */}
               <RelatedServiceOrders jobId={jobId} readOnly />
+              <RelatedBackorders jobId={String(jobId)} readOnly />
             </Stack>
           </Grid.Col>
 
@@ -574,7 +581,7 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
                       </Text>
                       {step.date && (
                         <Text size="xs" fw={500}>
-                          {dayjs(step.date).format("MMM D, HH:mm")}
+                          {dayjs(step.date).format("YYYY-MM-DD, HH:mm")}
                         </Text>
                       )}
                     </Timeline.Item>
@@ -621,7 +628,7 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
                     >
                       {step.date && (
                         <Text size="xs" c="dimmed">
-                          {dayjs(step.date).format("MMM D")}
+                          {dayjs(step.date).format("YYYY-MM-DD, HH:mm")}
                         </Text>
                       )}
                     </Timeline.Item>

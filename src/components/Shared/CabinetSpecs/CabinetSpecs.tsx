@@ -89,7 +89,7 @@ export default function CabinetSpecs({ cabinet }: CabinetSpecsProps) {
 
       <Grid>
         {/* Left Column: Standard Text Details */}
-        <Grid.Col span={8}>
+        <Grid.Col span={7}>
           <StackSpacing>
             <SpecRow label="Box" value={getDisplayValue(cabinet, "box")} />
             {/* FIX: Use getDisplayValue for Foreign Key fields */}
@@ -122,11 +122,13 @@ export default function CabinetSpecs({ cabinet }: CabinetSpecsProps) {
         </Grid.Col>
 
         {/* Right Column: Booleans & Grouped Specs */}
-        <Grid.Col span={4}>
+        <Grid.Col span={5}>
           <StackSpacing>
             {/* Glass Group */}
             <div>
-              <BooleanRow label="Glass" value={cabinet.glass} />
+              {cabinet.glass && (
+                <BooleanRow label="Glass" value={cabinet.glass} />
+              )}
               {cabinet.glass && (
                 <SpecRow
                   label="Glass Type"
@@ -137,10 +139,12 @@ export default function CabinetSpecs({ cabinet }: CabinetSpecsProps) {
 
             {/* Parts Only Group */}
             <div>
-              <BooleanRow
-                label="Doors Parts Only"
-                value={cabinet.doors_parts_only}
-              />
+              {cabinet.doors_parts_only && (
+                <BooleanRow
+                  label="Doors Parts Only"
+                  value={cabinet.doors_parts_only}
+                />
+              )}
               {cabinet.doors_parts_only && (
                 <SpecRow
                   label="Piece Count"

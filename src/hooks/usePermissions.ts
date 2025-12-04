@@ -19,18 +19,17 @@ export function usePermissions() {
   // Feature Permissions
   const canEditSales = isAdmin || isDesigner || isScheduler;
   const canEditProduction = isAdmin || isScheduler;
-  const canEditInstallation = isAdmin || isInstaller || isService || isPlant;
-  const canEditServiceOrders = isAdmin || isInstaller || isService || isPlant;
+  const canEditInstallation = isAdmin || isInstaller || isService;
+  const canEditServiceOrders = isAdmin || isInstaller || isService;
   const canEditClients =
     isAdmin ||
     isDesigner ||
     isScheduler ||
     isInstaller ||
     isService ||
-    isPlant ||
     isReception;
   const canEditPlant = isAdmin || isInstaller || isService || isPlant;
-  const canEditInstallers = isAdmin || isInstaller || isService || isPlant;
+  const canEditInstallers = isAdmin || isInstaller || isService;
   const canEditPurchasing = isAdmin || isScheduler;
   const canEditInvoices = isAdmin || isReception || isService;
   const canEditReports = true;
