@@ -40,7 +40,6 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 
 // --- 1. Type Definitions ---
-// We only fetch specific fields now
 type SalesTrendData = Pick<Tables<"sales_orders">, "designer" | "created_at">;
 
 // Gradient Palette
@@ -106,8 +105,10 @@ const StatCard = ({
 
 const SalesSpikeChart = ({
   data,
+  yearLabel,
 }: {
   data: { label: string; count: number }[];
+  yearLabel: string;
 }) => {
   const maxCount = Math.max(...data.map((d) => d.count || 0), 1);
 
@@ -115,7 +116,7 @@ const SalesSpikeChart = ({
     <Paper p="md" shadow="sm" radius="md" withBorder style={{ height: "100%" }}>
       <Group justify="space-between" mb="md">
         <Title order={5} c="dimmed">
-          Monthly Sales Volume {dayjs().year()}
+          Sales Volume ({yearLabel})
         </Title>
         <FaChartBar color="#4A00E0" />
       </Group>
@@ -160,7 +161,7 @@ const SalesSpikeChart = ({
                 c="dimmed"
                 style={{ fontSize: "10px", whiteSpace: "nowrap" }}
               >
-                {item.label.split(" ")[0]}
+                {item.label}
               </Text>
             </Stack>
           );
@@ -174,16 +175,23 @@ const SalesSpikeChart = ({
 export default function ManagerDashboardClient() {
   const { supabase, isAuthenticated } = useSupabase();
 
+  // Helper to get Fiscal Start Date (Feb 1st)
+  const getFiscalStart = () => {
+    const now = dayjs();
+    // If current month is January (index 0), fiscal year started previous calendar year.
+    // If Feb (1) or later, fiscal year started this calendar year.
+    const startYear = now.month() < 1 ? now.year() - 1 : now.year();
+    return dayjs().year(startYear).month(1).date(1).startOf("day");
+  };
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["manager-dashboard-optimized"],
+    queryKey: ["manager-dashboard-fiscal"],
     enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     queryFn: async () => {
+      const fiscalStart = getFiscalStart();
+      const fiscalStartISO = fiscalStart.toISOString();
       const todayISO = dayjs().startOf("day").toISOString();
-      const oneYearAgoISO = dayjs()
-        .subtract(11, "month")
-        .startOf("month")
-        .toISOString();
 
       // Execute all optimized queries in parallel
       const [
@@ -195,17 +203,18 @@ export default function ManagerDashboardClient() {
         salesTrendRes,
         shipmentsRes,
       ] = await Promise.all([
-        // 1. Count Active Quotes
+        // 1. Count Active Quotes (Total in pipeline)
         supabase
           .from("sales_orders")
           .select("*", { count: "exact", head: true })
           .eq("stage", "QUOTE"),
 
-        // 2. Count Total Sold Jobs (Lifetime)
+        // 2. Count Total Sold Jobs (THIS FISCAL YEAR ONLY)
         supabase
           .from("sales_orders")
           .select("*", { count: "exact", head: true })
-          .eq("stage", "SOLD"),
+          .eq("stage", "SOLD")
+          .gte("created_at", fiscalStartISO),
 
         // 3. Count Open Service Orders
         supabase
@@ -213,27 +222,25 @@ export default function ManagerDashboardClient() {
           .select("*", { count: "exact", head: true })
           .is("completed_at", null),
 
-        // 4. Count Total Production Jobs
+        // 4. Count Total Production Jobs (All time active)
         supabase
           .from("production_schedule")
           .select("*", { count: "exact", head: true }),
 
-        // 5. Count Incomplete Production Jobs (Assembly not done)
+        // 5. Count Incomplete Production Jobs
         supabase
           .from("production_schedule")
           .select("*", { count: "exact", head: true })
           .is("assembly_completed_actual", null),
 
-        // 6. Fetch Sales Trend Data (Last 12 Months Only)
-        // Optimized: Only fetching designer & date, filtered by date
+        // 6. Fetch Sales Trend Data (THIS FISCAL YEAR ONLY)
         supabase
           .from("sales_orders")
           .select("designer, created_at")
           .eq("stage", "SOLD")
-          .gte("created_at", oneYearAgoISO),
+          .gte("created_at", fiscalStartISO),
 
         // 7. Fetch Upcoming Shipments (Limit 5)
-        // Optimized: Uses DB ordering and limiting
         supabase
           .from("production_schedule")
           .select("prod_id, ship_schedule, jobs(job_number)")
@@ -259,6 +266,7 @@ export default function ManagerDashboardClient() {
         countProdIncomplete: prodIncompleteRes.count || 0,
         salesTrend: salesTrendRes.data as SalesTrendData[],
         upcomingShipments: shipmentsRes.data || [],
+        fiscalYearStart: fiscalStart.year(),
       };
     },
   });
@@ -267,26 +275,27 @@ export default function ManagerDashboardClient() {
   const metrics = useMemo(() => {
     if (!data) return null;
 
-    // A. Chart Data Preparation
+    const fiscalStart = getFiscalStart();
+
+    // A. Chart Data Preparation (Feb -> Jan)
     const monthlyCounts: Record<string, number> = {};
     const designerCounts: Record<string, number> = {};
 
-    // Initialize 12 buckets
+    // Initialize 12 buckets starting from Fiscal Start
     const chartData: { label: string; count: number }[] = [];
-    const today = dayjs();
-    let loopDate = today.startOf("year");
+    let loopDate = fiscalStart;
 
     for (let i = 0; i < 12; i++) {
       const key = loopDate.format("YYYY-MM");
       monthlyCounts[key] = 0;
       chartData.push({
-        label: loopDate.format("MMM"), // Label for display
-        count: 0, // Placeholder
+        label: loopDate.format("MMM"), // Feb, Mar, ... Jan
+        count: 0,
       });
       loopDate = loopDate.add(1, "month");
     }
 
-    // B. Process Sales Trend Data (Client-side aggregation of the small filtered dataset)
+    // B. Process Sales Trend Data (Client-side aggregation)
     data.salesTrend.forEach((sale) => {
       // 1. Designer Stats
       const designer = sale.designer || "Unknown";
@@ -301,10 +310,9 @@ export default function ManagerDashboardClient() {
       }
     });
 
-    // Map counts to chart data array (preserving order)
+    // Map aggregated counts to chart array (preserving order)
     const finalChartData = chartData.map((d, index) => {
-      // Re-calculate key from start date to match the map
-      const key = today.startOf("year").add(index, "month").format("YYYY-MM");
+      const key = fiscalStart.add(index, "month").format("YYYY-MM");
       return {
         ...d,
         count: monthlyCounts[key] || 0,
@@ -321,7 +329,6 @@ export default function ManagerDashboardClient() {
     const flatShipments = data.upcomingShipments.map((s: any) => ({
       prod_id: s.prod_id,
       ship_schedule: s.ship_schedule,
-      // Handle array or object return from 'jobs' relation
       job_number: Array.isArray(s.jobs)
         ? s.jobs[0]?.job_number
         : s.jobs?.job_number || "—",
@@ -336,6 +343,7 @@ export default function ManagerDashboardClient() {
       topDesigners,
       upcomingShipments: flatShipments,
       monthlyChartData: finalChartData,
+      fiscalLabel: `FY ${data.fiscalYearStart}-${data.fiscalYearStart + 1}`,
     };
   }, [data]);
 
@@ -406,16 +414,16 @@ export default function ManagerDashboardClient() {
               value={metrics.totalQuotes}
               icon={FaUsers}
               color="blue"
-              subtext="Potential Jobs"
+              subtext="Pipeline Potential"
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
             <StatCard
-              title="Total Sold Jobs"
+              title="Sold Jobs"
               value={metrics.totalSold}
               icon={FaHome}
               color="teal"
-              subtext="Converted Orders"
+              subtext={metrics.fiscalLabel}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
@@ -497,7 +505,10 @@ export default function ManagerDashboardClient() {
 
           {/* Monthly Spike Chart */}
           <Grid.Col span={{ base: 12, md: 8 }}>
-            <SalesSpikeChart data={metrics.monthlyChartData} />
+            <SalesSpikeChart
+              data={metrics.monthlyChartData}
+              yearLabel={metrics.fiscalLabel}
+            />
           </Grid.Col>
         </Grid>
 
@@ -508,7 +519,7 @@ export default function ManagerDashboardClient() {
             <Paper p="md" shadow="sm" radius="md" withBorder>
               <Group justify="space-between" mb="md">
                 <Title order={5} c="dimmed">
-                  Top Designers (Last 12 Mo)
+                  Top Designers ({metrics.fiscalLabel})
                 </Title>
                 <FaUsers color="gray" />
               </Group>

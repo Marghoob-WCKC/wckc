@@ -330,9 +330,9 @@ export default function NewSale() {
       manual_job_suffix: "",
       is_memo: false,
       cabinet: {
-        species: "", // Now stores ID as string
-        color: "", // Now stores ID as string
-        door_style: "", // Now stores ID as string
+        species: "",
+        color: "",
+        door_style: "",
         finish: "",
         glaze: "",
         top_drawer_front: "",
@@ -616,7 +616,7 @@ export default function NewSale() {
                   offLabel="Memo ?"
                   size="xl"
                   thumbIcon={<FaCheckCircle />}
-                  checked={form.values.is_memo}
+                  checked={form.values.is_memo === true}
                   onChange={(e) =>
                     form.setFieldValue("is_memo", e.currentTarget.checked)
                   }

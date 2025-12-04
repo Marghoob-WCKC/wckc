@@ -34,6 +34,7 @@ import {
   Accordion,
   SimpleGrid,
   Anchor,
+  Indicator,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { GrEmergency } from "react-icons/gr";
@@ -441,18 +442,30 @@ export default function PurchasingTable() {
 
         return (
           <Box style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <StatusCell
-              label={headerTitle}
-              orderedAt={row[ordKey] as string}
-              receivedAt={row[recKey] as string}
-              receivedIncompleteAt={row[incKey] as string}
-              onUpdate={handleUpdate}
-              onUpdateIncomplete={() => handleIncompleteReceipt(row, keyPrefix)}
-            />
-            {showWarning && (
-              <Tooltip label="Needs Ordering (Outsourced)">
-                <GrEmergency size={10} color="#ff0000ff" />
-              </Tooltip>
+            {showWarning ? (
+              <Indicator inline processing color="red" size={8} w={"100%"}>
+                <StatusCell
+                  label={headerTitle}
+                  orderedAt={row[ordKey] as string}
+                  receivedAt={row[recKey] as string}
+                  receivedIncompleteAt={row[incKey] as string}
+                  onUpdate={handleUpdate}
+                  onUpdateIncomplete={() =>
+                    handleIncompleteReceipt(row, keyPrefix)
+                  }
+                />
+              </Indicator>
+            ) : (
+              <StatusCell
+                label={headerTitle}
+                orderedAt={row[ordKey] as string}
+                receivedAt={row[recKey] as string}
+                receivedIncompleteAt={row[incKey] as string}
+                onUpdate={handleUpdate}
+                onUpdateIncomplete={() =>
+                  handleIncompleteReceipt(row, keyPrefix)
+                }
+              />
             )}
           </Box>
         );

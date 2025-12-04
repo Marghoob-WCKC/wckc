@@ -42,11 +42,12 @@ import {
   FaHome,
 } from "react-icons/fa";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { useQuery } from "@tanstack/react-query"; // Import useQuery
 import { useSupabase } from "@/hooks/useSupabase"; // Ensure Supabase hook is imported
 import { useSalesTable } from "@/hooks/useSalesTable";
 import { Views } from "@/types/db";
-
+dayjs.extend(utc);
 type SalesTableView = Views<"sales_table_view">;
 export default function SalesTable() {
   const router = useRouter();
@@ -222,7 +223,7 @@ export default function SalesTable() {
         size: 100,
         cell: (info) => {
           const date = info.getValue<string>();
-          return date ? dayjs(date).format("YYYY-MM-DD") : "—";
+          return date ? dayjs.utc(date).format("YYYY-MM-DD") : "—";
         },
       }),
       columnHelper.display({
