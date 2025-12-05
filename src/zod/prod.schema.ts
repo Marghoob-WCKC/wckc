@@ -20,5 +20,6 @@ export const schedulingSchema = z.object({
   cut_melamine_completed_actual: z.string().nullable(),
   paint_completed_actual: z.string().nullable(),
   assembly_completed_actual: z.string().nullable(),
+  production_comments: z.string().nullable().optional(),
 });
 export type SchedulingType = z.infer<typeof schedulingSchema>;

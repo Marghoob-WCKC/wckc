@@ -36,6 +36,7 @@ import {
   FaShippingFast,
   FaArrowLeft,
   FaRegCircle,
+  FaClipboardList,
 } from "react-icons/fa";
 import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
 import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
@@ -413,6 +414,17 @@ export default function ReadOnlyScheduler({ jobId }: { jobId: number }) {
                   </SimpleGrid>
                 </Card>
               </SimpleGrid>
+              <Card shadow="sm" padding="lg" radius="md" withBorder>
+                <SectionTitle
+                  icon={FaClipboardList}
+                  title="Production Notes"
+                  color="violet"
+                />
+                <Text size="sm" style={{ whiteSpace: "pre-wrap" }}>
+                  {data.production_schedule.production_comments ||
+                    "No notes recorded."}
+                </Text>
+              </Card>
             </Stack>
           </Grid.Col>
 

@@ -27,6 +27,7 @@ import {
   Grid,
   ThemeIcon,
   Badge,
+  Textarea,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import dayjs from "dayjs";
@@ -162,6 +163,7 @@ export default function EditProductionSchedulePage({
       ship_schedule: null,
       in_plant_actual: null,
       ship_status: "unprocessed",
+      production_comments: null,
       doors_completed_actual: null,
       cut_finish_completed_actual: null,
       custom_finish_completed_actual: null,
@@ -571,6 +573,14 @@ export default function EditProductionSchedulePage({
                       </Box>
                     ))}
                   </Stack>
+                  <Box mt="xl">
+                    <Textarea
+                      label="Production & Scheduling Comments"
+                      placeholder="Enter notes, exceptions, or special instructions here..."
+                      minRows={6}
+                      {...form.getInputProps("production_comments")}
+                    />
+                  </Box>
                 </Paper>
               </Paper>
             </Stack>

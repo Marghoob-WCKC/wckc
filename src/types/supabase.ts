@@ -594,6 +594,7 @@ export type Database = {
           paint_out_schedule: string | null
           placement_date: string | null
           prod_id: number
+          production_comments: string | null
           received_date: string | null
           rush: boolean
           ship_confirmed_legacy: boolean | null
@@ -621,6 +622,7 @@ export type Database = {
           paint_out_schedule?: string | null
           placement_date?: string | null
           prod_id?: number
+          production_comments?: string | null
           received_date?: string | null
           rush?: boolean
           ship_confirmed_legacy?: boolean | null
@@ -648,6 +650,7 @@ export type Database = {
           paint_out_schedule?: string | null
           placement_date?: string | null
           prod_id?: number
+          production_comments?: string | null
           received_date?: string | null
           rush?: boolean
           ship_confirmed_legacy?: boolean | null
