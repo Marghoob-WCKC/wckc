@@ -46,6 +46,8 @@ import dayjs from "dayjs";
 import { DateInput } from "@mantine/dates";
 import { useProdTable } from "@/hooks/useProdTable";
 import { Views } from "@/types/db";
+import { useDisclosure } from "@mantine/hooks";
+import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 
 // Use the View Type
 type ProductionListView = Views<"prod_table_view">;
@@ -63,7 +65,14 @@ export default function ProdTable() {
   // Two stages of filters: Inputs (UI) and Active (Query)
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
+  const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
+  const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
+    useDisclosure(false);
 
+  const handleJobClick = (id: number) => {
+    setDrawerJobId(id);
+    openDrawer();
+  };
   // Helpers
   const setInputFilterValue = (
     id: string,
@@ -114,9 +123,16 @@ export default function ProdTable() {
         <Group gap={4}>
           <Text fw={600} size="sm">
             <Anchor
-              href={`/dashboard/sales/editsale/${info.row.original.sales_order_id}`}
-              style={{ color: "#6100bbff", fontWeight: "bold" }}
-              onClick={(e) => e.stopPropagation()}
+              component="button"
+              size="sm"
+              fw={600}
+              w="100%"
+              c="#6f00ffff"
+              onClick={(e) => {
+                e.stopPropagation();
+                const jobId = info.row.original.id;
+                if (jobId) handleJobClick(jobId);
+              }}
             >
               {info.getValue()}
             </Anchor>
@@ -632,6 +648,11 @@ export default function ProdTable() {
           onChange={(page) => table.setPageIndex(page - 1)}
         />
       </Box>
+      <JobDetailsDrawer
+        jobId={drawerJobId}
+        opened={drawerOpened}
+        onClose={closeDrawer}
+      />
     </Box>
   );
 }

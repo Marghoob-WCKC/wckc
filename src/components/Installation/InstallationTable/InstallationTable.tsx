@@ -47,6 +47,8 @@ import dayjs from "dayjs";
 import { DateInput } from "@mantine/dates";
 import { useInstallationTable } from "@/hooks/useInstallationTable";
 import { Views } from "@/types/db";
+import { useDisclosure } from "@mantine/hooks";
+import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 
 type InstallationJobView = Views<"installation_table_view">;
 
@@ -60,7 +62,14 @@ export default function InstallationTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
+  const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
+  const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
+    useDisclosure(false);
 
+  const handleJobClick = (id: number) => {
+    setDrawerJobId(id);
+    openDrawer();
+  };
   const setInputFilterValue = (
     id: string,
     value: string | undefined | null
@@ -105,22 +114,29 @@ export default function InstallationTable() {
       size: 150,
       minSize: 100,
       cell: (info) => (
-        <Group gap={4}>
-          <Text fw={600} size="sm">
-            <Anchor
-              href={`/dashboard/sales/editsale/${info.row.original.sales_order_id}`}
-              style={{ color: "#6100bbff", fontWeight: "bold" }}
-              onClick={(e) => e.stopPropagation()}
-            >
+        <Anchor
+          component="button"
+          size="sm"
+          fw={600}
+          w="100%"
+          c="#6f00ffff"
+          onClick={(e) => {
+            e.stopPropagation();
+            const jobId = info.row.original.job_id;
+            if (jobId) handleJobClick(jobId);
+          }}
+        >
+          <Group gap={4}>
+            <Text fw={600} size="sm">
               {info.getValue()}
-            </Anchor>
-          </Text>
-          {info.row.original.rush && (
-            <Tooltip label="RUSH JOB">
-              <FaFire size={12} color="red" />
-            </Tooltip>
-          )}
-        </Group>
+            </Text>
+            {info.row.original.rush && (
+              <Tooltip label="RUSH JOB">
+                <FaFire size={12} color="red" />
+              </Tooltip>
+            )}
+          </Group>
+        </Anchor>
       ),
     }),
 
@@ -540,6 +556,11 @@ export default function InstallationTable() {
           onChange={(page) => table.setPageIndex(page - 1)}
         />
       </Box>
+      <JobDetailsDrawer
+        jobId={drawerJobId}
+        opened={drawerOpened}
+        onClose={closeDrawer}
+      />
     </Box>
   );
 }

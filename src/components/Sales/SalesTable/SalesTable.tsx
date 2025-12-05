@@ -31,6 +31,7 @@ import {
   ThemeIcon,
   Title,
   SimpleGrid,
+  Anchor,
 } from "@mantine/core";
 import {
   FaPlus,
@@ -47,6 +48,8 @@ import { useQuery } from "@tanstack/react-query"; // Import useQuery
 import { useSupabase } from "@/hooks/useSupabase"; // Ensure Supabase hook is imported
 import { useSalesTable } from "@/hooks/useSalesTable";
 import { Views } from "@/types/db";
+import { useDisclosure } from "@mantine/hooks";
+import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 dayjs.extend(utc);
 type SalesTableView = Views<"sales_table_view">;
 export default function SalesTable() {
@@ -61,7 +64,14 @@ export default function SalesTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
+  const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
+  const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
+    useDisclosure(false);
 
+  const handleJobClick = (id: number) => {
+    setDrawerJobId(id);
+    openDrawer();
+  };
   // Helpers
   const setInputFilterValue = (id: string, value: string) => {
     setInputFilters((prev) => {
@@ -142,16 +152,28 @@ export default function SalesTable() {
     () => [
       columnHelper.accessor("job_number", {
         header: "Job Number",
-        size: 100,
+        size: 70,
         cell: (info) => {
           if (info.getValue()) {
-            return <Text fw={600}>{info.getValue()}</Text>;
-          } else {
             return (
-              <Text c="gray" size="xs">
-                Unassigned (Quote)
-              </Text>
+              <Anchor
+                component="button"
+                size="sm"
+                fw={600}
+                w="100%"
+                style={{ textAlign: "left" }}
+                c="#6f00ffff"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const jobId = info.row.original.job_id;
+                  if (jobId) handleJobClick(jobId);
+                }}
+              >
+                <Text fw={600}>{info.getValue()}</Text>
+              </Anchor>
             );
+          } else {
+            return null;
           }
         },
       }),
@@ -554,6 +576,11 @@ export default function SalesTable() {
           onChange={(page) => table.setPageIndex(page - 1)}
         />
       </Box>
+      <JobDetailsDrawer
+        jobId={drawerJobId}
+        opened={drawerOpened}
+        onClose={closeDrawer}
+      />
     </Box>
   );
 }

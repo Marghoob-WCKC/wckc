@@ -54,6 +54,7 @@ import { usePurchasingTable } from "@/hooks/usePurchasingTable";
 import dayjs from "dayjs";
 import { notifications } from "@mantine/notifications";
 import { Views } from "@/types/db";
+import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 
 // Extend the View type with the new incomplete receipt columns
 type PurchasingTableView = Views<"purchasing_table_view"> & {
@@ -174,7 +175,14 @@ export default function PurchasingTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
+  const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
+  const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
+    useDisclosure(false);
 
+  const handleJobClick = (id: number) => {
+    setDrawerJobId(id);
+    openDrawer();
+  };
   // Modal State - for general comment editing
   const [
     commentModalOpened,
@@ -474,14 +482,22 @@ export default function PurchasingTable() {
 
   const columns = [
     columnHelper.accessor("job_number", {
-      header: "Job #",
+      header: "Job Number",
       size: 120,
       cell: (info) => (
         <Text fw={600} size="sm">
           <Anchor
-            href={`/dashboard/sales/editsale/${info.row.original.sales_order_id}`}
-            style={{ color: "#6100bbff", fontWeight: "bold" }}
-            onClick={(e) => e.stopPropagation()}
+            component="button"
+            size="sm"
+            fw={600}
+            w="100%"
+            c="#6f00ffff"
+            style={{ textAlign: "left" }}
+            onClick={(e) => {
+              e.stopPropagation();
+              const jobId = info.row.original.job_id;
+              if (jobId) handleJobClick(jobId);
+            }}
           >
             {info.getValue()}
           </Anchor>
@@ -841,6 +857,11 @@ export default function PurchasingTable() {
           </Group>
         </Stack>
       </Modal>
+      <JobDetailsDrawer
+        jobId={drawerJobId}
+        opened={drawerOpened}
+        onClose={closeDrawer}
+      />
     </Box>
   );
 }

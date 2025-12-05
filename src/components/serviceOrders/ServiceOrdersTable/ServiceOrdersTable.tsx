@@ -53,6 +53,8 @@ import { useServiceOrdersTable } from "@/hooks/useServiceOrdersTable";
 import { Views } from "@/types/db";
 import { useUser } from "@clerk/nextjs";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useDisclosure } from "@mantine/hooks";
+import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 dayjs.extend(utc);
 // Define shape based on the View structure
 type ServiceOrderView = Views<"service_orders_table_view">;
@@ -71,7 +73,14 @@ export default function ServiceOrdersTable() {
   // inputFilters = UI state, activeFilters = Query state
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
+  const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
+  const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
+    useDisclosure(false);
 
+  const handleJobClick = (id: number) => {
+    setDrawerJobId(id);
+    openDrawer();
+  };
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | "OPEN" | "COMPLETED"
   >("ALL");
@@ -138,9 +147,16 @@ export default function ServiceOrdersTable() {
       cell: (info) => (
         <Text fw={600} size="sm">
           <Anchor
-            href={`/dashboard/sales/editsale/${info.row.original.sales_order_id}`}
-            style={{ color: "#6100bbff", fontWeight: "bold" }}
-            onClick={(e) => e.stopPropagation()}
+            component="button"
+            size="sm"
+            fw={600}
+            w="100%"
+            c="#6f00ffff"
+            onClick={(e) => {
+              e.stopPropagation();
+              const jobId = info.row.original.job_id;
+              if (jobId) handleJobClick(jobId);
+            }}
           >
             {info.getValue()}
           </Anchor>
@@ -571,6 +587,11 @@ export default function ServiceOrdersTable() {
           onChange={(page) => table.setPageIndex(page - 1)}
         />
       </Box>
+      <JobDetailsDrawer
+        jobId={drawerJobId}
+        opened={drawerOpened}
+        onClose={closeDrawer}
+      />
     </Box>
   );
 }

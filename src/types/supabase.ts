@@ -71,6 +71,20 @@ export type Database = {
             referencedRelation: "prod_table_view"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "sales_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders_table_view"
+            referencedColumns: ["job_id"]
+          },
         ]
       }
       cabinets: {
@@ -454,6 +468,20 @@ export type Database = {
             referencedRelation: "prod_table_view"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "invoices_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "sales_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "invoices_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders_table_view"
+            referencedColumns: ["job_id"]
+          },
         ]
       }
       jobs: {
@@ -461,6 +489,7 @@ export type Database = {
           created_at: string
           id: number
           installation_id: number | null
+          is_active: boolean
           job_base_number: number
           job_number: string
           job_suffix: string | null
@@ -472,6 +501,7 @@ export type Database = {
           created_at?: string
           id?: number
           installation_id?: number | null
+          is_active?: boolean
           job_base_number: number
           job_number?: string
           job_suffix?: string | null
@@ -483,6 +513,7 @@ export type Database = {
           created_at?: string
           id?: number
           installation_id?: number | null
+          is_active?: boolean
           job_base_number?: number
           job_number?: string
           job_suffix?: string | null
@@ -709,6 +740,20 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "prod_table_view"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "sales_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "service_orders_table_view"
+            referencedColumns: ["job_id"]
           },
         ]
       }
@@ -986,6 +1031,20 @@ export type Database = {
             referencedRelation: "prod_table_view"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "sales_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders_table_view"
+            referencedColumns: ["job_id"]
+          },
         ]
       }
       species: {
@@ -1207,6 +1266,20 @@ export type Database = {
             referencedRelation: "prod_table_view"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "sales_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "service_orders_table_view"
+            referencedColumns: ["job_id"]
+          },
         ]
       }
       sales_table_view: {
@@ -1216,6 +1289,7 @@ export type Database = {
           designer: string | null
           id: number | null
           invoice_balance: number | null
+          job_id: number | null
           job_number: string | null
           sales_order_number: string | null
           shipping_city: string | null
@@ -1238,6 +1312,7 @@ export type Database = {
           installer_first: string | null
           installer_last: string | null
           installer_requested: boolean | null
+          job_id: number | null
           job_number: string | null
           sales_order_id: number | null
           service_order_id: number | null

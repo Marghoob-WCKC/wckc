@@ -288,7 +288,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
           `
             *, 
             client: client(*), 
-            job: jobs(id, job_number, job_base_number, job_suffix),
+            job: jobs(id, job_number, job_base_number, job_suffix, is_active),
             cabinet: cabinets(
                 *, 
                 species_name:species(Species), 
@@ -346,6 +346,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
       delivery_type: "",
       manual_job_base: undefined,
       manual_job_suffix: "",
+      is_active: true,
       is_memo: false,
       flooring_type: "",
       flooring_clearance: "",
@@ -395,6 +396,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         delivery_type: salesOrderData.delivery_type,
         manual_job_base: salesOrderData.job?.job_base_number,
         manual_job_suffix: salesOrderData.job?.job_suffix || "",
+        is_active: salesOrderData.job?.is_active || true,
         is_memo: salesOrderData.is_memo,
         flooring_type: salesOrderData.flooring_type || "",
         flooring_clearance: salesOrderData.flooring_clearance || "",
@@ -543,6 +545,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
             .update({
               job_base_number: manual_job_base,
               job_suffix: suffixStr,
+              is_active: values.is_active,
             })
             .eq("id", currentJobId);
 
@@ -552,6 +555,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
             sales_order_id: salesOrderId,
             job_base_number: manual_job_base,
             job_suffix: suffixStr,
+            is_active: values.is_active,
           });
 
           if (jobInsertError) throw jobInsertError;
@@ -791,41 +795,74 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                   });
                 }}
               />
-
-              <Switch
-                onLabel="Memo"
-                offLabel="Memo"
-                size="xl"
-                thumbIcon={isMemoChecked ? <FaCheckCircle /> : <FaCircle />}
-                checked={!!isMemoChecked}
-                onChange={(e) =>
-                  form.setFieldValue(
-                    "is_memo",
-                    e.currentTarget.checked ? true : false
-                  )
-                }
-                disabled
-                styles={{
-                  track: {
-                    cursor: "pointer",
-                    background: isMemoChecked
-                      ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
-                      : "linear-gradient(135deg, #ddddddff 0%, #dadadaff 100%)",
-                    color: isMemoChecked ? "white" : "black",
-                    border: "none",
-                    padding: "0 0.2rem",
-                    width: "6rem",
-                  },
-                  thumb: {
-                    background: isMemoChecked ? "#218838" : "#ffffffff",
-                  },
-                  root: {
-                    display: "flex",
-                    alignItems: "flex-end",
-                    justifyContent: "flex-end",
-                  },
+              <Group
+                style={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  justifyContent: "flex-end",
                 }}
-              />
+              >
+                <Switch
+                  onLabel="Memo"
+                  offLabel="Memo"
+                  size="xl"
+                  thumbIcon={isMemoChecked ? <FaCheckCircle /> : <FaCircle />}
+                  checked={!!isMemoChecked}
+                  onChange={(e) =>
+                    form.setFieldValue(
+                      "is_memo",
+                      e.currentTarget.checked ? true : false
+                    )
+                  }
+                  disabled
+                  styles={{
+                    track: {
+                      cursor: "pointer",
+                      background: isMemoChecked
+                        ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
+                        : "linear-gradient(135deg, #ddddddff 0%, #dadadaff 100%)",
+                      color: isMemoChecked ? "white" : "black",
+                      border: "none",
+                      padding: "0 0.2rem",
+                      width: "6rem",
+                    },
+                    thumb: {
+                      background: isMemoChecked ? "#218838" : "#ffffffff",
+                    },
+                  }}
+                />
+                {form.values.stage === "SOLD" && (
+                  <Switch
+                    onLabel="Active"
+                    offLabel="Dead"
+                    size="xl"
+                    thumbIcon={
+                      form.values.is_active ? <FaCheckCircle /> : <FaCircle />
+                    }
+                    checked={form.values.is_active}
+                    onChange={(e) =>
+                      form.setFieldValue("is_active", e.currentTarget.checked)
+                    }
+                    styles={{
+                      track: {
+                        cursor: "pointer",
+                        background: form.values.is_active
+                          ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
+                          : "linear-gradient(135deg, #ff0000ff 0%, #ff6363ff 100%)",
+                        color: form.values.is_active ? "white" : "white",
+                        border: "none",
+                        padding: "0 0.2rem",
+                        width: "6rem",
+                      },
+                      thumb: {
+                        background: form.values.is_active
+                          ? "#218838"
+                          : "#cf0000ff",
+                      },
+                    }}
+                  />
+                )}
+              </Group>
             </SimpleGrid>
           </Paper>
 
