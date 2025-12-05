@@ -12,13 +12,16 @@ import {
   Tooltip,
   Center,
   Accordion,
+  ActionIcon,
+  Loader,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { FaBoxOpen, FaPlus, FaCheck, FaTimes } from "react-icons/fa";
+import { FaBoxOpen, FaPlus, FaCheck, FaTimes, FaPrint } from "react-icons/fa";
 import dayjs from "dayjs";
 import { useSupabase } from "@/hooks/useSupabase";
 import { Tables } from "@/types/db";
 import EditBackorderModal from "@/components/Installation/EditBOModal/EditBOModal";
+import BackorderPdfPreviewModal from "../BOPdfModal/BOPdfModal";
 
 type Backorder = Tables<"backorders">;
 
@@ -42,6 +45,12 @@ export default function RelatedBackorders({
   const [editModalOpened, { open: openEditModal, close: closeEditModal }] =
     useDisclosure(false);
 
+  // State for Printing
+  const [printBackorderId, setPrintBackorderId] = useState<number | null>(null);
+  const [printModalOpened, { open: openPrintModal, close: closePrintModal }] =
+    useDisclosure(false);
+
+  // 1. Fetch List
   const { data: relatedBackorders } = useQuery({
     queryKey: ["related-backorders", jobId],
     queryFn: async () => {
@@ -58,10 +67,59 @@ export default function RelatedBackorders({
     enabled: isAuthenticated && !!jobId,
   });
 
+  // 2. Fetch Full Details for Print (Joined Data)
+  const { data: printData, isLoading: isPrintLoading } = useQuery({
+    queryKey: ["backorder-print-data", printBackorderId],
+    queryFn: async () => {
+      if (!printBackorderId) return null;
+
+      const { data, error } = await supabase
+        .from("backorders")
+        .select(
+          `
+          *,
+          jobs:job_id (
+            job_number,
+            sales_orders:sales_orders (
+              shipping_client_name,
+              shipping_street,
+              shipping_city,
+              shipping_province,
+              shipping_zip,
+              cabinet:cabinets (
+                box,
+                species:species (Species),
+                colors:colors (Name),
+                door_styles:door_styles (name)
+              )
+            )
+          )
+        `
+        )
+        .eq("id", printBackorderId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAuthenticated && !!printBackorderId,
+  });
+
   const handleRowClick = (bo: Backorder) => {
     if (readOnly) return;
     setSelectedBackorder(bo);
     openEditModal();
+  };
+
+  const handlePrintClick = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setPrintBackorderId(id);
+    openPrintModal();
+  };
+
+  const handleClosePrint = () => {
+    closePrintModal();
+    setPrintBackorderId(null);
   };
 
   const renderRows = (orders: Backorder[]) => {
@@ -100,6 +158,17 @@ export default function RelatedBackorders({
           >
             {bo.complete ? "Complete" : "Pending"}
           </Badge>
+        </Table.Td>
+        {/* Print Action Column */}
+        <Table.Td w={60}>
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            onClick={(e) => handlePrintClick(e, bo.id)}
+            loading={isPrintLoading && printBackorderId === bo.id}
+          >
+            <FaPrint size={14} />
+          </ActionIcon>
         </Table.Td>
       </Table.Tr>
     ));
@@ -151,6 +220,7 @@ export default function RelatedBackorders({
                     <Table.Th w={140}>Due Date</Table.Th>
                     <Table.Th>Comments</Table.Th>
                     <Table.Th w={140}>Status</Table.Th>
+                    <Table.Th w={60} />
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>{renderRows(visibleOrders)}</Table.Tbody>
@@ -206,6 +276,13 @@ export default function RelatedBackorders({
           setSelectedBackorder(null);
         }}
         backorder={selectedBackorder}
+      />
+
+      {/* Render Print Modal */}
+      <BackorderPdfPreviewModal
+        opened={printModalOpened}
+        onClose={handleClosePrint}
+        data={printData}
       />
     </>
   );
