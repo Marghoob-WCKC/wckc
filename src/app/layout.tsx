@@ -32,6 +32,11 @@ const dashboardLinks: SidebarLink[] = [
   { iconName: "FaHome", label: "Sales", path: "/dashboard" },
   { iconName: "FaGears", label: "Production", path: "/dashboard/production" },
   {
+    iconName: "FaShoppingBag",
+    label: "Purchasing",
+    path: "/dashboard/purchasing",
+  },
+  {
     iconName: "FaShippingFast",
     label: "Installation",
     path: "/dashboard/installation",
@@ -64,11 +69,7 @@ const dashboardLinks: SidebarLink[] = [
     ],
   },
   { iconName: "GoTools", label: "Installers", path: "/dashboard/installers" },
-  {
-    iconName: "FaShoppingBag",
-    label: "Purchasing",
-    path: "/dashboard/purchasing",
-  },
+
   { iconName: "FaFileInvoice", label: "Invoices", path: "/dashboard/invoices" },
   {
     iconName: "FaClipboardCheck",

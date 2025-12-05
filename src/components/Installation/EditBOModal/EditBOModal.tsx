@@ -90,7 +90,6 @@ export default function EditBackorderModal({
         message: "Backorder updated successfully",
         color: "green",
       });
-      // Refresh the list in RelatedBackorders
       queryClient.invalidateQueries({ queryKey: ["related-backorders"] });
       onClose();
     },

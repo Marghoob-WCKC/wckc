@@ -213,28 +213,6 @@ export default function SalesTable() {
           return date ? dayjs.utc(date).format("YYYY-MM-DD") : "—";
         },
       }),
-      columnHelper.display({
-        id: "actions",
-        header: "Actions",
-        size: 60,
-        cell: (info) => (
-          <Group justify="center">
-            <Tooltip label="View Details / Edit">
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                onClick={() => {
-                  router.push(
-                    `/dashboard/sales/editsale/${info.row.original.id}`
-                  );
-                }}
-              >
-                <FaEye size={16} />
-              </ActionIcon>
-            </Tooltip>
-          </Group>
-        ),
-      }),
     ],
     [router]
   );

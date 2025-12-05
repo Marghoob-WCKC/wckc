@@ -365,6 +365,9 @@ export default function EditProductionSchedulePage({
                         form.setFieldValue("rush", e.currentTarget.checked)
                       }
                       styles={{
+                        root: {
+                          display: "flex",
+                        },
                         track: {
                           padding: "5px",
                           cursor: "pointer",
@@ -392,16 +395,19 @@ export default function EditProductionSchedulePage({
                       </Group>
                       <SimpleGrid cols={5} spacing="sm">
                         <DateInput
+                          highlightToday
                           label="Received Date"
                           {...form.getInputProps("received_date")}
                         />
                         <DateInput
                           label="Placement Date"
                           {...form.getInputProps("placement_date")}
+                          highlightToday
                         />
                         <DateInput
                           label="Ship Date"
                           {...form.getInputProps("ship_schedule")}
+                          highlightToday
                         />
 
                         <Select
@@ -517,6 +523,7 @@ export default function EditProductionSchedulePage({
                               {...form.getInputProps(
                                 key as keyof SchedulingFormValues
                               )}
+                              highlightToday
                             />
                           ))}
                         </SimpleGrid>

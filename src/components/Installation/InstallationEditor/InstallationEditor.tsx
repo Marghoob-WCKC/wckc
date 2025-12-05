@@ -9,7 +9,6 @@ import { Tables, TablesUpdate } from "@/types/db";
 import {
   Container,
   Paper,
-  Stack,
   Group,
   Text,
   Switch,
@@ -28,7 +27,10 @@ import {
   Modal,
   Tooltip,
   ThemeIcon,
+  ActionIcon,
+  Stack,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { DateInput } from "@mantine/dates";
 import dayjs from "dayjs";
 import { notifications } from "@mantine/notifications";
@@ -41,7 +43,9 @@ import {
   FaIndustry,
   FaPaintBrush,
   FaTools,
+  FaPlus,
   FaTruckLoading,
+  FaShippingFast,
 } from "react-icons/fa";
 
 import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
@@ -49,6 +53,8 @@ import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
 import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/RelatedServiceOrders";
 import AddBackorderModal from "../AddBOModal/AddBOModal";
 import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
+import AddInstaller from "@/components/Installers/AddInstaller/AddInstaller";
+import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
 
 type InstallationType = Tables<"installation"> & {
   partially_shipped?: boolean;
@@ -92,6 +98,11 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
 
   const [isBackorderPromptOpen, setIsBackorderPromptOpen] = useState(false);
   const [isAddBackorderModalOpen, setIsAddBackorderModalOpen] = useState(false);
+  const [
+    isAddInstallerOpen,
+    { open: openAddInstaller, close: closeAddInstaller },
+  ] = useDisclosure(false);
+
   const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [targetCompletionField, setTargetCompletionField] = useState<
     "installation_completed" | "inspection_completed" | null
@@ -117,12 +128,13 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             shipping_phone_2,
             shipping_email_1,
             shipping_email_2,
+            order_type,
+            delivery_type,
+            install,
             cabinet:cabinets (
               id,
               box,
               glass,
-              glaze,
-              finish,
               interior,
               drawer_box,
               glass_type,
@@ -130,7 +142,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
               doors_parts_only,
               handles_selected,
               handles_supplied,
-              hinge_soft_close,
               top_drawer_front,
               door_styles(name),
               species(Species),
@@ -379,7 +390,26 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     );
 
   const cabinet = jobData.sales_orders?.cabinet;
-  const shipping = jobData.sales_orders;
+  const shipping = jobData.sales_orders
+    ? {
+        shipping_client_name: jobData.sales_orders.shipping_client_name,
+        shipping_phone_1: jobData.sales_orders.shipping_phone_1,
+        shipping_phone_2: jobData.sales_orders.shipping_phone_2,
+        shipping_email_1: jobData.sales_orders.shipping_email_1,
+        shipping_email_2: jobData.sales_orders.shipping_email_2,
+        shipping_street: jobData.sales_orders.shipping_street,
+        shipping_city: jobData.sales_orders.shipping_city,
+        shipping_province: jobData.sales_orders.shipping_province,
+        shipping_zip: jobData.sales_orders.shipping_zip,
+      }
+    : null;
+  const orderDetails = jobData?.sales_orders
+    ? {
+        order_type: jobData.sales_orders.order_type,
+        delivery_type: jobData.sales_orders.delivery_type,
+        install: jobData.sales_orders.install,
+      }
+    : null;
   const prodSchedule = jobData.production_schedule;
   const installRecordId = jobData.installation?.installation_id;
 
@@ -404,7 +434,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
       };
       form.setFieldValue("has_shipped", true);
       form.setFieldValue("partially_shipped", false);
-      updateMutation.mutate(newValues);
+      //updateMutation.mutate(newValues);
     } else {
       setIsAddBackorderModalOpen(true);
     }
@@ -528,18 +558,33 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           <Grid.Col span={10}>
             <Stack>
               <Paper p="md" radius="md" shadow="sm" mb="md" bg={"gray.1"}>
-                <Group justify="space-between" align="center">
+                <Group
+                  justify="space-between"
+                  align="center"
+                  bg="white"
+                  p="md"
+                  style={{ borderRadius: "6px" }}
+                >
                   <Text
                     fw={600}
                     size="lg"
                     style={{ display: "flex", alignItems: "center" }}
                   >
+                    <FaShippingFast
+                      size={20}
+                      style={{ marginRight: 8 }}
+                      color="#4A00E0"
+                    />
                     Installation Job # {jobData.job_number}
                   </Text>
                 </Group>
                 <Divider my="sm" color="violet" />
                 <SimpleGrid cols={3}>
-                  <ClientInfo shipping={shipping} />
+                  <Stack>
+                    <ClientInfo shipping={shipping} />
+                    <OrderDetails orderDetails={orderDetails} />
+                  </Stack>
+
                   <CabinetSpecs cabinet={cabinet} />
                   <Paper
                     p="md"
@@ -602,20 +647,34 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                       <Text fw={600}>Installer & Key Dates</Text>
                     </Group>
                     <SimpleGrid cols={3} spacing="md">
-                      <Select
-                        label="Assigned Installer"
-                        placeholder="Select Installer"
-                        data={installerOptions}
-                        searchable
-                        clearable
-                        value={String(form.values.installer_id)}
-                        onChange={(val) => {
-                          form.setFieldValue(
-                            "installer_id",
-                            val ? Number(val) : null
-                          );
-                        }}
-                      />
+                      <Group align="flex-end" gap="xs">
+                        <Select
+                          label="Assigned Installer"
+                          placeholder="Select Installer"
+                          data={installerOptions}
+                          searchable
+                          clearable
+                          value={String(form.values.installer_id)}
+                          onChange={(val) => {
+                            form.setFieldValue(
+                              "installer_id",
+                              val ? Number(val) : null
+                            );
+                          }}
+                          style={{ flex: 1 }}
+                        />
+                        <Tooltip label="Create New Installer">
+                          <ActionIcon
+                            variant="filled"
+                            color="#4A00E0"
+                            size="lg"
+                            mb={2}
+                            onClick={openAddInstaller}
+                          >
+                            <FaPlus size={12} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Group>
                       <DateInput
                         label="Scheduled Installation Date"
                         placeholder="Start Date"
@@ -691,7 +750,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                                 cursor: "pointer",
                                 background: form.values.has_shipped
                                   ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
-                                  : "linear-gradient(135deg, #0010eeff 0%, #af26ffff 100%)",
+                                  : "linear-gradient(135deg, #ddddddff 0%, #a7a5a5ff 100%)",
                                 border: "none",
                                 color: form.values.has_shipped
                                   ? "white"
@@ -1102,7 +1161,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             form.setFieldValue("has_shipped", false);
             form.setFieldValue("partially_shipped", true);
 
-            updateMutation.mutate(newValues);
+            //updateMutation.mutate(newValues);
           }}
         />
       )}
@@ -1139,6 +1198,15 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           </Group>
         </Stack>
       </Modal>
+
+      {/* Add Installer Modal */}
+      <AddInstaller
+        opened={isAddInstallerOpen}
+        onClose={() => {
+          closeAddInstaller();
+          queryClient.invalidateQueries({ queryKey: ["installers-list"] });
+        }}
+      />
     </Container>
   );
 }

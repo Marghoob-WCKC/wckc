@@ -237,30 +237,6 @@ export default function ServiceOrdersTable() {
         );
       },
     }),
-    columnHelper.display({
-      id: "actions",
-      header: "Actions",
-      size: 80,
-      minSize: 80,
-      cell: (info) => (
-        <Group justify="center">
-          <Tooltip label="Edit Service Order">
-            <ActionIcon
-              variant="subtle"
-              color="blue"
-              onClick={(e) => {
-                e.stopPropagation();
-                router.push(
-                  `/dashboard/serviceorders/${info.row.original.service_order_id}`
-                );
-              }}
-            >
-              <FaPencilAlt size={16} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
-      ),
-    }),
   ];
 
   // --- Table Instance ---
