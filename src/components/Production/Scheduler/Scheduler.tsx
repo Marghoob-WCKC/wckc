@@ -163,7 +163,7 @@ export default function EditProductionSchedulePage({
       ship_schedule: null,
       in_plant_actual: null,
       ship_status: "unprocessed",
-      production_comments: null,
+      production_comments: "",
       doors_completed_actual: null,
       cut_finish_completed_actual: null,
       custom_finish_completed_actual: null,
