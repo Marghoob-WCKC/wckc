@@ -261,6 +261,9 @@ export default function EditProductionSchedulePage({
       queryClient.invalidateQueries({
         queryKey: ["production_schedule_list"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["prod_table_view"],
+      });
       router.push("/dashboard/production");
     },
     onError: (err: any) =>

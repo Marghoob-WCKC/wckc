@@ -11,7 +11,7 @@ export default function EditSchedulerPage() {
 
   const { canEditProduction } = usePermissions();
 
-  if (!canEditProduction) {
+  if (canEditProduction) {
     return <Scheduler jobId={jobId} />;
   }
 

@@ -500,34 +500,38 @@ export default function InstallationTable() {
                 </Table.Td>
               </Table.Tr>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <Table.Tr
-                  key={row.id}
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/installation/${row.original.job_id}`
-                    )
-                  }
-                  style={{ cursor: "pointer" }}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <Table.Td
-                      key={cell.id}
-                      style={{
-                        width: cell.column.getSize(),
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </Table.Td>
-                  ))}
-                </Table.Tr>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const bgColor =
+                  row.original.wrap_date === null ? "#ffefefff" : undefined;
+                return (
+                  <Table.Tr
+                    key={row.id}
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/installation/${row.original.job_id}`
+                      )
+                    }
+                    style={{ cursor: "pointer", backgroundColor: bgColor }}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <Table.Td
+                        key={cell.id}
+                        style={{
+                          width: cell.column.getSize(),
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </Table.Td>
+                    ))}
+                  </Table.Tr>
+                );
+              })
             )}
           </Table.Tbody>
         </Table>
