@@ -1,4 +1,3 @@
-import React from "react";
 import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import dayjs from "dayjs";
 import { Views } from "@/types/db";
@@ -12,6 +11,13 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica",
     fontSize: 8,
     lineHeight: 1.3,
+  },
+  footer: {
+    position: "absolute",
+    bottom: 30,
+    left: 30,
+    fontSize: 8,
+    color: "#aaa",
   },
   headerContainer: {
     flexDirection: "row",
@@ -148,7 +154,6 @@ export const PlantShippingSchedulePdf = ({
             </Text>
           </View>
         </View>
-
         {sortedKeys.map((dateKey) => {
           const rows = grouped[dateKey];
           const isUnscheduled = dateKey === "Unscheduled";
@@ -247,6 +252,9 @@ export const PlantShippingSchedulePdf = ({
             </View>
           );
         })}
+        <Text style={styles.footer} fixed>
+          Generated on {dayjs().format("YYYY-MM-DD HH:mm")}
+        </Text>
       </Page>
     </Document>
   );

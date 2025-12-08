@@ -88,6 +88,11 @@ const dashboardLinks: SidebarLink[] = [
         label: "Shipping",
         path: "/dashboard/reports/shippingreport",
       },
+      {
+        iconName: "FaBoxOpen",
+        label: "Box Count",
+        path: "/dashboard/reports/boxcountreport",
+      },
     ],
   },
 

@@ -296,6 +296,17 @@ export const ShippingReportPdf = ({
             </View>
           );
         })}
+        <Text
+          style={{
+            position: "absolute",
+            bottom: 30,
+            left: 30,
+            fontSize: 8,
+            color: "#999",
+          }}
+        >
+          Generated on {dayjs().format("YYYY-MM-DD HH:mm")}
+        </Text>
 
         <Text
           render={({ pageNumber, totalPages }) =>

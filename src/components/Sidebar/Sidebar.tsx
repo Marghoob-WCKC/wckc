@@ -24,6 +24,7 @@ import {
   FaCalendarAlt,
   FaClipboardCheck,
   FaTruckLoading,
+  FaBoxOpen,
 } from "react-icons/fa";
 import { FaGears } from "react-icons/fa6";
 import { MdFactory, MdSupervisorAccount } from "react-icons/md";
@@ -57,6 +58,7 @@ const iconMap: Record<string, any> = {
   FaTruckLoading,
   MdSupervisorAccount,
   GrSchedules,
+  FaBoxOpen,
 };
 
 function MainLink({ item }: { item: SidebarLink }) {
@@ -185,8 +187,10 @@ export default function Sidebar({ links }: SidebarProps) {
     <Box
       style={{
         width: rem(220),
+        minWidth: rem(220),
         height: "100vh",
         overflowY: "auto",
+        scrollbarWidth: "none",
         background: "linear-gradient(0deg, #7b2de2ff 20%, #4A00E0 80%)",
         borderRight: `1px solid ${theme.colors.gray[3]}`,
         display: "flex",
