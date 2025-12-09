@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import {
   useReactTable,
   getCoreRowModel,
@@ -34,10 +34,12 @@ import {
   Accordion,
   SimpleGrid,
   Anchor,
-  Indicator,
+  ActionIcon,
+  Checkbox,
+  NumberInput,
+  Paper,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
-import { GrEmergency } from "react-icons/gr";
 import { useDisclosure } from "@mantine/hooks";
 import {
   FaSearch,
@@ -48,15 +50,20 @@ import {
   FaTruckLoading,
   FaPencilAlt,
   FaShoppingBag,
+  FaTrash,
+  FaPlus,
+  FaList,
+  FaExclamationCircle,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import { usePurchasingTable } from "@/hooks/usePurchasingTable";
 import dayjs from "dayjs";
 import { notifications } from "@mantine/notifications";
-import { Views } from "@/types/db";
+import { Views, Tables, TablesInsert } from "@/types/db"; //
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 
-// Extend the View type with the new incomplete receipt columns
+// ---------- Types ----------
+
 type PurchasingTableView = Views<"purchasing_table_view"> & {
   doors_received_incomplete_at: string | null;
   glass_received_incomplete_at: string | null;
@@ -64,98 +71,551 @@ type PurchasingTableView = Views<"purchasing_table_view"> & {
   acc_received_incomplete_at: string | null;
 };
 
-// Data needed to process an incomplete update
-type IncompleteUpdateData = {
-  id: number;
-  keyPrefix: "doors" | "glass" | "handles" | "acc";
-  orderedAt: string | null;
-  initialComment: string;
+type PurchaseOrderItemRow = Tables<"purchase_order_items">;
+
+type PurchaseOrderItemState =
+  | PurchaseOrderItemRow
+  | (TablesInsert<"purchase_order_items"> & { id?: number });
+
+// ---------- Modals ----------
+
+/**
+ * Modal to Add/Edit Purchase Parts (Ordered Phase)
+ */
+const OrderPartsModal = ({
+  opened,
+  onClose,
+  purchaseTrackingId,
+  itemType,
+  onSave,
+}: {
+  opened: boolean;
+  onClose: () => void;
+  purchaseTrackingId: number | null;
+  itemType: string;
+  onSave: (items: PurchaseOrderItemState[]) => void;
+}) => {
+  const { supabase } = useSupabase();
+  const [items, setItems] = useState<PurchaseOrderItemState[]>([]);
+
+  // FETCH
+  const { data: fetchedItems, isLoading } = useQuery({
+    queryKey: ["purchase_order_items", purchaseTrackingId, itemType],
+    queryFn: async () => {
+      if (!purchaseTrackingId) return [];
+      const { data } = await supabase
+        .from("purchase_order_items")
+        .select("*")
+        .eq("purchase_tracking_id", purchaseTrackingId)
+        .eq("item_type", itemType)
+        .order("id", { ascending: true });
+      return data || [];
+    },
+    enabled: opened && !!purchaseTrackingId,
+    staleTime: Infinity,
+  });
+
+  // SYNC
+  useEffect(() => {
+    if (fetchedItems && opened) {
+      if (fetchedItems.length > 0) {
+        setItems(fetchedItems);
+      } else {
+        // Initialize with one empty draft item
+        setItems([
+          {
+            quantity: 1,
+            part_description: "",
+            company: "", // Default empty string for text input
+            is_received: false,
+            // These are technically required by TablesInsert but handled by context or DB defaults
+            purchase_tracking_id: purchaseTrackingId!,
+            item_type: itemType,
+          },
+        ]);
+      }
+    }
+  }, [fetchedItems, opened, purchaseTrackingId, itemType]);
+
+  const handleAddItem = () => {
+    setItems([
+      ...items,
+      {
+        quantity: 1,
+        part_description: "",
+        company: "",
+        is_received: false,
+        purchase_tracking_id: purchaseTrackingId!,
+        item_type: itemType,
+      },
+    ]);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    const newItems = [...items];
+    newItems.splice(index, 1);
+    setItems(newItems);
+  };
+
+  const updateItem = (
+    index: number,
+    field: keyof PurchaseOrderItemState,
+    value: any
+  ) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(newItems);
+  };
+
+  return (
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={
+        <Group>
+          <ThemeIcon variant="light" color="violet" radius="md" size="lg">
+            <FaList />
+          </ThemeIcon>
+          <Text fw={700} c="violet.9">
+            Order Details: {itemType?.toUpperCase()}
+          </Text>
+        </Group>
+      }
+      size="xl"
+      padding="xl"
+      radius="md"
+      centered
+      overlayProps={{
+        backgroundOpacity: 0.55,
+        blur: 3,
+      }}
+    >
+      <Stack>
+        {isLoading && items.length === 0 ? (
+          <Center h={100}>
+            <Loader type="dots" color="violet" />
+          </Center>
+        ) : (
+          <Box>
+            <Paper withBorder p="xs" bg="gray.0" mb="sm" radius="md">
+              <SimpleGrid cols={12} spacing="xs">
+                <Text
+                  size="xs"
+                  fw={700}
+                  c="dimmed"
+                  style={{ gridColumn: "span 2" }}
+                >
+                  QTY
+                </Text>
+                <Text
+                  size="xs"
+                  fw={700}
+                  c="dimmed"
+                  style={{ gridColumn: "span 4" }}
+                >
+                  PART DESCRIPTION
+                </Text>
+                <Text
+                  size="xs"
+                  fw={700}
+                  c="dimmed"
+                  style={{ gridColumn: "span 5" }}
+                >
+                  SUPPLIER / COMPANY
+                </Text>
+                <Box style={{ gridColumn: "span 1" }} />
+              </SimpleGrid>
+            </Paper>
+
+            <Stack gap="xs">
+              {items.map((item, idx) => (
+                <SimpleGrid
+                  key={idx}
+                  cols={12}
+                  spacing="xs"
+                  style={{ alignItems: "center" }}
+                >
+                  <NumberInput
+                    style={{ gridColumn: "span 2" }}
+                    min={1}
+                    value={item.quantity || 1}
+                    onChange={(v) => updateItem(idx, "quantity", v)}
+                    placeholder="1"
+                  />
+                  <TextInput
+                    style={{ gridColumn: "span 4" }}
+                    value={item.part_description || ""}
+                    onChange={(e) =>
+                      updateItem(idx, "part_description", e.currentTarget.value)
+                    }
+                    placeholder="e.g. Shaker Door 18x24"
+                  />
+                  <TextInput
+                    style={{ gridColumn: "span 5" }}
+                    value={item.company || ""}
+                    onChange={(e) =>
+                      updateItem(idx, "company", e.currentTarget.value)
+                    }
+                    placeholder="e.g. Richelieu"
+                  />
+                  <ActionIcon
+                    color="red"
+                    variant="subtle"
+                    onClick={() => handleRemoveItem(idx)}
+                    style={{ gridColumn: "span 1" }}
+                  >
+                    <FaTrash size={14} />
+                  </ActionIcon>
+                </SimpleGrid>
+              ))}
+            </Stack>
+
+            <Button
+              fullWidth
+              mt="md"
+              variant="light"
+              color="violet"
+              leftSection={<FaPlus size={12} />}
+              onClick={handleAddItem}
+              style={{ borderStyle: "dashed" }}
+            >
+              Add Another Part
+            </Button>
+          </Box>
+        )}
+        <Group justify="flex-end" mt="xl">
+          <Button variant="default" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => onSave(items)}
+            variant="gradient"
+            gradient={{ from: "violet", to: "indigo", deg: 90 }}
+            leftSection={<FaCheck size={14} />}
+          >
+            Save Order Changes
+          </Button>
+        </Group>
+      </Stack>
+    </Modal>
+  );
 };
 
 /**
- * StatusCell Component
- * Renders the status badge and the dropdown menu for changing status.
+ * Modal to Receive Incomplete Parts
  */
+const IncompletePartsModal = ({
+  opened,
+  onClose,
+  purchaseTrackingId,
+  itemType,
+  onSave,
+}: {
+  opened: boolean;
+  onClose: () => void;
+  purchaseTrackingId: number | null;
+  itemType: string;
+  onSave: (items: PurchaseOrderItemState[], comments: string) => void;
+}) => {
+  const { supabase } = useSupabase();
+  const [items, setItems] = useState<PurchaseOrderItemState[]>([]);
+  const [comments, setComments] = useState("");
+
+  const { data: fetchedItems, isLoading } = useQuery({
+    queryKey: ["purchase_order_items", purchaseTrackingId, itemType],
+    queryFn: async () => {
+      if (!purchaseTrackingId) return [];
+      const { data } = await supabase
+        .from("purchase_order_items")
+        .select("*")
+        .eq("purchase_tracking_id", purchaseTrackingId)
+        .eq("item_type", itemType)
+        .order("id", { ascending: true });
+      return data || [];
+    },
+    enabled: opened && !!purchaseTrackingId,
+    staleTime: Infinity,
+  });
+
+  useEffect(() => {
+    if (fetchedItems && opened) {
+      setItems(fetchedItems);
+    }
+  }, [fetchedItems, opened]);
+
+  const toggleReceived = (index: number) => {
+    const newItems = [...items];
+    newItems[index].is_received = !newItems[index].is_received;
+    setItems(newItems);
+  };
+
+  return (
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={
+        <Group gap="xs">
+          <ThemeIcon variant="light" color="orange" radius="md" size="lg">
+            <FaExclamationCircle />
+          </ThemeIcon>
+          <Text fw={700} c="orange.9">
+            Receive Parts: {itemType?.toUpperCase()}
+          </Text>
+        </Group>
+      }
+      size="lg"
+      padding="lg"
+      radius="md"
+      centered
+      overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+    >
+      <Stack gap="md">
+        <Paper
+          withBorder
+          p="sm"
+          bg="orange.0"
+          style={{ borderColor: "var(--mantine-color-orange-2)" }}
+        >
+          <Text size="sm" c="orange.9" lh={1.4}>
+            Check off items that have been <b>successfully received</b>. The
+            order status will update to <b>Complete</b> only when all items are
+            checked.
+          </Text>
+        </Paper>
+
+        {isLoading && items.length === 0 ? (
+          <Center h={100}>
+            <Loader type="dots" color="orange" />
+          </Center>
+        ) : items.length === 0 ? (
+          <Center h={100}>
+            <Text c="dimmed">No parts logged for this order.</Text>
+          </Center>
+        ) : (
+          <Box>
+            {/* Header Row */}
+            <SimpleGrid cols={12} spacing="xs" mb="xs" mt="xs">
+              <Text
+                size="xs"
+                fw={700}
+                c="dimmed"
+                style={{ gridColumn: "span 1", textAlign: "center" }}
+              >
+                REC
+              </Text>
+              <Text
+                size="xs"
+                fw={700}
+                c="dimmed"
+                style={{ gridColumn: "span 1", textAlign: "center" }}
+              >
+                QTY
+              </Text>
+              <Text
+                size="xs"
+                fw={700}
+                c="dimmed"
+                style={{ gridColumn: "span 6" }}
+              >
+                PART DESCRIPTION
+              </Text>
+              <Text
+                size="xs"
+                fw={700}
+                c="dimmed"
+                style={{ gridColumn: "span 4" }}
+              >
+                COMPANY
+              </Text>
+            </SimpleGrid>
+
+            {/* Items List */}
+            <Stack gap={6}>
+              {items.map((item, idx) => (
+                <Paper
+                  key={idx}
+                  withBorder
+                  p={6}
+                  radius="sm"
+                  style={{
+                    backgroundColor: item.is_received
+                      ? "var(--mantine-color-green-0)"
+                      : "white",
+                    borderColor: item.is_received
+                      ? "var(--mantine-color-green-3)"
+                      : "var(--mantine-color-gray-3)",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  <SimpleGrid
+                    cols={12}
+                    spacing="xs"
+                    style={{ alignItems: "center" }}
+                  >
+                    <Center style={{ gridColumn: "span 1" }}>
+                      <Checkbox
+                        size="sm"
+                        checked={item.is_received || false}
+                        onChange={() => toggleReceived(idx)}
+                        color="green"
+                        aria-label="Mark Received"
+                        styles={{ input: { cursor: "pointer" } }}
+                      />
+                    </Center>
+                    <Text
+                      fw={600}
+                      size="sm"
+                      style={{ gridColumn: "span 1", textAlign: "center" }}
+                    >
+                      {item.quantity}
+                    </Text>
+                    <Text
+                      size="sm"
+                      fw={500}
+                      style={{ gridColumn: "span 6", lineHeight: 1.2 }}
+                    >
+                      {item.part_description}
+                    </Text>
+                    <Text
+                      size="sm"
+                      c="dimmed"
+                      style={{ gridColumn: "span 4", lineHeight: 1.2 }}
+                      truncate
+                    >
+                      {item.company || "—"}
+                    </Text>
+                  </SimpleGrid>
+                </Paper>
+              ))}
+            </Stack>
+          </Box>
+        )}
+
+        <Textarea
+          label="Notes / Discrepancies"
+          placeholder="e.g. 2 doors arrived damaged, waiting on replacement..."
+          minRows={2}
+          autosize
+          value={comments}
+          onChange={(e) => setComments(e.currentTarget.value)}
+        />
+
+        <Group justify="flex-end" mt="xs">
+          <Button variant="default" onClick={onClose} size="sm">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => onSave(items, comments)}
+            variant="gradient"
+            gradient={{ from: "orange", to: "red", deg: 90 }}
+            size="sm"
+          >
+            Update Receipt Status
+          </Button>
+        </Group>
+      </Stack>
+    </Modal>
+  );
+};
+
+// ---------- Status Cell Component ----------
+
 const StatusCell = ({
   orderedAt,
   receivedAt,
   receivedIncompleteAt,
-  onUpdate,
-  onUpdateIncomplete,
-  label,
+  onMarkOrdered,
+  onEditOrder,
+  onMarkReceived,
+  onReceiveIncomplete,
+  onClear,
 }: {
   orderedAt: string | null;
   receivedAt: string | null;
   receivedIncompleteAt: string | null;
-  onUpdate: (
-    field: "ordered" | "received" | "clear",
-    val: string | null
-  ) => void;
-  onUpdateIncomplete: () => void;
-  label: string;
+  onMarkOrdered: () => void;
+  onEditOrder: () => void;
+  onMarkReceived: () => void;
+  onReceiveIncomplete: () => void;
+  onClear: () => void;
 }) => {
   let badgeColor = "red";
   let statusText = "—";
+  let variant = "light";
 
   if (receivedIncompleteAt) {
     badgeColor = "orange";
     statusText = "Incomplete";
+    variant = "filled";
   } else if (receivedAt) {
     badgeColor = "green";
     statusText = "Received";
+    variant = "light";
   } else if (orderedAt) {
     badgeColor = "yellow";
     statusText = "Ordered";
+    variant = "outline";
   }
 
   return (
-    <Menu shadow="md" width={220} withinPortal>
+    <Menu shadow="xl" width={240} withinPortal position="bottom-end" withArrow>
       <Menu.Target>
         <Badge
           color={badgeColor}
-          variant="light"
-          style={{ cursor: "pointer", width: "100%" }}
+          variant={variant}
+          size="lg"
+          radius="sm"
+          style={{
+            cursor: "pointer",
+            width: "100%",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+          }}
         >
           {statusText}
         </Badge>
       </Menu.Target>
 
       <Menu.Dropdown>
-        <Menu.Item
-          leftSection={<FaTruckLoading size={14} />}
-          onClick={() => onUpdate("ordered", new Date().toISOString())}
-          // Disable only if it is strictly "Ordered" (no receipt activity yet).
-          // Allows resetting to "Ordered" if it was previously marked Received or Incomplete.
-          disabled={!!orderedAt && !receivedAt && !receivedIncompleteAt}
-        >
-          Mark Ordered
-        </Menu.Item>
+        <Menu.Label>Change Status</Menu.Label>
+        {!orderedAt && (
+          <Menu.Item
+            leftSection={<FaTruckLoading size={14} />}
+            onClick={onMarkOrdered}
+          >
+            Mark Ordered (Add Parts)
+          </Menu.Item>
+        )}
+
+        {orderedAt && (
+          <Menu.Item leftSection={<FaList size={14} />} onClick={onEditOrder}>
+            View/Edit Order Details
+          </Menu.Item>
+        )}
 
         <Menu.Item
-          leftSection={<FaCheck size={14} />}
-          color="green"
-          onClick={() => onUpdate("received", new Date().toISOString())}
-          // FIX: Removed `!!receivedIncompleteAt` check.
-          // Now allows marking as "Complete" even if currently "Incomplete".
-          disabled={!!receivedAt || !orderedAt}
+          leftSection={<FaCheck size={14} color="green" />}
+          onClick={onMarkReceived}
+          disabled={!orderedAt}
         >
           Mark Received Complete
         </Menu.Item>
 
         <Menu.Item
-          leftSection={<FaCheck size={14} />}
-          color="orange"
-          onClick={onUpdateIncomplete}
-          // Enable this even if already incomplete, so users can add sequential notes
-          // (e.g., "Received 5 more, still missing 2").
-          disabled={!!receivedAt || !orderedAt}
+          leftSection={<FaExclamationCircle size={14} color="orange" />}
+          onClick={onReceiveIncomplete}
+          disabled={!orderedAt}
         >
-          Received Incomplete
+          Manage / Incomplete Receipt
         </Menu.Item>
 
         <Menu.Divider />
 
-        <Menu.Item color="red" onClick={() => onUpdate("clear", null)}>
+        <Menu.Item
+          color="red"
+          leftSection={<FaTrash size={14} />}
+          onClick={onClear}
+        >
           Clear All
         </Menu.Item>
       </Menu.Dropdown>
@@ -163,11 +623,13 @@ const StatusCell = ({
   );
 };
 
+// ---------- Main Table Component ----------
+
 export default function PurchasingTable() {
-  const { supabase, isAuthenticated } = useSupabase();
+  const { supabase } = useSupabase();
   const queryClient = useQueryClient();
 
-  // State Management
+  // State
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 20,
@@ -175,15 +637,11 @@ export default function PurchasingTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
+
+  // Modals
   const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
-
-  const handleJobClick = (id: number) => {
-    setDrawerJobId(id);
-    openDrawer();
-  };
-  // Modal State - for general comment editing
   const [
     commentModalOpened,
     { open: openCommentModal, close: closeCommentModal },
@@ -193,16 +651,26 @@ export default function PurchasingTable() {
     text: string;
   } | null>(null);
 
-  // Modal State - for "Received Incomplete" details
+  const [orderModalOpened, { open: openOrderModal, close: closeOrderModal }] =
+    useDisclosure(false);
   const [
     incompleteModalOpened,
     { open: openIncompleteModal, close: closeIncompleteModal },
   ] = useDisclosure(false);
-  const [incompleteUpdateData, setIncompleteUpdateData] =
-    useState<IncompleteUpdateData | null>(null);
-  const [incompleteDetail, setIncompleteDetail] = useState("");
 
-  // Helper Filters
+  // Context
+  const [activeRowContext, setActiveRowContext] = useState<{
+    id: number;
+    keyPrefix: "doors" | "glass" | "handles" | "acc";
+    initialComment: string;
+  } | null>(null);
+
+  const handleJobClick = (id: number) => {
+    setDrawerJobId(id);
+    openDrawer();
+  };
+
+  // Filters
   const setInputFilterValue = (
     id: string,
     value: string | undefined | null
@@ -229,7 +697,7 @@ export default function PurchasingTable() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
 
-  // 1. Fetch Data
+  // Data
   const { data, isLoading, isError, error } = usePurchasingTable({
     pagination,
     columnFilters: activeFilters,
@@ -239,153 +707,202 @@ export default function PurchasingTable() {
   const tableData = (data?.data as PurchasingTableView[]) || [];
   const pageCount = Math.ceil((data?.count || 0) / pagination.pageSize);
 
-  // 2. Mutation Logic with Comment Logging
-  const updateMutation = useMutation({
+  // Mutations
+  const updateStatusMutation = useMutation({
     mutationFn: async ({
       id,
       updates,
-      isStatusChange = false,
-      keyPrefix,
+      logMessage,
       initialComment,
-      detail,
     }: {
       id: number;
       updates: any;
-      isStatusChange?: boolean;
-      keyPrefix?: string;
+      logMessage?: string;
       initialComment?: string;
-      detail?: string;
     }) => {
-      let commentUpdate: string | undefined = undefined;
-
-      // If this is a status change, we automatically append a log line to comments
-      if (isStatusChange && keyPrefix) {
+      let finalUpdates = { ...updates };
+      if (logMessage) {
         const timestamp = dayjs().format("YYYY-MM-DD HH:mm");
-        const statusField = Object.keys(updates).find(
-          (k) => updates[k] !== undefined && updates[k] !== null
-        );
-
-        let newCommentLine = "";
-
-        // Determine log message based on field update
-        if (statusField?.endsWith("ordered_at") && updates[statusField]) {
-          newCommentLine = `${keyPrefix.toUpperCase()} Ordered at: [${timestamp}]`;
-        } else if (
-          statusField?.endsWith("received_at") &&
-          updates[statusField]
-        ) {
-          newCommentLine = `${keyPrefix.toUpperCase()} Received fully at: [${timestamp}]`;
-        } else if (
-          statusField?.endsWith("received_incomplete_at") &&
-          updates[statusField]
-        ) {
-          // Incomplete logic includes detail
-          newCommentLine = `${keyPrefix.toUpperCase()} Received partially at: [${timestamp}] - ${
-            detail || "No detail provided"
-          }`;
-        } else if (Object.values(updates).every((val) => val === null)) {
-          newCommentLine = `${keyPrefix.toUpperCase()} Status Cleared at: [${timestamp}]`;
-        }
-
-        // Append log line
-        if (newCommentLine) {
-          commentUpdate = initialComment
-            ? `${initialComment}\n${newCommentLine}`
-            : newCommentLine;
-
-          updates.purchasing_comments = commentUpdate;
-        }
+        const newCommentLine = `${logMessage} [${timestamp}]`;
+        finalUpdates.purchasing_comments = initialComment
+          ? `${initialComment}\n${newCommentLine}`
+          : newCommentLine;
       }
-
-      // Perform the update
       const { error } = await supabase
         .from("purchase_tracking")
-        .update(updates)
+        .update(finalUpdates)
         .eq("purchase_check_id", id);
-
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchasing_table_view"] });
       notifications.show({
         title: "Updated",
-        message: "Status and comments updated successfully",
+        message: "Order status updated successfully",
         color: "green",
-      });
-      // Reset Modals
-      closeCommentModal();
-      closeIncompleteModal();
-      setIncompleteDetail("");
-    },
-    onError: (err: any) => {
-      notifications.show({
-        title: "Error",
-        message: err.message,
-        color: "red",
       });
     },
   });
 
-  // Save manual comment edit
-  const handleSaveComment = () => {
-    if (!editingComment) return;
-    updateMutation.mutate({
-      id: editingComment.id,
-      updates: { purchasing_comments: editingComment.text },
-      isStatusChange: false,
+  const saveOrderItemsMutation = useMutation({
+    mutationFn: async ({
+      items,
+      trackingId,
+      type,
+    }: {
+      items: PurchaseOrderItemState[];
+      trackingId: number;
+      type: string;
+    }) => {
+      // 1. Delete existing for this tracking/type
+      await supabase
+        .from("purchase_order_items")
+        .delete()
+        .eq("purchase_tracking_id", trackingId)
+        .eq("item_type", type);
+
+      // 2. Insert items
+      if (items.length > 0) {
+        // Map to valid Insert type
+        const itemsToInsert: TablesInsert<"purchase_order_items">[] = items.map(
+          (i) => ({
+            purchase_tracking_id: trackingId,
+            item_type: type,
+            quantity: i.quantity || 1, // Default if undefined
+            part_description: i.part_description,
+            company: i.company,
+            is_received: i.is_received || false,
+          })
+        );
+        const { error } = await supabase
+          .from("purchase_order_items")
+          .insert(itemsToInsert);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchasing_table_view"] });
+      queryClient.invalidateQueries({ queryKey: ["purchase_order_items"] });
+    },
+  });
+
+  const updateIncompleteItemsMutation = useMutation({
+    mutationFn: async ({ items }: { items: PurchaseOrderItemState[] }) => {
+      // Only update items that actually have an ID (exist in DB)
+      const updates = items
+        .filter((i) => i.id !== undefined)
+        .map((i) => ({
+          id: i.id!,
+          is_received: i.is_received,
+        }));
+
+      for (const update of updates) {
+        await supabase
+          .from("purchase_order_items")
+          .update({ is_received: update.is_received })
+          .eq("id", update.id);
+      }
+    },
+  });
+
+  // --- Handlers ---
+
+  const handleSaveOrder = async (items: PurchaseOrderItemState[]) => {
+    if (!activeRowContext) return;
+    const { id, keyPrefix, initialComment } = activeRowContext;
+
+    // 1. Save Items
+    await saveOrderItemsMutation.mutateAsync({
+      items,
+      trackingId: id,
+      type: keyPrefix,
     });
-  };
 
-  // Open "Received Incomplete" modal
-  const handleIncompleteReceipt = (
-    row: PurchasingTableView,
-    keyPrefix: "doors" | "glass" | "handles" | "acc"
-  ) => {
-    if (row.purchase_check_id === null) return;
+    // 2. Determine New Status
+    const allReceived =
+      items.length > 0 && items.every((i) => i.is_received === true);
 
-    setIncompleteUpdateData({
-      id: row.purchase_check_id,
-      keyPrefix,
-      orderedAt: row[`${keyPrefix}_ordered_at`] as string | null,
-      initialComment: row.purchasing_comments || "",
-    });
+    const currentRow = tableData.find((r) => r.purchase_check_id === id);
+    const wasReceived = !!currentRow?.[`${keyPrefix}_received_at`];
 
-    openIncompleteModal();
-  };
+    const ordKey = `${keyPrefix}_ordered_at`;
+    const recKey = `${keyPrefix}_received_at`;
+    const incKey = `${keyPrefix}_received_incomplete_at`;
 
-  // Submit "Received Incomplete" status
-  const submitIncompleteReceipt = () => {
-    if (!incompleteUpdateData) return;
+    let updates: any = {};
+    let logMsg = "";
 
-    const { id, keyPrefix, initialComment } = incompleteUpdateData;
+    // Logic: If ANY item is NOT received, we cannot be "Complete".
+    if (!allReceived) {
+      updates[ordKey] = new Date().toISOString();
 
-    // DB Column Names
-    const incompleteField = `${keyPrefix}_received_incomplete_at`;
-    const completeField = `${keyPrefix}_received_at`;
-    const orderedField = `${keyPrefix}_ordered_at`;
-
-    const updates: any = {};
-    // Set incomplete timestamp
-    updates[incompleteField] = new Date().toISOString();
-    // Ensure complete timestamp is cleared (cannot be both)
-    updates[completeField] = null;
-
-    // Consistency: If not marked ordered yet, mark it ordered now
-    if (!incompleteUpdateData.orderedAt) {
-      updates[orderedField] = new Date().toISOString();
+      if (wasReceived) {
+        // Downgrade: Complete -> Incomplete
+        updates[recKey] = null;
+        updates[incKey] = new Date().toISOString();
+        logMsg = `${keyPrefix.toUpperCase()} Updated: New parts added, status changed to Incomplete.`;
+      } else {
+        logMsg = `${keyPrefix.toUpperCase()} Order Details Updated`;
+      }
+    } else {
+      updates[ordKey] = new Date().toISOString();
+      logMsg = `${keyPrefix.toUpperCase()} Order Details Updated`;
     }
 
-    updateMutation.mutate({
+    await updateStatusMutation.mutateAsync({
       id,
       updates,
-      isStatusChange: true,
-      keyPrefix,
+      logMessage: logMsg,
       initialComment,
-      detail: incompleteDetail,
     });
+
+    closeOrderModal();
   };
 
-  // 3. Table Column Definitions
+  const handleSaveIncomplete = async (
+    items: PurchaseOrderItemState[],
+    comments: string
+  ) => {
+    if (!activeRowContext) return;
+    const { id, keyPrefix, initialComment } = activeRowContext;
+
+    // 1. Update Items
+    await updateIncompleteItemsMutation.mutateAsync({ items });
+
+    // 2. Update Parent Status
+    const allReceived =
+      items.length > 0 && items.every((i) => i.is_received === true);
+    const recKey = `${keyPrefix}_received_at`;
+    const incKey = `${keyPrefix}_received_incomplete_at`;
+
+    let updates: any = {};
+    let logMsg = "";
+
+    if (allReceived) {
+      // Upgrade to Complete
+      updates[recKey] = new Date().toISOString();
+      updates[incKey] = null;
+      logMsg = `${keyPrefix.toUpperCase()} Status Upgrade: All items received.`;
+    } else {
+      // Stay/Become Incomplete
+      updates[recKey] = null;
+      updates[incKey] = new Date().toISOString();
+      logMsg = `${keyPrefix.toUpperCase()} Partial Receipt Logged.`;
+    }
+
+    if (comments) logMsg += ` Note: ${comments}`;
+
+    await updateStatusMutation.mutateAsync({
+      id,
+      updates,
+      logMessage: logMsg,
+      initialComment,
+    });
+
+    closeIncompleteModal();
+  };
+
+  // Columns
   const columnHelper = createColumnHelper<PurchasingTableView>();
 
   const createStatusColumn = (
@@ -395,87 +912,65 @@ export default function PurchasingTable() {
     columnHelper.accessor(`${keyPrefix}_received_at` as any, {
       id: keyPrefix,
       header: headerTitle,
-      size: 100,
+      size: 140,
       cell: (info) => {
         const row = info.row.original;
+        if (row.purchase_check_id === null) return null;
 
         const ordKey = `${keyPrefix}_ordered_at` as keyof PurchasingTableView;
         const recKey = `${keyPrefix}_received_at` as keyof PurchasingTableView;
         const incKey =
           `${keyPrefix}_received_incomplete_at` as keyof PurchasingTableView;
 
-        // General Status Update Handler
-        const handleUpdate = (
-          type: "ordered" | "received" | "clear",
-          val: string | null
-        ) => {
-          if (row.purchase_check_id === null) return;
-
-          let updates: any = {};
-
-          if (type === "ordered") {
-            // Setting Ordered clears any received status (reset flow)
-            updates = {
-              [ordKey]: val,
-              [recKey]: null,
-              [incKey]: null,
-            };
-          } else if (type === "received") {
-            // Setting Received Complete clears incomplete status
-            updates = {
-              [recKey]: val,
-              [incKey]: null,
-            };
-          } else if (type === "clear") {
-            // Clear all
-            updates = {
-              [ordKey]: null,
-              [recKey]: null,
-              [incKey]: null,
-            };
-          }
-
-          updateMutation.mutate({
-            id: row.purchase_check_id,
-            updates,
-            isStatusChange: true,
-            keyPrefix,
-            initialComment: row.purchasing_comments || "",
-          });
-        };
-
-        const isDoorColumn = keyPrefix === "doors";
-        const showWarning =
-          isDoorColumn && row.door_style_name && !row.door_made_in_house;
-
         return (
-          <Box style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            {showWarning ? (
-              <Indicator inline processing color="red" size={8} w={"100%"}>
-                <StatusCell
-                  label={headerTitle}
-                  orderedAt={row[ordKey] as string}
-                  receivedAt={row[recKey] as string}
-                  receivedIncompleteAt={row[incKey] as string}
-                  onUpdate={handleUpdate}
-                  onUpdateIncomplete={() =>
-                    handleIncompleteReceipt(row, keyPrefix)
-                  }
-                />
-              </Indicator>
-            ) : (
-              <StatusCell
-                label={headerTitle}
-                orderedAt={row[ordKey] as string}
-                receivedAt={row[recKey] as string}
-                receivedIncompleteAt={row[incKey] as string}
-                onUpdate={handleUpdate}
-                onUpdateIncomplete={() =>
-                  handleIncompleteReceipt(row, keyPrefix)
-                }
-              />
-            )}
-          </Box>
+          <StatusCell
+            orderedAt={row[ordKey] as string}
+            receivedAt={row[recKey] as string}
+            receivedIncompleteAt={row[incKey] as string}
+            onMarkOrdered={() => {
+              setActiveRowContext({
+                id: row.purchase_check_id!,
+                keyPrefix,
+                initialComment: row.purchasing_comments || "",
+              });
+              openOrderModal();
+            }}
+            onEditOrder={() => {
+              setActiveRowContext({
+                id: row.purchase_check_id!,
+                keyPrefix,
+                initialComment: row.purchasing_comments || "",
+              });
+              openOrderModal();
+            }}
+            onMarkReceived={() => {
+              updateStatusMutation.mutate({
+                id: row.purchase_check_id!,
+                updates: {
+                  [recKey]: new Date().toISOString(),
+                  [incKey]: null,
+                },
+                logMessage: `${keyPrefix.toUpperCase()} Marked Fully Received`,
+                initialComment: row.purchasing_comments || "",
+              });
+            }}
+            onReceiveIncomplete={() => {
+              setActiveRowContext({
+                id: row.purchase_check_id!,
+                keyPrefix,
+                initialComment: row.purchasing_comments || "",
+              });
+              openIncompleteModal();
+            }}
+            onClear={() => {
+              updateStatusMutation.mutate({
+                id: row.purchase_check_id!,
+                updates: { [ordKey]: null, [recKey]: null, [incKey]: null },
+                logMessage: `${keyPrefix.toUpperCase()} Status Cleared`,
+                initialComment: row.purchasing_comments || "",
+              });
+            }}
+          />
         );
       },
     });
@@ -490,13 +985,11 @@ export default function PurchasingTable() {
             component="button"
             size="sm"
             fw={600}
-            w="100%"
-            c="#6f00ffff"
-            style={{ textAlign: "left" }}
+            c="violet.9"
             onClick={(e) => {
               e.stopPropagation();
-              const jobId = info.row.original.job_id;
-              if (jobId) handleJobClick(jobId);
+              if (info.row.original.job_id)
+                handleJobClick(info.row.original.job_id);
             }}
           >
             {info.getValue()}
@@ -514,13 +1007,13 @@ export default function PurchasingTable() {
       size: 130,
       cell: (info) => {
         const date = info.getValue();
-        if (!date)
-          return (
-            <Text c="orange" size="sm">
-              TBD
-            </Text>
-          );
-        return <Text size="sm">{dayjs(date).format("YYYY-MM-DD")}</Text>;
+        return date ? (
+          <Text size="sm">{dayjs(date).format("YYYY-MM-DD")}</Text>
+        ) : (
+          <Text c="orange" size="sm">
+            TBD
+          </Text>
+        );
       },
     }),
     createStatusColumn("doors", "Doors"),
@@ -529,7 +1022,6 @@ export default function PurchasingTable() {
     createStatusColumn("acc", "Accessories"),
     columnHelper.accessor("purchasing_comments", {
       header: "History",
-      // IMPORTANT: Define a size so fixed layout knows how wide to make this
       size: 250,
       cell: (info) => (
         <Box
@@ -546,8 +1038,6 @@ export default function PurchasingTable() {
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            minHeight: "24px",
-            // Crucial for text truncation in Flexbox:
             maxWidth: "100%",
           }}
         >
@@ -558,26 +1048,16 @@ export default function PurchasingTable() {
             withinPortal
             disabled={!info.getValue()}
           >
-            <Text
-              size="xs"
-              truncate // This adds the '...'
-              c="dimmed"
-              style={{ flex: 1 }}
-            >
+            <Text size="xs" truncate c="dimmed" style={{ flex: 1 }}>
               {info.getValue() || "—"}
             </Text>
           </Tooltip>
-          <FaPencilAlt
-            size={10}
-            color="#adb5bd"
-            style={{ opacity: 0.5, flexShrink: 0 }}
-          />
+          <FaPencilAlt size={10} color="#adb5bd" />
         </Box>
       ),
     }),
   ];
 
-  // 4. React Table Instance
   const table = useReactTable({
     data: tableData,
     columns,
@@ -591,21 +1071,18 @@ export default function PurchasingTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <Center h={400}>
-        <Loader />
+        <Loader color="violet" />
       </Center>
     );
-  }
-
-  if (isError) {
+  if (isError)
     return (
       <Center h={400}>
         <Text c="red">{(error as any)?.message}</Text>
       </Center>
     );
-  }
 
   return (
     <Box
@@ -616,7 +1093,6 @@ export default function PurchasingTable() {
         height: "calc(100vh - 45px)",
       }}
     >
-      {/* HEADER */}
       <Group mb="md">
         <ThemeIcon
           size={50}
@@ -631,15 +1107,14 @@ export default function PurchasingTable() {
             Purchase Tracking
           </Title>
           <Text size="sm" c="dimmed">
-            Track purchase orders
+            Track and manage purchase orders
           </Text>
         </Stack>
       </Group>
 
-      {/* FILTERS */}
-      <Accordion variant="contained" radius="md" mb="md">
+      <Accordion variant="contained" radius="md" mb="md" chevronPosition="left">
         <Accordion.Item value="filters">
-          <Accordion.Control icon={<FaSearch size={16} />}>
+          <Accordion.Control icon={<FaSearch size={16} color="#8E2DE2" />}>
             Search Filters
           </Accordion.Control>
           <Accordion.Panel>
@@ -669,12 +1144,12 @@ export default function PurchasingTable() {
                     ? dayjs(getInputFilterValue("ship_schedule")).toDate()
                     : null
                 }
-                onChange={(date) => {
-                  const formatted = date
-                    ? dayjs(date).format("YYYY-MM-DD")
-                    : undefined;
-                  setInputFilterValue("ship_schedule", formatted);
-                }}
+                onChange={(date) =>
+                  setInputFilterValue(
+                    "ship_schedule",
+                    date ? dayjs(date).format("YYYY-MM-DD") : undefined
+                  )
+                }
                 valueFormat="YYYY-MM-DD"
               />
             </SimpleGrid>
@@ -684,8 +1159,6 @@ export default function PurchasingTable() {
               </Button>
               <Button
                 variant="filled"
-                color="blue"
-                leftSection={<FaSearch size={14} />}
                 onClick={handleApplyFilters}
                 style={{
                   background:
@@ -699,7 +1172,6 @@ export default function PurchasingTable() {
         </Accordion.Item>
       </Accordion>
 
-      {/* TABLE CONTENT */}
       <ScrollArea style={{ flex: 1 }}>
         <Table
           striped
@@ -760,7 +1232,6 @@ export default function PurchasingTable() {
         </Table>
       </ScrollArea>
 
-      {/* PAGINATION */}
       <Box
         style={{
           borderTop: "1px solid #eee",
@@ -773,11 +1244,13 @@ export default function PurchasingTable() {
           total={table.getPageCount()}
           value={pagination.pageIndex + 1}
           onChange={(p) => table.setPageIndex(p - 1)}
-          color="#4A00E0"
+          color="violet"
         />
       </Box>
 
-      {/* MODAL 1: General Comments */}
+      {/* --- Modals --- */}
+
+      {/* 1. Comment History Modal */}
       <Modal
         opened={commentModalOpened}
         onClose={closeCommentModal}
@@ -799,16 +1272,21 @@ export default function PurchasingTable() {
                 prev ? { ...prev, text: newVal } : null
               );
             }}
-            data-autofocus
           />
           <Group justify="flex-end">
             <Button variant="default" onClick={closeCommentModal}>
               Cancel
             </Button>
             <Button
-              color="purple"
-              onClick={handleSaveComment}
-              loading={updateMutation.isPending}
+              color="violet"
+              onClick={() => {
+                if (editingComment)
+                  updateStatusMutation.mutate({
+                    id: editingComment.id,
+                    updates: { purchasing_comments: editingComment.text },
+                  });
+                closeCommentModal();
+              }}
             >
               Save Comment
             </Button>
@@ -816,47 +1294,24 @@ export default function PurchasingTable() {
         </Stack>
       </Modal>
 
-      {/* MODAL 2: Received Incomplete Detail */}
-      <Modal
+      {/* 2. Order Parts Modal */}
+      <OrderPartsModal
+        opened={orderModalOpened}
+        onClose={closeOrderModal}
+        purchaseTrackingId={activeRowContext?.id || null}
+        itemType={activeRowContext?.keyPrefix || ""}
+        onSave={handleSaveOrder}
+      />
+
+      {/* 3. Incomplete Items Modal */}
+      <IncompletePartsModal
         opened={incompleteModalOpened}
         onClose={closeIncompleteModal}
-        title={`Incomplete Receipt: ${
-          incompleteUpdateData?.keyPrefix.toUpperCase() || "ITEM"
-        }`}
-        centered
-      >
-        <Stack>
-          <Text size="sm" c="red" fw={500}>
-            Action Required: Provide details about the missing items.
-          </Text>
-          <Text size="xs" c="dimmed">
-            This note will be automatically logged in the comments field with a
-            timestamp.
-          </Text>
-          <Textarea
-            minRows={3}
-            label="Missing / Damaged Details"
-            placeholder="e.g. Missing 5 door fronts, 1 drawer box damaged..."
-            value={incompleteDetail}
-            onChange={(e) => setIncompleteDetail(e.currentTarget.value)}
-            data-autofocus
-            withAsterisk
-          />
-          <Group justify="flex-end">
-            <Button variant="default" onClick={closeIncompleteModal}>
-              Cancel
-            </Button>
-            <Button
-              color="orange"
-              onClick={submitIncompleteReceipt}
-              loading={updateMutation.isPending}
-              disabled={!incompleteDetail.trim()}
-            >
-              Log Incomplete Receipt
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+        purchaseTrackingId={activeRowContext?.id || null}
+        itemType={activeRowContext?.keyPrefix || ""}
+        onSave={handleSaveIncomplete}
+      />
+
       <JobDetailsDrawer
         jobId={drawerJobId}
         opened={drawerOpened}

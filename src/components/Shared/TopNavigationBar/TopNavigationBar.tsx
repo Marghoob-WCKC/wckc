@@ -7,14 +7,6 @@ import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 export default function TopNavigationBar() {
   const { navigateBack, navigateForward } = useNavigationGuard();
 
-  const buttonStyle = {
-    transition: "all 0.2s ease",
-    border: "1px solid #dee2e6",
-    "&:hover": {
-      color: "#7048e8",
-    },
-  };
-
   return (
     <Paper
       p="md"
@@ -30,14 +22,17 @@ export default function TopNavigationBar() {
         <Group gap="sm">
           <Tooltip label="Go Back" withArrow position="bottom" openDelay={500}>
             <ActionIcon
-              variant="default"
+              variant="light"
+              color="white"
+              bg="transparent"
+              style={{
+                border: "2px solid #dee2e6",
+              }}
               size="lg"
-              radius="md"
               w="auto"
-              px="md"
+              px="lg"
               onClick={navigateBack}
               aria-label="Go Back"
-              style={buttonStyle}
             >
               <FaArrowLeft size={14} />
             </ActionIcon>
@@ -50,14 +45,17 @@ export default function TopNavigationBar() {
             openDelay={500}
           >
             <ActionIcon
-              variant="default"
+              variant="light"
+              color="white"
+              bg="transparent"
+              style={{
+                border: "2px solid #dee2e6",
+              }}
               size="lg"
-              radius="md"
               w="auto"
-              px="md"
+              px="lg"
               onClick={navigateForward}
               aria-label="Go Forward"
-              style={buttonStyle}
             >
               <FaArrowRight size={14} />
             </ActionIcon>

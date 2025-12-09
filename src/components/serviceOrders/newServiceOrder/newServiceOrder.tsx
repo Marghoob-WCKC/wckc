@@ -43,6 +43,7 @@ import AddInstaller from "@/components/Installers/AddInstaller/AddInstaller";
 import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
 import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
+import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 
 interface NewServiceOrderProps {
   preselectedJobId?: string;
@@ -117,6 +118,13 @@ export default function NewServiceOrder({
     },
     validate: zodResolver(ServiceOrderSchema),
   });
+
+  const { setIsDirty } = useNavigationGuard();
+  const isDirty = form.isDirty();
+  useEffect(() => {
+    setIsDirty(isDirty);
+    return () => setIsDirty(false);
+  }, [isDirty, setIsDirty]);
 
   const [existingSOCount, setExistingSOCount] = useState<number | null>(null);
   const [jobData, setJobData] = useState<any>(null);

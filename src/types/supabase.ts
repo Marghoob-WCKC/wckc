@@ -681,6 +681,54 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_order_items: {
+        Row: {
+          company: string | null
+          created_at: string | null
+          id: number
+          is_received: boolean | null
+          item_type: string
+          part_description: string
+          purchase_tracking_id: number
+          quantity: number | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string | null
+          id?: number
+          is_received?: boolean | null
+          item_type: string
+          part_description: string
+          purchase_tracking_id: number
+          quantity?: number | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string | null
+          id?: number
+          is_received?: boolean | null
+          item_type?: string
+          part_description?: string
+          purchase_tracking_id?: number
+          quantity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_purchase_tracking_id_fkey"
+            columns: ["purchase_tracking_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_tracking"
+            referencedColumns: ["purchase_check_id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_purchase_tracking_id_fkey"
+            columns: ["purchase_tracking_id"]
+            isOneToOne: false
+            referencedRelation: "purchasing_table_view"
+            referencedColumns: ["purchase_check_id"]
+          },
+        ]
+      }
       purchase_tracking: {
         Row: {
           acc_ordered_at: string | null

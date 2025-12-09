@@ -53,6 +53,7 @@ import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/RelatedServiceOrders";
 import AddBackorderModal from "@/components/Installation/AddBOModal/AddBOModal";
 import { calculateBusinessDate } from "@/utils/subtractBizDays";
+import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 
 // ---------- Types ----------
 type CabinetSpecsJoined = Tables<"cabinets"> & {
@@ -176,6 +177,12 @@ export default function EditProductionSchedulePage({
     } as SchedulingFormValues,
     validate: zodResolver(schedulingSchema),
   });
+  const { setIsDirty } = useNavigationGuard();
+  const isDirty = form.isDirty();
+  useEffect(() => {
+    setIsDirty(isDirty);
+    return () => setIsDirty(false);
+  }, [isDirty, setIsDirty]);
 
   useEffect(() => {
     if (data?.production_schedule) form.setValues(data.production_schedule);

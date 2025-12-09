@@ -56,6 +56,7 @@ import AddBackorderModal from "../AddBOModal/AddBOModal";
 import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 import AddInstaller from "@/components/Installers/AddInstaller/AddInstaller";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
+import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 
 type InstallationType = Tables<"installation"> & {
   partially_shipped?: boolean;
@@ -200,6 +201,13 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
       ship_status: "unprocessed",
     },
   });
+
+  const { setIsDirty } = useNavigationGuard();
+  const isDirty = form.isDirty();
+  useEffect(() => {
+    setIsDirty(isDirty);
+    return () => setIsDirty(false);
+  }, [isDirty, setIsDirty]);
 
   useEffect(() => {
     if (jobData) {

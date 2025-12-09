@@ -55,6 +55,7 @@ import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
 import { Tables } from "@/types/db";
 import AddInstaller from "@/components/Installers/AddInstaller/AddInstaller";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
+import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 
 interface EditServiceOrderProps {
   serviceOrderId: string;
@@ -200,6 +201,13 @@ export default function EditServiceOrder({
     },
     validate: zodResolver(ServiceOrderSchema),
   });
+
+  const { setIsDirty } = useNavigationGuard();
+  const isDirty = form.isDirty();
+  useEffect(() => {
+    setIsDirty(isDirty);
+    return () => setIsDirty(false);
+  }, [isDirty, setIsDirty]);
 
   useEffect(() => {
     if (serviceOrderData) {
