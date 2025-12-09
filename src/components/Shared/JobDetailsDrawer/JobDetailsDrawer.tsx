@@ -372,32 +372,37 @@ export default function JobDetailsDrawer({
 
           {/* Schedule Grid */}
           <SimpleGrid cols={4} spacing="xs">
-            <CompactDateBlock label="Received" date={prod?.received_date} />
             <CompactDateBlock label="Placement" date={prod?.placement_date} />
             <CompactDateBlock
               label="Ship Date"
               date={prod?.ship_schedule}
               color="blue"
             />
-            <Box>
+
+            <CompactDateBlock label="Wrap Date" date={install?.wrap_date} />
+            <Stack align="center" justify="center">
               <Text size="10px" c="dimmed" fw={700} tt="uppercase">
-                Shipping Date Status
+                Shipped
               </Text>
-              <Badge
-                size="sm"
-                mt={2}
-                variant="light"
-                color={
-                  prod?.ship_status === "confirmed"
-                    ? "green"
-                    : prod?.ship_status === "tentative"
-                    ? "orange"
-                    : "gray"
-                }
-              >
-                {prod?.ship_status || "N/A"}
-              </Badge>
-            </Box>
+              <Group>
+                {!install?.partially_shipped && (
+                  <Badge
+                    color={install?.has_shipped ? "green" : "red"}
+                    variant="light"
+                    miw="60px"
+                  >
+                    <Text size="10px" fw={600}>
+                      {install?.has_shipped ? "YES" : "NO"}
+                    </Text>
+                  </Badge>
+                )}
+                {install?.partially_shipped && (
+                  <Badge color="orange" variant="outline" miw="60px">
+                    Partial
+                  </Badge>
+                )}
+              </Group>
+            </Stack>
           </SimpleGrid>
         </Paper>
 
@@ -409,97 +414,60 @@ export default function JobDetailsDrawer({
             color="orange"
           />
 
-          <Grid>
-            <Grid.Col span={7}>
-              <Stack gap="xs">
-                <Group>
-                  <Text size="sm" c="dimmed">
-                    Installer:
-                  </Text>
-                  <Text size="sm" fw={600}>
-                    {install?.installer?.company_name ||
-                      install?.installer?.first_name ||
-                      "Unassigned"}
-                  </Text>
-                </Group>
+          <Stack gap="xs">
+            <Group>
+              <Text size="sm" c="dimmed">
+                Installer:
+              </Text>
+              <Text size="sm" fw={600}>
+                {install?.installer?.company_name ||
+                  install?.installer?.first_name ||
+                  "Unassigned"}
+              </Text>
+            </Group>
 
-                <SimpleGrid cols={2} spacing="xs">
-                  <CompactDateBlock
-                    label="Install Date"
-                    date={install?.installation_date}
-                    color="orange"
-                  />
-                  <CompactDateBlock
-                    label="Inspect Date"
-                    date={install?.inspection_date}
-                    color="cyan"
-                  />
-                </SimpleGrid>
+            <SimpleGrid cols={2} spacing="xs">
+              <CompactDateBlock
+                label="Install Date"
+                date={install?.installation_date}
+                color="orange"
+              />
+              <CompactDateBlock
+                label="Inspect Date"
+                date={install?.inspection_date}
+                color="cyan"
+              />
+            </SimpleGrid>
 
-                <Group gap="xs" mt={4}>
-                  <Badge
-                    variant={
-                      install?.installation_completed ? "filled" : "outline"
-                    }
-                    color={install?.installation_completed ? "green" : "gray"}
-                    leftSection={
-                      install?.installation_completed ? (
-                        <FaCheckCircle size={10} />
-                      ) : (
-                        <FaRegCircle size={10} />
-                      )
-                    }
-                  >
-                    Install Complete
-                  </Badge>
-                  <Badge
-                    variant={
-                      install?.inspection_completed ? "filled" : "outline"
-                    }
-                    color={install?.inspection_completed ? "blue" : "gray"}
-                    leftSection={
-                      install?.inspection_completed ? (
-                        <FaCheckCircle size={10} />
-                      ) : (
-                        <FaRegCircle size={10} />
-                      )
-                    }
-                  >
-                    Inspect Complete
-                  </Badge>
-                </Group>
-              </Stack>
-            </Grid.Col>
-
-            <Grid.Col span={5} style={{ borderLeft: "1px dashed #dee2e6" }}>
-              <Stack gap="xs">
-                <CompactDateBlock label="Wrap Date" date={install?.wrap_date} />
-                <Box>
-                  <Text size="10px" c="dimmed" fw={700} tt="uppercase" mb={4}>
-                    Shipped?
-                  </Text>
-                  <Badge
-                    color={install?.has_shipped ? "green" : "red"}
-                    variant="light"
-                    fullWidth
-                  >
-                    {install?.has_shipped ? "YES" : "NO"}
-                  </Badge>
-                  {install?.partially_shipped && (
-                    <Badge
-                      color="orange"
-                      variant="outline"
-                      fullWidth
-                      mt={4}
-                      size="xs"
-                    >
-                      Partial
-                    </Badge>
-                  )}
-                </Box>
-              </Stack>
-            </Grid.Col>
-          </Grid>
+            <Group gap="xs" mt={4}>
+              <Badge
+                variant={install?.installation_completed ? "filled" : "outline"}
+                color={install?.installation_completed ? "green" : "gray"}
+                leftSection={
+                  install?.installation_completed ? (
+                    <FaCheckCircle size={10} />
+                  ) : (
+                    <FaRegCircle size={10} />
+                  )
+                }
+              >
+                Install Complete
+              </Badge>
+              <Badge
+                variant={install?.inspection_completed ? "filled" : "outline"}
+                color={install?.inspection_completed ? "blue" : "gray"}
+                leftSection={
+                  install?.inspection_completed ? (
+                    <FaCheckCircle size={10} />
+                  ) : (
+                    <FaRegCircle size={10} />
+                  )
+                }
+              >
+                Inspect Complete
+              </Badge>
+            </Group>
+          </Stack>
         </Paper>
 
         {/* --- NEW SECTION 4: COMMENTS & NOTES --- */}
