@@ -811,6 +811,70 @@ export default function PurchasingTable() {
     },
   });
 
+  // NEW: Mutation to mark all items as received when status is force-updated to Complete
+  const markAllItemsReceivedMutation = useMutation({
+    mutationFn: async ({
+      id,
+      keyPrefix,
+      initialComment,
+    }: {
+      id: number;
+      keyPrefix: string;
+      initialComment: string;
+    }) => {
+      // 1. Fetch related items
+      const { data: items } = await supabase
+        .from("purchase_order_items")
+        .select("id, quantity")
+        .eq("purchase_tracking_id", id)
+        .eq("item_type", keyPrefix);
+
+      // 2. Update all items to full quantity
+      if (items && items.length > 0) {
+        const itemUpdates = items.map((item) =>
+          supabase
+            .from("purchase_order_items")
+            .update({
+              qty_received: item.quantity,
+              is_received: true,
+            })
+            .eq("id", item.id)
+        );
+        await Promise.all(itemUpdates);
+      }
+
+      // 3. Update parent tracking status
+      const recKey = `${keyPrefix}_received_at`;
+      const incKey = `${keyPrefix}_received_incomplete_at`;
+
+      const timestamp = dayjs().format("YYYY-MM-DD HH:mm");
+      const logMessage = `${keyPrefix.toUpperCase()} Marked Fully Received`;
+      const newComment = initialComment
+        ? `${initialComment}\n${logMessage} [${timestamp}]`
+        : `${logMessage} [${timestamp}]`;
+
+      const { error } = await supabase
+        .from("purchase_tracking")
+        .update({
+          [recKey]: new Date().toISOString(),
+          [incKey]: null,
+          purchasing_comments: newComment,
+        })
+        .eq("purchase_check_id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchasing_table_view"] });
+      queryClient.invalidateQueries({ queryKey: ["purchase_order_items"] });
+      notifications.show({
+        title: "Updated",
+        message: "Marked Complete & Items Updated",
+        color: "green",
+      });
+    },
+  });
+
   const handleSaveOrder = async (items: PurchaseOrderItemState[]) => {
     if (!activeRowContext) return;
     const { id, keyPrefix, initialComment } = activeRowContext;
@@ -940,13 +1004,10 @@ export default function PurchasingTable() {
               openOrderModal();
             }}
             onMarkReceived={() => {
-              updateStatusMutation.mutate({
+              // UPDATED: Now calls the mutation that updates all items too
+              markAllItemsReceivedMutation.mutate({
                 id: row.purchase_check_id!,
-                updates: {
-                  [recKey]: new Date().toISOString(),
-                  [incKey]: null,
-                },
-                logMessage: `${keyPrefix.toUpperCase()} Marked Fully Received`,
+                keyPrefix,
                 initialComment: row.purchasing_comments || "",
               });
             }}
