@@ -50,6 +50,7 @@ import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
 import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/RelatedServiceOrders";
 import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
+import JobAttachments from "../JobAttachments/JobAttachments";
 
 // --- Types ---
 type JoinedCabinet = Tables<"cabinets"> & {
@@ -251,7 +252,8 @@ export default function JobDetailsDrawer({
       <Stack gap="md" pb="xl">
         {/* --- HEADER --- */}
         <Paper p="md" radius="md" bg="gray.1">
-          <Group justify="space-between" align="flex-start">
+          <JobAttachments jobId={jobId as number} />
+          <Group justify="space-between" align="flex-start" mt="md">
             <Group>
               <ThemeIcon
                 size={50}
