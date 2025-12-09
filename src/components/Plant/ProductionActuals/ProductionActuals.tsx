@@ -48,6 +48,24 @@ type CompletionField =
   | "paint_completed_actual"
   | "assembly_completed_actual";
 
+// Helper component for displaying scheduled dates
+const ScheduleDateBlock = ({
+  label,
+  date,
+}: {
+  label: string;
+  date: string | null | undefined;
+}) => (
+  <Stack gap={2}>
+    <Text size="xs" c="dimmed" fw={700} tt="uppercase">
+      {label}
+    </Text>
+    <Text size="sm" fw={600} c={date ? "dark" : "dimmed"}>
+      {date ? dayjs(date).format("MMM D, YYYY") : "TBD"}
+    </Text>
+  </Stack>
+);
+
 export default function ProductionActuals() {
   const { supabase, isAuthenticated } = useSupabase();
   const queryClient = useQueryClient();
@@ -130,11 +148,6 @@ export default function ProductionActuals() {
       label: string;
       icon: React.ReactNode;
     }[] = [
-      {
-        key: "in_plant_actual",
-        label: "In Plant Entry",
-        icon: <FaIndustry size={22} />,
-      },
       {
         key: "doors_completed_actual",
         label: "Doors Completed",
@@ -326,6 +339,74 @@ export default function ProductionActuals() {
 
               <Divider />
 
+              {/* NEW: PRODUCTION SCHEDULE (PLANNED DATES) */}
+              <Paper p="lg" radius="md" shadow="xs" withBorder>
+                <Group mb="md" style={{ color: "#4A00E0" }}>
+                  <FaClipboardList size={18} />
+                  <Text fw={600} size="lg">
+                    Production Schedule
+                  </Text>
+                </Group>
+                <SimpleGrid
+                  cols={{ base: 2, sm: 3, md: 4, lg: 6 }}
+                  spacing="lg"
+                >
+                  <ScheduleDateBlock
+                    label="Doors In"
+                    date={
+                      (jobData.production_schedule as any)?.doors_in_schedule
+                    }
+                  />
+                  <ScheduleDateBlock
+                    label="Doors Out"
+                    date={
+                      (jobData.production_schedule as any)?.doors_out_schedule
+                    }
+                  />
+                  <ScheduleDateBlock
+                    label="Cut Finish"
+                    date={
+                      (jobData.production_schedule as any)?.cut_finish_schedule
+                    }
+                  />
+                  <ScheduleDateBlock
+                    label="Cut Melamine"
+                    date={
+                      (jobData.production_schedule as any)
+                        ?.cut_melamine_schedule
+                    }
+                  />
+                  <ScheduleDateBlock
+                    label="Paint In"
+                    date={
+                      (jobData.production_schedule as any)?.paint_in_schedule
+                    }
+                  />
+                  <ScheduleDateBlock
+                    label="Paint Out"
+                    date={
+                      (jobData.production_schedule as any)?.paint_out_schedule
+                    }
+                  />
+                  <ScheduleDateBlock
+                    label="Assembly"
+                    date={
+                      (jobData.production_schedule as any)?.assembly_schedule
+                    }
+                  />
+                  <ScheduleDateBlock
+                    label="Wrap Date"
+                    date={(jobData.production_schedule as any)?.wrap_date}
+                  />
+                  <ScheduleDateBlock
+                    label="Ship Date"
+                    date={(jobData.production_schedule as any)?.ship_schedule}
+                  />
+                </SimpleGrid>
+              </Paper>
+
+              <Divider />
+
               {/* STEPS GRID */}
               <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing="lg">
                 {actualSteps.map((step) => (
@@ -339,7 +420,7 @@ export default function ProductionActuals() {
                       borderColor: step.isCompleted ? "#28a745" : "#dee2e6",
                       borderWidth: step.isCompleted ? 2 : 1,
                       background: step.isCompleted
-                        ? "linear-gradient(145deg, #ffffff 0%, #f0fff4 100%)" // Subtle green tint for completed
+                        ? "linear-gradient(145deg, #ffffff 0%, #f0fff4 100%)"
                         : "#fff",
                       display: "flex",
                       flexDirection: "column",
@@ -351,7 +432,7 @@ export default function ProductionActuals() {
                       <Box>
                         <Group justify="space-between" mb="md">
                           <ThemeIcon
-                            size={50}
+                            size={30}
                             radius="md"
                             variant="gradient"
                             gradient={
@@ -411,8 +492,8 @@ export default function ProductionActuals() {
 
                       <Button
                         fullWidth
-                        mt="xl"
-                        size="md"
+                        mt="md"
+                        size="sm"
                         radius="md"
                         // Toggle Styles based on state
                         variant={step.isCompleted ? "outline" : "gradient"}
