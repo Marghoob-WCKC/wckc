@@ -494,6 +494,7 @@ export default function InspectionTable() {
                 onChange={(e) =>
                   setInputFilterValue("job_number", e.target.value)
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
                 label="Client"
@@ -502,6 +503,7 @@ export default function InspectionTable() {
                 onChange={(e) =>
                   setInputFilterValue("shipping_client_name", e.target.value)
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
                 label="Installer"
@@ -510,6 +512,7 @@ export default function InspectionTable() {
                 onChange={(e) =>
                   setInputFilterValue("installer_company", e.target.value)
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <DateInput
                 label="Inspection Date"
@@ -527,6 +530,7 @@ export default function InspectionTable() {
                   setInputFilterValue("inspection_date", formattedDate);
                 }}
                 valueFormat="YYYY-MM-DD"
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
             </SimpleGrid>
 
@@ -695,7 +699,6 @@ export default function InspectionTable() {
             label="Completion Date"
             placeholder="YYYY-MM-DD"
             value={completionDateInput}
-            
             onChange={(date) =>
               setCompletionDateInput(date ? dayjs(date).toDate() : null)
             }

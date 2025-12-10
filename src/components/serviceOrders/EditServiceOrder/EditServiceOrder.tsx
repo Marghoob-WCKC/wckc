@@ -610,14 +610,8 @@ export default function EditServiceOrder({
                     </Box>
                   </Group>
 
-                  {/* 2. Mobile/Tablet View (Hidden from 'lg' up) 
-      Stacks items vertically, hides dividers.
-  */}
                   <Stack hiddenFrom="lg" gap="xl">
-                    {/* Mobile Col 1 */}
                     <Stack gap="sm">
-                      {/* ... (Repeat inputs or extract to a sub-component to avoid code duplication) ... */}
-                      {/* For brevity, use the same input logic here as above if not extracting components */}
                       <Group align="flex-end" gap="xs" wrap="nowrap">
                         <Select
                           label="Assign Service Tech"
@@ -625,7 +619,6 @@ export default function EditServiceOrder({
                           {...form.getInputProps("installer_id")}
                           style={{ flex: 1 }}
                         />
-                        {/* ... Actions ... */}
                       </Group>
                       <SimpleGrid cols={2}>
                         <DateInput
@@ -639,7 +632,6 @@ export default function EditServiceOrder({
                       </SimpleGrid>
                     </Stack>
 
-                    {/* Mobile Col 2 */}
                     <SimpleGrid cols={2}>
                       <Stack gap={4}>
                         <TextInput
@@ -663,7 +655,6 @@ export default function EditServiceOrder({
                       </Stack>
                     </SimpleGrid>
 
-                    {/* Mobile Col 3 */}
                     <HomeOwnersInfo form={form} />
                   </Stack>
                 </Box>

@@ -602,6 +602,7 @@ export default function PurchasingTable() {
                 onChange={(e) =>
                   setInputFilterValue("job_number", e.target.value)
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
                 label="Client Name"
@@ -610,6 +611,7 @@ export default function PurchasingTable() {
                 onChange={(e) =>
                   setInputFilterValue("client_name", e.target.value)
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <DateInput
                 label="Ship Date"
@@ -627,6 +629,7 @@ export default function PurchasingTable() {
                   )
                 }
                 valueFormat="YYYY-MM-DD"
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
             </SimpleGrid>
             <Group justify="flex-end" mt="md">

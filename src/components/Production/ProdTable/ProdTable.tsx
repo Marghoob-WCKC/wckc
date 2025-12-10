@@ -435,12 +435,14 @@ export default function ProdTable() {
                 onChange={(e) =>
                   setInputFilterValue("job_number", e.target.value)
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
                 label="Client"
                 placeholder="e.g., Smith"
                 value={getInputFilterValue("client")}
                 onChange={(e) => setInputFilterValue("client", e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <DateInput
                 label="Received Date"
@@ -458,6 +460,7 @@ export default function ProdTable() {
                   setInputFilterValue("received_date", formatted);
                 }}
                 valueFormat="YYYY-MM-DD"
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <DateInput
                 label="Placement Date"
@@ -475,6 +478,7 @@ export default function ProdTable() {
                   setInputFilterValue("placement_date", formatted);
                 }}
                 valueFormat="YYYY-MM-DD"
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <DateInput
                 label="Ship Date"
@@ -492,6 +496,7 @@ export default function ProdTable() {
                   setInputFilterValue("ship_schedule", formatted);
                 }}
                 valueFormat="YYYY-MM-DD"
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
                 label="Site Address"
@@ -500,6 +505,7 @@ export default function ProdTable() {
                 onChange={(e) =>
                   setInputFilterValue("site_address", e.target.value)
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
             </SimpleGrid>
 
