@@ -35,6 +35,7 @@ import { GrSchedules } from "react-icons/gr";
 // Import the Navigation Guard Hook
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 import TopNavigationBar from "../Shared/TopNavigationBar/TopNavigationBar";
+import Link from "next/link";
 
 export type SidebarLink = {
   iconName: string;
@@ -69,21 +70,15 @@ function MainLink({ item }: { item: SidebarLink }) {
   const pathname = usePathname();
   const Icon = iconMap[item.iconName] || FaHome;
   const hasLinks = Array.isArray(item.links);
-
-  // Access the navigation guard to handle safe navigation
   const { navigatePush } = useNavigationGuard();
 
-  // Determine active state
   const isActive = item.path ? pathname === item.path : false;
-
   const isChildActive = hasLinks
     ? item.links?.some((link) => pathname === link.path) ?? false
     : false;
 
-  // State for collapse
   const [opened, setOpened] = useState(isChildActive);
 
-  // Auto-open if a child is active (on mount or path change)
   useEffect(() => {
     if (isChildActive) {
       setOpened(true);
@@ -176,10 +171,15 @@ function MainLink({ item }: { item: SidebarLink }) {
     );
   }
 
-  // UPDATED: Use UnstyledButton + navigatePush instead of Next.js Link
   return (
     <UnstyledButton
-      onClick={() => {
+      component={Link}
+      href={item.path || "#"}
+      onClick={(e: React.MouseEvent) => {
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
+          return;
+        }
+        e.preventDefault();
         if (item.path) {
           navigatePush(item.path);
         }
