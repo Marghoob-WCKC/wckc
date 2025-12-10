@@ -322,49 +322,49 @@ export type Database = {
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "inspection_table_view"
             referencedColumns: ["job_id"]
           },
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "installation_table_view"
             referencedColumns: ["job_id"]
           },
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "plant_table_view"
             referencedColumns: ["job_id"]
           },
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "prod_table_view"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "sales_table_view"
             referencedColumns: ["job_id"]
           },
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "service_orders_table_view"
             referencedColumns: ["job_id"]
           },
@@ -440,6 +440,7 @@ export type Database = {
           installer_id: number
           is_active: boolean
           last_name: string | null
+          legacy_installer_id: string | null
           notes: string | null
           phone_number: string | null
           street_address: string | null
@@ -459,6 +460,7 @@ export type Database = {
           installer_id?: number
           is_active?: boolean
           last_name?: string | null
+          legacy_installer_id?: string | null
           notes?: string | null
           phone_number?: string | null
           street_address?: string | null
@@ -478,6 +480,7 @@ export type Database = {
           installer_id?: number
           is_active?: boolean
           last_name?: string | null
+          legacy_installer_id?: string | null
           notes?: string | null
           phone_number?: string | null
           street_address?: string | null
