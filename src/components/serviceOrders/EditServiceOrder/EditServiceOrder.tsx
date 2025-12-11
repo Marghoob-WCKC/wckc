@@ -724,12 +724,15 @@ export default function EditServiceOrder({
                       }}
                     />
                     <Collapse in={!!form.values.completed_at} keepMounted>
-                      <Text size="sm" c="dimmed" w={rem(250)}>
-                        Completed on:
-                        {dayjs(form.values.completed_at).format(
-                          "YYYY-MM-DD HH:mm"
+                      {form.values.completed_at &&
+                        dayjs(form.values.completed_at).year() !== 1999 && (
+                          <Text size="sm" c="dimmed" w={rem(250)}>
+                            Completed on:{" "}
+                            {dayjs(form.values.completed_at).format(
+                              "YYYY-MM-DD HH:mm"
+                            )}
+                          </Text>
                         )}
-                      </Text>
                     </Collapse>
                   </Group>
                 </SimpleGrid>

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSupabase } from "@/hooks/useSupabase";
-import { useJobs } from "@/hooks/useJobs";
+import { useJobSearch } from "@/hooks/useJobSearch";
 import {
   Container,
   Paper,
@@ -73,8 +73,12 @@ export default function ProductionActuals() {
   // State for the search selection
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
-  // 1. Fetch Job List for Search
-  const { data: jobOptions, isLoading: jobsLoading } = useJobs(isAuthenticated);
+  const {
+    options: jobOptions,
+    isLoading: jobsLoading,
+    setSearch: setJobSearch,
+    search: jobSearchValue,
+  } = useJobSearch(selectedJobId);
 
   // 2. Fetch Job Data (Dependent on selection)
   const { data: jobData, isLoading: dataLoading } = useQuery({
@@ -86,7 +90,10 @@ export default function ProductionActuals() {
         .select(
           `
           job_number,
-          production_schedule:production_schedule (*)
+          production_schedule:production_schedule (*),
+          installation:installation_id (
+            wrap_date
+          )
         `
         )
         .eq("id", Number(selectedJobId))
@@ -207,6 +214,9 @@ export default function ProductionActuals() {
     return Math.round((completed / actualSteps.length) * 100);
   }, [actualSteps]);
 
+  const productionSchedule = jobData?.production_schedule as any;
+  const installationData = jobData?.installation as any;
+
   return (
     <Box>
       <Paper
@@ -243,11 +253,13 @@ export default function ProductionActuals() {
             data={jobOptions || []}
             searchable
             clearable
-            nothingFoundMessage="No jobs found"
+            nothingFoundMessage={jobsLoading ? "Searching..." : "No jobs found"}
             leftSection={<FaSearch size={14} />}
             value={selectedJobId}
             onChange={setSelectedJobId}
-            disabled={jobsLoading}
+            onSearchChange={setJobSearch}
+            searchValue={jobSearchValue}
+            rightSection={jobsLoading ? <Loader size={16} /> : null}
             w={300}
             size="md"
             styles={{
@@ -263,8 +275,6 @@ export default function ProductionActuals() {
       </Paper>
       <Container size={"xl"}>
         <Stack gap="xl">
-          {/* --- HEADER SECTION --- */}
-
           {/* --- CONTENT AREA --- */}
           {!selectedJobId ? (
             <Center h={400} bg="gray.0" style={{ borderRadius: 16 }}>
@@ -339,7 +349,7 @@ export default function ProductionActuals() {
 
               <Divider />
 
-              {/* NEW: PRODUCTION SCHEDULE (PLANNED DATES) */}
+              {/* PRODUCTION SCHEDULE (PLANNED DATES) */}
               <Paper p="lg" radius="md" shadow="xs" withBorder>
                 <Group mb="md" style={{ color: "#4A00E0" }}>
                   <FaClipboardList size={18} />
@@ -353,54 +363,39 @@ export default function ProductionActuals() {
                 >
                   <ScheduleDateBlock
                     label="Doors In"
-                    date={
-                      (jobData.production_schedule as any)?.doors_in_schedule
-                    }
+                    date={productionSchedule?.doors_in_schedule}
                   />
                   <ScheduleDateBlock
                     label="Doors Out"
-                    date={
-                      (jobData.production_schedule as any)?.doors_out_schedule
-                    }
+                    date={productionSchedule?.doors_out_schedule}
                   />
                   <ScheduleDateBlock
                     label="Cut Finish"
-                    date={
-                      (jobData.production_schedule as any)?.cut_finish_schedule
-                    }
+                    date={productionSchedule?.cut_finish_schedule}
                   />
                   <ScheduleDateBlock
                     label="Cut Melamine"
-                    date={
-                      (jobData.production_schedule as any)
-                        ?.cut_melamine_schedule
-                    }
+                    date={productionSchedule?.cut_melamine_schedule}
                   />
                   <ScheduleDateBlock
                     label="Paint In"
-                    date={
-                      (jobData.production_schedule as any)?.paint_in_schedule
-                    }
+                    date={productionSchedule?.paint_in_schedule}
                   />
                   <ScheduleDateBlock
                     label="Paint Out"
-                    date={
-                      (jobData.production_schedule as any)?.paint_out_schedule
-                    }
+                    date={productionSchedule?.paint_out_schedule}
                   />
                   <ScheduleDateBlock
                     label="Assembly"
-                    date={
-                      (jobData.production_schedule as any)?.assembly_schedule
-                    }
+                    date={productionSchedule?.assembly_schedule}
                   />
                   <ScheduleDateBlock
                     label="Wrap Date"
-                    date={(jobData.production_schedule as any)?.wrap_date}
+                    date={installationData?.wrap_date}
                   />
                   <ScheduleDateBlock
                     label="Ship Date"
-                    date={(jobData.production_schedule as any)?.ship_schedule}
+                    date={productionSchedule?.ship_schedule}
                   />
                 </SimpleGrid>
               </Paper>

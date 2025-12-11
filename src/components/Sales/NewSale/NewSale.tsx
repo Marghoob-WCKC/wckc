@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useForm } from "@mantine/form";
 import { zodResolver } from "@/utils/zodResolver/zodResolver";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";
 import {
@@ -16,7 +16,6 @@ import {
   TextInput,
   NumberInput,
   Select,
-  Text,
   SimpleGrid,
   Fieldset,
   Paper,
@@ -24,7 +23,6 @@ import {
   Loader,
   Center,
   Badge,
-  Divider,
   Title,
   Autocomplete,
   Modal,
@@ -32,8 +30,9 @@ import {
   Checkbox,
   Radio,
   Textarea,
+  Text,
+  Divider,
 } from "@mantine/core";
-import { DateInput } from "@mantine/dates";
 import { FaCopy, FaPlus, FaCheckCircle, FaCircle } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import {
@@ -54,17 +53,18 @@ import {
 } from "@/dropdowns/dropdownOptions";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 
-type DoorStyleOptionData = Pick<Tables<"door_styles">, "id" | "name">;
-type ReferenceOption = {
-  value: string;
-  label: string;
-};
+// New Optimized Hooks
+import { useClientSearch } from "@/hooks/useClientSearch";
+import { useSpeciesSearch } from "@/hooks/useSpeciesSearch";
+import { useColorSearch } from "@/hooks/useColorSearch";
+import { useDoorStyleSearch } from "@/hooks/useDoorStyleSearch";
+
+const FEATURE_MANUAL_JOB_ENTRY = true;
 
 interface ExtendedMasterOrderInput extends MasterOrderInput {
   manual_job_base: number;
   manual_job_suffix?: string;
 }
-
 interface NewDoorStyleState {
   name: string;
   model: string;
@@ -87,10 +87,6 @@ export default function NewSale() {
     type: string;
   } | null>(null);
 
-  const [speciesSearch, setSpeciesSearch] = useState("");
-  const [colorSearch, setColorSearch] = useState("");
-  const [doorStyleSearch, setDoorStyleSearch] = useState("");
-
   const [newItemValue, setNewItemValue] = useState("");
 
   const [newDoorStyle, setNewDoorStyle] = useState<NewDoorStyleState>({
@@ -111,202 +107,6 @@ export default function NewSale() {
     { open: openDoorStyleModal, close: closeDoorStyleModal },
   ] = useDisclosure(false);
 
-  const {
-    data: clientsData,
-    isLoading: clientsLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ["clients-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("client")
-        .select(
-          "id, lastName, street, city, province, zip, phone1, email1, phone2, email2"
-        )
-        .order("lastName");
-      if (error) throw error;
-      return data as Tables<"client">[];
-    },
-    enabled: isAuthenticated,
-  });
-
-  type ClientSelectOption = {
-    value: string;
-    label: string;
-    original: Tables<"client">;
-  };
-
-  const clientSelectOptions = useMemo(() => {
-    const safeClients = clientsData || [];
-    return safeClients.map((c) => {
-      const clientItem = c as Tables<"client">;
-      return {
-        value: String(clientItem.id),
-        label: clientItem.lastName,
-        original: clientItem,
-      };
-    });
-  }, [clientsData]);
-
-  const { data: colorsData, isLoading: colorsLoading } = useQuery<
-    { Id: number; Name: string }[]
-  >({
-    queryKey: ["colors-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("colors")
-        .select("Id, Name")
-        .order("Name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: isAuthenticated,
-  });
-
-  const { data: speciesData, isLoading: speciesLoading } = useQuery<
-    { Id: number; Species: string }[]
-  >({
-    queryKey: ["species-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("species")
-        .select("Id, Species")
-        .order("Species");
-      if (error) throw error;
-      return data;
-    },
-    enabled: isAuthenticated,
-  });
-
-  const { data: doorStylesData, isLoading: doorStylesLoading } = useQuery<
-    DoorStyleOptionData[]
-  >({
-    queryKey: ["door-styles-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("door_styles")
-        .select("id, name")
-        .order("name");
-      if (error) throw error;
-      return data as DoorStyleOptionData[];
-    },
-    enabled: isAuthenticated,
-  });
-
-  const colorOptions = useMemo<ReferenceOption[]>(() => {
-    return (colorsData || []).map((c) => ({
-      value: String(c.Id),
-      label: c.Name,
-    }));
-  }, [colorsData]);
-
-  const speciesOptions = useMemo<ReferenceOption[]>(() => {
-    return (speciesData || []).map((s) => ({
-      value: String(s.Id),
-      label: s.Species,
-    }));
-  }, [speciesData]);
-
-  const doorStylesOptions = useMemo<ReferenceOption[]>(() => {
-    return (doorStylesData || []).map((d) => ({
-      value: String(d.id),
-      label: d.name,
-    }));
-  }, [doorStylesData]);
-
-  const addSpeciesMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const { data, error } = await supabase
-        .from("species")
-        .insert({ Species: name })
-        .select("Id")
-        .single();
-      if (error) throw error;
-      return data.Id;
-    },
-    onSuccess: (newId) => {
-      notifications.show({
-        title: "Success",
-        message: "Species added",
-        color: "green",
-      });
-      queryClient.invalidateQueries({ queryKey: ["species-list"] });
-      form.setFieldValue("cabinet.species", String(newId));
-      closeSpeciesModal();
-      setNewItemValue("");
-    },
-    onError: (err: any) =>
-      notifications.show({
-        title: "Error",
-        message: err.message,
-        color: "red",
-      }),
-  });
-
-  const addColorMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const { data, error } = await supabase
-        .from("colors")
-        .insert({ Name: name })
-        .select("Id")
-        .single();
-      if (error) throw error;
-      return data.Id;
-    },
-    onSuccess: (newId) => {
-      notifications.show({
-        title: "Success",
-        message: "Color added",
-        color: "green",
-      });
-      queryClient.invalidateQueries({ queryKey: ["colors-list"] });
-      form.setFieldValue("cabinet.color", String(newId));
-      closeColorModal();
-      setNewItemValue("");
-    },
-    onError: (err: any) =>
-      notifications.show({
-        title: "Error",
-        message: err.message,
-        color: "red",
-      }),
-  });
-
-  const addDoorStyleMutation = useMutation({
-    mutationFn: async (values: NewDoorStyleState) => {
-      const { data, error } = await supabase
-        .from("door_styles")
-        .insert(values)
-        .select("id")
-        .single();
-      if (error) throw error;
-      return data.id;
-    },
-    onSuccess: (newId) => {
-      notifications.show({
-        title: "Success",
-        message: "Door Style added",
-        color: "green",
-      });
-      queryClient.invalidateQueries({ queryKey: ["door-styles-list"] });
-      form.setFieldValue("cabinet.door_style", String(newId));
-      closeDoorStyleModal();
-      setNewDoorStyle({
-        name: "",
-        model: "",
-        is_pre_manufactured: false,
-        is_made_in_house: false,
-      });
-    },
-    onError: (err: any) =>
-      notifications.show({
-        title: "Error",
-        message: err.message,
-        color: "red",
-      }),
-  });
-
   const form = useForm<ExtendedMasterOrderInput>({
     initialValues: {
       client_id: 0,
@@ -320,7 +120,6 @@ export default function NewSale() {
       manual_job_base: undefined as unknown as number,
       manual_job_suffix: "",
       is_memo: false,
-
       flooring_type: "",
       flooring_clearance: "",
       cabinet: {
@@ -353,18 +152,124 @@ export default function NewSale() {
     },
     validate: zodResolver(MasterOrderSchema),
   });
-  const { setIsDirty } = useNavigationGuard();
-  const isDirty = form.isDirty();
-  useEffect(() => {
-    setIsDirty(isDirty);
-    return () => setIsDirty(false);
-  }, [isDirty, setIsDirty]);
-  useEffect(() => {
-    if (form.values.stage !== "SOLD") {
-      form.setFieldValue("manual_job_base", undefined as unknown as number);
-      form.setFieldValue("manual_job_suffix", "");
-    }
-  }, [form.values.stage]);
+
+  // --- Optimized Data Fetching ---
+  const {
+    options: clientOptions,
+    isLoading: clientsLoading,
+    setSearch: setClientSearch,
+    search: clientSearch,
+  } = useClientSearch(null);
+
+  const {
+    options: speciesOptions,
+    setSearch: setSpeciesSearch,
+    search: speciesSearchValue,
+  } = useSpeciesSearch(null);
+
+  const {
+    options: colorOptions,
+    setSearch: setColorSearch,
+    search: colorSearchValue,
+  } = useColorSearch(null);
+
+  const {
+    options: doorStyleOptions,
+    setSearch: setDoorStyleSearch,
+    search: doorStyleSearchValue,
+  } = useDoorStyleSearch(null);
+
+  const addSpeciesMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const { data, error } = await supabase
+        .from("species")
+        .insert({ Species: name })
+        .select("Id")
+        .single();
+      if (error) throw error;
+      return data.Id;
+    },
+    onSuccess: (newId) => {
+      notifications.show({
+        title: "Success",
+        message: "Species added",
+        color: "green",
+      });
+      queryClient.invalidateQueries({ queryKey: ["species-search"] });
+      form.setFieldValue("cabinet.species", String(newId));
+      closeSpeciesModal();
+      setNewItemValue("");
+    },
+    onError: (err: any) =>
+      notifications.show({
+        title: "Error",
+        message: err.message,
+        color: "red",
+      }),
+  });
+
+  const addColorMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const { data, error } = await supabase
+        .from("colors")
+        .insert({ Name: name })
+        .select("Id")
+        .single();
+      if (error) throw error;
+      return data.Id;
+    },
+    onSuccess: (newId) => {
+      notifications.show({
+        title: "Success",
+        message: "Color added",
+        color: "green",
+      });
+      queryClient.invalidateQueries({ queryKey: ["color-search"] });
+      form.setFieldValue("cabinet.color", String(newId));
+      closeColorModal();
+      setNewItemValue("");
+    },
+    onError: (err: any) =>
+      notifications.show({
+        title: "Error",
+        message: err.message,
+        color: "red",
+      }),
+  });
+
+  const addDoorStyleMutation = useMutation({
+    mutationFn: async (values: NewDoorStyleState) => {
+      const { data, error } = await supabase
+        .from("door_styles")
+        .insert(values)
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id;
+    },
+    onSuccess: (newId) => {
+      notifications.show({
+        title: "Success",
+        message: "Door Style added",
+        color: "green",
+      });
+      queryClient.invalidateQueries({ queryKey: ["door-style-search"] });
+      form.setFieldValue("cabinet.door_style", String(newId));
+      closeDoorStyleModal();
+      setNewDoorStyle({
+        name: "",
+        model: "",
+        is_pre_manufactured: false,
+        is_made_in_house: false,
+      });
+    },
+    onError: (err: any) =>
+      notifications.show({
+        title: "Error",
+        message: err.message,
+        color: "red",
+      }),
+  });
 
   const submitMutation = useMutation({
     mutationFn: async (values: ExtendedMasterOrderInput) => {
@@ -497,6 +402,20 @@ export default function NewSale() {
     return () => clearTimeout(timer);
   }, [successBannerData, router, form, queryClient]);
 
+  const { setIsDirty } = useNavigationGuard();
+  const isDirty = form.isDirty();
+  useEffect(() => {
+    setIsDirty(isDirty);
+    return () => setIsDirty(false);
+  }, [isDirty, setIsDirty]);
+
+  useEffect(() => {
+    if (form.values.stage !== "SOLD") {
+      form.setFieldValue("manual_job_base", undefined as unknown as number);
+      form.setFieldValue("manual_job_suffix", "");
+    }
+  }, [form.values.stage]);
+
   const copyClientToShipping = () => {
     if (!selectedClientData) {
       notifications.show({
@@ -540,13 +459,7 @@ export default function NewSale() {
     };
   };
 
-  if (
-    !isAuthenticated ||
-    clientsLoading ||
-    colorsLoading ||
-    speciesLoading ||
-    doorStylesLoading
-  ) {
+  if (!isAuthenticated) {
     return (
       <Center style={{ height: "100vh", width: "100%" }}>
         <Loader />
@@ -555,13 +468,6 @@ export default function NewSale() {
     );
   }
 
-  if (isError) {
-    return (
-      <Center style={{ height: "100vh", width: "100%" }}>
-        <Text c="red">Error loading clients: {error?.message}</Text>
-      </Center>
-    );
-  }
   const handleSubmit = (values: ExtendedMasterOrderInput) => {
     if (Object.keys(form.errors).length > 0) {
       console.error("Zod Validation Blocked Submission:", form.errors);
@@ -641,41 +547,6 @@ export default function NewSale() {
 
                 <Collapse in={form.values.stage === "SOLD"}>
                   <Group gap="xs" align="flex-end" style={{ flex: 1 }}>
-                    {/*<Select
-                      label="Suggest Job Base #"
-                      placeholder="Search existing jobs..."
-                      data={jobBaseOptions || []}
-                      searchable
-                      clearable
-                      disabled={form.values.stage != "SOLD"}
-                      style={{ flex: 1 }}
-                      styles={{
-                        dropdown: {
-                          boxShadow: "var(--mantine-shadow-xl)",
-                          borderColor: "var(--mantine-color-gray-4)",
-                          borderWidth: "1px",
-                          borderStyle: "solid",
-                        },
-                        root: { maxWidth: "200px" },
-                      }}
-                      comboboxProps={{
-                        position: "bottom",
-                        middlewares: { flip: false, shift: false },
-                        offset: 0,
-                      }}
-                      value={
-                        form.values.manual_job_base
-                          ? String(form.values.manual_job_base)
-                          : null
-                      }
-                      onChange={(val) => {
-                        if (val) {
-                          form.setFieldValue("manual_job_base", Number(val));
-                        } else {
-                          form.setFieldValue("manual_job_base", undefined);
-                        }
-                      }}
-                    />*/}
                     <NumberInput
                       label="Base Job #"
                       placeholder="40000..."
@@ -695,6 +566,7 @@ export default function NewSale() {
                 </Collapse>
               </Group>
 
+              {/* OPTIMIZED CLIENT SELECT */}
               <Select
                 label="Client"
                 placeholder="Search clients..."
@@ -704,72 +576,43 @@ export default function NewSale() {
                   middlewares: { flip: false, shift: false },
                   offset: 0,
                 }}
-                data={clientSelectOptions}
+                data={clientOptions}
                 searchable
+                searchValue={clientSearch}
+                onSearchChange={setClientSearch}
                 nothingFoundMessage={
-                  <Stack align="center" p="xs" gap="xs">
-                    <Text size="sm" c="dimmed">
-                      No matching clients found.
-                    </Text>
-                    <Button
-                      variant="filled"
-                      size="xs"
-                      onClick={() => setIsAddClientModalOpen(true)}
-                      leftSection={<FaPlus size={12} />}
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
-                        color: "white",
-                        border: "none",
-                      }}
-                    >
-                      Add New Client
-                    </Button>
-                  </Stack>
+                  clientsLoading ? (
+                    "Searching..."
+                  ) : (
+                    <Stack align="center" p="xs" gap="xs">
+                      <Text size="sm" c="dimmed">
+                        No matching clients found.
+                      </Text>
+                      <Button
+                        variant="filled"
+                        size="xs"
+                        onClick={() => setIsAddClientModalOpen(true)}
+                        leftSection={<FaPlus size={12} />}
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
+                          color: "white",
+                          border: "none",
+                        }}
+                      >
+                        Add New Client
+                      </Button>
+                    </Stack>
+                  )
                 }
-                disabled={clientsLoading || clientSelectOptions.length === 0}
-                style={{
-                  flex: 1,
-                }}
-                styles={{
-                  dropdown: {
-                    boxShadow: "var(--mantine-shadow-xl)",
-                    borderColor: "var(--mantine-color-gray-4)",
-                    borderWidth: "1px",
-                    borderStyle: "solid",
-                  },
-                  root: { width: "100%" },
-                }}
+                rightSection={clientsLoading ? <Loader size={16} /> : null}
+                style={{ flex: 1 }}
                 {...form.getInputProps("client_id")}
-                renderOption={({ option }) => {
-                  const clientOption = option as ClientSelectOption;
-                  const clientData: Tables<"client"> = clientOption.original;
-                  return (
-                    <Group
-                      justify="space-between"
-                      wrap="nowrap"
-                      gap="md"
-                      style={{ width: "100%" }}
-                    >
-                      <Stack gap={0} style={{ flexGrow: 1 }}>
-                        <Text fw={700} size="sm">
-                          {clientData.lastName}{" "}
-                        </Text>
-                        <Text size="xs" c="dimmed">
-                          {clientData.street || "—"}, {clientData.city || "—"}
-                        </Text>
-                      </Stack>
-                      <Badge variant="light" color="blue" size="sm" radius="sm">
-                        {clientData.phone1 || "—"}
-                      </Badge>
-                    </Group>
-                  );
-                }}
                 value={String(form.values.client_id)}
                 onChange={(val) => {
                   form.setFieldValue("client_id", Number(val));
-                  const fullObj = clientSelectOptions.find(
-                    (c) => c.value === val
+                  const fullObj = clientOptions.find(
+                    (c: any) => c.value === val
                   )?.original;
                   setSelectedClientData(fullObj as Tables<"client">);
                   form.setFieldValue(`shipping`, {
@@ -823,6 +666,7 @@ export default function NewSale() {
             </SimpleGrid>
           </Paper>
 
+          {/* ... Billing and Shipping (Identical structure) ... */}
           {selectedClientData ? (
             <SimpleGrid
               cols={{ base: 1, lg: 2 }}
@@ -891,7 +735,6 @@ export default function NewSale() {
                   </Stack>
                 </Stack>
               </Fieldset>
-
               <Fieldset legend="Shipping Details" variant="filled" bg={"white"}>
                 <Stack gap="sm">
                   <Group justify="space-between">
@@ -1001,25 +844,26 @@ export default function NewSale() {
                   bg={"white"}
                 >
                   <SimpleGrid cols={3}>
+                    {/* OPTIMIZED SELECTS */}
                     <Select
                       label="Species"
                       placeholder="Select Species"
                       data={speciesOptions}
                       searchable
-                      searchValue={speciesSearch}
+                      searchValue={speciesSearchValue}
                       onSearchChange={setSpeciesSearch}
                       nothingFoundMessage={
-                        speciesSearch.trim().length > 0 && (
+                        speciesSearchValue.trim().length > 0 && (
                           <Button
                             fullWidth
                             variant="light"
                             size="xs"
                             onClick={() => {
-                              setNewItemValue(speciesSearch);
+                              setNewItemValue(speciesSearchValue);
                               openSpeciesModal();
                             }}
                           >
-                            + Add "{speciesSearch}"
+                            + Add "{speciesSearchValue}"
                           </Button>
                         )
                       }
@@ -1030,20 +874,20 @@ export default function NewSale() {
                       placeholder="Select Color"
                       data={colorOptions}
                       searchable
-                      searchValue={colorSearch}
+                      searchValue={colorSearchValue}
                       onSearchChange={setColorSearch}
                       nothingFoundMessage={
-                        colorSearch.trim().length > 0 && (
+                        colorSearchValue.trim().length > 0 && (
                           <Button
                             fullWidth
                             variant="light"
                             size="xs"
                             onClick={() => {
-                              setNewItemValue(colorSearch);
+                              setNewItemValue(colorSearchValue);
                               openColorModal();
                             }}
                           >
-                            + Add "{colorSearch}"
+                            + Add "{colorSearchValue}"
                           </Button>
                         )
                       }
@@ -1052,12 +896,12 @@ export default function NewSale() {
                     <Select
                       label="Door Style"
                       placeholder="Select Door Style"
-                      data={doorStylesOptions}
+                      data={doorStyleOptions}
                       searchable
-                      searchValue={doorStyleSearch}
+                      searchValue={doorStyleSearchValue}
                       onSearchChange={setDoorStyleSearch}
                       nothingFoundMessage={
-                        doorStyleSearch.trim().length > 0 && (
+                        doorStyleSearchValue.trim().length > 0 && (
                           <Button
                             fullWidth
                             variant="light"
@@ -1065,17 +909,18 @@ export default function NewSale() {
                             onClick={() => {
                               setNewDoorStyle((prev) => ({
                                 ...prev,
-                                name: doorStyleSearch,
+                                name: doorStyleSearchValue,
                               }));
                               openDoorStyleModal();
                             }}
                           >
-                            + Add "{doorStyleSearch}"
+                            + Add "{doorStyleSearchValue}"
                           </Button>
                         )
                       }
                       {...form.getInputProps(`cabinet.door_style`)}
                     />
+                    {/* ... Rest of autocomplete inputs ... */}
                     <Autocomplete
                       label="Top Drawer Front"
                       data={TopDrawerFrontOptions}
@@ -1189,8 +1034,8 @@ export default function NewSale() {
                   <Divider mt="md" />
                 </Fieldset>
               </Stack>
-
               <Stack>
+                {/* ... Financials and Details ... */}
                 <Fieldset legend="Details" variant="filled" bg={"white"}>
                   <Textarea
                     label="Comments"
@@ -1250,14 +1095,15 @@ export default function NewSale() {
           </Paper>
         </Stack>
       </form>
+
+      {/* --- Success Banners and Modals (Same as EditSale) --- */}
       <AddClient
         opened={isAddClientModalOpen}
         onClose={() => {
           setIsAddClientModalOpen(false);
-          queryClient.invalidateQueries({ queryKey: ["clients-list"] });
+          queryClient.invalidateQueries({ queryKey: ["client-search"] });
         }}
       />
-
       {successBannerData &&
         (successBannerData.type === "SOLD" ? (
           <Center
@@ -1353,7 +1199,7 @@ export default function NewSale() {
             </Paper>
           </Center>
         ))}
-
+      {/* ... [Add Species/Color/DoorStyle Modals] ... */}
       <Modal
         opened={speciesModalOpened}
         onClose={closeSpeciesModal}
