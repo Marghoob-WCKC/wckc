@@ -670,7 +670,7 @@ export type Database = {
           id: number
           installation_id: number | null
           is_active: boolean
-          job_base_number: number
+          job_base_number: string
           job_number: string
           job_suffix: string | null
           prod_id: number | null
@@ -682,7 +682,7 @@ export type Database = {
           id?: number
           installation_id?: number | null
           is_active?: boolean
-          job_base_number: number
+          job_base_number: string
           job_number?: string
           job_suffix?: string | null
           prod_id?: number | null
@@ -694,7 +694,7 @@ export type Database = {
           id?: number
           installation_id?: number | null
           is_active?: boolean
-          job_base_number?: number
+          job_base_number?: string
           job_number?: string
           job_suffix?: string | null
           prod_id?: number | null

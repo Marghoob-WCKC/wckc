@@ -54,7 +54,6 @@ import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/Relat
 import AddClient from "@/components/Clients/AddClient/AddClient";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 
-
 import { useClientSearch } from "@/hooks/useClientSearch";
 import { useSpeciesSearch } from "@/hooks/useSpeciesSearch";
 import { useColorSearch } from "@/hooks/useColorSearch";
@@ -67,7 +66,7 @@ type EditSaleProps = {
 };
 
 interface ExtendedMasterOrderInput extends MasterOrderInput {
-  manual_job_base?: number;
+  manual_job_base?: string;
   manual_job_suffix?: string;
 }
 
@@ -121,7 +120,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
       comments: "",
       order_type: "",
       delivery_type: "",
-      manual_job_base: undefined,
+      manual_job_base: "",
       manual_job_suffix: "",
       is_active: true,
       is_memo: false,

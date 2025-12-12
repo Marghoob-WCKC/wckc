@@ -62,7 +62,7 @@ import { useDoorStyleSearch } from "@/hooks/useDoorStyleSearch";
 const FEATURE_MANUAL_JOB_ENTRY = true;
 
 interface ExtendedMasterOrderInput extends MasterOrderInput {
-  manual_job_base: number;
+  manual_job_base: string;
   manual_job_suffix?: string;
 }
 interface NewDoorStyleState {
@@ -117,7 +117,7 @@ export default function NewSale() {
       comments: "",
       order_type: undefined as unknown as string,
       delivery_type: "Delivery",
-      manual_job_base: undefined as unknown as number,
+      manual_job_base: "",
       manual_job_suffix: "",
       is_memo: false,
       flooring_type: "",
@@ -411,7 +411,7 @@ export default function NewSale() {
 
   useEffect(() => {
     if (form.values.stage !== "SOLD") {
-      form.setFieldValue("manual_job_base", undefined as unknown as number);
+      form.setFieldValue("manual_job_base", "");
       form.setFieldValue("manual_job_suffix", "");
     }
   }, [form.values.stage]);

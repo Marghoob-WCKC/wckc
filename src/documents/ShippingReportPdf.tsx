@@ -1,17 +1,15 @@
-// src.zip/documents/ShippingReportPdf.tsx
 import React from "react";
 import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import dayjs from "dayjs";
 import { Tables } from "@/types/db";
 
-// NEW: Define the Cabinet structure with joins for display purposes
+// --- Types ---
 export type JoinedCabinet = Tables<"cabinets"> & {
   door_styles: { name: string } | null;
   species: { Species: string } | null;
   colors: { Name: string } | null;
 };
 
-// Define specific types for the joined data, using the new JoinedCabinet
 export type ShippingReportJob = Tables<"jobs"> & {
   sales_orders: Tables<"sales_orders"> & {
     cabinet: JoinedCabinet | null;
@@ -19,12 +17,18 @@ export type ShippingReportJob = Tables<"jobs"> & {
   production_schedule: Tables<"production_schedule">;
 };
 
+// --- Constants ---
+// Increased to 45 to fill A4 Landscape better (prevents premature breaks)
+// The engine will handle minor overflows automatically if rows are tall.
+const ITEMS_PER_PAGE = 45;
+
 const styles = StyleSheet.create({
   page: {
     padding: 30,
     fontFamily: "Helvetica",
     fontSize: 9,
     lineHeight: 1.3,
+    flexDirection: "column",
   },
   headerContainer: {
     flexDirection: "row",
@@ -33,99 +37,64 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: "#000",
     paddingBottom: 5,
+    height: 40,
   },
-  reportTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  metaInfo: {
-    fontSize: 8,
-    textAlign: "right",
-  },
-  // Date Group Header
+  reportTitle: { fontSize: 18, fontWeight: "bold" },
+  metaInfo: { fontSize: 8, textAlign: "right" },
+
+  // Headers
   dateGroupHeader: {
     flexDirection: "row",
     alignItems: "center",
-    borderTopWidth: 2,
-    borderTopColor: "#000",
-    borderBottomWidth: 2,
-    borderBottomColor: "#000",
     backgroundColor: "#dfdfdf",
     paddingVertical: 4,
     paddingHorizontal: 5,
-    marginTop: 10,
-    marginBottom: 5,
+    marginTop: 5,
+    marginBottom: 2,
   },
-  dateGroupText: {
-    fontSize: 11,
-    fontWeight: "bold",
-    paddingHorizontal: 5,
-  },
-  // Table Styles
-  tableRow: {
-    flexDirection: "row",
-    paddingVertical: 4,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#e0e0e0",
-    alignItems: "center",
-  },
+  dateGroupText: { fontSize: 10, fontWeight: "bold", paddingHorizontal: 5 },
+
   tableHeader: {
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#000",
-    paddingVertical: 3,
+    paddingVertical: 4,
     marginBottom: 2,
+    backgroundColor: "#f8f9fa",
   },
-  headerText: {
-    fontSize: 8,
-    fontWeight: "bold",
+  headerText: { fontSize: 8, fontWeight: "bold" },
+
+  // Rows
+  tableRow: {
+    flexDirection: "row",
+    paddingVertical: 3,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#e0e0e0",
+    alignItems: "center",
   },
 
-  // --- ADJUSTED COLUMNS (TOTAL = 100%) ---
+  // Columns
   colJob: { width: "10%" },
   colCust: { width: "15%" },
   colAddr: { width: "20%" },
   colBox: { width: "5%", textAlign: "center" },
-  colDoor: { width: "15%" }, // New style for Door Style column
+  colDoor: { width: "15%" },
   colSpec: { width: "10%" },
   colColor: { width: "10%" },
+  colCheck: { width: "3%", textAlign: "center" },
 
-  // Updated colCheck to handle both Text (header) and View (row) alignment
-  colCheck: {
-    width: "3%",
-    alignItems: "center",
-    textAlign: "center",
-  },
-
-  // Checkbox
+  // Visuals
   checkbox: {
-    width: 10,
-    height: 10,
+    width: 8,
+    height: 8,
     borderWidth: 1,
     borderColor: "#000",
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: "auto",
-    marginRight: "auto",
   },
-  checkMark: {
-    fontSize: 7,
-    lineHeight: 1,
-    fontWeight: "bold",
-    paddingBottom: 1,
-  },
+  checkMark: { fontSize: 6, fontWeight: "bold", paddingBottom: 1 },
 
-  // Total Row
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 2,
-    marginBottom: 10,
-  },
-  totalText: {
-    fontSize: 9,
-    fontWeight: "bold",
-  },
+  // Footer & Total
   footer: {
     position: "absolute",
     bottom: 20,
@@ -135,6 +104,15 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: "#888",
   },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 5,
+    paddingTop: 5,
+    borderTopWidth: 1,
+    borderTopColor: "#000",
+  },
+  totalText: { fontSize: 9, fontWeight: "bold" },
 });
 
 const Checkbox = ({ checked }: { checked: boolean }) => (
@@ -143,6 +121,30 @@ const Checkbox = ({ checked }: { checked: boolean }) => (
   </View>
 );
 
+const safeGet = (data: any) => {
+  if (Array.isArray(data)) return data[0] || null;
+  return data || null;
+};
+
+// Reusable Header Component
+const ColumnHeaders = () => (
+  <View style={styles.tableHeader}>
+    <Text style={[styles.headerText, styles.colJob]}>Job #</Text>
+    <Text style={[styles.headerText, styles.colCust]}>Customer</Text>
+    <Text style={[styles.headerText, styles.colAddr]}>Address</Text>
+    <Text style={[styles.headerText, styles.colBox]}>Box</Text>
+    <Text style={[styles.headerText, styles.colDoor]}>Door Style</Text>
+    <Text style={[styles.headerText, styles.colSpec]}>Species</Text>
+    <Text style={[styles.headerText, styles.colColor]}>Color</Text>
+    <Text style={[styles.headerText, styles.colCheck]}>D</Text>
+    <Text style={[styles.headerText, styles.colCheck]}>P</Text>
+    <Text style={[styles.headerText, styles.colCheck]}>F/C</Text>
+    <Text style={[styles.headerText, styles.colCheck]}>P/S</Text>
+    <Text style={[styles.headerText, styles.colCheck]}>A</Text>
+  </View>
+);
+
+// --- Component ---
 export const ShippingReportPdf = ({
   data,
   startDate,
@@ -152,170 +154,196 @@ export const ShippingReportPdf = ({
   startDate: Date | null;
   endDate: Date | null;
 }) => {
-  // Group data by ship date
+  // 1. Group Data
   const grouped = data.reduce((acc, job) => {
-    const dateKey = job.production_schedule.ship_schedule || "No Date";
+    const ps = safeGet(job.production_schedule);
+    const dateKey = ps?.ship_schedule || "No Date";
+
     if (!acc[dateKey]) acc[dateKey] = [];
     acc[dateKey].push(job);
     return acc;
   }, {} as Record<string, ShippingReportJob[]>);
 
-  // Sort dates
   const sortedDates = Object.keys(grouped).sort((a, b) => {
     if (a === "No Date") return 1;
     if (b === "No Date") return -1;
     return new Date(a).getTime() - new Date(b).getTime();
   });
 
-  return (
-    <Document>
-      <Page size="A4" orientation="landscape" style={styles.page}>
-        {/* Header */}
-        <View style={styles.headerContainer}>
-          <Text style={styles.reportTitle}>Orders Shipping by Date</Text>
-          <View>
-            <Text style={styles.metaInfo}>
-              Printed: {dayjs().format("DD-MMM-YY")}
-            </Text>
-            <Text style={styles.metaInfo}>
-              Report Range:{" "}
-              {startDate ? dayjs(startDate).format("DD-MMM-YY") : "?"} -{" "}
-              {endDate ? dayjs(endDate).format("DD-MMM-YY") : "?"}
-            </Text>
+  // 2. Pagination Logic
+  const pages: React.ReactNode[][] = [];
+  let currentPage: React.ReactNode[] = [];
+  let currentCount = 0;
+
+  const startNewPage = () => {
+    if (currentPage.length > 0) pages.push(currentPage);
+    currentPage = [];
+    currentCount = 0;
+  };
+
+  // 3. Build Content
+  sortedDates.forEach((dateKey) => {
+    const jobs = grouped[dateKey];
+    const dateObj = dayjs(dateKey);
+    const formattedDate =
+      dateKey === "No Date" ? "Unscheduled" : dateObj.format("DD-MMM-YY");
+    const dayName = dateKey === "No Date" ? "" : dateObj.format("dddd");
+
+    const boxTotal = jobs.reduce((sum, job) => {
+      const so = safeGet(job.sales_orders);
+      const cab = safeGet(so?.cabinet);
+      const box = parseInt(cab?.box || "0", 10);
+      return isNaN(box) ? sum : sum + box;
+    }, 0);
+
+    // --- START OF GROUP ---
+
+    // Check if we need to break page before starting the group
+    // (If < 5 items space left, better to start fresh for a header)
+    if (currentCount > ITEMS_PER_PAGE - 5) {
+      startNewPage();
+    }
+
+    // 1. Add Date Header (wrap={false} keeps title together)
+    currentPage.push(
+      <View
+        key={`date-header-${dateKey}`}
+        style={styles.dateGroupHeader}
+        wrap={false}
+      >
+        <Text style={styles.dateGroupText}>Ship Date:</Text>
+        <Text style={styles.dateGroupText}>{formattedDate}</Text>
+        <Text style={styles.dateGroupText}>{dayName}</Text>
+      </View>
+    );
+    currentCount += 1;
+
+    // 2. Add Column Headers
+    currentPage.push(<ColumnHeaders key={`col-header-start-${dateKey}`} />);
+    currentCount += 1;
+
+    // --- ROWS ---
+    jobs.forEach((job) => {
+      // Check for page break
+      if (currentCount >= ITEMS_PER_PAGE) {
+        startNewPage();
+        // Re-add headers on new page
+        currentPage.push(<ColumnHeaders key={`col-header-cont-${job.id}`} />);
+        currentCount += 1;
+      }
+
+      const so = safeGet(job.sales_orders);
+      const cab = safeGet(so?.cabinet);
+      const ps = safeGet(job.production_schedule);
+
+      const jobNum = job.job_number || "—";
+      const clientName = so?.shipping_client_name || "Unknown";
+      const address =
+        [so?.shipping_street, so?.shipping_city].filter(Boolean).join(", ") ||
+        "—";
+
+      const box = cab?.box || "0";
+      const door = safeGet(cab?.door_styles)?.name || "—";
+      const species = safeGet(cab?.species)?.Species || "—";
+      const color = safeGet(cab?.colors)?.Name || "—";
+
+      currentPage.push(
+        // wrap={false} prevents a single row from splitting across pages
+        <View style={styles.tableRow} key={job.id} wrap={false}>
+          <Text style={[styles.colJob, { fontSize: 8 }]}>{jobNum}</Text>
+          <Text style={[styles.colCust, { fontSize: 8 }]}>
+            {clientName.substring(0, 20)}
+          </Text>
+          <Text style={[styles.colAddr, { fontSize: 8 }]}>
+            {address.substring(0, 25)}
+          </Text>
+
+          <View style={styles.colBox}>
+            <Text style={{ fontWeight: "bold" }}>{box}</Text>
+          </View>
+          <View style={[styles.colDoor, { fontSize: 8 }]}>
+            <Text>{door.substring(0, 15)}</Text>
+          </View>
+
+          <Text style={[styles.colSpec, { fontSize: 8 }]}>
+            {species.substring(0, 10)}
+          </Text>
+          <Text style={[styles.colColor, { fontSize: 8 }]}>
+            {color.substring(0, 10)}
+          </Text>
+
+          <View style={styles.colCheck}>
+            <Checkbox checked={!!ps?.doors_completed_actual} />
+          </View>
+          <View style={styles.colCheck}>
+            <Checkbox checked={!!ps?.cut_finish_completed_actual} />
+          </View>
+          <View style={styles.colCheck}>
+            <Checkbox checked={!!ps?.custom_finish_completed_actual} />
+          </View>
+          <View style={styles.colCheck}>
+            <Checkbox checked={!!ps?.paint_completed_actual} />
+          </View>
+          <View style={styles.colCheck}>
+            <Checkbox checked={!!ps?.assembly_completed_actual} />
           </View>
         </View>
+      );
+      currentCount += 1;
+    });
 
-        {sortedDates.map((dateKey) => {
-          const jobs = grouped[dateKey];
-          const dateObj = dayjs(dateKey);
-          const formattedDate =
-            dateKey === "No Date" ? "Unscheduled" : dateObj.format("DD-MMM-YY");
-          const dayName = dateKey === "No Date" ? "" : dateObj.format("dddd");
+    // --- TOTALS ---
+    if (currentCount >= ITEMS_PER_PAGE) {
+      startNewPage();
+    }
 
-          // Calculate Box Total
-          const boxTotal = jobs.reduce((sum, job) => {
-            const box = parseInt(job.sales_orders?.cabinet?.box || "0", 10);
-            return isNaN(box) ? sum : sum + box;
-          }, 0);
+    currentPage.push(
+      <View key={`total-${dateKey}`} style={styles.totalRow} wrap={false}>
+        <Text style={styles.totalText}>Total Boxes: {boxTotal}</Text>
+      </View>
+    );
+    currentCount += 1;
+  });
 
-          return (
-            <View key={dateKey} wrap={false}>
-              {/* Date Divider */}
-              <View style={styles.dateGroupHeader}>
-                <Text style={styles.dateGroupText}>Ship Date:</Text>
-                <Text style={styles.dateGroupText}>{formattedDate}</Text>
-                <Text style={styles.dateGroupText}>{dayName}</Text>
-              </View>
+  if (currentPage.length > 0) pages.push(currentPage);
 
-              {/* Column Headers */}
-              <View style={styles.tableHeader}>
-                <Text style={[styles.headerText, styles.colJob]}>
-                  Job Number
-                </Text>
-                <Text style={[styles.headerText, styles.colCust]}>
-                  Customer
-                </Text>
-                <Text style={[styles.headerText, styles.colAddr]}>Address</Text>
-                <Text style={[styles.headerText, styles.colBox]}>Box</Text>
-                {/* Using new colDoor style for proper width */}
-                <Text style={[styles.headerText, styles.colDoor]}>
-                  Door Style
-                </Text>
-                <Text style={[styles.headerText, styles.colSpec]}>Species</Text>
-                <Text style={[styles.headerText, styles.colColor]}>Color</Text>
-                <Text style={[styles.headerText, styles.colCheck]}>D</Text>
-                <Text style={[styles.headerText, styles.colCheck]}>P</Text>
-                <Text style={[styles.headerText, styles.colCheck]}>F/C</Text>
-                <Text style={[styles.headerText, styles.colCheck]}>P/S</Text>
-                <Text style={[styles.headerText, styles.colCheck]}>A</Text>
-              </View>
+  if (pages.length === 0) {
+    return (
+      <Document>
+        <Page size="A4" orientation="landscape" style={styles.page}>
+          <Text>No data found for this date range.</Text>
+        </Page>
+      </Document>
+    );
+  }
 
-              {/* Job Rows */}
-              {jobs.map((job) => {
-                const so = job.sales_orders;
-                const cab = so?.cabinet;
-                const ps = job.production_schedule;
-
-                return (
-                  <View style={styles.tableRow} key={job.id}>
-                    <Text style={[styles.colJob, { fontSize: 8 }]}>
-                      {job.job_number}
-                    </Text>
-                    <Text style={[styles.colCust, { fontSize: 8 }]}>
-                      {so.shipping_client_name || "Unknown"}
-                    </Text>
-                    <Text style={[styles.colAddr, { fontSize: 8 }]}>
-                      {[so.shipping_street, so.shipping_zip, so.shipping_city]
-                        .filter(Boolean)
-                        .join(", ") || "—"}
-                    </Text>
-
-                    <View style={styles.colBox}>
-                      <Text style={{ fontWeight: "bold" }}>
-                        {cab?.box || "0"}
-                      </Text>
-                    </View>
-                    {/* UPDATED: Use joined door style name */}
-                    <View style={[styles.colDoor, { fontSize: 8 }]}>
-                      <Text>{cab?.door_styles?.name || ""}</Text>
-                    </View>
-
-                    {/* UPDATED: Use joined species name */}
-                    <Text style={[styles.colSpec, { fontSize: 8 }]}>
-                      {cab?.species?.Species || "—"}
-                    </Text>
-                    {/* UPDATED: Use joined color name */}
-                    <Text style={[styles.colColor, { fontSize: 8 }]}>
-                      {cab?.colors?.Name || "—"}
-                    </Text>
-
-                    {/* Checkboxes */}
-                    <View style={styles.colCheck}>
-                      <Checkbox checked={!!ps.doors_completed_actual} />
-                    </View>
-                    <View style={styles.colCheck}>
-                      <Checkbox checked={!!ps.cut_finish_completed_actual} />
-                    </View>
-                    <View style={styles.colCheck}>
-                      <Checkbox checked={!!ps.custom_finish_completed_actual} />
-                    </View>
-                    <View style={styles.colCheck}>
-                      <Checkbox checked={!!ps.paint_completed_actual} />
-                    </View>
-                    <View style={styles.colCheck}>
-                      <Checkbox checked={!!ps.assembly_completed_actual} />
-                    </View>
-                  </View>
-                );
-              })}
-
-              {/* Totals */}
-              <View style={styles.totalRow}>
-                <Text style={styles.totalText}>Total Boxes: {boxTotal}</Text>
-              </View>
+  return (
+    <Document>
+      {pages.map((pageContent, index) => (
+        <Page key={index} size="A4" orientation="landscape" style={styles.page}>
+          <View style={styles.headerContainer} fixed>
+            <Text style={styles.reportTitle}>Orders Shipping by Date</Text>
+            <View>
+              <Text style={styles.metaInfo}>
+                Printed: {dayjs().format("DD-MMM-YY")}
+              </Text>
+              <Text style={styles.metaInfo}>
+                Page {index + 1} of {pages.length}
+              </Text>
+              <Text style={styles.metaInfo}>
+                Range: {startDate ? dayjs(startDate).format("DD-MMM") : "?"} -{" "}
+                {endDate ? dayjs(endDate).format("DD-MMM") : "?"}
+              </Text>
             </View>
-          );
-        })}
-        <Text
-          style={{
-            position: "absolute",
-            bottom: 30,
-            left: 30,
-            fontSize: 8,
-            color: "#999",
-          }}
-        >
-          Generated on {dayjs().format("YYYY-MM-DD HH:mm")}
-        </Text>
+          </View>
 
-        <Text
-          render={({ pageNumber, totalPages }) =>
-            `Page ${pageNumber} of ${totalPages}`
-          }
-          fixed
-          style={styles.footer}
-        />
-      </Page>
+          <View>{pageContent}</View>
+
+          <Text style={styles.footer} fixed>
+            Page {index + 1} of {pages.length}
+          </Text>
+        </Page>
+      ))}
     </Document>
   );
 };

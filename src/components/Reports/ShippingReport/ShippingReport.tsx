@@ -67,24 +67,26 @@ export default function ShippingReport() {
         .from("jobs")
         .select(
           `
-          *,
-          sales_orders:sales_orders (
-            shipping_street,
-            shipping_city,
-            shipping_zip,
-            shipping_client_name,
-            cabinet:cabinets (
-              box,
-              species(Species),
-              colors(Name),
-              door_styles(name)
-            )
-          ),
-          production_schedule!inner (*)
-        `
+    *,
+    sales_orders:sales_orders (
+      shipping_street,
+      shipping_city,
+      shipping_zip,
+      shipping_client_name,
+      cabinet:cabinets (
+        box,
+        species(Species),
+        colors(Name),
+        door_styles(name)
+      )
+    ),
+    production_schedule!inner (*),
+    installation:installation_id!inner (has_shipped)
+  `
         )
         .gte("production_schedule.ship_schedule", startDate)
         .lte("production_schedule.ship_schedule", endDate)
+        .eq("installation.has_shipped", false)
         .order("ship_schedule", {
           referencedTable: "production_schedule",
           ascending: true,
