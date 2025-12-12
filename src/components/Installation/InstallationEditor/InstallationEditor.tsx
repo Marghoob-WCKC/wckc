@@ -29,6 +29,7 @@ import {
   ThemeIcon,
   ActionIcon,
   Stack,
+  Collapse,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { DateInput } from "@mantine/dates";
@@ -74,6 +75,8 @@ type CombinedInstallFormValues = Omit<
   ship_schedule: Date | null;
   ship_status: "unprocessed" | "tentative" | "confirmed";
   partially_shipped?: boolean;
+  installation_report_received?: string | null;
+  in_warehouse?: string | null;
 };
 
 type InstallerLookup = Tables<"installers">;
@@ -199,6 +202,8 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
       prod_id: 0,
       ship_schedule: null,
       ship_status: "unprocessed",
+      installation_report_received: null,
+      in_warehouse: null,
     },
   });
 
@@ -238,6 +243,8 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             ? dayjs(prod.ship_schedule).toDate()
             : null,
           ship_status: prod?.ship_status || "unprocessed",
+          installation_report_received: install.installation_report_received,
+          in_warehouse: install.in_warehouse,
         });
         form.resetDirty();
       }
@@ -854,7 +861,86 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                       )}
                     </Stack>
                   </Box>
-
+                  <Group gap={50}>
+                    <Stack gap={10}>
+                      <Switch
+                        size="md"
+                        color="violet"
+                        label="Inst. Report Received"
+                        checked={!!form.values.installation_report_received}
+                        onChange={(event) => {
+                          const isChecked = event.currentTarget.checked;
+                          form.setFieldValue(
+                            "installation_report_received",
+                            isChecked ? dayjs().toISOString() : null
+                          );
+                        }}
+                        styles={{
+                          label: {
+                            fontWeight: "bold",
+                            fontSize: "14px",
+                          },
+                          track: {
+                            cursor: "pointer",
+                          },
+                        }}
+                      />
+                      <Box style={{ minHeight: 20 }}>
+                        <Collapse
+                          in={!!form.values.installation_report_received}
+                        >
+                          <Text
+                            c="dimmed"
+                            style={{ textAlign: "center", fontSize: "12px" }}
+                          >
+                            (Received on :{" "}
+                            {dayjs(
+                              form.values.installation_report_received
+                            ).format("YYYY-MM-DD")}
+                            )
+                          </Text>
+                        </Collapse>
+                      </Box>
+                    </Stack>
+                    <Stack gap={10}>
+                      <Switch
+                        size="md"
+                        color="violet"
+                        label="In Warehouse"
+                        checked={!!form.values.in_warehouse}
+                        onChange={(event) => {
+                          const isChecked = event.currentTarget.checked;
+                          form.setFieldValue(
+                            "in_warehouse",
+                            isChecked ? dayjs().toISOString() : null
+                          );
+                        }}
+                        styles={{
+                          label: {
+                            fontWeight: "bold",
+                            fontSize: "14px",
+                          },
+                          track: {
+                            cursor: "pointer",
+                          },
+                        }}
+                      />
+                      <Box style={{ minHeight: 20 }}>
+                        <Collapse in={!!form.values.in_warehouse}>
+                          <Text
+                            c="dimmed"
+                            style={{ textAlign: "center", fontSize: "12px" }}
+                          >
+                            (Sent on :{" "}
+                            {dayjs(form.values.in_warehouse).format(
+                              "YYYY-MM-DD"
+                            )}
+                            )
+                          </Text>
+                        </Collapse>
+                      </Box>
+                    </Stack>
+                  </Group>
                   <Divider />
 
                   <Box>
@@ -864,6 +950,8 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                     </Group>
                     <Stack>
                       <Textarea
+                        minRows={10}
+                        styles={{ input: { minHeight: "200px" } }}
                         label="Installation/Site Notes"
                         placeholder="Document site conditions, issues, or specific instructions here."
                         {...form.getInputProps("installation_notes")}
@@ -946,9 +1034,12 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                     </Text>
                     <Text size="xs" fw={500}>
                       {form.values.installation_completed
-                        ? dayjs(form.values.installation_completed).format(
-                            "YYYY-MM-DD"
-                          )
+                        ? form.values.installation_completed ===
+                          "1999-09-19T00:00:00+00:00"
+                          ? "Completed"
+                          : dayjs(form.values.installation_completed).format(
+                              "YYYY-MM-DD"
+                            )
                         : "—"}
                     </Text>
                     <Button

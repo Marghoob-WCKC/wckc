@@ -12,6 +12,8 @@ export const installationSchema = z.object({
   inspection_date: z.coerce.date().nullable(),
   inspection_completed: z.string().nullable(),
   legacy_ref: z.string().nullable(),
+  installation_report_received: z.string().nullable(),
+  in_warehouse: z.string().nullable(),
 });
 
 export type InstallationType = z.infer<typeof installationSchema>;

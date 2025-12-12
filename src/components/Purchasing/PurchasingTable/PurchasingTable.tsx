@@ -60,7 +60,7 @@ export default function PurchasingTable() {
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 20,
+    pageSize: 16,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
@@ -562,10 +562,10 @@ export default function PurchasingTable() {
 
   return (
     <Box
-      p={rem(20)}
       style={{
         display: "flex",
         flexDirection: "column",
+        padding: rem(20),
         height: "calc(100vh - 45px)",
       }}
     >
@@ -651,7 +651,16 @@ export default function PurchasingTable() {
         </Accordion.Item>
       </Accordion>
 
-      <ScrollArea style={{ flex: 1 }}>
+      <ScrollArea
+        style={{ flex: 1, minHeight: 0, padding: rem(10) }}
+        styles={{
+          thumb: {
+            cursor: "pointer",
+            background: "linear-gradient(135deg, #dfc9f2, #ba9bfa)",
+          },
+        }}
+        type="auto"
+      >
         <Table
           striped
           stickyHeader
@@ -713,10 +722,17 @@ export default function PurchasingTable() {
 
       <Box
         style={{
+          position: "fixed",
+          bottom: 0,
+          left: rem(250),
+          right: 0,
+          padding: "1rem 0",
+          background: "white",
           borderTop: "1px solid #eee",
-          padding: "1rem",
+          zIndex: 100,
           display: "flex",
           justifyContent: "center",
+          alignItems: "center",
         }}
       >
         <Pagination

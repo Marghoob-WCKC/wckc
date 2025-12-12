@@ -661,7 +661,8 @@ export default function EditProductionSchedulePage({
                     <Textarea
                       label="Production & Scheduling Comments"
                       placeholder="Enter notes, exceptions, or special instructions here..."
-                      minRows={6}
+                      minRows={10}
+                      styles={{ input: { minHeight: "200px" } }}
                       {...form.getInputProps("production_comments")}
                       value={form.values.production_comments ?? ""}
                     />
@@ -745,11 +746,18 @@ export default function EditProductionSchedulePage({
                         <Text size="xs" c="dimmed">
                           {step.isCompleted ? "Completed:" : "Pending"}
                         </Text>
-                        <Text size="sm" fw={500}>
-                          {step.date
-                            ? dayjs(step.date).format("YYYY-MM-DD HH:mm")
-                            : "—"}
-                        </Text>
+
+                        {step.date === "1999-09-19T00:00:00+00:00" ? (
+                          <Text size="sm" c="green.8" fw={600}>
+                            Completed
+                          </Text>
+                        ) : (
+                          <Text size="sm" fw={500}>
+                            {step.date
+                              ? dayjs(step.date).format("YYYY-MM-DD HH:mm")
+                              : "—"}
+                          </Text>
+                        )}
                       </Timeline.Item>
                     );
                   })}

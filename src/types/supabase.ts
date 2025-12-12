@@ -374,12 +374,14 @@ export type Database = {
         Row: {
           created_at: string
           has_shipped: boolean
+          in_warehouse: string | null
           inspection_completed: string | null
           inspection_date: string | null
           installation_completed: string | null
           installation_date: string | null
           installation_id: number
           installation_notes: string | null
+          installation_report_received: string | null
           installer_id: number | null
           legacy_ref: string | null
           partially_shipped: boolean | null
@@ -389,12 +391,14 @@ export type Database = {
         Insert: {
           created_at?: string
           has_shipped?: boolean
+          in_warehouse?: string | null
           inspection_completed?: string | null
           inspection_date?: string | null
           installation_completed?: string | null
           installation_date?: string | null
           installation_id?: number
           installation_notes?: string | null
+          installation_report_received?: string | null
           installer_id?: number | null
           legacy_ref?: string | null
           partially_shipped?: boolean | null
@@ -404,12 +408,14 @@ export type Database = {
         Update: {
           created_at?: string
           has_shipped?: boolean
+          in_warehouse?: string | null
           inspection_completed?: string | null
           inspection_date?: string | null
           installation_completed?: string | null
           installation_date?: string | null
           installation_id?: number
           installation_notes?: string | null
+          installation_report_received?: string | null
           installer_id?: number | null
           legacy_ref?: string | null
           partially_shipped?: boolean | null
