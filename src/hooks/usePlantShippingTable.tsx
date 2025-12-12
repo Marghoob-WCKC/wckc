@@ -23,66 +23,77 @@ export function usePlantShippingTable({
   return useQuery({
     queryKey: ["plant_shipping_table", pagination, columnFilters, sorting],
     queryFn: async () => {
-      let query = supabase
+      let dateQuery = supabase
         .from("plant_table_view")
-        .select("*", { count: "exact" })
+        .select("ship_schedule")
         .not("ship_schedule", "is", null)
         .not("has_shipped", "is", true)
         .is("installation_completed", null);
 
       columnFilters.forEach((filter) => {
         const { id, value } = filter;
-
         if (id === "ship_date_range" && Array.isArray(value)) {
           const [start, end] = value;
           if (start && end) {
-            query = query
+            dateQuery = dateQuery
               .gte("ship_schedule", dayjs(start).format("YYYY-MM-DD"))
               .lte("ship_schedule", dayjs(end).format("YYYY-MM-DD"));
           }
           return;
         }
-
         const valStr = String(value);
         if (!valStr) return;
 
         switch (id) {
           case "job_number":
-            query = query.ilike("job_number", `%${valStr}%`);
+            dateQuery = dateQuery.ilike("job_number", `%${valStr}%`);
             break;
           case "client":
-            query = query.ilike("client_name", `%${valStr}%`);
+            dateQuery = dateQuery.ilike("client_name", `%${valStr}%`);
             break;
           case "address":
-            query = query.or(
+            dateQuery = dateQuery.or(
               `shipping_street.ilike.%${valStr}%,shipping_city.ilike.%${valStr}%`
             );
-            break;
-          default:
             break;
         }
       });
 
-      if (sorting.length > 0) {
-        const { id, desc } = sorting[0];
-        query = query.order(id, { ascending: !desc });
-      } else {
-        query = query.order("ship_schedule", { ascending: true });
-      }
+      const { data: dateRows, error: dateError } = await dateQuery;
+      if (dateError) throw new Error(dateError.message);
+      const uniqueDates = Array.from(
+        new Set(dateRows.map((r) => r.ship_schedule))
+      ).sort();
 
       const from = pagination.pageIndex * pagination.pageSize;
-      const to = from + pagination.pageSize - 1;
-      query = query.range(from, to);
+      const to = from + pagination.pageSize;
+      const targetDates = uniqueDates.slice(from, to);
 
-      const { data, count, error } = await query;
-
-      if (error) {
-        throw new Error(error.message);
+      if (targetDates.length === 0) {
+        return { data: [], count: 0 };
       }
 
+      let jobQuery = supabase
+        .from("plant_table_view")
+        .select("*")
+        .in("ship_schedule", targetDates)
+        .not("ship_schedule", "is", null)
+        .not("has_shipped", "is", true)
+        .is("installation_completed", null);
+
+      if (sorting.length > 0) {
+        const { id, desc } = sorting[0];
+        jobQuery = jobQuery.order(id, { ascending: !desc });
+      } else {
+        jobQuery = jobQuery.order("ship_schedule", { ascending: true });
+      }
+
+      const { data: jobs, error: jobError } = await jobQuery;
+      if (jobError) throw new Error(jobError.message);
+
       return {
-        data,
-        count,
+        data: jobs,
+        count: uniqueDates.length,
       };
     },
     enabled: isAuthenticated,

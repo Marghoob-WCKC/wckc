@@ -62,7 +62,7 @@ export default function PlantShippingTable() {
   // --- State ---
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 50,
+    pageSize: 10,
   });
   const [sorting, setSorting] = useState<SortingState>([
     { id: "ship_schedule", desc: false },

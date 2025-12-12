@@ -57,7 +57,7 @@ export default function PlantTableWrap() {
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 50,
+    pageSize: 10,
   });
   const [sorting, setSorting] = useState<SortingState>([
     { id: "wrap_date", desc: false },
