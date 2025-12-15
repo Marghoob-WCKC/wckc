@@ -414,7 +414,7 @@ export default function ManagerDashboardClient() {
               value={metrics.totalQuotes}
               icon={FaUsers}
               color="blue"
-              subtext="Pipeline Potential"
+              subtext="Pending"
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
@@ -437,7 +437,7 @@ export default function ManagerDashboardClient() {
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
             <StatCard
-              title="Open Service"
+              title="Open Service Orders"
               value={metrics.openServiceOrders}
               icon={FaTools}
               color="red"
@@ -519,7 +519,7 @@ export default function ManagerDashboardClient() {
             <Paper p="md" shadow="sm" radius="md" withBorder>
               <Group justify="space-between" mb="md">
                 <Title order={5} c="dimmed">
-                  Top Designers ({metrics.fiscalLabel})
+                  Sales By Designers ({metrics.fiscalLabel})
                 </Title>
                 <FaUsers color="gray" />
               </Group>
