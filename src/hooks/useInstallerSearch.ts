@@ -33,11 +33,9 @@ export function useInstallerSearch(selectedId?: string | null) {
         label: i.company_name || `${i.first_name} ${i.last_name}`,
       }));
     },
-    // Keep previous data while fetching new search results to prevent UI flicker
     placeholderData: (previousData: any) => previousData,
   });
 
-  // Fetch the selected item separately if it exists (handles initial load of edit forms)
   const { data: selectedItem } = useQuery({
     queryKey: ["installer-lookup", selectedId],
     queryFn: async () => {
@@ -59,7 +57,6 @@ export function useInstallerSearch(selectedId?: string | null) {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Merge search results with the selected item (if not already present)
   const options = [...(searchResults || [])];
 
   if (selectedItem && !options.find((o) => o.value === selectedItem.value)) {

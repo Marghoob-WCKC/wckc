@@ -2,7 +2,6 @@ import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import dayjs from "dayjs";
 import { Views } from "@/types/db";
 
-// Reuse the View type from the table
 type PlantTableView = Views<"plant_table_view">;
 
 const styles = StyleSheet.create({
@@ -37,7 +36,6 @@ const styles = StyleSheet.create({
     textAlign: "right",
     color: "#555",
   },
-  // Date Group Header
   dateGroupHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -56,7 +54,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginRight: 10,
   },
-  // Table Layout
   tableHeader: {
     flexDirection: "row",
     borderBottomWidth: 1,
@@ -82,7 +79,6 @@ const styles = StyleSheet.create({
     color: "#000",
   },
 
-  // Column Widths (Total ~100%)
   colJob: { width: "8%" },
   colClient: { width: "17%" },
   colLoc: { width: "17%" },
@@ -90,10 +86,8 @@ const styles = StyleSheet.create({
   colDoor: { width: "10%" },
   colSpec: { width: "12%" },
   colColor: { width: "16%" },
-  // Production Checkboxes (Tiny)
   colCheck: { width: "3%", textAlign: "center" },
 
-  // Checkbox Visual
   checkbox: {
     width: 8,
     height: 8,
@@ -120,7 +114,6 @@ export const PlantShippingSchedulePdf = ({
   data: PlantTableView[];
   dateRange: [Date | null, Date | null];
 }) => {
-  // 1. Group Data
   const grouped = data.reduce((acc, row) => {
     const dateKey = row.ship_schedule
       ? dayjs(row.ship_schedule).format("YYYY-MM-DD")
@@ -130,7 +123,6 @@ export const PlantShippingSchedulePdf = ({
     return acc;
   }, {} as Record<string, PlantTableView[]>);
 
-  // 2. Sort Keys
   const sortedKeys = Object.keys(grouped).sort((a, b) => {
     if (a === "Unscheduled") return 1;
     if (b === "Unscheduled") return -1;
@@ -140,7 +132,7 @@ export const PlantShippingSchedulePdf = ({
   return (
     <Document>
       <Page size="A4" orientation="landscape" style={styles.page}>
-        {/* Header */}
+        {}
         <View style={styles.headerContainer}>
           <Text style={styles.reportTitle}>Plant Shipping Schedule</Text>
           <View>
@@ -161,7 +153,6 @@ export const PlantShippingSchedulePdf = ({
             ? "Unscheduled"
             : dayjs(dateKey).format("ddd, MMM D, YYYY");
 
-          // Calculate Box Total for Header
           const totalBoxes = rows.reduce((sum, r) => {
             const val = parseInt(r.cabinet_box || "0", 10);
             return isNaN(val) ? sum : sum + val;
@@ -169,7 +160,7 @@ export const PlantShippingSchedulePdf = ({
 
           return (
             <View key={dateKey} wrap={false}>
-              {/* Group Header */}
+              {}
               <View style={styles.dateGroupHeader}>
                 <Text style={styles.dateGroupText}>
                   SHIP DATE: {displayDate}
@@ -184,7 +175,7 @@ export const PlantShippingSchedulePdf = ({
                 </Text>
               </View>
 
-              {/* Table Header */}
+              {}
               <View style={styles.tableHeader}>
                 <Text style={[styles.headerText, styles.colJob]}>Job #</Text>
                 <Text style={[styles.headerText, styles.colClient]}>
@@ -196,7 +187,7 @@ export const PlantShippingSchedulePdf = ({
                 <Text style={[styles.headerText, styles.colSpec]}>Species</Text>
                 <Text style={[styles.headerText, styles.colColor]}>Color</Text>
 
-                {/* Production Checkboxes */}
+                {}
                 <Text style={[styles.headerText, styles.colCheck]}>D</Text>
                 <Text style={[styles.headerText, styles.colCheck]}>P</Text>
                 <Text style={[styles.headerText, styles.colCheck]}>F/C</Text>
@@ -204,7 +195,7 @@ export const PlantShippingSchedulePdf = ({
                 <Text style={[styles.headerText, styles.colCheck]}>A</Text>
               </View>
 
-              {/* Rows */}
+              {}
               {rows.map((row) => (
                 <View style={styles.tableRow} key={row.job_id}>
                   <Text style={[styles.rowText, styles.colJob]}>
@@ -231,7 +222,7 @@ export const PlantShippingSchedulePdf = ({
                     {row.cabinet_color}
                   </Text>
 
-                  {/* Prod Checkboxes */}
+                  {}
                   <View style={styles.colCheck}>
                     <Checkbox checked={!!row.doors_completed_actual} />
                   </View>

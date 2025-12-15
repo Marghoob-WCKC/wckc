@@ -100,7 +100,6 @@ export default function EditServiceOrder({
     { open: openAddInstaller, close: closeAddInstaller },
   ] = useDisclosure(false);
 
-  // --- Form Setup ---
   const form = useForm<ServiceOrderFormValues>({
     initialValues: {
       job_id: "",
@@ -125,8 +124,6 @@ export default function EditServiceOrder({
     validate: zodResolver(ServiceOrderSchema),
   });
 
-  // --- 2. Use Optimized Hooks with Form Values ---
-  // These hooks automatically handle fetching the selected item if it's not in the initial search list
   const {
     options: jobOptions,
     isLoading: jobsLoading,
@@ -141,7 +138,6 @@ export default function EditServiceOrder({
     search: installerSearch,
   } = useInstallerSearch(form.values.installer_id);
 
-  // --- Fetch Main Service Order Data ---
   const { data: serviceOrderData, isLoading: soLoading } =
     useQuery<ServiceOrderData>({
       queryKey: ["service_order", serviceOrderId],
@@ -213,7 +209,6 @@ export default function EditServiceOrder({
     return () => setIsDirty(false);
   }, [isDirty, setIsDirty]);
 
-  // Populate form with fetched data
   useEffect(() => {
     if (serviceOrderData) {
       const hoInfo = serviceOrderData.jobs?.homeowners_info;
@@ -281,7 +276,6 @@ export default function EditServiceOrder({
 
       if (soError) throw new Error(`Update Order Error: ${soError.message}`);
 
-      // Upsert Homeowner Info
       if (
         values.homeowner_name ||
         values.homeowner_phone ||
@@ -406,7 +400,7 @@ export default function EditServiceOrder({
         }}
       >
         <Stack gap="md">
-          {/* HEADER */}
+          {}
           <Paper p="md" radius="md" shadow="sm" bg="gray.1">
             <Group
               justify="space-between"
@@ -466,7 +460,7 @@ export default function EditServiceOrder({
             </SimpleGrid>
           </Paper>
 
-          {/* MAIN FORM */}
+          {}
           <Paper p="md" radius="md" shadow="xl" bg="gray.1">
             <Stack>
               <Fieldset legend="Job & Identifier" variant="filled" bg="white">
@@ -502,7 +496,7 @@ export default function EditServiceOrder({
                     wrap="nowrap"
                     gap="lg"
                   >
-                    {/* COLUMN 1: INSTALLER & DATES */}
+                    {}
                     <Stack gap="sm" style={{ flex: 1 }}>
                       <Group align="flex-end" gap="xs" wrap="nowrap">
                         <Select
@@ -588,10 +582,10 @@ export default function EditServiceOrder({
                       </SimpleGrid>
                     </Stack>
 
-                    {/* DIVIDER 1 */}
+                    {}
                     <Divider orientation="vertical" />
 
-                    {/* COLUMN 2: SERVICE DETAILS */}
+                    {}
                     <Group align="stretch" gap="xs" style={{ flex: 1 }}>
                       <Stack gap={4} style={{ flex: 1 }}>
                         <TextInput
@@ -605,7 +599,7 @@ export default function EditServiceOrder({
                         />
                       </Stack>
 
-                      {/* Inner Divider */}
+                      {}
                       <Divider orientation="vertical" />
 
                       <Stack gap={4} style={{ flex: 1 }}>
@@ -621,16 +615,16 @@ export default function EditServiceOrder({
                       </Stack>
                     </Group>
 
-                    {/* DIVIDER 2 */}
+                    {}
                     <Divider orientation="vertical" />
 
-                    {/* COLUMN 3: HOMEOWNER INFO */}
+                    {}
                     <Box style={{ flex: 1 }}>
                       <HomeOwnersInfo form={form} />
                     </Box>
                   </Group>
 
-                  {/* Mobile/Tablet View (Hidden from 'lg' up) */}
+                  {}
                   <Stack hiddenFrom="lg" gap="xl">
                     <Stack gap="sm">
                       <Group align="flex-end" gap="xs" wrap="nowrap">
@@ -751,7 +745,7 @@ export default function EditServiceOrder({
             </Stack>
           </Paper>
 
-          {/* PARTS TABLE */}
+          {}
           <Paper p="md" radius="md" shadow="xl">
             <Group justify="space-between" mb="md">
               <Text fw={600}>Required Parts</Text>

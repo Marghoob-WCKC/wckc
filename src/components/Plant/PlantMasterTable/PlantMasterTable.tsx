@@ -49,7 +49,6 @@ import { useSupabase } from "@/hooks/useSupabase";
 import { useDisclosure } from "@mantine/hooks";
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 
-// Define the shape based on our View
 type PlantMasterRow = {
   record_type: "JOB" | "SERVICE";
   id: number;
@@ -64,7 +63,6 @@ export default function PlantMasterTable() {
   const router = useRouter();
   const { supabase, isAuthenticated } = useSupabase();
 
-  // --- Table State ---
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 16,
@@ -73,7 +71,6 @@ export default function PlantMasterTable() {
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
 
-  // Track current pill selection for UI styling
   const [currentType, setCurrentType] = useState<"ALL" | "JOB" | "SERVICE">(
     "ALL"
   );
@@ -85,11 +82,9 @@ export default function PlantMasterTable() {
     setDrawerJobId(id);
     openDrawer();
   };
-  // --- 1. Stats Query (Counts for Pills) ---
   const { data: stats } = useQuery({
     queryKey: ["plant_master_stats"],
     queryFn: async () => {
-      // Run counts in parallel
       const [allRes, jobRes, svcRes] = await Promise.all([
         supabase
           .from("plant_master_view" as any)
@@ -111,11 +106,9 @@ export default function PlantMasterTable() {
       };
     },
     enabled: isAuthenticated,
-    // Keep stats fresh but don't refetch constantly
     staleTime: 1000 * 60 * 2,
   });
 
-  // --- Helpers ---
   const setInputFilterValue = (id: string, value: string | null) => {
     setInputFilters((prev) => {
       const existing = prev.filter((f) => f.id !== id);
@@ -136,17 +129,13 @@ export default function PlantMasterTable() {
   const handleClearFilters = () => {
     setInputFilters([]);
     setActiveFilters([]);
-    // Reset pill to ALL as well? Optional. Usually separate.
-    // setCurrentType("ALL");
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
 
-  // --- Pill Handler ---
   const handleTypeChange = (type: "ALL" | "JOB" | "SERVICE") => {
     setCurrentType(type);
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
 
-    // Update the active filters passed to the hook
     setActiveFilters((prev) => {
       const others = prev.filter((f) => f.id !== "record_type");
       if (type === "ALL") return others;
@@ -154,7 +143,6 @@ export default function PlantMasterTable() {
     });
   };
 
-  // --- Data Fetching ---
   const { data, isLoading, isError, error } = usePlantMasterTable({
     pagination,
     columnFilters: activeFilters,
@@ -165,7 +153,6 @@ export default function PlantMasterTable() {
   const totalCount = data?.count || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
-  // --- Columns ---
   const columnHelper = createColumnHelper<PlantMasterRow>();
 
   const columns = [
@@ -228,7 +215,6 @@ export default function PlantMasterTable() {
       size: 300,
       cell: (info) => {
         const rawValue = info.getValue();
-        // Strip HTML tags if any (reuse the fix from earlier)
         const cleanText = rawValue
           ? String(rawValue).replace(/<[^>]+>/g, " ")
           : "—";
@@ -263,7 +249,6 @@ export default function PlantMasterTable() {
     }),
   ];
 
-  // --- Table Instance ---
   const table = useReactTable({
     data: tableData,
     columns,
@@ -300,7 +285,7 @@ export default function PlantMasterTable() {
       display="flex"
       style={{ flexDirection: "column" }}
     >
-      {/* HEADER */}
+      {}
       <Group mb="md">
         <ThemeIcon
           size={50}
@@ -320,7 +305,7 @@ export default function PlantMasterTable() {
         </Stack>
       </Group>
 
-      {/* FILTERS ACCORDION */}
+      {}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -380,7 +365,7 @@ export default function PlantMasterTable() {
         </Accordion.Item>
       </Accordion>
 
-      {/* STATUS PILLS */}
+      {}
       <Group mb="md" align="center">
         {[
           { key: "ALL", label: "All Records", count: stats?.ALL || 0 },
@@ -393,7 +378,6 @@ export default function PlantMasterTable() {
         ].map((item) => {
           const isActive = currentType === item.key;
 
-          // Custom Gradients for Active State
           const gradients: Record<string, string> = {
             ALL: "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
             JOB: "linear-gradient(135deg, #4da0ff 0%, #0066cc 100%)",
@@ -448,7 +432,7 @@ export default function PlantMasterTable() {
         })}
       </Group>
 
-      {/* TABLE */}
+      {}
       <ScrollArea style={{ flex: 1 }} type="hover">
         <Table
           striped
@@ -497,12 +481,9 @@ export default function PlantMasterTable() {
                   key={`${row.original.record_type}-${row.original.id}`}
                   style={{ cursor: "pointer" }}
                   onClick={() => {
-                    // Smart Routing
                     if (row.original.record_type === "JOB") {
-                      // Jobs route to production schedule
                       router.push(`/dashboard/installation/${row.original.id}`);
                     } else {
-                      // Service orders route to their detail page
                       router.push(
                         `/dashboard/serviceorders/${row.original.id}`
                       );
@@ -531,7 +512,7 @@ export default function PlantMasterTable() {
         </Table>
       </ScrollArea>
 
-      {/* PAGINATION */}
+      {}
       <Box
         style={{
           borderTop: "1px solid #eee",

@@ -38,19 +38,16 @@ export default function RelatedBackorders({
 }: RelatedBackordersProps) {
   const { supabase, isAuthenticated } = useSupabase();
 
-  // State for editing
   const [selectedBackorder, setSelectedBackorder] = useState<Backorder | null>(
     null
   );
   const [editModalOpened, { open: openEditModal, close: closeEditModal }] =
     useDisclosure(false);
 
-  // State for Printing
   const [printBackorderId, setPrintBackorderId] = useState<number | null>(null);
   const [printModalOpened, { open: openPrintModal, close: closePrintModal }] =
     useDisclosure(false);
 
-  // 1. Fetch List
   const { data: relatedBackorders } = useQuery({
     queryKey: ["related-backorders", jobId],
     queryFn: async () => {
@@ -67,7 +64,6 @@ export default function RelatedBackorders({
     enabled: isAuthenticated && !!jobId,
   });
 
-  // 2. Fetch Full Details for Print (Joined Data)
   const { data: printData, isLoading: isPrintLoading } = useQuery({
     queryKey: ["backorder-print-data", printBackorderId],
     queryFn: async () => {
@@ -159,7 +155,7 @@ export default function RelatedBackorders({
             {bo.complete ? "Complete" : "Pending"}
           </Badge>
         </Table.Td>
-        {/* Print Action Column */}
+        {}
         <Table.Td w={60}>
           <ActionIcon
             variant="subtle"
@@ -273,7 +269,7 @@ export default function RelatedBackorders({
         </Paper>
       </Paper>
 
-      {/* Render Edit Modal */}
+      {}
       <EditBackorderModal
         opened={editModalOpened}
         onClose={() => {
@@ -283,7 +279,7 @@ export default function RelatedBackorders({
         backorder={selectedBackorder}
       />
 
-      {/* Render Print Modal */}
+      {}
       <BackorderPdfPreviewModal
         opened={printModalOpened}
         onClose={handleClosePrint}

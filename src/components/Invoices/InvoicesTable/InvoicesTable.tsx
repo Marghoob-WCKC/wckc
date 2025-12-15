@@ -57,7 +57,6 @@ import AddInvoice from "../AddInvoice/AddInvoice";
 import { useUser } from "@clerk/nextjs";
 import { usePermissions } from "@/hooks/usePermissions";
 
-// 1. Extended Type Definition including nested Shipping fields
 type InvoiceRow = Tables<"invoices"> & {
   job:
     | (Tables<"jobs"> & {
@@ -76,7 +75,6 @@ export default function InvoicesTable() {
     pageSize: 15,
   });
 
-  // Modal States
   const [addModalOpened, { open: openAddModal, close: closeAddModal }] =
     useDisclosure(false);
 
@@ -89,7 +87,6 @@ export default function InvoicesTable() {
     text: string;
   } | null>(null);
 
-  // 2. Fetch Invoices
   const { data: invoices, isLoading } = useQuery<InvoiceRow[]>({
     queryKey: ["invoices_list"],
     queryFn: async () => {
@@ -120,7 +117,6 @@ export default function InvoicesTable() {
     placeholderData: (previousData) => previousData,
   });
 
-  // 3. Mutation to Mark as Paid
   const togglePaidMutation = useMutation({
     mutationFn: async ({ id, isPaid }: { id: number; isPaid: boolean }) => {
       const { error } = await supabase
@@ -149,7 +145,6 @@ export default function InvoicesTable() {
     },
   });
 
-  // 4. Mutation to Update Comment
   const updateCommentMutation = useMutation({
     mutationFn: async () => {
       if (!editingComment) return;
@@ -178,7 +173,6 @@ export default function InvoicesTable() {
     },
   });
 
-  // 5. Mutation to Toggle No Charge
   const toggleNoChargeMutation = useMutation({
     mutationFn: async ({ id, noCharge }: { id: number; noCharge: boolean }) => {
       const { error } = await supabase
@@ -207,14 +201,12 @@ export default function InvoicesTable() {
   const columnHelper = createColumnHelper<InvoiceRow>();
 
   const columns = [
-    // --- Invoice Number ---
     columnHelper.accessor("invoice_number", {
       header: "Invoice #",
       size: 110,
       cell: (info) => <Text fw={700}>{info.getValue() || "—"}</Text>,
     }),
 
-    // --- Job Number ---
     columnHelper.accessor("job.job_number", {
       id: "job_number",
       header: "Job #",
@@ -222,7 +214,6 @@ export default function InvoicesTable() {
       cell: (info) => <Text c="dimmed">{info.getValue() || "—"}</Text>,
     }),
 
-    // --- Client Name ---
     columnHelper.accessor("job.sales_orders.shipping_client_name", {
       id: "client",
       header: "Client",
@@ -234,7 +225,6 @@ export default function InvoicesTable() {
       ),
     }),
 
-    // --- Date Entered ---
     columnHelper.accessor("date_entered", {
       header: "Entered",
       size: 110,
@@ -242,7 +232,6 @@ export default function InvoicesTable() {
         info.getValue() ? dayjs(info.getValue()).format("YYYY-MM-DD") : "—",
     }),
 
-    // --- Date Due ---
     columnHelper.accessor("date_due", {
       header: "Due",
       size: 110,
@@ -259,7 +248,6 @@ export default function InvoicesTable() {
       },
     }),
 
-    // --- Shipping Address ---
     columnHelper.accessor(
       (row) => {
         const so = row.job?.sales_orders;
@@ -287,7 +275,6 @@ export default function InvoicesTable() {
       }
     ),
 
-    // --- Paid in Full (Status Badge) ---
     columnHelper.accessor("paid_at", {
       id: "status",
       header: "Paid Status",
@@ -320,7 +307,6 @@ export default function InvoicesTable() {
       },
     }),
 
-    // --- Date Paid ---
     columnHelper.accessor("paid_at", {
       id: "date_paid",
       header: "Date Paid",
@@ -337,7 +323,6 @@ export default function InvoicesTable() {
         ),
     }),
 
-    // --- Comments (Editable) ---
     columnHelper.accessor("comments", {
       header: "Comments",
       size: 200,
@@ -366,7 +351,6 @@ export default function InvoicesTable() {
       ),
     }),
 
-    // --- Actions (Menu) ---
     canEditInvoices
       ? columnHelper.display({
           id: "actions",
@@ -453,7 +437,7 @@ export default function InvoicesTable() {
       display="flex"
       style={{ flexDirection: "column" }}
     >
-      {/* --- Header Section --- */}
+      {}
       <Paper
         p="xl"
         radius="lg"
@@ -507,7 +491,7 @@ export default function InvoicesTable() {
         </Group>
       </Paper>
 
-      {/* --- Table Section --- */}
+      {}
       <ScrollArea style={{ flex: 1 }}>
         <Table
           striped
@@ -592,7 +576,7 @@ export default function InvoicesTable() {
 
       <AddInvoice opened={addModalOpened} onClose={closeAddModal} />
 
-      {/* --- Edit Comment Modal --- */}
+      {}
       <Modal
         opened={commentModalOpened}
         onClose={closeCommentModal}

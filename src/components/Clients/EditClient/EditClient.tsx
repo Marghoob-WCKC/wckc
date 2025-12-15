@@ -121,7 +121,7 @@ export default function EditClient({
             <SimpleGrid cols={{ base: 1, sm: 2 }}>
               <TextInput
                 label="Client Name"
-                withAsterisk // Keep this if it's required
+                withAsterisk 
                 {...form.getInputProps("lastName")}
               />
             </SimpleGrid>

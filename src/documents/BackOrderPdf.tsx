@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: 9,
     textAlign: "right",
-    justifyContent: "flex-end", // Aligns content to bottom if needed
+    justifyContent: "flex-end", 
   },
   section: {
     marginBottom: 15,
@@ -82,22 +82,22 @@ export const BackorderPdf = ({ data }: BackorderPdfProps) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* --- HEADER START --- */}
+        {}
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>Backorder</Text>
-            {/* BO Number */}
+            {}
             <Text style={{ fontSize: 14, fontWeight: "bold", marginTop: 5 }}>
               ID: BO-{data.id}
             </Text>
-            {/* Job Number (Moved & Resized) */}
+            {}
             <Text style={{ fontSize: 14, fontWeight: "bold", marginTop: 2 }}>
               Job #: {job.job_number}
             </Text>
           </View>
 
           <View style={styles.meta}>
-            {/* Removed Job # from meta list */}
+            {}
             <Text>
               Date Entered: {dayjs(data.date_entered).format("MMM D, YYYY")}
             </Text>
@@ -109,7 +109,7 @@ export const BackorderPdf = ({ data }: BackorderPdfProps) => {
             </Text>
           </View>
         </View>
-        {/* --- HEADER END --- */}
+        {}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Client & Shipping</Text>

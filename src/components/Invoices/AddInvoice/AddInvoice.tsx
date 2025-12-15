@@ -31,15 +31,13 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
   const { supabase, isAuthenticated } = useSupabase();
   const queryClient = useQueryClient();
 
-  // 1. Fetch Jobs for the Dropdown
   const { data: jobOptions, isLoading: jobsLoading } = useJobs(isAuthenticated);
 
-  // 2. Form Setup
   const form = useForm<InvoiceFormInput>({
     initialValues: {
       invoice_number: "",
       job_id: "",
-      date_entered: new Date(), // Default to today
+      date_entered: new Date(), 
       date_due: null,
       paid_at: null,
       no_charge: false,
@@ -48,7 +46,6 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
     validate: zodResolver(InvoiceSchema),
   });
 
-  // 3. Reset form when modal opens
   useEffect(() => {
     if (opened) {
       form.reset();
@@ -56,10 +53,8 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
     }
   }, [opened]);
 
-  // 4. Create Mutation
   const createMutation = useMutation({
     mutationFn: async (values: InvoiceFormInput) => {
-      // Zod has already validated and transformed job_id to a number
       const { error } = await supabase.from("invoices").insert(values);
 
       if (error) throw error;

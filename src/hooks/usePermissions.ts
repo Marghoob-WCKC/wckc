@@ -6,7 +6,6 @@ export function usePermissions() {
   const { user, isLoaded } = useUser();
   const role = user?.publicMetadata?.role as string | undefined;
 
-  // Role Checks
   const isAdmin = role === "admin";
   const isDesigner = role === "designer";
   const isScheduler = role === "scheduler";
@@ -16,7 +15,6 @@ export function usePermissions() {
   const isReception = role === "reception";
   const isManager = role === "manager";
 
-  // Feature Permissions
   const canEditSales = isAdmin || isDesigner || isScheduler;
   const canEditProduction = isAdmin || isScheduler;
   const canEditInstallation = isAdmin || isInstaller || isService;

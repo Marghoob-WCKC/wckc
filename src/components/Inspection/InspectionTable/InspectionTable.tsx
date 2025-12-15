@@ -77,7 +77,6 @@ export default function InspectionTable() {
   const { supabase } = useSupabase();
   const queryClient = useQueryClient();
 
-  // --- State ---
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 16,
@@ -86,29 +85,23 @@ export default function InspectionTable() {
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
 
-  // Drawer State
   const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
 
-  // Shared State for Row Selection
   const [selectedInstallId, setSelectedInstallId] = useState<number | null>(
     null
   );
 
-  // State: Completion Modal
   const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [completionDateInput, setCompletionDateInput] = useState<Date | null>(
     new Date()
   );
-  // Track if we are editing an existing completion so we can show "Mark Incomplete"
   const [isCurrentlyCompleted, setIsCurrentlyCompleted] = useState(false);
 
-  // State: Scheduling Modal
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [scheduleDateInput, setScheduleDateInput] = useState<Date | null>(null);
 
-  // --- Data Fetching ---
   const { data, isLoading, isError, error } = useInspectionTable({
     pagination,
     columnFilters: activeFilters,
@@ -119,7 +112,6 @@ export default function InspectionTable() {
   const totalCount = data?.count || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
-  // --- Mutation: Completion ---
   const updateCompletionMutation = useMutation({
     mutationFn: async ({ id, date }: { id: number; date: string | null }) => {
       const { error } = await supabase
@@ -147,7 +139,6 @@ export default function InspectionTable() {
     },
   });
 
-  // --- Mutation: Scheduling ---
   const updateScheduleMutation = useMutation({
     mutationFn: async ({ id, date }: { id: number; date: string | null }) => {
       const { error } = await supabase
@@ -175,7 +166,6 @@ export default function InspectionTable() {
     },
   });
 
-  // --- Handlers ---
   const handleJobClick = (id: number) => {
     setDrawerJobId(id);
     openDrawer();
@@ -207,16 +197,13 @@ export default function InspectionTable() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
 
-  // Click Handler: Toggle Completion (Modified to always open modal)
   const handleCompletionClick = (row: InspectionTableView) => {
     setSelectedInstallId(row.installation_id);
 
     if (row.inspection_completed) {
-      // If already complete, pre-fill date and set editing flag
       setCompletionDateInput(dayjs(row.inspection_completed).toDate());
       setIsCurrentlyCompleted(true);
     } else {
-      // If not complete, default to today
       setCompletionDateInput(new Date());
       setIsCurrentlyCompleted(false);
     }
@@ -242,7 +229,6 @@ export default function InspectionTable() {
     }
   };
 
-  // Click Handler: Change Schedule
   const handleScheduleClick = (row: InspectionTableView) => {
     setSelectedInstallId(row.installation_id);
     const currentDate = row.inspection_date
@@ -264,7 +250,6 @@ export default function InspectionTable() {
     }
   };
 
-  // --- Columns ---
   const columnHelper = createColumnHelper<InspectionTableView>();
 
   const columns = [
@@ -479,7 +464,7 @@ export default function InspectionTable() {
         </Stack>
       </Group>
 
-      {/* Filters */}
+      {}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -677,7 +662,7 @@ export default function InspectionTable() {
         onClose={closeDrawer}
       />
 
-      {/* MODAL: Completion Date & Status */}
+      {}
       <Modal
         opened={completionModalOpen}
         onClose={() => setCompletionModalOpen(false)}
@@ -707,7 +692,7 @@ export default function InspectionTable() {
             data-autofocus
           />
           <Group justify="space-between" mt="md">
-            {/* Show "Mark Incomplete" only if currently complete */}
+            {}
             {isCurrentlyCompleted ? (
               <Button
                 variant="light"
@@ -719,7 +704,7 @@ export default function InspectionTable() {
                 Mark Incomplete
               </Button>
             ) : (
-              <div /> // Spacer if button is hidden
+              <div /> 
             )}
 
             <Group>
@@ -741,7 +726,7 @@ export default function InspectionTable() {
         </Stack>
       </Modal>
 
-      {/* MODAL: Scheduling Date */}
+      {}
       <Modal
         opened={scheduleModalOpen}
         onClose={() => setScheduleModalOpen(false)}

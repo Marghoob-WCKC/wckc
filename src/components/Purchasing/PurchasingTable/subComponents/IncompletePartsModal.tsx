@@ -63,7 +63,6 @@ export const IncompletePartsModal = ({
     const newItems = [...items];
     const qty = typeof val === "number" ? val : 0;
     newItems[index].qty_received = qty;
-    // Auto-update legacy boolean for consistency, though logic relies on qty now
     newItems[index].is_received = qty >= (newItems[index].quantity || 0);
     setItems(newItems);
   };

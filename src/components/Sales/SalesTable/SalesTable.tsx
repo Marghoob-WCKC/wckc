@@ -44,8 +44,8 @@ import {
 } from "react-icons/fa";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { useQuery } from "@tanstack/react-query"; // Import useQuery
-import { useSupabase } from "@/hooks/useSupabase"; // Ensure Supabase hook is imported
+import { useQuery } from "@tanstack/react-query"; 
+import { useSupabase } from "@/hooks/useSupabase"; 
 import { useSalesTable } from "@/hooks/useSalesTable";
 import { Views } from "@/types/db";
 import { useDisclosure } from "@mantine/hooks";
@@ -54,9 +54,8 @@ dayjs.extend(utc);
 type SalesTableView = Views<"sales_table_view">;
 export default function SalesTable() {
   const router = useRouter();
-  const { supabase, isAuthenticated } = useSupabase(); // Access Supabase client
+  const { supabase, isAuthenticated } = useSupabase(); 
 
-  // --- 1. Table State ---
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 16,
@@ -72,7 +71,6 @@ export default function SalesTable() {
     setDrawerJobId(id);
     openDrawer();
   };
-  // Helpers
   const setInputFilterValue = (id: string, value: string) => {
     setInputFilters((prev) => {
       const existing = prev.filter((f) => f.id !== id);
@@ -122,7 +120,6 @@ export default function SalesTable() {
   const totalCount = data?.count || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
-  // --- 4. Search Actions ---
   const handleSearch = () => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     setActiveFilters(inputFilters);
@@ -145,7 +142,6 @@ export default function SalesTable() {
   const currentStage =
     activeFilters.find((f) => f.id === "stage")?.value || "ALL";
 
-  // --- 5. Columns ---
   const columnHelper = createColumnHelper<SalesTableView>();
 
   const columns = useMemo(
@@ -239,7 +235,6 @@ export default function SalesTable() {
     [router]
   );
 
-  // --- 6. Table Instance ---
   const table = useReactTable({
     data: tableData,
     columns,
@@ -281,7 +276,7 @@ export default function SalesTable() {
         height: "calc(100vh - 45px)",
       }}
     >
-      {/* Header */}
+      {}
       <Group mb="md" justify="space-between">
         <Group>
           <ThemeIcon
@@ -315,7 +310,7 @@ export default function SalesTable() {
         </Button>
       </Group>
 
-      {/* Filter Section */}
+      {}
       <Accordion variant="contained" radius="md" mb="md" w={"100%"}>
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -372,7 +367,7 @@ export default function SalesTable() {
         </Accordion.Item>
       </Accordion>
 
-      {/* Status Pills */}
+      {}
       <Group mb="md" align="center" style={{ width: "100%" }}>
         <Group wrap="wrap">
           {[
@@ -380,19 +375,19 @@ export default function SalesTable() {
               key: "ALL",
               label: "All Orders",
               color: "gray",
-              count: stats?.ALL || 0, // Using DB Stats
+              count: stats?.ALL || 0, 
             },
             {
               key: "QUOTE",
               label: "Quotes",
               color: "blue",
-              count: stats?.QUOTE || 0, // Using DB Stats
+              count: stats?.QUOTE || 0, 
             },
             {
               key: "SOLD",
               label: "Jobs",
               color: "green",
-              count: stats?.SOLD || 0, // Using DB Stats
+              count: stats?.SOLD || 0, 
             },
           ].map((item) => {
             const isActive = currentStage === item.key;
@@ -453,7 +448,7 @@ export default function SalesTable() {
         <div style={{ flex: 1 }} />
       </Group>
 
-      {/* Data Table */}
+      {}
       <ScrollArea
         style={{
           flex: 1,
@@ -552,7 +547,7 @@ export default function SalesTable() {
         </Table>
       </ScrollArea>
 
-      {/* Pagination */}
+      {}
       <Box
         style={{
           position: "fixed",

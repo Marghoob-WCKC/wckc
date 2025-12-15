@@ -26,7 +26,6 @@ export function usePurchasingTable({
         .from("purchasing_table_view")
         .select("*", { count: "exact" });
 
-      // Apply Filters
       columnFilters.forEach((filter) => {
         const { id, value } = filter;
         const valStr = String(value);
@@ -47,16 +46,13 @@ export function usePurchasingTable({
         }
       });
 
-      // Apply Sorting
       if (sorting.length > 0) {
         const { id, desc } = sorting[0];
         query = query.order(id, { ascending: !desc });
       } else {
-        // Default sort by Job ID descending (newest first)
         query = query.order("job_id", { ascending: false });
       }
 
-      // Apply Pagination
       const from = pagination.pageIndex * pagination.pageSize;
       const to = from + pagination.pageSize - 1;
       query = query.range(from, to);

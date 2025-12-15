@@ -1,4 +1,3 @@
-// src.zip/components/Installation/AddBackorderModal/AddBackorderModal.tsx
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -39,7 +38,6 @@ export default function AddBackorderModal({
     validate: zodResolver(BackorderSchema),
   });
 
-  // Ensure form value is updated if job changes (though in editor, jobId is fixed)
   if (form.values.job_id !== String(jobId)) {
     form.setFieldValue("job_id", String(jobId));
   }
@@ -64,7 +62,6 @@ export default function AddBackorderModal({
         message: `Backorder for Job #${jobNumber} logged successfully.`,
         color: "orange",
       });
-      // Invalidate queries to refresh both the backorder list and the editor page
       queryClient.invalidateQueries({
         queryKey: ["related-backorders", jobId],
       });

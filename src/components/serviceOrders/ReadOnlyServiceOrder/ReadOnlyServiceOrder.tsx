@@ -209,7 +209,7 @@ export default function ReadOnlyServiceOrder({
       }
     : null;
   const installer = so.installers;
-  const hoInfo = job?.homeowners_info?.[0]; // Access nested homeowner data
+  const hoInfo = job?.homeowners_info?.[0]; 
   const isCompleted = !!so.completed_at;
   const statusColor = isCompleted ? "green" : "violet";
 
@@ -346,7 +346,7 @@ export default function ReadOnlyServiceOrder({
                   </Stack>
                 </Card>
 
-                {/* Homeowner Information Card */}
+                {}
                 <Card shadow="sm" padding="lg" radius="md" withBorder>
                   <SectionTitle
                     icon={FaUser}

@@ -45,7 +45,6 @@ import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/Relat
 import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
 
-// --- Types ---
 type JoinedCabinet = Tables<"cabinets"> & {
   door_styles: { name: string } | null;
   species: { Species: string } | null;
@@ -69,7 +68,6 @@ type JobData = Tables<"jobs"> & {
   };
 };
 type ProductionScheduleType = Tables<"production_schedule">;
-// --- Helper Components ---
 const SectionTitle = ({
   icon: Icon,
   title,
@@ -137,7 +135,6 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
   const router = useRouter();
   const { supabase, isAuthenticated } = useSupabase();
 
-  // --- Data Fetching ---
   const { data: jobData, isLoading } = useQuery<JobData>({
     queryKey: ["installation-readonly", jobId],
     queryFn: async () => {
@@ -194,7 +191,6 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
     enabled: isAuthenticated && !!jobId,
   });
 
-  // --- Derived State ---
   const install = jobData?.installation;
   const prod = jobData?.production_schedule;
   const shipping = jobData?.sales_orders
@@ -260,7 +256,6 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
     },
     { key: "assembly_schedule", label: "Assembly", icon: <FaCogs size={12} /> },
   ];
-  // --- Production Timeline Data ---
   const actualSteps = useMemo(() => {
     if (!prod) return [];
     const stepsData = [
@@ -313,7 +308,6 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
     }));
   }, [prod]);
 
-  // --- Installation Timeline Data ---
   const installSteps = useMemo(() => {
     if (!install) return [];
     return [
@@ -355,7 +349,7 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
         flexDirection: "column",
       }}
     >
-      {/* --- Header --- */}
+      {}
       <Paper
         p="md"
         radius={0}
@@ -388,13 +382,13 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
         </Group>
       </Paper>
 
-      {/* --- Content --- */}
+      {}
       <Box style={{ flex: 1, overflowY: "auto" }} p="md">
         <Grid gutter="lg">
-          {/* LEFT COLUMN: Main Info */}
+          {}
           <Grid.Col span={{ base: 12, lg: 10 }}>
             <Stack gap="md">
-              {/* Client & Specs */}
+              {}
               <Paper p="md" radius="md" shadow="xs" withBorder>
                 <SimpleGrid cols={3} spacing="xl" verticalSpacing="lg">
                   <Stack>
@@ -451,7 +445,7 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
                 </SimpleGrid>
               </Paper>
 
-              {/* Installer & Schedule */}
+              {}
               <Card shadow="sm" padding="lg" radius="md" withBorder>
                 <SectionTitle
                   icon={FaUserTie}
@@ -483,7 +477,7 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
                 </SimpleGrid>
               </Card>
 
-              {/* Shipping & Logistics */}
+              {}
               <Card shadow="sm" padding="lg" radius="md" withBorder>
                 <SectionTitle
                   icon={FaTruckLoading}
@@ -537,7 +531,7 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
                 </SimpleGrid>
               </Card>
 
-              {/* Notes */}
+              {}
               <Card shadow="sm" padding="lg" radius="md" withBorder>
                 <SectionTitle
                   icon={FaClipboardList}
@@ -549,16 +543,16 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
                 </Text>
               </Card>
 
-              {/* Related Service Orders */}
+              {}
               <RelatedServiceOrders jobId={jobId} readOnly />
               <RelatedBackorders jobId={String(jobId)} readOnly />
             </Stack>
           </Grid.Col>
 
-          {/* RIGHT COLUMN: Timelines */}
+          {}
           <Grid.Col span={{ base: 12, lg: 2 }}>
             <Stack gap="md">
-              {/* Installation Phase */}
+              {}
               <Card shadow="sm" padding="lg" radius="md" withBorder>
                 <SectionTitle
                   icon={FaCalendarCheck}
@@ -608,7 +602,7 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
                 </Timeline>
               </Card>
 
-              {/* Production Progress */}
+              {}
               <Card shadow="sm" padding="lg" radius="md" withBorder>
                 <SectionTitle
                   icon={FaCogs}

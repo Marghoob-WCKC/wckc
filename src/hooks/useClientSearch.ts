@@ -28,7 +28,7 @@ export function useClientSearch(selectedId?: string | number | null) {
       return data.map((c) => ({
         value: String(c.id),
         label: c.lastName,
-        original: c, // Keep full object for custom rendering/copying
+        original: c, 
       }));
     },
     placeholderData: (previousData: any) => previousData,

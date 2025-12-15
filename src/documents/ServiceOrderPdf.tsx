@@ -2,7 +2,6 @@ import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import Html from "react-pdf-html";
 import dayjs from "dayjs";
 
-// Standard Helvetica is built-in
 const styles = StyleSheet.create({
   page: {
     paddingTop: 30,
@@ -40,7 +39,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
 
-  // Main Info Section
   infoContainer: {
     flexDirection: "row",
     marginBottom: 20,
@@ -53,7 +51,6 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
   },
 
-  // Generic Rows
   row: {
     flexDirection: "row",
     marginBottom: 4,
@@ -70,7 +67,6 @@ const styles = StyleSheet.create({
     fontWeight: "normal",
   },
 
-  // Comments Section Container
   commentsSection: {
     marginTop: 10,
     borderBottomWidth: 4,
@@ -85,7 +81,6 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
 
-  // Parts Table
   table: {
     marginTop: 5,
     width: "100%",
@@ -111,20 +106,15 @@ const styles = StyleSheet.create({
   colDescription: { width: "60%" },
 });
 
-// Styles specifically for the HTML content inside the PDF
 const htmlStyles = {
-  // Global text settings for HTML content
   body: {
     fontFamily: "Helvetica",
     fontSize: 10,
     lineHeight: 1.4,
   },
-  // Paragraph spacing
   p: { fontSize: 10, margin: 0, marginBottom: 4 },
-  // Lists
   ul: { fontSize: 10, marginLeft: 15, marginBottom: 4 },
   li: { fontSize: 10, marginLeft: 0, marginBottom: 2 },
-  // Bold Text (using standard Helvetica-Bold)
   strong: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
@@ -135,7 +125,6 @@ const htmlStyles = {
     fontFamily: "Helvetica-Bold",
     fontWeight: "bold" as const,
   },
-  // Italic Text
   em: {
     fontSize: 10,
     fontFamily: "Helvetica-Oblique",
@@ -163,26 +152,22 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
     .filter(Boolean)
     .join(", ");
 
-  // HELPER: Handles legacy plain text from DB by converting newlines to <br/>
-  // This ensures old comments render with line breaks even if they aren't HTML.
   const processContent = (content: string | null) => {
     if (!content) return "<p>No comments provided.</p>";
 
-    // Check for HTML tags
     const isHtml = /<[a-z][\s\S]*>/i.test(content);
 
     if (isHtml) {
       return content;
     }
 
-    // Convert plain text newlines to HTML breaks for PDF rendering
     return content.replace(/\n/g, "<br />");
   };
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* --- HEADER --- */}
+        {}
         <View style={styles.headerContainer}>
           <Text style={styles.title}>
             Service Order: {data.service_order_number}
@@ -203,9 +188,9 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
           </View>
         </View>
 
-        {/* --- MAIN INFO GRID --- */}
+        {}
         <View style={styles.infoContainer}>
-          {/* LEFT COLUMN */}
+          {}
           <View style={styles.leftCol}>
             <View style={styles.row}>
               <Text style={styles.label}>Job Number:</Text>
@@ -270,7 +255,7 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
             </View>
           </View>
 
-          {/* RIGHT COLUMN */}
+          {}
           <View style={styles.rightCol}>
             <View style={{ marginBottom: 15 }}>
               <Text
@@ -322,16 +307,16 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
           </View>
         </View>
 
-        {/* --- COMMENTS SECTION --- */}
+        {}
         <View style={styles.commentsSection}>
           <Text style={styles.commentsHeader}>Comments</Text>
-          {/* IMPORTANT: stylesheet prop passes the CSS rules, processContent handles legacy text */}
+          {}
           <Html stylesheet={htmlStyles} style={{ fontSize: 10 }}>
             {processContent(data.comments)}
           </Html>
         </View>
 
-        {/* --- PARTS TABLE --- */}
+        {}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
             <View style={styles.colQty}>
@@ -370,7 +355,7 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
           )}
         </View>
 
-        {/* Footer info */}
+        {}
         <Text
           style={{
             position: "absolute",

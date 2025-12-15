@@ -25,7 +25,6 @@ import {
   ShippingReportJob,
 } from "@/documents/ShippingReportPdf";
 
-// Dynamic import for PDF Viewer to avoid SSR issues
 const PDFViewer = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
   {
@@ -41,13 +40,11 @@ const PDFViewer = dynamic(
 export default function ShippingReport() {
   const { supabase, isAuthenticated } = useSupabase();
 
-  // Default to current month
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
     dayjs().toDate(),
     dayjs().add(7, "day").toDate(),
   ]);
 
-  // Fetch Data Logic
   const {
     data: reportData,
     isLoading,
@@ -62,7 +59,6 @@ export default function ShippingReport() {
       const startDate = dayjs(dateRange[0]).format("YYYY-MM-DD");
       const endDate = dayjs(dateRange[1]).format("YYYY-MM-DD");
 
-      // Join jobs -> sales_orders (for client/cabinet) -> production_schedule (for date filtering)
       const { data, error } = await supabase
         .from("jobs")
         .select(
@@ -101,7 +97,7 @@ export default function ShippingReport() {
   return (
     <Container size="100%" p="md">
       <Stack gap="lg">
-        {/* Header / Controls */}
+        {}
         <Paper p="md" radius="md" shadow="sm" bg="white">
           <Group justify="space-between" align="flex-end">
             <Group>
@@ -129,7 +125,6 @@ export default function ShippingReport() {
                 label="Report Date Range"
                 placeholder="Select dates"
                 value={dateRange}
-                // FIX: Explicitly cast value to satisfy TypeScript
                 onChange={(val) =>
                   setDateRange(val as [Date | null, Date | null])
                 }
@@ -149,7 +144,7 @@ export default function ShippingReport() {
           </Group>
         </Paper>
 
-        {/* PDF Preview Area */}
+        {}
         <Paper
           shadow="md"
           p={0}

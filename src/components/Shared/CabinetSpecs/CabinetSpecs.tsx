@@ -2,9 +2,7 @@ import { Paper, Text, Grid } from "@mantine/core";
 import { FaCheck } from "react-icons/fa";
 import { Tables } from "@/types/db";
 import { BiSolidCabinet } from "react-icons/bi";
-// --- New Interface Definition ---
 interface CabinetData extends Tables<"cabinets"> {
-  // These fields are overwritten by the joined objects in the upstream query
   door_styles: { name: string } | null | undefined;
   species: { Species: string } | null | undefined;
   colors: { Name: string } | null | undefined;
@@ -14,11 +12,9 @@ interface CabinetSpecsProps {
   cabinet: CabinetData | null | undefined;
 }
 
-// --- Utility function to safely extract the string value for rendering ---
 const getDisplayValue = (obj: any, key: string): string => {
   if (!obj) return "—";
 
-  // Handle joined foreign key objects
   if (key === "species") {
     return obj.species?.Species || "—";
   }
@@ -29,11 +25,9 @@ const getDisplayValue = (obj: any, key: string): string => {
     return obj.door_styles?.name || "—";
   }
 
-  // Handle direct fields (like box, interior, finish, etc.)
   return String(obj[key as keyof Tables<"cabinets">] ?? "—");
 };
 
-// --- Helper Components ---
 
 const SpecRow = ({ label, value }: { label: string; value: string }) => (
   <Text size="sm" lh={1.4}>
@@ -88,11 +82,11 @@ export default function CabinetSpecs({ cabinet }: CabinetSpecsProps) {
       </Text>
 
       <Grid>
-        {/* Left Column: Standard Text Details */}
+        {}
         <Grid.Col span={7}>
           <StackSpacing>
             <SpecRow label="Box" value={getDisplayValue(cabinet, "box")} />
-            {/* FIX: Use getDisplayValue for Foreign Key fields */}
+            {}
             <SpecRow label="Color" value={getDisplayValue(cabinet, "color")} />
 
             <SpecRow
@@ -122,10 +116,10 @@ export default function CabinetSpecs({ cabinet }: CabinetSpecsProps) {
           </StackSpacing>
         </Grid.Col>
 
-        {/* Right Column: Booleans & Grouped Specs */}
+        {}
         <Grid.Col span={5}>
           <StackSpacing>
-            {/* Glass Group */}
+            {}
             <div>
               {cabinet.glass && (
                 <BooleanRow label="Glass" value={cabinet.glass} />
@@ -138,7 +132,7 @@ export default function CabinetSpecs({ cabinet }: CabinetSpecsProps) {
               )}
             </div>
 
-            {/* Parts Only Group */}
+            {}
             <div>
               {cabinet.doors_parts_only && (
                 <BooleanRow

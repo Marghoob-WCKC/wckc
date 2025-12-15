@@ -116,7 +116,6 @@ export default function NewServiceOrder({
     setSearch: setInstallerSearch,
     search: installerSearch,
   } = useInstallerSearch(form.values.installer_id);
-  // ------------------------------
 
   const { setIsDirty } = useNavigationGuard();
   const isDirty = form.isDirty();
@@ -148,7 +147,6 @@ export default function NewServiceOrder({
     fetchHomeownerInfo();
   }, [form.values.job_id, supabase]);
 
-  // Fetch Job Details & Generate SO#
   useEffect(() => {
     const fetchSoNumber = async () => {
       const jobId = form.values.job_id;
@@ -607,7 +605,7 @@ export default function NewServiceOrder({
                       </SimpleGrid>
                     </Stack>
 
-                    {/* Mobile Col 2 */}
+                    {}
                     <SimpleGrid cols={2}>
                       <Stack gap={4}>
                         <TextInput
@@ -631,12 +629,12 @@ export default function NewServiceOrder({
                       </Stack>
                     </SimpleGrid>
 
-                    {/* Mobile Col 3 */}
+                    {}
                     <HomeOwnersInfo form={form} />
                   </Stack>
                 </Box>
 
-                {/* ... RichText, Switches, etc ... */}
+                {}
                 <Box mt="md">
                   <CustomRichTextEditor
                     label="Comments"
@@ -673,7 +671,7 @@ export default function NewServiceOrder({
             </Stack>
           </Paper>
 
-          {/* Parts Table (unchanged) */}
+          {}
           <Paper p="md" radius="md" shadow="xl">
             <Group justify="space-between" mb="md">
               <Text fw={600}>Required Parts</Text>

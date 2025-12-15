@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// 1. Cabinet Specifications
 export const CabinetSpecsSchema = z.object({
   species: z.string().optional(),
   color: z.string().optional(),
@@ -18,7 +17,6 @@ export const CabinetSpecsSchema = z.object({
   piece_count: z.string().optional(),
 });
 
-// 2. Shipping Information
 export const ShippingSchema = z.object({
   shipping_client_name: z.string().optional(),
   shipping_street: z.string().optional(),
@@ -31,7 +29,6 @@ export const ShippingSchema = z.object({
   shipping_email_2: z.email().or(z.literal("")).optional(),
 });
 
-// 5. Master Form Input
 export const MasterOrderSchema = z.object({
   client_id: z.number().min(1, "Client is required"),
   stage: z.enum(["QUOTE", "SOLD"]),

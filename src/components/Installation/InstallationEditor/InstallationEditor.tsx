@@ -634,14 +634,14 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             <Paper bg={"gray.1"} p="md" radius="md">
               <Paper p="md" radius="md" pb={30}>
                 <Stack gap="xl">
-                  {/* ... [Keep Installer & Key Dates Section] ... */}
+                  {}
                   <Box>
                     <Group mb={8} style={{ color: "#4A00E0" }}>
                       <FaTools size={18} />
                       <Text fw={600}>Installer & Key Dates</Text>
                     </Group>
                     <SimpleGrid cols={3} spacing="md">
-                      {/* ... (Installer Select, Install Date, Inspect Date) ... */}
+                      {}
                       <Group align="flex-end" gap="xs">
                         <Select
                           styles={{
@@ -704,7 +704,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
 
                   <Divider />
 
-                  {/* --- UPDATED SHIPPING MANAGEMENT SECTION --- */}
+                  {}
                   <Box>
                     <Group mb="md" style={{ color: "#218838" }}>
                       <FaTruckLoading size={18} />
@@ -712,7 +712,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                     </Group>
 
                     <Stack gap="lg">
-                      {/* ROW 1: WRAP MANAGEMENT (2 Columns) */}
+                      {}
                       <SimpleGrid cols={{ base: 1, sm: 5 }} spacing="md">
                         <DateInput
                           styles={{
@@ -744,14 +744,14 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                             styles={{
                               track: {
                                 padding: "0 12px",
-                                height: "36px", // Matches standard Input height
+                                height: "36px", 
                                 cursor: "pointer",
                                 border: "none",
                                 backgroundColor: form.values.wrap_completed
                                   ? undefined
                                   : "#e9ecef",
                                 backgroundImage: form.values.wrap_completed
-                                  ? "linear-gradient(135deg, #ae3ec9 0%, #7048e8 100%)" // Grape Gradient
+                                  ? "linear-gradient(135deg, #ae3ec9 0%, #7048e8 100%)" 
                                   : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
                                 transition: "background 200ms ease",
                               },
@@ -819,14 +819,14 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                             styles={{
                               track: {
                                 padding: "0 12px",
-                                height: "36px", // Matches standard Input height
+                                height: "36px", 
                                 cursor: "pointer",
                                 border: "none",
                                 backgroundColor: form.values.has_shipped
                                   ? undefined
                                   : "#e9ecef",
                                 backgroundImage: form.values.has_shipped
-                                  ? "linear-gradient(135deg, #28a745 0%, #218838 100%)" // Green Gradient
+                                  ? "linear-gradient(135deg, #28a745 0%, #218838 100%)" 
                                   : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
                                 transition: "background 200ms ease",
                               },
@@ -970,9 +970,9 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             {jobId && <RelatedServiceOrders jobId={jobId} />}
           </Grid.Col>
 
-          {/* ... [Keep Timeline Grid.Col] ... */}
+          {}
           <Grid.Col span={2} style={{ borderLeft: "1px solid #ccc" }}>
-            {/* ... (Timeline code same as original) ... */}
+            {}
             <Box pt="md" pos="sticky" style={{ justifyItems: "center" }}>
               <Text
                 fw={600}
@@ -1186,7 +1186,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         </Grid>
       </form>
 
-      {/* ... [Keep Footer and Modals] ... */}
+      {}
       <Paper
         p="md"
         bg={"gray.1"}
@@ -1225,7 +1225,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         </Group>
       </Paper>
 
-      {/* ... [Modals: Backorder Prompt, Add Backorder, Completion Date, Add Installer] ... */}
+      {}
       <Modal
         opened={isBackorderPromptOpen}
         onClose={() => {

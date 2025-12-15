@@ -49,7 +49,6 @@ import { notifications } from "@mantine/notifications";
 import { usePlantShippingTable } from "@/hooks/usePlantShippingTable";
 import { Views } from "@/types/db";
 import { useDisclosure } from "@mantine/hooks";
-// IMPORTS for PDF
 import ShippingPdfPreviewModal from "./ShippingPdfPreviewModal";
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 
@@ -59,7 +58,6 @@ export default function PlantShippingTable() {
   const { supabase, isAuthenticated } = useSupabase();
   const queryClient = useQueryClient();
 
-  // --- State ---
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -82,10 +80,8 @@ export default function PlantShippingTable() {
     setDrawerJobId(id);
     openDrawer();
   };
-  // Modal State for PDF
   const [pdfOpened, { open: openPdf, close: closePdf }] = useDisclosure(false);
 
-  // --- Data ---
   const { data, isLoading, isError, error } = usePlantShippingTable({
     pagination,
     columnFilters: activeFilters,
@@ -95,7 +91,6 @@ export default function PlantShippingTable() {
   const totalCount = data?.count || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
-  // --- Mutation: Toggle Shipped Status ---
   const toggleShippedMutation = useMutation({
     mutationFn: async ({
       installId,
@@ -129,7 +124,6 @@ export default function PlantShippingTable() {
     },
   });
 
-  // --- Filter Handlers ---
   const setInputFilterValue = (id: string, value: any) => {
     setInputFilters((prev) => {
       const existing = prev.filter((f) => f.id !== id);
@@ -160,9 +154,7 @@ export default function PlantShippingTable() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
 
-  // --- Handle Print Preview Action ---
   const handlePrintPreview = () => {
-    // Check if active filters contain the date range (meaning filters are applied)
     const hasActiveDateFilter = activeFilters.some(
       (f) => f.id === "ship_date_range"
     );
@@ -181,7 +173,6 @@ export default function PlantShippingTable() {
     openPdf();
   };
 
-  // --- Column Defs ---
   const columnHelper = createColumnHelper<PlantTableView>();
 
   const columns = [
@@ -442,7 +433,7 @@ export default function PlantShippingTable() {
             </Text>
           </Stack>
         </Group>
-        {/* PRINT PREVIEW BUTTON */}
+        {}
         <Button
           variant="outline"
           color="violet"
@@ -453,7 +444,7 @@ export default function PlantShippingTable() {
         </Button>
       </Group>
 
-      {/* FILTERS */}
+      {}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -515,7 +506,7 @@ export default function PlantShippingTable() {
         </Accordion.Item>
       </Accordion>
 
-      {/* DATA ACCORDION */}
+      {}
       <ScrollArea
         style={{ flex: 1 }}
         type="always"
@@ -585,7 +576,7 @@ export default function PlantShippingTable() {
                         <Table.Tr>
                           {table
                             .getFlatHeaders()
-                            .slice(1) // Skip grouping column
+                            .slice(1) 
                             .map((header) => (
                               <Table.Th
                                 key={header.id}
@@ -604,7 +595,7 @@ export default function PlantShippingTable() {
                           <Table.Tr key={row.id}>
                             {row
                               .getVisibleCells()
-                              .slice(1) // Skip grouping column
+                              .slice(1) 
                               .map((cell) => (
                                 <Table.Td
                                   key={cell.id}
@@ -633,7 +624,7 @@ export default function PlantShippingTable() {
         )}
       </ScrollArea>
 
-      {/* PAGINATION */}
+      {}
       <Box
         style={{
           borderTop: "1px solid #eee",
@@ -650,7 +641,7 @@ export default function PlantShippingTable() {
         />
       </Box>
 
-      {/* PDF PREVIEW MODAL */}
+      {}
       <ShippingPdfPreviewModal
         opened={pdfOpened}
         onClose={closePdf}

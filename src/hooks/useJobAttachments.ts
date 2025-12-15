@@ -24,7 +24,6 @@ export function useJobAttachments(jobId: number) {
     enabled: !!jobId,
   });
 
-  // UPDATED: Now accepts an object with file AND category
   const uploadMutation = useMutation({
     mutationFn: async ({
       file,
@@ -34,7 +33,6 @@ export function useJobAttachments(jobId: number) {
       category: string;
     }) => {
       const fileExt = file.name.split(".").pop();
-      // Use category in path for better organization (optional, but good practice)
       const fileName = `${jobId}/${category}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
@@ -50,7 +48,7 @@ export function useJobAttachments(jobId: number) {
         file_type: file.type,
         file_size: file.size,
         uploaded_by: user?.username || "Staff",
-        category: category, // <-- Saving category
+        category: category, 
       });
 
       if (dbError) throw dbError;

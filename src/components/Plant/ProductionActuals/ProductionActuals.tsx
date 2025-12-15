@@ -37,7 +37,6 @@ import {
 } from "react-icons/fa";
 import dayjs from "dayjs";
 
-// Define specific fields for type safety
 type CompletionField =
   | "in_plant_actual"
   | "doors_completed_actual"
@@ -48,7 +47,6 @@ type CompletionField =
   | "paint_completed_actual"
   | "assembly_completed_actual";
 
-// Helper component for displaying scheduled dates
 const ScheduleDateBlock = ({
   label,
   date,
@@ -70,7 +68,6 @@ export default function ProductionActuals() {
   const { supabase, isAuthenticated } = useSupabase();
   const queryClient = useQueryClient();
 
-  // State for the search selection
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
   const {
@@ -80,7 +77,6 @@ export default function ProductionActuals() {
     search: jobSearchValue,
   } = useJobSearch(selectedJobId);
 
-  // 2. Fetch Job Data (Dependent on selection)
   const { data: jobData, isLoading: dataLoading } = useQuery({
     queryKey: ["production-actuals", selectedJobId],
     queryFn: async () => {
@@ -104,7 +100,6 @@ export default function ProductionActuals() {
     enabled: isAuthenticated && !!selectedJobId,
   });
 
-  // 3. Mutation to toggle status
   const updateMutation = useMutation({
     mutationFn: async ({
       field,
@@ -145,7 +140,6 @@ export default function ProductionActuals() {
       }),
   });
 
-  // 4. Define steps configuration
   const actualSteps = useMemo(() => {
     const schedule = jobData?.production_schedule as any;
     if (!schedule) return [];
@@ -207,7 +201,6 @@ export default function ProductionActuals() {
     updateMutation.mutate({ field, value: newValue });
   };
 
-  // Calculate progress for visual flair
   const progress = useMemo(() => {
     if (!actualSteps.length) return 0;
     const completed = actualSteps.filter((s) => s.isCompleted).length;
@@ -275,7 +268,7 @@ export default function ProductionActuals() {
       </Paper>
       <Container size={"xl"}>
         <Stack gap="xl">
-          {/* --- CONTENT AREA --- */}
+          {}
           {!selectedJobId ? (
             <Center h={400} bg="gray.0" style={{ borderRadius: 16 }}>
               <Stack align="center" gap="md">
@@ -302,9 +295,8 @@ export default function ProductionActuals() {
               <Text c="red">Job data could not be loaded.</Text>
             </Center>
           ) : (
-            /* --- ACTUALS GRID --- */
             <Stack gap="lg">
-              {/* JOB HEADER */}
+              {}
               <Group justify="space-between" align="flex-end">
                 <Stack gap={4}>
                   <Text
@@ -326,7 +318,7 @@ export default function ProductionActuals() {
                   </Text>
                 </Stack>
 
-                {/* Progress Ring */}
+                {}
                 <Group gap="xs">
                   <Text fw={600} size="sm" c="dimmed">
                     Completion
@@ -336,7 +328,7 @@ export default function ProductionActuals() {
                     thickness={8}
                     roundCaps
                     sections={[
-                      { value: progress, color: "#4A00E0" }, // Purple
+                      { value: progress, color: "#4A00E0" }, 
                     ]}
                     label={
                       <Text c="blue" fw={700} ta="center" size="xs">
@@ -349,7 +341,7 @@ export default function ProductionActuals() {
 
               <Divider />
 
-              {/* PRODUCTION SCHEDULE (PLANNED DATES) */}
+              {}
               <Paper p="lg" radius="md" shadow="xs" withBorder>
                 <Group mb="md" style={{ color: "#4A00E0" }}>
                   <FaClipboardList size={18} />
@@ -402,7 +394,7 @@ export default function ProductionActuals() {
 
               <Divider />
 
-              {/* STEPS GRID */}
+              {}
               <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing="lg">
                 {actualSteps.map((step) => (
                   <Paper
@@ -432,8 +424,8 @@ export default function ProductionActuals() {
                             variant="gradient"
                             gradient={
                               step.isCompleted
-                                ? { from: "#28a745", to: "#218838", deg: 135 } // Green gradient
-                                : { from: "#e9ecef", to: "#dee2e6", deg: 135 } // Gray gradient
+                                ? { from: "#28a745", to: "#218838", deg: 135 } 
+                                : { from: "#e9ecef", to: "#dee2e6", deg: 135 } 
                             }
                           >
                             {step.isCompleted ? (
@@ -490,7 +482,6 @@ export default function ProductionActuals() {
                         mt="md"
                         size="sm"
                         radius="md"
-                        // Toggle Styles based on state
                         variant={step.isCompleted ? "outline" : "gradient"}
                         color={step.isCompleted ? "red" : undefined}
                         gradient={

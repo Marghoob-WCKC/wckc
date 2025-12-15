@@ -135,7 +135,7 @@ export default function RootLayout({
                           minWidth: 0,
                         }}
                       >
-                        {/* Page Content */}
+                        {}
                         <div style={{ flex: 1, position: "relative" }}>
                           {children}
                         </div>

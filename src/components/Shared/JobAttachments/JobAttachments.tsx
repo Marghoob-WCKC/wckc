@@ -56,7 +56,6 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
 
   const [opened, { toggle, open }] = useDisclosure(false);
 
-  // 1. Initialize as null to force selection
   const [category, setCategory] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,7 +63,7 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
   }, [isUploading, open]);
 
   const handleDrop = (files: File[]) => {
-    if (!category) return; // Guard clause
+    if (!category) return; 
     files.forEach((file) => {
       uploadFile({ file, category });
     });
@@ -72,7 +71,7 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
 
   return (
     <Paper p="sm" radius="md" withBorder shadow="sm" bg="white">
-      {/* Header Trigger */}
+      {}
       <UnstyledButton
         onClick={toggle}
         style={{ width: "100%", display: "block" }}
@@ -104,7 +103,7 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
 
       <Collapse in={opened}>
         <Stack gap="sm">
-          {/* File List Area */}
+          {}
           <ScrollArea.Autosize mah={220} type="hover" offsetScrollbars>
             <Stack gap={4}>
               {isLoading ? (
@@ -155,7 +154,7 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
                           <Text size="xs" fw={600} truncate c="dark" lh={1.2}>
                             {file.file_name}
                           </Text>
-                          {/* Category Badge */}
+                          {}
                           <Badge
                             size="xs"
                             variant="outline"
@@ -202,7 +201,7 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
           </ScrollArea.Autosize>
 
           <Stack gap={4}>
-            {/* Category Selector - Mandatory */}
+            {}
             <Select
               data={CATEGORIES}
               value={category}
@@ -224,7 +223,7 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
               }}
             />
 
-            {/* Dropzone - Disabled until category selected */}
+            {}
             <Dropzone
               onDrop={handleDrop}
               onReject={() => console.log("File rejected")}
@@ -232,7 +231,7 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
               accept={PDF_MIME_TYPE}
               loading={isUploading}
               multiple
-              disabled={!category} // Disable interaction
+              disabled={!category} 
               h={36}
               p={0}
               radius="sm"

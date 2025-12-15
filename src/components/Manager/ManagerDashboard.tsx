@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useUser } from "@clerk/nextjs";
 import {
   Grid,
   Paper,
@@ -28,21 +30,67 @@ import {
   FaUsers,
   FaExclamationCircle,
   FaClock,
+  FaCalendarCheck,
+  FaHardHat,
+  FaCheckCircle,
+  FaShoppingBag,
 } from "react-icons/fa";
-import { useSupabase } from "@/hooks/useSupabase";
-import { Tables } from "@/types/db";
-import { useMemo } from "react";
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 
+import { useSupabase } from "@/hooks/useSupabase";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Tables } from "@/types/db";
+
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 
-// --- 1. Type Definitions ---
+type DashboardView =
+  | "OVERVIEW"
+  | "DESIGNER"
+  | "PRODUCTION"
+  | "INSTALLATION"
+  | "SERVICE"
+  | "PLANT";
+
 type SalesTrendData = Pick<Tables<"sales_orders">, "designer" | "created_at">;
 
-// Gradient Palette
+interface DashboardMetrics {
+  totalQuotes?: number;
+  totalSold?: number;
+  fiscalLabel?: string;
+  monthlyChartData?: { label: string; count: number }[];
+  topDesigners?: { name: string; count: number }[];
+
+  myTotalQuotes?: number;
+  myTotalSold?: number;
+
+  prodTotalJobs?: number;
+  prodPendingOrders?: number;
+
+  plantActiveJobs?: number;
+  plantShipmentsMonth?: number;
+
+  pendingPlacement?: {
+    prod_id: number;
+    job_number: string;
+    created_at: string;
+  }[];
+  upcomingShipments?: {
+    prod_id: number;
+    ship_schedule: string | null;
+    job_number: string;
+  }[];
+
+  pendingInstalls?: number;
+  activeInstallers?: number;
+  completedInstallsYear?: number;
+
+  openServiceOrders?: number;
+  completedServiceOrders?: number;
+}
+
 const GRADIENTS = {
   blue: { from: "#4facfe", to: "#3700ffff", deg: 45 },
   teal: { from: "#43e97b", to: "#004105ff", deg: 45 },
@@ -50,8 +98,6 @@ const GRADIENTS = {
   red: { from: "#ff0844", to: "#ffb199", deg: 45 },
   purple: { from: "#8E2DE2", to: "#4A00E0", deg: 45 },
 };
-
-// --- 2. UI Components ---
 
 const StatCard = ({
   title,
@@ -66,7 +112,6 @@ const StatCard = ({
   color: keyof typeof GRADIENTS;
   subtext?: string;
 }) => {
-  const gradient = GRADIENTS[color];
   return (
     <Paper p="md" shadow="sm" radius="md" withBorder style={{ height: "100%" }}>
       <Group justify="space-between" align="flex-start">
@@ -78,7 +123,7 @@ const StatCard = ({
             fw={700}
             size={rem(28)}
             variant="gradient"
-            gradient={gradient}
+            gradient={GRADIENTS[color]}
             style={{ lineHeight: 1 }}
           >
             {value}
@@ -93,7 +138,7 @@ const StatCard = ({
           size="lg"
           radius="md"
           variant="gradient"
-          gradient={gradient}
+          gradient={GRADIENTS[color]}
           style={{ boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}
         >
           <Icon size={18} color="white" />
@@ -171,181 +216,325 @@ const SalesSpikeChart = ({
   );
 };
 
-// --- 3. Optimized Data Fetching ---
 export default function ManagerDashboardClient() {
   const { supabase, isAuthenticated } = useSupabase();
+  const { user } = useUser();
+  const permissions = usePermissions();
 
-  // Helper to get Fiscal Start Date (Feb 1st)
-  const getFiscalStart = () => {
-    const now = dayjs();
-    // If current month is January (index 0), fiscal year started previous calendar year.
-    // If Feb (1) or later, fiscal year started this calendar year.
-    const startYear = now.month() < 1 ? now.year() - 1 : now.year();
-    return dayjs().year(startYear).month(1).date(1).startOf("day");
-  };
+  const [currentView, setCurrentView] = useState<DashboardView>("OVERVIEW");
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["manager-dashboard-fiscal"],
-    enabled: isAuthenticated,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  useEffect(() => {
+    if (permissions.isDesigner) setCurrentView("DESIGNER");
+    else if (permissions.isScheduler) setCurrentView("PRODUCTION");
+    else if (permissions.isInstaller) setCurrentView("INSTALLATION");
+    else if (permissions.isService) setCurrentView("SERVICE");
+    else if (permissions.isPlant) setCurrentView("PLANT");
+    else setCurrentView("OVERVIEW");
+  }, [permissions]);
+
+  const {
+    data: metrics,
+    isLoading,
+    isError,
+  } = useQuery<DashboardMetrics>({
+    queryKey: ["dashboard-metrics", currentView, user?.id],
+    enabled: isAuthenticated && !!user,
+    staleTime: 1000 * 60 * 5,
     queryFn: async () => {
-      const fiscalStart = getFiscalStart();
-      const fiscalStartISO = fiscalStart.toISOString();
+      const fiscalStart = dayjs().month(1).date(1).startOf("day");
+      const fiscalStartISO = (
+        dayjs().month() < 1 ? fiscalStart.subtract(1, "year") : fiscalStart
+      ).toISOString();
+      const fiscalYearLabel = `FY ${dayjs(fiscalStartISO).year()}`;
+
       const todayISO = dayjs().startOf("day").toISOString();
 
-      // Execute all optimized queries in parallel
-      const [
-        quotesRes,
-        soldRes,
-        serviceRes,
-        prodTotalRes,
-        prodIncompleteRes,
-        salesTrendRes,
-        shipmentsRes,
-      ] = await Promise.all([
-        // 1. Count Active Quotes (Total in pipeline)
-        supabase
-          .from("sales_orders")
-          .select("*", { count: "exact", head: true })
-          .eq("stage", "QUOTE"),
+      const processSalesChart = (salesData: SalesTrendData[]) => {
+        const monthlyCounts: Record<string, number> = {};
+        const designerCounts: Record<string, number> = {};
+        let loopDate = dayjs(fiscalStartISO);
 
-        // 2. Count Total Sold Jobs (THIS FISCAL YEAR ONLY)
-        supabase
-          .from("sales_orders")
-          .select("*", { count: "exact", head: true })
-          .eq("stage", "SOLD")
-          .gte("created_at", fiscalStartISO),
+        const chartData = Array.from({ length: 12 }).map(() => {
+          const key = loopDate.format("YYYY-MM");
+          monthlyCounts[key] = 0;
+          const label = loopDate.format("MMM");
+          loopDate = loopDate.add(1, "month");
+          return { label, key, count: 0 };
+        });
 
-        // 3. Count Open Service Orders
-        supabase
-          .from("service_orders")
-          .select("*", { count: "exact", head: true })
-          .is("completed_at", null),
+        salesData.forEach((s) => {
+          if (s.created_at) {
+            const mKey = dayjs(s.created_at).format("YYYY-MM");
+            if (monthlyCounts[mKey] !== undefined) monthlyCounts[mKey]++;
+          }
+          const designer = s.designer || "Unknown";
+          designerCounts[designer] = (designerCounts[designer] || 0) + 1;
+        });
 
-        // 4. Count Total Production Jobs (All time active)
-        supabase
-          .from("production_schedule")
-          .select("*", { count: "exact", head: true }),
+        const finalChartData = chartData.map((d) => ({
+          label: d.label,
+          count: monthlyCounts[d.key] || 0,
+        }));
 
-        // 5. Count Incomplete Production Jobs
-        supabase
-          .from("production_schedule")
-          .select("*", { count: "exact", head: true })
-          .is("assembly_completed_actual", null),
+        const topDesigners = Object.entries(designerCounts)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5)
+          .map(([name, count]) => ({ name, count }));
 
-        // 6. Fetch Sales Trend Data (THIS FISCAL YEAR ONLY)
-        supabase
-          .from("sales_orders")
-          .select("designer, created_at")
-          .eq("stage", "SOLD")
-          .gte("created_at", fiscalStartISO),
-
-        // 7. Fetch Upcoming Shipments (Limit 5)
-        supabase
-          .from("production_schedule")
-          .select("prod_id, ship_schedule, jobs(job_number)")
-          .gte("ship_schedule", todayISO)
-          .order("ship_schedule", { ascending: true })
-          .limit(5),
-      ]);
-
-      // Error Handling
-      if (quotesRes.error) throw quotesRes.error;
-      if (soldRes.error) throw soldRes.error;
-      if (serviceRes.error) throw serviceRes.error;
-      if (prodTotalRes.error) throw prodTotalRes.error;
-      if (prodIncompleteRes.error) throw prodIncompleteRes.error;
-      if (salesTrendRes.error) throw salesTrendRes.error;
-      if (shipmentsRes.error) throw shipmentsRes.error;
-
-      return {
-        countQuotes: quotesRes.count || 0,
-        countSold: soldRes.count || 0,
-        countOpenService: serviceRes.count || 0,
-        countProdTotal: prodTotalRes.count || 0,
-        countProdIncomplete: prodIncompleteRes.count || 0,
-        salesTrend: salesTrendRes.data as SalesTrendData[],
-        upcomingShipments: shipmentsRes.data || [],
-        fiscalYearStart: fiscalStart.year(),
+        return { finalChartData, topDesigners };
       };
+
+      const flattenJobRelation = (data: any[]) => {
+        return data.map((item: any) => {
+          const jobObj = Array.isArray(item.jobs) ? item.jobs[0] : item.jobs;
+          return {
+            prod_id: item.prod_id,
+            ship_schedule: item.ship_schedule || null,
+            job_number: jobObj?.job_number || "—",
+            created_at: jobObj?.created_at,
+          };
+        });
+      };
+
+      if (currentView === "OVERVIEW") {
+        const [quotes, sold, service, activeJobs, salesData, shipments] =
+          await Promise.all([
+            supabase
+              .from("sales_orders")
+              .select("*", { count: "exact", head: true })
+              .eq("stage", "QUOTE"),
+
+            supabase
+              .from("sales_orders")
+              .select("*", { count: "exact", head: true })
+              .eq("stage", "SOLD")
+              .gte("created_at", fiscalStartISO),
+
+            supabase
+              .from("service_orders")
+              .select("*", { count: "exact", head: true })
+              .is("completed_at", null),
+
+            // Updated Active Jobs Logic
+            supabase
+              .from("jobs")
+              .select("id, installation!inner(wrap_completed, wrap_date)", {
+                count: "exact",
+                head: true,
+              })
+              .eq("is_active", true)
+              .not("installation.wrap_date", "is", null) // Must have a scheduled wrap date
+              .is("installation.wrap_completed", null), // Must NOT be wrapped
+
+            supabase
+              .from("sales_orders")
+              .select("designer, created_at")
+              .eq("stage", "SOLD")
+              .gte("created_at", fiscalStartISO),
+
+            supabase
+              .from("production_schedule")
+              .select("prod_id, ship_schedule, jobs(job_number)")
+              .gte("ship_schedule", todayISO)
+              .order("ship_schedule", { ascending: true })
+              .limit(5),
+          ]);
+        const { finalChartData, topDesigners } = processSalesChart(
+          (salesData.data as SalesTrendData[]) || []
+        );
+
+        return {
+          totalQuotes: quotes.count || 0,
+          totalSold: sold.count || 0,
+          openServiceOrders: service.count || 0,
+          prodTotalJobs: activeJobs.count || 0,
+          fiscalLabel: fiscalYearLabel,
+          monthlyChartData: finalChartData,
+          topDesigners,
+          upcomingShipments: flattenJobRelation(shipments.data || []),
+        };
+      }
+
+      if (currentView === "PRODUCTION") {
+        const startOfWeek = dayjs().startOf("week").toISOString();
+        const endOfWeek = dayjs().endOf("week").toISOString();
+
+        const [activeNotWrapped, shipments, pendingPlace, pendingOrders] =
+          await Promise.all([
+            // Updated Active Jobs Logic
+            supabase
+              .from("jobs")
+              .select("id, installation!inner(wrap_completed, wrap_date)", {
+                count: "exact",
+                head: true,
+              })
+              .eq("is_active", true)
+              .not("installation.wrap_date", "is", null)
+              .is("installation.wrap_completed", null),
+
+            supabase
+              .from("production_schedule")
+              .select("prod_id, ship_schedule, jobs(job_number)")
+              .gte("ship_schedule", todayISO)
+              .order("ship_schedule", { ascending: true })
+              .limit(5),
+
+            supabase
+              .from("production_schedule")
+              .select(
+                "prod_id, placement_date, jobs!inner(job_number, created_at)"
+              )
+              .is("placement_date", null)
+              .eq("jobs.is_active", true),
+
+            supabase
+              .from("purchasing_table_view")
+              .select(
+                "doors_ordered_at, doors_received_at, glass_ordered_at, glass_received_at, handles_ordered_at, handles_received_at, acc_ordered_at, acc_received_at"
+              )
+              .gte("ship_schedule", startOfWeek)
+              .lte("ship_schedule", endOfWeek),
+          ]);
+
+        const pendingOrdersCount = (pendingOrders.data || []).filter((row) => {
+          const isPending = (ordered: string | null, received: string | null) =>
+            ordered && !received;
+
+          return (
+            isPending(row.doors_ordered_at, row.doors_received_at) ||
+            isPending(row.glass_ordered_at, row.glass_received_at) ||
+            isPending(row.handles_ordered_at, row.handles_received_at) ||
+            isPending(row.acc_ordered_at, row.acc_received_at)
+          );
+        }).length;
+
+        return {
+          prodTotalJobs: activeNotWrapped.count || 0,
+          prodPendingOrders: pendingOrdersCount,
+          upcomingShipments: flattenJobRelation(shipments.data || []),
+          pendingPlacement: flattenJobRelation(pendingPlace.data || []),
+        };
+      }
+
+      if (currentView === "PLANT") {
+        const startOfMonth = dayjs().startOf("month").toISOString();
+        const endOfMonth = dayjs().endOf("month").toISOString();
+
+        const [activeNotWrapped, shipmentsMonth, shipments] = await Promise.all(
+          [
+            // Updated Active Jobs Logic
+            supabase
+              .from("jobs")
+              .select("id, installation!inner(wrap_completed, wrap_date)", {
+                count: "exact",
+                head: true,
+              })
+              .eq("is_active", true)
+              .not("installation.wrap_date", "is", null)
+              .is("installation.wrap_completed", null),
+
+            supabase
+              .from("production_schedule")
+              .select("*", { count: "exact", head: true })
+              .gte("ship_schedule", startOfMonth)
+              .lte("ship_schedule", endOfMonth),
+
+            supabase
+              .from("production_schedule")
+              .select("prod_id, ship_schedule, jobs(job_number)")
+              .gte("ship_schedule", todayISO)
+              .order("ship_schedule", { ascending: true })
+              .limit(5),
+          ]
+        );
+
+        return {
+          plantActiveJobs: activeNotWrapped.count || 0,
+          plantShipmentsMonth: shipmentsMonth.count || 0,
+          upcomingShipments: flattenJobRelation(shipments.data || []),
+        };
+      }
+
+      if (currentView === "INSTALLATION") {
+        const [pending, completedYear, active] = await Promise.all([
+          supabase
+            .from("installation")
+            .select("*", { count: "exact", head: true })
+            .is("installation_date", null),
+          supabase
+            .from("installation")
+            .select("*", { count: "exact", head: true })
+            .not("installation_completed", "is", null)
+            .gte("installation_date", fiscalStartISO),
+          supabase
+            .from("installers")
+            .select("*", { count: "exact", head: true })
+            .eq("is_active", true),
+        ]);
+
+        return {
+          pendingInstalls: pending.count || 0,
+          completedInstallsYear: completedYear.count || 0,
+          activeInstallers: active.count || 0,
+        };
+      }
+
+      if (currentView === "SERVICE") {
+        const [open, closedMonth] = await Promise.all([
+          supabase
+            .from("service_orders")
+            .select("*", { count: "exact", head: true })
+            .is("completed_at", null),
+          supabase
+            .from("service_orders")
+            .select("*", { count: "exact", head: true })
+            .not("completed_at", "is", null)
+            .gte("completed_at", dayjs().startOf("month").toISOString()),
+        ]);
+
+        return {
+          openServiceOrders: open.count || 0,
+          completedServiceOrders: closedMonth.count || 0,
+        };
+      }
+
+      if (currentView === "DESIGNER") {
+        const [quotes, sold, salesData] = await Promise.all([
+          supabase
+            .from("sales_orders")
+            .select("*", { count: "exact", head: true })
+            .eq("stage", "QUOTE")
+            .ilike("designer", `%${user?.username || ""}%`),
+          supabase
+            .from("sales_orders")
+            .select("*", { count: "exact", head: true })
+            .eq("stage", "SOLD")
+            .gte("created_at", fiscalStartISO)
+            .ilike("designer", `%${user?.username || ""}%`),
+          supabase
+            .from("sales_orders")
+            .select("designer, created_at")
+            .eq("stage", "SOLD")
+            .gte("created_at", fiscalStartISO)
+            .ilike("designer", `%${user?.username || ""}%`),
+        ]);
+
+        const { finalChartData, topDesigners } = processSalesChart(
+          (salesData.data as SalesTrendData[]) || []
+        );
+
+        return {
+          myTotalQuotes: quotes.count || 0,
+          myTotalSold: sold.count || 0,
+          fiscalLabel: fiscalYearLabel,
+          monthlyChartData: finalChartData,
+          topDesigners,
+        };
+      }
+
+      return {};
     },
   });
-
-  // --- 4. Logic & Transformation (Fast) ---
-  const metrics = useMemo(() => {
-    if (!data) return null;
-
-    const fiscalStart = getFiscalStart();
-
-    // A. Chart Data Preparation (Feb -> Jan)
-    const monthlyCounts: Record<string, number> = {};
-    const designerCounts: Record<string, number> = {};
-
-    // Initialize 12 buckets starting from Fiscal Start
-    const chartData: { label: string; count: number }[] = [];
-    let loopDate = fiscalStart;
-
-    for (let i = 0; i < 12; i++) {
-      const key = loopDate.format("YYYY-MM");
-      monthlyCounts[key] = 0;
-      chartData.push({
-        label: loopDate.format("MMM"), // Feb, Mar, ... Jan
-        count: 0,
-      });
-      loopDate = loopDate.add(1, "month");
-    }
-
-    // B. Process Sales Trend Data (Client-side aggregation)
-    data.salesTrend.forEach((sale) => {
-      // 1. Designer Stats
-      const designer = sale.designer || "Unknown";
-      designerCounts[designer] = (designerCounts[designer] || 0) + 1;
-
-      // 2. Chart Stats
-      if (sale.created_at) {
-        const mKey = dayjs(sale.created_at).format("YYYY-MM");
-        if (monthlyCounts[mKey] !== undefined) {
-          monthlyCounts[mKey]++;
-        }
-      }
-    });
-
-    // Map aggregated counts to chart array (preserving order)
-    const finalChartData = chartData.map((d, index) => {
-      const key = fiscalStart.add(index, "month").format("YYYY-MM");
-      return {
-        ...d,
-        count: monthlyCounts[key] || 0,
-      };
-    });
-
-    // C. Sort Top Designers
-    const topDesigners = Object.entries(designerCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([name, count]) => ({ name, count }));
-
-    // D. Flatten Shipments
-    const flatShipments = data.upcomingShipments.map((s: any) => ({
-      prod_id: s.prod_id,
-      ship_schedule: s.ship_schedule,
-      job_number: Array.isArray(s.jobs)
-        ? s.jobs[0]?.job_number
-        : s.jobs?.job_number || "—",
-    }));
-
-    return {
-      totalQuotes: data.countQuotes,
-      totalSold: data.countSold,
-      openServiceOrders: data.countOpenService,
-      totalUncompleteJobs: data.countProdIncomplete,
-      totalJobsInProduction: data.countProdTotal,
-      topDesigners,
-      upcomingShipments: flatShipments,
-      monthlyChartData: finalChartData,
-      fiscalLabel: `FY ${data.fiscalYearStart}-${data.fiscalYearStart + 1}`,
-    };
-  }, [data]);
 
   if (isLoading) {
     return (
@@ -358,29 +547,20 @@ export default function ManagerDashboardClient() {
     );
   }
 
-  if (isError || !metrics) {
+  if (isError) {
     return (
       <Center h="100vh">
         <Text c="red" fw={500}>
-          Unable to load dashboard data. Please reload.
+          Unable to load dashboard data.
         </Text>
       </Center>
     );
   }
 
-  // Calculate Completion Rate
-  const { totalJobsInProduction, totalUncompleteJobs } = metrics;
-  const finishedJobs = totalJobsInProduction - totalUncompleteJobs;
-  const completionRate =
-    totalJobsInProduction > 0
-      ? Math.round((finishedJobs / totalJobsInProduction) * 100)
-      : 0;
-
   return (
-    <Container size={"100%"} p="xl">
+    <Container size="100%" p="xl">
       <Stack gap="xl">
-        {/* Header */}
-        <Group justify="space-between">
+        <Group justify="space-between" align="flex-end">
           <Group>
             <ThemeIcon
               size={48}
@@ -392,191 +572,194 @@ export default function ManagerDashboardClient() {
             </ThemeIcon>
             <Stack gap={0}>
               <Title order={2} style={{ color: "#2C2E33" }}>
-                Overview
+                {currentView === "OVERVIEW"
+                  ? "Overview"
+                  : currentView.charAt(0) +
+                    currentView.slice(1).toLowerCase()}{" "}
+                Dashboard
               </Title>
               <Text size="sm" c="dimmed">
-                Operational Overview & Sales Performance
+                {currentView === "OVERVIEW"
+                  ? "Operational Overview & Sales Performance"
+                  : `Metrics for ${currentView}`}
               </Text>
             </Stack>
           </Group>
-          <Text size="xs" c="dimmed" fs="italic">
-            Last Updated: {dayjs().format("MMM D, HH:mm")}
-          </Text>
         </Group>
 
         <Divider />
 
-        {/* 1. KPI CARDS */}
-        <Grid>
-          <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-            <StatCard
-              title="Active Quotes"
-              value={metrics.totalQuotes}
-              icon={FaUsers}
-              color="blue"
-              subtext="Pending"
-            />
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-            <StatCard
-              title="Sold Jobs"
-              value={metrics.totalSold}
-              icon={FaHome}
-              color="teal"
-              subtext={metrics.fiscalLabel}
-            />
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-            <StatCard
-              title="Incomplete Jobs"
-              value={metrics.totalUncompleteJobs}
-              icon={FaClipboardList}
-              color="orange"
-              subtext="In Production"
-            />
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-            <StatCard
-              title="Open Service Orders"
-              value={metrics.openServiceOrders}
-              icon={FaTools}
-              color="red"
-              subtext="Pending Resolution"
-            />
-          </Grid.Col>
-        </Grid>
-
-        {/* 2. CHARTS */}
-        <Grid>
-          {/* Production Progress Ring */}
-          <Grid.Col span={{ base: 12, md: 4 }}>
-            <Paper
-              p="md"
-              shadow="sm"
-              radius="md"
-              withBorder
-              style={{ height: "100%" }}
-            >
-              <Title order={5} mb="lg" c="dimmed">
-                Plant Throughput
-              </Title>
-              <Center h={180}>
-                <RingProgress
-                  size={160}
-                  thickness={16}
-                  roundCaps
-                  label={
-                    <Text size="xs" ta="center" c="dimmed" fw={700}>
-                      {completionRate}%<br />
-                      Complete
-                    </Text>
-                  }
-                  sections={[
-                    {
-                      value: completionRate,
-                      color: "#00ce1bff",
-                      tooltip: `${finishedJobs} Jobs Finished`,
-                    },
-                    {
-                      value: 100 - completionRate,
-                      color: "#ff6600ff",
-                      tooltip: `${totalUncompleteJobs} Jobs Incomplete`,
-                    },
-                  ]}
+        {currentView === "OVERVIEW" && metrics && (
+          <>
+            <Grid>
+              <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  title="Active Quotes"
+                  value={metrics.totalQuotes || 0}
+                  icon={FaUsers}
+                  color="blue"
+                  subtext="Pending"
                 />
-              </Center>
-              <Group justify="center" mt="md" gap="xl">
-                <Group gap={4}>
-                  <Box
-                    w={8}
-                    h={8}
-                    bg="orange"
-                    style={{ borderRadius: "50%" }}
-                  />
-                  <Text size="xs">{totalUncompleteJobs} Incomplete</Text>
-                </Group>
-                <Group gap={4}>
-                  <Box w={8} h={8} bg="teal" style={{ borderRadius: "50%" }} />
-                  <Text size="xs">{finishedJobs} Finished</Text>
-                </Group>
-              </Group>
-            </Paper>
-          </Grid.Col>
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  title="Sold Jobs"
+                  value={metrics.totalSold || 0}
+                  icon={FaHome}
+                  color="teal"
+                  subtext={metrics.fiscalLabel}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  title="In Production"
+                  value={metrics.prodTotalJobs || 0}
+                  icon={FaClipboardList}
+                  color="orange"
+                  subtext="Active Jobs"
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  title="Open Service Orders"
+                  value={metrics.openServiceOrders || 0}
+                  icon={FaTools}
+                  color="red"
+                  subtext="Pending Resolution"
+                />
+              </Grid.Col>
+            </Grid>
 
-          {/* Monthly Spike Chart */}
-          <Grid.Col span={{ base: 12, md: 8 }}>
-            <SalesSpikeChart
-              data={metrics.monthlyChartData}
-              yearLabel={metrics.fiscalLabel}
-            />
-          </Grid.Col>
-        </Grid>
+            <Grid>
+              <Grid.Col span={{ base: 12, md: 8 }}>
+                <SalesSpikeChart
+                  data={metrics.monthlyChartData || []}
+                  yearLabel={metrics.fiscalLabel || ""}
+                />
+              </Grid.Col>
 
-        {/* 3. LISTS */}
-        <Grid>
-          {/* Top Designers */}
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Paper p="md" shadow="sm" radius="md" withBorder>
-              <Group justify="space-between" mb="md">
-                <Title order={5} c="dimmed">
-                  Sales By Designers ({metrics.fiscalLabel})
-                </Title>
-                <FaUsers color="gray" />
-              </Group>
-              <Stack gap="sm">
-                {metrics.topDesigners.map((d, index) => (
-                  <Group key={d.name} justify="space-between">
-                    <Group gap="sm">
-                      <ThemeIcon
-                        variant="gradient"
-                        gradient={GRADIENTS.purple}
-                        size="sm"
-                        radius="xl"
-                      >
-                        {index + 1}
-                      </ThemeIcon>
-                      <Text size="sm" fw={500}>
-                        {d.name}
-                      </Text>
-                    </Group>
-                    <Badge
-                      variant="gradient"
-                      gradient={GRADIENTS.blue}
-                      radius="sm"
-                    >
-                      {d.count} Sales
-                    </Badge>
+              <Grid.Col span={{ base: 12, md: 4 }}>
+                <Paper p="md" shadow="sm" radius="md" withBorder h="100%">
+                  <Group justify="space-between" mb="md">
+                    <Title order={5} c="dimmed">
+                      Upcoming Shipments
+                    </Title>
+                    <FaShippingFast color="gray" />
                   </Group>
-                ))}
-                {metrics.topDesigners.length === 0 && (
-                  <Text c="dimmed" size="sm" fs="italic">
-                    No sales data available.
-                  </Text>
-                )}
-              </Stack>
-            </Paper>
-          </Grid.Col>
+                  <Stack gap="xs">
+                    {metrics.upcomingShipments &&
+                    metrics.upcomingShipments.length > 0 ? (
+                      metrics.upcomingShipments.map((job, idx) => (
+                        <Paper key={idx} withBorder p="xs" bg="gray.0">
+                          <Group justify="space-between">
+                            <Group gap="xs">
+                              <FaClock color="gray" size={12} />
+                              <Text size="sm" fw={600}>
+                                {dayjs(job.ship_schedule).format("ddd, MMM D")}
+                              </Text>
+                            </Group>
+                            <Text
+                              size="sm"
+                              fw={700}
+                              variant="gradient"
+                              gradient={GRADIENTS.purple}
+                            >
+                              #{job.job_number}
+                            </Text>
+                          </Group>
+                        </Paper>
+                      ))
+                    ) : (
+                      <Group justify="center" p="lg" gap="xs">
+                        <FaExclamationCircle color="gray" />
+                        <Text c="dimmed" size="sm">
+                          No future shipments found.
+                        </Text>
+                      </Group>
+                    )}
+                  </Stack>
+                </Paper>
+              </Grid.Col>
+            </Grid>
+          </>
+        )}
 
-          {/* Upcoming Shipments */}
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Paper p="md" shadow="sm" radius="md" withBorder>
-              <Group justify="space-between" mb="md">
-                <Title order={5} c="dimmed">
-                  Upcoming Shipments
-                </Title>
-                <FaShippingFast color="gray" />
-              </Group>
-              <Stack gap="xs">
-                {metrics.upcomingShipments.length > 0 ? (
-                  metrics.upcomingShipments
-                    .slice(0, 3)
-                    .map((job: any, idx: number) => (
-                      <Paper
-                        key={idx}
-                        withBorder
-                        p="xs"
-                        bg="var(--mantine-color-gray-0)"
-                      >
+        {currentView === "PRODUCTION" && metrics && (
+          <>
+            <Grid>
+              <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+                <StatCard
+                  title="Active Jobs"
+                  value={metrics.prodTotalJobs || 0}
+                  icon={FaClipboardList}
+                  color="blue"
+                  subtext="Not Wrapped"
+                />
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+                <StatCard
+                  title="Unscheduled"
+                  value={metrics.pendingPlacement?.length || 0}
+                  icon={FaCalendarCheck}
+                  color="red"
+                  subtext="No Placement Date"
+                />
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+                <StatCard
+                  title="Pending Orders"
+                  value={metrics.prodPendingOrders || 0}
+                  icon={FaShoppingBag}
+                  color="orange"
+                  subtext="Shipping This Week"
+                />
+              </Grid.Col>
+            </Grid>
+
+            <Grid>
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <Paper p="md" shadow="sm" radius="md" withBorder h="100%">
+                  <Group justify="space-between" mb="md">
+                    <Title order={5} c="dimmed">
+                      Pending Placement
+                    </Title>
+                    <FaCalendarCheck color="gray" />
+                  </Group>
+                  <Stack gap="xs">
+                    {metrics.pendingPlacement?.slice(0, 5).map((job) => (
+                      <Paper key={job.prod_id} withBorder p="xs" bg="gray.0">
+                        <Group justify="space-between">
+                          <Text size="sm" fw={700}>
+                            Job #{job.job_number}
+                          </Text>
+                          <Text size="xs" c="dimmed">
+                            {dayjs(job.created_at).format("MMM D")}
+                          </Text>
+                        </Group>
+                      </Paper>
+                    ))}
+                    {(metrics.pendingPlacement?.length || 0) === 0 && (
+                      <Text c="dimmed" fs="italic" size="sm">
+                        All jobs scheduled.
+                      </Text>
+                    )}
+                  </Stack>
+                </Paper>
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <Paper p="md" shadow="sm" radius="md" withBorder h="100%">
+                  <Group justify="space-between" mb="md">
+                    <Title order={5} c="dimmed">
+                      Upcoming Shipments
+                    </Title>
+                    <FaShippingFast color="gray" />
+                  </Group>
+                  <Stack gap="xs">
+                    {metrics.upcomingShipments?.slice(0, 5).map((job, idx) => (
+                      <Paper key={idx} withBorder p="xs" bg="gray.0">
                         <Group justify="space-between">
                           <Group gap="xs">
                             <FaClock color="gray" size={12} />
@@ -590,23 +773,176 @@ export default function ManagerDashboardClient() {
                             variant="gradient"
                             gradient={GRADIENTS.purple}
                           >
-                            Job #{job.job_number}
+                            #{job.job_number}
                           </Text>
                         </Group>
                       </Paper>
-                    ))
-                ) : (
-                  <Group justify="center" p="lg" gap="xs">
-                    <FaExclamationCircle color="gray" />
-                    <Text c="dimmed" size="sm">
-                      No future shipments found.
-                    </Text>
+                    ))}
+                    {(metrics.upcomingShipments?.length || 0) === 0 && (
+                      <Text c="dimmed" fs="italic" size="sm">
+                        No shipments soon.
+                      </Text>
+                    )}
+                  </Stack>
+                </Paper>
+              </Grid.Col>
+            </Grid>
+          </>
+        )}
+
+        {currentView === "PLANT" && metrics && (
+          <>
+            <Grid>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <StatCard
+                  title="Active on Floor"
+                  value={metrics.plantActiveJobs || 0}
+                  icon={FaClipboardList}
+                  color="blue"
+                  subtext="Jobs Not Wrapped"
+                />
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <StatCard
+                  title="Shipments (Month)"
+                  value={metrics.plantShipmentsMonth || 0}
+                  icon={FaShippingFast}
+                  color="teal"
+                  subtext="Total Scheduled"
+                />
+              </Grid.Col>
+            </Grid>
+
+            <Grid>
+              <Grid.Col span={12}>
+                <Paper p="md" shadow="sm" radius="md" withBorder h="100%">
+                  <Group justify="space-between" mb="md">
+                    <Title order={5} c="dimmed">
+                      Upcoming Shipments
+                    </Title>
+                    <FaShippingFast color="gray" />
                   </Group>
-                )}
-              </Stack>
-            </Paper>
-          </Grid.Col>
-        </Grid>
+                  <Stack gap="xs">
+                    {metrics.upcomingShipments?.slice(0, 5).map((job, idx) => (
+                      <Paper key={idx} withBorder p="xs" bg="gray.0">
+                        <Group justify="space-between">
+                          <Group gap="xs">
+                            <FaClock color="gray" size={12} />
+                            <Text size="sm" fw={600}>
+                              {dayjs(job.ship_schedule).format("ddd, MMM D")}
+                            </Text>
+                          </Group>
+                          <Text
+                            size="sm"
+                            fw={700}
+                            variant="gradient"
+                            gradient={GRADIENTS.purple}
+                          >
+                            #{job.job_number}
+                          </Text>
+                        </Group>
+                      </Paper>
+                    ))}
+                    {(metrics.upcomingShipments?.length || 0) === 0 && (
+                      <Text c="dimmed" fs="italic" size="sm">
+                        No shipments soon.
+                      </Text>
+                    )}
+                  </Stack>
+                </Paper>
+              </Grid.Col>
+            </Grid>
+          </>
+        )}
+
+        {currentView === "INSTALLATION" && metrics && (
+          <Grid>
+            <Grid.Col span={{ base: 12, sm: 4 }}>
+              <StatCard
+                title="Pending Schedule"
+                value={metrics.pendingInstalls || 0}
+                icon={FaCalendarCheck}
+                color="blue"
+                subtext="Not assigned yet"
+              />
+            </Grid.Col>
+            <Grid.Col span={{ base: 12, sm: 4 }}>
+              <StatCard
+                title="Completed (Year)"
+                value={metrics.completedInstallsYear || 0}
+                icon={FaHardHat}
+                color="teal"
+                subtext="Installations Done"
+              />
+            </Grid.Col>
+            <Grid.Col span={{ base: 12, sm: 4 }}>
+              <StatCard
+                title="Active Installers"
+                value={metrics.activeInstallers || 0}
+                icon={FaUsers}
+                color="orange"
+                subtext="Available Teams"
+              />
+            </Grid.Col>
+          </Grid>
+        )}
+
+        {currentView === "SERVICE" && metrics && (
+          <Grid>
+            <Grid.Col span={{ base: 12, sm: 6 }}>
+              <StatCard
+                title="Open Orders"
+                value={metrics.openServiceOrders || 0}
+                icon={FaTools}
+                color="red"
+                subtext="Require Attention"
+              />
+            </Grid.Col>
+            <Grid.Col span={{ base: 12, sm: 6 }}>
+              <StatCard
+                title="Closed (Month)"
+                value={metrics.completedServiceOrders || 0}
+                icon={FaCheckCircle}
+                color="teal"
+                subtext="Service Orders Closed"
+              />
+            </Grid.Col>
+          </Grid>
+        )}
+
+        {currentView === "DESIGNER" && metrics && (
+          <>
+            <Grid>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <StatCard
+                  title="My Active Quotes"
+                  value={metrics.myTotalQuotes || 0}
+                  icon={FaUsers}
+                  color="blue"
+                  subtext="Pending Quotes"
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <StatCard
+                  title="My Sold Jobs"
+                  value={metrics.myTotalSold || 0}
+                  icon={FaHome}
+                  color="teal"
+                  subtext={`My Sales ${metrics.fiscalLabel}`}
+                />
+              </Grid.Col>
+            </Grid>
+            <Grid>
+              <Grid.Col span={12}>
+                <SalesSpikeChart
+                  data={metrics.monthlyChartData || []}
+                  yearLabel={metrics.fiscalLabel || ""}
+                />
+              </Grid.Col>
+            </Grid>
+          </>
+        )}
       </Stack>
     </Container>
   );

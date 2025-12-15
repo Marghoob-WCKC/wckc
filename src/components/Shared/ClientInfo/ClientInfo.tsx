@@ -2,12 +2,10 @@ import { Paper, Text, Stack } from "@mantine/core";
 import { FaUser } from "react-icons/fa";
 import { Tables } from "@/types/db";
 
-// Interface is updated to only accept the shipping details
 interface ClientInfoProps {
   shipping: Partial<Tables<"sales_orders">> | null | undefined;
 }
 
-// --- Helper Component ---
 const InfoRow = ({
   label,
   value,
@@ -21,7 +19,6 @@ const InfoRow = ({
 );
 
 export default function ClientInfo({ shipping }: ClientInfoProps) {
-  // Use shipping fields for the combined address
   const formattedAddress = [
     shipping?.shipping_street,
     shipping?.shipping_city,
@@ -43,13 +40,13 @@ export default function ClientInfo({ shipping }: ClientInfoProps) {
         <FaUser style={{ marginRight: 8 }} /> Client Details
       </Text>
       <Stack gap={3}>
-        {/* Use shipping client name as the primary identifier */}
+        {}
         <InfoRow label="Client" value={shipping?.shipping_client_name} />
         <InfoRow label="Phone 1" value={shipping?.shipping_phone_1} />
         <InfoRow label="Phone 2" value={shipping?.shipping_phone_2} />
         <InfoRow label="Email 1" value={shipping?.shipping_email_1} />
         <InfoRow label="Email 2" value={shipping?.shipping_email_2} />
-        {/* Use the combined shipping address */}
+        {}
         <InfoRow label="Address" value={formattedAddress} />
       </Stack>
     </Paper>

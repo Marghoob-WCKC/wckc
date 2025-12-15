@@ -22,7 +22,6 @@ import dayjs from "dayjs";
 import { ShippingReportJob } from "@/documents/ShippingReportPdf";
 import { BoxCountReportPdf } from "@/documents/BoxCountPdf";
 
-// Dynamic import for PDF Viewer to avoid SSR issues
 const PDFViewer = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
   {
@@ -38,13 +37,11 @@ const PDFViewer = dynamic(
 export default function BoxCountReport() {
   const { supabase, isAuthenticated } = useSupabase();
 
-  // Default to current month
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
     dayjs().startOf("month").toDate(),
     dayjs().endOf("month").toDate(),
   ]);
 
-  // Fetch Data Logic
   const {
     data: reportData,
     isLoading,
@@ -90,7 +87,7 @@ export default function BoxCountReport() {
   return (
     <Container size="100%" p="md">
       <Stack gap="lg">
-        {/* Header / Controls */}
+        {}
         <Paper p="md" radius="md" shadow="sm" bg="white">
           <Group justify="space-between" align="flex-end">
             <Group>
@@ -137,7 +134,7 @@ export default function BoxCountReport() {
           </Group>
         </Paper>
 
-        {/* PDF Preview Area */}
+        {}
         <Paper
           shadow="md"
           p={0}

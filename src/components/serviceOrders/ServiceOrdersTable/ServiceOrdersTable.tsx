@@ -56,21 +56,18 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useDisclosure } from "@mantine/hooks";
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 dayjs.extend(utc);
-// Define shape based on the View structure
 type ServiceOrderView = Views<"service_orders_table_view">;
 
 export default function ServiceOrdersTable() {
   const { canEditServiceOrders } = usePermissions();
   const router = useRouter();
 
-  // --- State Management ---
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 16,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  // inputFilters = UI state, activeFilters = Query state
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
   const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
@@ -85,7 +82,6 @@ export default function ServiceOrdersTable() {
     "ALL" | "OPEN" | "COMPLETED"
   >("ALL");
 
-  // --- Filter Helpers ---
   const setInputFilterValue = (id: string, value: string) => {
     setInputFilters((prev) => {
       const existing = prev.filter((f) => f.id !== id);
@@ -114,7 +110,6 @@ export default function ServiceOrdersTable() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
 
-  // --- Data Fetching ---
   const { data, isLoading, isError, error } = useServiceOrdersTable({
     pagination,
     columnFilters: activeFilters,
@@ -126,7 +121,6 @@ export default function ServiceOrdersTable() {
   const totalCount = data?.count || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
-  // --- Columns ---
   const columnHelper = createColumnHelper<ServiceOrderView>();
 
   const columns = [
@@ -261,7 +255,6 @@ export default function ServiceOrdersTable() {
     }),
   ];
 
-  // --- Table Instance ---
   const table = useReactTable({
     data: tableData,
     columns,
@@ -339,7 +332,7 @@ export default function ServiceOrdersTable() {
         )}
       </Group>
 
-      {/* Filters Accordion */}
+      {}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -442,11 +435,10 @@ export default function ServiceOrdersTable() {
         ].map((item) => {
           const isActive = statusFilter === item.key;
 
-          // Theme Gradients
           const gradients: Record<string, string> = {
-            ALL: "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)", // Purple
-            OPEN: "linear-gradient(135deg, #4da0ff 0%, #0066cc 100%)", // Blue
-            COMPLETED: "linear-gradient(135deg, #3ac47d 0%, #0f9f4f 100%)", // Green
+            ALL: "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)", 
+            OPEN: "linear-gradient(135deg, #4da0ff 0%, #0066cc 100%)", 
+            COMPLETED: "linear-gradient(135deg, #3ac47d 0%, #0f9f4f 100%)", 
           };
 
           const gradientsLight: Record<string, string> = {

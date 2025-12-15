@@ -32,7 +32,6 @@ import { GoTools } from "react-icons/go";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { GrSchedules } from "react-icons/gr";
 
-// Import the Navigation Guard Hook
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 import TopNavigationBar from "../Shared/TopNavigationBar/TopNavigationBar";
 import Link from "next/link";
@@ -213,21 +212,21 @@ export default function Sidebar({ links }: SidebarProps) {
       <Center>
         <TopNavigationBar />
       </Center>
-      {/* Logo */}
+      {}
       <Group justify="space-between" mb="lg">
         <Text fz="lg" fw={700} style={{ color: "white" }}>
           WCKC Tracker
         </Text>
       </Group>
 
-      {/* Links */}
+      {}
       <Stack gap="xs" style={{ flexGrow: 1 }}>
         {links.map((link) => (
           <MainLink key={link.label} item={link} />
         ))}
       </Stack>
 
-      {/* Clerk Auth Buttons (bottom) */}
+      {}
       <Box mt="auto" pt="lg">
         <SignedOut>
           <SignInButton

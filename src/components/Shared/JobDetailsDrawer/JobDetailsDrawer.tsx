@@ -44,7 +44,6 @@ import { useSupabase } from "@/hooks/useSupabase";
 import { Tables } from "@/types/db";
 import Link from "next/link";
 
-// Reuse existing components
 import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
 import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
@@ -52,7 +51,6 @@ import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/Relat
 import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 import JobAttachments from "../JobAttachments/JobAttachments";
 
-// --- Types ---
 type JoinedCabinet = Tables<"cabinets"> & {
   door_styles: { name: string } | null;
   species: { Species: string } | null;
@@ -80,7 +78,6 @@ interface JobDetailsDrawerProps {
   onClose: () => void;
 }
 
-// --- Helper Components ---
 
 const SectionHeader = ({
   icon: Icon,
@@ -143,7 +140,6 @@ export default function JobDetailsDrawer({
 }: JobDetailsDrawerProps) {
   const { supabase, isAuthenticated } = useSupabase();
 
-  // --- Data Fetching ---
   const { data: job, isLoading } = useQuery<FullJobData>({
     queryKey: ["job_quick_view", jobId],
     queryFn: async () => {
@@ -179,7 +175,6 @@ export default function JobDetailsDrawer({
     enabled: isAuthenticated && !!jobId && opened,
   });
 
-  // --- Derived State for Production Steps ---
   const productionSteps = [
     {
       key: "in_plant_actual",
@@ -223,7 +218,6 @@ export default function JobDetailsDrawer({
     },
   ] as const;
 
-  // --- Render Content ---
   const renderContent = () => {
     if (isLoading)
       return (
@@ -243,14 +237,13 @@ export default function JobDetailsDrawer({
     const prod = job.production_schedule;
     const install = job.installation;
 
-    // Construct Address
     const address = [so?.shipping_street, so?.shipping_city, so?.shipping_zip]
       .filter(Boolean)
       .join(", ");
 
     return (
       <Stack gap="md" pb="xl">
-        {/* --- HEADER --- */}
+        {}
         <Paper p="md" radius="md" bg="gray.1">
           <JobAttachments jobId={jobId as number} />
           <Group justify="space-between" align="flex-start" mt="md">
@@ -290,7 +283,7 @@ export default function JobDetailsDrawer({
               </Stack>
             </Group>
 
-            {/* Quick Link to Edit Page */}
+            {}
             <Tooltip label="Open Full Edit Page">
               <ActionIcon
                 component={Link}
@@ -306,7 +299,7 @@ export default function JobDetailsDrawer({
           </Group>
         </Paper>
 
-        {/* --- SECTION 1: SPECS --- */}
+        {}
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <Stack gap="xs">
             <ClientInfo
@@ -330,7 +323,7 @@ export default function JobDetailsDrawer({
           <CabinetSpecs cabinet={cabinet} />
         </SimpleGrid>
 
-        {/* --- SECTION 2: PRODUCTION --- */}
+        {}
         <Paper p="md" radius="md" withBorder shadow="sm">
           <SectionHeader
             icon={FaIndustry}
@@ -338,7 +331,7 @@ export default function JobDetailsDrawer({
             color="blue"
           />
 
-          {/* Progress Strip */}
+          {}
           <Group justify="space-between" mb="lg" wrap="nowrap" gap={4}>
             {productionSteps.map((step) => {
               const isDone = !!prod?.[step.key];
@@ -372,7 +365,7 @@ export default function JobDetailsDrawer({
 
           <Divider mb="md" />
 
-          {/* Schedule Grid */}
+          {}
           <SimpleGrid cols={4} spacing="xs">
             <CompactDateBlock label="Placement" date={prod?.placement_date} />
             <CompactDateBlock
@@ -408,7 +401,7 @@ export default function JobDetailsDrawer({
           </SimpleGrid>
         </Paper>
 
-        {/* --- SECTION 3: INSTALLATION & LOGISTICS --- */}
+        {}
         <Paper p="md" radius="md" withBorder shadow="sm">
           <SectionHeader
             icon={FaShippingFast}
@@ -472,7 +465,7 @@ export default function JobDetailsDrawer({
           </Stack>
         </Paper>
 
-        {/* --- NEW SECTION 4: COMMENTS & NOTES --- */}
+        {}
         <Paper p="md" radius="md" withBorder shadow="sm">
           <SectionHeader
             icon={FaClipboardList}
@@ -517,9 +510,9 @@ export default function JobDetailsDrawer({
             </Box>
           </Stack>
         </Paper>
-        {/* --- END NEW SECTION 4 --- */}
+        {}
 
-        {/* --- SECTION 5: RELATED ITEMS (Original Section 4) --- */}
+        {}
         <RelatedServiceOrders jobId={jobId} readOnly />
         <RelatedBackorders jobId={String(jobId)} readOnly />
       </Stack>
@@ -531,7 +524,7 @@ export default function JobDetailsDrawer({
       opened={opened}
       onClose={onClose}
       position="right"
-      size="xl" // ~800px wide
+      size="xl" 
       title={
         <Text fw={700} size="lg" c="violet">
           Job Quick View

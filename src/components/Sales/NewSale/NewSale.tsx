@@ -53,7 +53,6 @@ import {
 } from "@/dropdowns/dropdownOptions";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 
-// New Optimized Hooks
 import { useClientSearch } from "@/hooks/useClientSearch";
 import { useSpeciesSearch } from "@/hooks/useSpeciesSearch";
 import { useColorSearch } from "@/hooks/useColorSearch";
@@ -153,7 +152,6 @@ export default function NewSale() {
     validate: zodResolver(MasterOrderSchema),
   });
 
-  // --- Optimized Data Fetching ---
   const {
     options: clientOptions,
     isLoading: clientsLoading,
@@ -566,7 +564,7 @@ export default function NewSale() {
                 </Collapse>
               </Group>
 
-              {/* OPTIMIZED CLIENT SELECT */}
+              {}
               <Select
                 label="Client"
                 placeholder="Search clients..."
@@ -666,7 +664,7 @@ export default function NewSale() {
             </SimpleGrid>
           </Paper>
 
-          {/* ... Billing and Shipping (Identical structure) ... */}
+          {}
           {selectedClientData ? (
             <SimpleGrid
               cols={{ base: 1, lg: 2 }}
@@ -844,7 +842,7 @@ export default function NewSale() {
                   bg={"white"}
                 >
                   <SimpleGrid cols={3}>
-                    {/* OPTIMIZED SELECTS */}
+                    {}
                     <Select
                       label="Species"
                       placeholder="Select Species"
@@ -920,7 +918,7 @@ export default function NewSale() {
                       }
                       {...form.getInputProps(`cabinet.door_style`)}
                     />
-                    {/* ... Rest of autocomplete inputs ... */}
+                    {}
                     <Autocomplete
                       label="Top Drawer Front"
                       data={TopDrawerFrontOptions}
@@ -1035,7 +1033,7 @@ export default function NewSale() {
                 </Fieldset>
               </Stack>
               <Stack>
-                {/* ... Financials and Details ... */}
+                {}
                 <Fieldset legend="Details" variant="filled" bg={"white"}>
                   <Textarea
                     label="Comments"
@@ -1096,7 +1094,7 @@ export default function NewSale() {
         </Stack>
       </form>
 
-      {/* --- Success Banners and Modals (Same as EditSale) --- */}
+      {}
       <AddClient
         opened={isAddClientModalOpen}
         onClose={() => {
@@ -1199,7 +1197,7 @@ export default function NewSale() {
             </Paper>
           </Center>
         ))}
-      {/* ... [Add Species/Color/DoorStyle Modals] ... */}
+      {}
       <Modal
         opened={speciesModalOpened}
         onClose={closeSpeciesModal}

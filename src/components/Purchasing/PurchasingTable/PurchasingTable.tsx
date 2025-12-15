@@ -230,7 +230,6 @@ export default function PurchasingTable() {
     },
   });
 
-  // NEW: Mutation to mark all items as received when status is force-updated to Complete
   const markAllItemsReceivedMutation = useMutation({
     mutationFn: async ({
       id,
@@ -241,14 +240,12 @@ export default function PurchasingTable() {
       keyPrefix: string;
       initialComment: string;
     }) => {
-      // 1. Fetch related items
       const { data: items } = await supabase
         .from("purchase_order_items")
         .select("id, quantity, part_description, company")
         .eq("purchase_tracking_id", id)
         .eq("item_type", keyPrefix);
 
-      // 2. Update all items to full quantity
       if (items && items.length > 0) {
         const itemUpdates = items.map((item) =>
           supabase
@@ -262,7 +259,6 @@ export default function PurchasingTable() {
         await Promise.all(itemUpdates);
       }
 
-      // 3. Update parent tracking status
       const recKey = `${keyPrefix}_received_at`;
       const incKey = `${keyPrefix}_received_incomplete_at`;
 
@@ -372,7 +368,6 @@ export default function PurchasingTable() {
 
     await updateIncompleteItemsMutation.mutateAsync({ items });
 
-    // Use Quantity logic for completion
     const allReceived =
       items.length > 0 &&
       items.every((i) => (i.qty_received || 0) >= (i.quantity || 0));
@@ -456,7 +451,6 @@ export default function PurchasingTable() {
               openOrderModal();
             }}
             onMarkReceived={() => {
-              // UPDATED: Now calls the mutation that updates all items too
               markAllItemsReceivedMutation.mutate({
                 id: row.purchase_check_id!,
                 keyPrefix,
@@ -776,7 +770,7 @@ export default function PurchasingTable() {
         />
       </Box>
 
-      {/* --- Modals --- */}
+      {}
 
       <Modal
         opened={commentModalOpened}

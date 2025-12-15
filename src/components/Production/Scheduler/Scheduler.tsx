@@ -54,9 +54,7 @@ import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/Relat
 import AddBackorderModal from "@/components/Installation/AddBOModal/AddBOModal";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 
-// ---------- Types ----------
 type CabinetSpecsJoined = Tables<"cabinets"> & {
-  // FIX: Define the expected structure from the joined tables (single object for each)
   door_styles: { name: string } | null;
   species: { Species: string } | null;
   colors: { Name: string } | null;
@@ -75,7 +73,6 @@ type JobType = Tables<"jobs"> & {
   installation: Tables<"installation">;
 };
 
-// ---------- Component ----------
 export default function EditProductionSchedulePage({
   jobId,
 }: {
@@ -87,7 +84,6 @@ export default function EditProductionSchedulePage({
   const queryClient = useQueryClient();
   const [isBackorderPromptOpen, setIsBackorderPromptOpen] = useState(false);
   const [isAddBackorderModalOpen, setIsAddBackorderModalOpen] = useState(false);
-  // ---------- Fetch Job ----------
   const { data, isLoading } = useQuery<JobType>({
     queryKey: ["production-schedule", jobId],
     queryFn: async () => {
@@ -152,7 +148,6 @@ export default function EditProductionSchedulePage({
     }
   };
 
-  // ---------- Form ----------
   const form = useForm<SchedulingFormValues>({
     initialValues: {
       rush: false,
@@ -196,7 +191,6 @@ export default function EditProductionSchedulePage({
     }
   }, [data]);
 
-  // ---------- Timeline / Progress Logic ----------
   const actualSteps = useMemo(() => {
     const schedule = data?.production_schedule;
     if (!schedule) return [];
@@ -255,10 +249,8 @@ export default function EditProductionSchedulePage({
     }));
   }, [data]);
 
-  // ---------- Mutation ----------
   const updateMutation = useMutation({
     mutationFn: async (values: SchedulingFormValues) => {
-      // 1. Validation Guards
       if (!user) throw new Error("User not authenticated");
       if (!data?.production_schedule?.prod_id)
         throw new Error("Production schedule data missing");
@@ -348,7 +340,6 @@ export default function EditProductionSchedulePage({
   const handleSubmit = (values: SchedulingFormValues) =>
     updateMutation.mutate(values);
 
-  // ---------- JSX ----------
   return (
     <Container
       size="100%"
@@ -416,9 +407,9 @@ export default function EditProductionSchedulePage({
         <Grid>
           <Grid.Col span={10}>
             <Stack>
-              {/* HEADER */}
+              {}
               <Paper p="md" radius="md" shadow="sm" bg="gray.1">
-                {/* CLIENT & CABINET */}
+                {}
                 <SimpleGrid cols={2}>
                   <Stack>
                     <ClientInfo shipping={shipping} />
@@ -429,11 +420,11 @@ export default function EditProductionSchedulePage({
                 </SimpleGrid>
               </Paper>
 
-              {/* FORM */}
+              {}
               <Paper p="md" radius="md" shadow="xl" pb={30} bg="gray.1">
                 <Paper p="md" radius="md" shadow="xl" bg="white">
                   <Stack>
-                    {/* Rush & Placement/Shipping */}
+                    {}
                     <Switch
                       size="xl"
                       offLabel="Normal"
@@ -598,7 +589,7 @@ export default function EditProductionSchedulePage({
                       </SimpleGrid>
                     </Box>
 
-                    {/* Schedule Groups */}
+                    {}
                     {[
                       {
                         title: "Doors Schedule",
@@ -679,7 +670,7 @@ export default function EditProductionSchedulePage({
             {jobId && <RelatedServiceOrders jobId={jobId} />}
           </Grid.Col>
 
-          {/* TIMELINE */}
+          {}
           <Grid.Col span={2}>
             <Box pt="md" style={{ justifyItems: "center" }}>
               <Paper p="md" radius="md" w={"100%"}>
@@ -768,7 +759,7 @@ export default function EditProductionSchedulePage({
         </Grid>
       </form>
 
-      {/* Footer Buttons */}
+      {}
       <Paper
         p="md"
         style={{
@@ -820,7 +811,6 @@ export default function EditProductionSchedulePage({
           form.setFieldValue("has_shipped", false);
           form.setFieldValue("partially_shipped", true);
 
-          //updateMutation.mutate(newValues);
         }}
       />
     </Container>

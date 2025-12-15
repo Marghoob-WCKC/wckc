@@ -3,7 +3,6 @@ import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import dayjs from "dayjs";
 import { Tables } from "@/types/db";
 
-// --- Types ---
 export type JoinedCabinet = Tables<"cabinets"> & {
   door_styles: { name: string } | null;
   species: { Species: string } | null;
@@ -17,9 +16,6 @@ export type ShippingReportJob = Tables<"jobs"> & {
   production_schedule: Tables<"production_schedule">;
 };
 
-// --- Constants ---
-// Increased to 45 to fill A4 Landscape better (prevents premature breaks)
-// The engine will handle minor overflows automatically if rows are tall.
 const ITEMS_PER_PAGE = 45;
 
 const styles = StyleSheet.create({
@@ -42,7 +38,6 @@ const styles = StyleSheet.create({
   reportTitle: { fontSize: 18, fontWeight: "bold" },
   metaInfo: { fontSize: 8, textAlign: "right" },
 
-  // Headers
   dateGroupHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -64,7 +59,6 @@ const styles = StyleSheet.create({
   },
   headerText: { fontSize: 8, fontWeight: "bold" },
 
-  // Rows
   tableRow: {
     flexDirection: "row",
     paddingVertical: 3,
@@ -73,7 +67,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  // Columns
   colJob: { width: "10%" },
   colCust: { width: "15%" },
   colAddr: { width: "20%" },
@@ -83,7 +76,6 @@ const styles = StyleSheet.create({
   colColor: { width: "10%" },
   colCheck: { width: "3%", textAlign: "center" },
 
-  // Visuals
   checkbox: {
     width: 8,
     height: 8,
@@ -94,7 +86,6 @@ const styles = StyleSheet.create({
   },
   checkMark: { fontSize: 6, fontWeight: "bold", paddingBottom: 1 },
 
-  // Footer & Total
   footer: {
     position: "absolute",
     bottom: 20,
@@ -126,7 +117,6 @@ const safeGet = (data: any) => {
   return data || null;
 };
 
-// Reusable Header Component
 const ColumnHeaders = () => (
   <View style={styles.tableHeader}>
     <Text style={[styles.headerText, styles.colJob]}>Job #</Text>
@@ -144,7 +134,6 @@ const ColumnHeaders = () => (
   </View>
 );
 
-// --- Component ---
 export const ShippingReportPdf = ({
   data,
   startDate,
@@ -154,7 +143,6 @@ export const ShippingReportPdf = ({
   startDate: Date | null;
   endDate: Date | null;
 }) => {
-  // 1. Group Data
   const grouped = data.reduce((acc, job) => {
     const ps = safeGet(job.production_schedule);
     const dateKey = ps?.ship_schedule || "No Date";
@@ -170,7 +158,6 @@ export const ShippingReportPdf = ({
     return new Date(a).getTime() - new Date(b).getTime();
   });
 
-  // 2. Pagination Logic
   const pages: React.ReactNode[][] = [];
   let currentPage: React.ReactNode[] = [];
   let currentCount = 0;
@@ -181,7 +168,6 @@ export const ShippingReportPdf = ({
     currentCount = 0;
   };
 
-  // 3. Build Content
   sortedDates.forEach((dateKey) => {
     const jobs = grouped[dateKey];
     const dateObj = dayjs(dateKey);
@@ -196,15 +182,11 @@ export const ShippingReportPdf = ({
       return isNaN(box) ? sum : sum + box;
     }, 0);
 
-    // --- START OF GROUP ---
 
-    // Check if we need to break page before starting the group
-    // (If < 5 items space left, better to start fresh for a header)
     if (currentCount > ITEMS_PER_PAGE - 5) {
       startNewPage();
     }
 
-    // 1. Add Date Header (wrap={false} keeps title together)
     currentPage.push(
       <View
         key={`date-header-${dateKey}`}
@@ -218,16 +200,12 @@ export const ShippingReportPdf = ({
     );
     currentCount += 1;
 
-    // 2. Add Column Headers
     currentPage.push(<ColumnHeaders key={`col-header-start-${dateKey}`} />);
     currentCount += 1;
 
-    // --- ROWS ---
     jobs.forEach((job) => {
-      // Check for page break
       if (currentCount >= ITEMS_PER_PAGE) {
         startNewPage();
-        // Re-add headers on new page
         currentPage.push(<ColumnHeaders key={`col-header-cont-${job.id}`} />);
         currentCount += 1;
       }
@@ -248,7 +226,6 @@ export const ShippingReportPdf = ({
       const color = safeGet(cab?.colors)?.Name || "—";
 
       currentPage.push(
-        // wrap={false} prevents a single row from splitting across pages
         <View style={styles.tableRow} key={job.id} wrap={false}>
           <Text style={[styles.colJob, { fontSize: 8 }]}>{jobNum}</Text>
           <Text style={[styles.colCust, { fontSize: 8 }]}>
@@ -292,7 +269,6 @@ export const ShippingReportPdf = ({
       currentCount += 1;
     });
 
-    // --- TOTALS ---
     if (currentCount >= ITEMS_PER_PAGE) {
       startNewPage();
     }

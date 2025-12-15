@@ -10,7 +10,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 1.4,
   },
-  // Header
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -37,7 +36,6 @@ const styles = StyleSheet.create({
     color: "#555",
   },
 
-  // Table Structure
   table: {
     width: "100%",
     marginTop: 10,
@@ -58,7 +56,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     alignItems: "center",
   },
-  // Special Style for Total Row
   totalRow: {
     flexDirection: "row",
     backgroundColor: "#f8f9fa",
@@ -71,13 +68,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Column Widths
   colMonth: { width: "40%", textAlign: "left" },
   colJobs: { width: "20%", textAlign: "center" },
   colBoxes: { width: "20%", textAlign: "center" },
   colAvg: { width: "20%", textAlign: "right" },
 
-  // Text Utilities
   headerText: {
     fontSize: 10,
     fontWeight: "bold",
@@ -112,10 +107,8 @@ export const BoxCountReportPdf = ({
   startDate: Date | null;
   endDate: Date | null;
 }) => {
-  // 1. Group Data by Month
   const groupedData = data.reduce((acc, job) => {
     const shipDate = job.production_schedule.ship_schedule;
-    // Use ISO month (YYYY-MM) for sorting keys
     const monthKey = shipDate
       ? dayjs(shipDate).format("YYYY-MM")
       : "Unscheduled";
@@ -130,7 +123,6 @@ export const BoxCountReportPdf = ({
       };
     }
 
-    // Parse box count safely
     const boxes = parseInt(job.sales_orders?.cabinet?.box || "0", 10);
     const safeBoxes = isNaN(boxes) ? 0 : boxes;
 
@@ -140,14 +132,12 @@ export const BoxCountReportPdf = ({
     return acc;
   }, {} as Record<string, { jobsCount: number; totalBoxes: number; monthLabel: string }>);
 
-  // 2. Sort Groups Chronologically
   const sortedKeys = Object.keys(groupedData).sort((a, b) => {
     if (a === "Unscheduled") return 1;
     if (b === "Unscheduled") return -1;
     return a.localeCompare(b);
   });
 
-  // 3. Calculate Grand Totals
   const grandTotal = Object.values(groupedData).reduce(
     (acc, curr) => ({
       jobs: acc.jobs + curr.jobsCount,
@@ -164,7 +154,7 @@ export const BoxCountReportPdf = ({
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* --- Header --- */}
+        {}
         <View style={styles.headerContainer}>
           <View>
             <Text style={styles.reportTitle}>Monthly Box Volume</Text>
@@ -180,9 +170,9 @@ export const BoxCountReportPdf = ({
           </View>
         </View>
 
-        {/* --- Table --- */}
+        {}
         <View style={styles.table}>
-          {/* Header */}
+          {}
           <View style={styles.tableHeader}>
             <Text style={[styles.headerText, styles.colMonth]}>Month</Text>
             <Text style={[styles.headerText, styles.colJobs]}>Total Jobs</Text>
@@ -194,7 +184,7 @@ export const BoxCountReportPdf = ({
             </Text>
           </View>
 
-          {/* Data Rows */}
+          {}
           {sortedKeys.map((key) => {
             const row = groupedData[key];
             const avg =
@@ -220,7 +210,7 @@ export const BoxCountReportPdf = ({
             );
           })}
 
-          {/* Grand Total Row */}
+          {}
           <View style={styles.totalRow}>
             <Text style={[styles.rowText, styles.colMonth, styles.boldText]}>
               GRAND TOTAL
@@ -237,7 +227,7 @@ export const BoxCountReportPdf = ({
           </View>
         </View>
 
-        {/* --- Footer --- */}
+        {}
         <Text
           render={({ pageNumber, totalPages }) =>
             `Page ${pageNumber} of ${totalPages}`

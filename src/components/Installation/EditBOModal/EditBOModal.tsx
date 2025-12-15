@@ -51,7 +51,6 @@ export default function EditBackorderModal({
     validate: zodResolver(BackorderSchema),
   });
 
-  // Populate form when modal opens with a selected backorder
   useEffect(() => {
     if (backorder && opened) {
       form.setValues({

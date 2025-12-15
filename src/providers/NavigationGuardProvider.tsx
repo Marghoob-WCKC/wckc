@@ -43,7 +43,6 @@ export default function NavigationGuardProvider({
   const [opened, { open, close }] = useDisclosure(false);
   const router = useRouter();
 
-  // Handle Browser Native Events (Refresh/Close Tab)
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (isDirty) {
@@ -55,7 +54,6 @@ export default function NavigationGuardProvider({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
 
-  // Generic Interceptor
   const executeOrConfirm = useCallback(
     (action: () => void) => {
       if (isDirty) {
@@ -68,7 +66,6 @@ export default function NavigationGuardProvider({
     [isDirty, open]
   );
 
-  // Navigation Actions
   const navigateBack = useCallback(
     () => executeOrConfirm(() => router.back()),
     [executeOrConfirm, router]
@@ -83,7 +80,7 @@ export default function NavigationGuardProvider({
   );
 
   const handleConfirmLeave = () => {
-    setIsDirty(false); // Reset dirty state
+    setIsDirty(false); 
     close();
     if (pendingAction) pendingAction();
   };
@@ -100,7 +97,7 @@ export default function NavigationGuardProvider({
     >
       {children}
 
-      {/* Centralized Confirmation Modal */}
+      {}
       <Modal
         opened={opened}
         onClose={close}

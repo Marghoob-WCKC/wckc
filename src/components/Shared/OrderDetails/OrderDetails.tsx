@@ -6,7 +6,6 @@ interface OrderDetailsProps {
   orderDetails: Partial<Tables<"sales_orders">> | null | undefined;
 }
 
-// Helper updated for horizontal layout: Label above Value
 const InfoItem = ({
   label,
   value,
@@ -39,7 +38,7 @@ export default function OrderDetails({ orderDetails }: OrderDetailsProps) {
         <FaClipboardList style={{ marginRight: 8 }} /> Order Details
       </Text>
 
-      {/* Grid layout creates a single row with 3 columns on larger screens */}
+      {}
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
         <InfoItem label="Order Type" value={orderDetails.order_type} />
         <InfoItem label="Delivery Type" value={orderDetails.delivery_type} />

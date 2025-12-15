@@ -271,7 +271,7 @@ export default function ClientsTable() {
         </Stack>
       </Group>
       <Flex align="center" justify="space-between" mb="md">
-        {/* Accordion takes all remaining width */}
+        {}
         <Box
           style={{
             flex: 1,
@@ -337,7 +337,7 @@ export default function ClientsTable() {
           </Accordion>
         </Box>
 
-        {/* Button stays on the right */}
+        {}
         <Button
           size="md"
           onClick={openAddModal}

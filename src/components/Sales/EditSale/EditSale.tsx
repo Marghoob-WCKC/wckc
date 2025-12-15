@@ -87,7 +87,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
   const [selectedClientData, setSelectedClientData] =
     useState<Tables<"client"> | null>(null);
 
-  // Removed local useState for searches to avoid conflict with hooks
   const [newItemValue, setNewItemValue] = useState("");
 
   const [newDoorStyle, setNewDoorStyle] = useState<NewDoorStyleState>({
@@ -108,7 +107,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
     { open: openDoorStyleModal, close: closeDoorStyleModal },
   ] = useDisclosure(false);
 
-  // --- Form Setup ---
 
   const form = useForm<ExtendedMasterOrderInput>({
     initialValues: {
@@ -157,7 +155,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
     validate: zodResolver(MasterOrderSchema),
   });
 
-  // --- Optimized Data Fetching ---
 
   const {
     options: clientOptions,
@@ -184,7 +181,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
     search: doorStyleSearch,
   } = useDoorStyleSearch(form.values.cabinet.door_style || null);
 
-  // --- Reference Data Mutations ---
 
   const addSpeciesMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -278,7 +274,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
       }),
   });
 
-  // --- Main Sales Order Data ---
 
   const { data: salesOrderData, isLoading: salesOrderLoading } = useQuery({
     queryKey: ["sales-order", salesOrderId],
@@ -316,7 +311,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
     return () => setIsDirty(false);
   }, [isDirty, setIsDirty]);
 
-  // Populate Form
   useEffect(() => {
     if (salesOrderData) {
       const cabinet = salesOrderData.cabinet;
@@ -571,7 +565,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         }}
       >
         <Stack gap={5}>
-          {/* 1. MASTER DETAILS */}
+          {}
           <Paper p="md" radius="md" shadow="xl" withBorder>
             <SimpleGrid cols={3}>
               <Group align="end">
@@ -776,7 +770,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
             </SimpleGrid>
           </Paper>
 
-          {/* 2. BILLING & SHIPPING */}
+          {}
           {selectedClientData ? (
             <SimpleGrid
               cols={{ base: 1, lg: 2 }}
@@ -922,10 +916,10 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
             </Center>
           )}
 
-          {/* 3. MAIN FORM GRID */}
+          {}
           <Paper p="md" withBorder bg={"gray.1"}>
             <SimpleGrid cols={{ base: 1, xl: 2 }} spacing={30}>
-              {/* LEFT COLUMN: Cabinet Specs */}
+              {}
               <Stack>
                 <Fieldset
                   legend="Basic Information"
@@ -1140,7 +1134,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                 </Fieldset>
               </Stack>
 
-              {/* RIGHT COLUMN: Details & Financials */}
+              {}
               <Stack>
                 <Fieldset legend="Details" variant="filled" bg={"white"}>
                   <Textarea
@@ -1246,7 +1240,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         </Stack>
       </form>
 
-      {/* --- MODALS --- */}
+      {}
       <Modal
         opened={speciesModalOpened}
         onClose={closeSpeciesModal}

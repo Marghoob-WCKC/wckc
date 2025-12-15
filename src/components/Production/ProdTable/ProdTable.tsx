@@ -49,20 +49,17 @@ import { Views } from "@/types/db";
 import { useDisclosure } from "@mantine/hooks";
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 
-// Use the View Type
 type ProductionListView = Views<"prod_table_view">;
 
 export default function ProdTable() {
   const router = useRouter();
 
-  // --- 1. State Management ---
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 16,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  // Two stages of filters: Inputs (UI) and Active (Query)
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
   const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
@@ -73,7 +70,6 @@ export default function ProdTable() {
     setDrawerJobId(id);
     openDrawer();
   };
-  // Helpers
   const setInputFilterValue = (
     id: string,
     value: string | undefined | null
@@ -100,7 +96,6 @@ export default function ProdTable() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
 
-  // --- 2. Data Fetching ---
   const { data, isLoading, isError, error } = useProdTable({
     pagination,
     columnFilters: activeFilters,
@@ -111,7 +106,6 @@ export default function ProdTable() {
   const totalCount = data?.count || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
-  // --- 3. Columns ---
   const columnHelper = createColumnHelper<ProductionListView>();
 
   const columns = [
@@ -238,7 +232,6 @@ export default function ProdTable() {
       cell: (info) => {
         const row = info.row.original;
 
-        // Reconstruct steps array from flat view columns
         const steps = [
           {
             key: "in_plant_actual",
@@ -354,7 +347,6 @@ export default function ProdTable() {
     }),
   ];
 
-  // --- 4. Table Instance ---
   const table = useReactTable({
     data: tableData,
     columns,
@@ -362,7 +354,7 @@ export default function ProdTable() {
     state: {
       pagination,
       sorting,
-      columnFilters: activeFilters, // Pass active filters to table state
+      columnFilters: activeFilters, 
     },
     manualPagination: true,
     manualFiltering: true,
@@ -416,7 +408,7 @@ export default function ProdTable() {
         </Stack>
       </Group>
 
-      {/* SEARCH/FILTER ACCORDION */}
+      {}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -509,7 +501,7 @@ export default function ProdTable() {
               />
             </SimpleGrid>
 
-            {/* APPLY / CLEAR BUTTONS */}
+            {}
             <Group justify="flex-end" mt="md">
               <Button
                 variant="default"
@@ -636,7 +628,7 @@ export default function ProdTable() {
         </Table>
       </ScrollArea>
 
-      {/* PAGINATION */}
+      {}
       <Box
         style={{
           position: "fixed",
