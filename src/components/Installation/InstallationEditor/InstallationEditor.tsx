@@ -1105,7 +1105,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                 </Timeline>
               </Paper>
             </Box>
-            {/* ... (Actual Progress Timeline same as original) ... */}
             <Box pt="md" style={{ justifyItems: "center" }}>
               <Text
                 fw={600}
@@ -1166,11 +1165,17 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                         <Text size="xs" c="dimmed">
                           {step.isCompleted ? "Completed:" : "Pending"}
                         </Text>
-                        <Text size="sm" fw={500}>
-                          {step.date
-                            ? dayjs(step.date).format("YYYY-MM-DD HH:mm")
-                            : "—"}
-                        </Text>
+                        {step.date === "1999-09-19T00:00:00+00:00" ? (
+                          <Text size="sm" c="green.8" fw={600}>
+                            Completed
+                          </Text>
+                        ) : (
+                          <Text size="sm" fw={500}>
+                            {step.date
+                              ? dayjs(step.date).format("YYYY-MM-DD HH:mm")
+                              : "—"}
+                          </Text>
+                        )}
                       </Timeline.Item>
                     );
                   })}

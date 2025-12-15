@@ -244,7 +244,7 @@ export default function PurchasingTable() {
       // 1. Fetch related items
       const { data: items } = await supabase
         .from("purchase_order_items")
-        .select("id, quantity")
+        .select("id, quantity, part_description, company")
         .eq("purchase_tracking_id", id)
         .eq("item_type", keyPrefix);
 
@@ -267,7 +267,20 @@ export default function PurchasingTable() {
       const incKey = `${keyPrefix}_received_incomplete_at`;
 
       const timestamp = dayjs().format("YYYY-MM-DD HH:mm");
-      const logMessage = `${keyPrefix.toUpperCase()} Marked Fully Received`;
+
+      let itemDetails = "";
+      if (items && items.length > 0) {
+        itemDetails = items
+          .map(
+            (i) =>
+              `• ${i.quantity}x ${i.part_description || "Part"} (${
+                i.company || "Unknown"
+              })`
+          )
+          .join("\n");
+      }
+
+      const logMessage = `${keyPrefix.toUpperCase()} Marked Fully Received:\n${itemDetails}`;
       const newComment = initialComment
         ? `${initialComment}\n${logMessage} [${timestamp}]`
         : `${logMessage} [${timestamp}]`;
@@ -319,16 +332,25 @@ export default function PurchasingTable() {
 
     updates[ordKey] = new Date().toISOString();
 
+    const itemDetails = items
+      .map(
+        (i) =>
+          `• ${i.quantity}x ${i.part_description || "Part"} (${
+            i.company || "Unknown"
+          })`
+      )
+      .join("\n");
+
     if (!allReceived) {
       if (wasReceived) {
         updates[recKey] = null;
         updates[incKey] = new Date().toISOString();
-        logMsg = `${keyPrefix.toUpperCase()} Updated: New parts added, status changed to Incomplete.`;
+        logMsg = `${keyPrefix.toUpperCase()} Updated (Incomplete):\n${itemDetails}`;
       } else {
-        logMsg = `${keyPrefix.toUpperCase()} Order Details Updated`;
+        logMsg = `${keyPrefix.toUpperCase()} Order Placed/Updated:\n${itemDetails}`;
       }
     } else {
-      logMsg = `${keyPrefix.toUpperCase()} Order Details Updated`;
+      logMsg = `${keyPrefix.toUpperCase()} Order Details Updated:\n${itemDetails}`;
     }
 
     await updateStatusMutation.mutateAsync({
@@ -360,17 +382,28 @@ export default function PurchasingTable() {
     let updates: any = {};
     let logMsg = "";
 
+    const itemDetails = items
+      .map((i) => {
+        const received = i.qty_received || 0;
+        const total = i.quantity || 0;
+        const status = received >= total ? "Done" : "Partial";
+        return `• [${status}] ${received}/${total} ${
+          i.part_description || "Part"
+        }`;
+      })
+      .join("\n");
+
     if (allReceived) {
       updates[recKey] = new Date().toISOString();
       updates[incKey] = null;
-      logMsg = `${keyPrefix.toUpperCase()} Status Upgrade: All items received.`;
+      logMsg = `${keyPrefix.toUpperCase()} All Items Received:\n${itemDetails}`;
     } else {
       updates[recKey] = null;
       updates[incKey] = new Date().toISOString();
-      logMsg = `${keyPrefix.toUpperCase()} Partial Receipt Logged.`;
+      logMsg = `${keyPrefix.toUpperCase()} Partial Receipt:\n${itemDetails}`;
     }
 
-    if (comments) logMsg += ` Note: ${comments}`;
+    if (comments) logMsg += `\nNote: ${comments}`;
 
     await updateStatusMutation.mutateAsync({
       id,
