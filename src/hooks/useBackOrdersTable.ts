@@ -22,12 +22,10 @@ export function useBackordersTable({
   return useQuery({
     queryKey: ["backorders_view", pagination, columnFilters, sorting],
     queryFn: async () => {
-      // Query the VIEW instead of the table
       let query = supabase
-        .from("backorders_view" as any) // Cast to any if types aren't generated yet
+        .from("backorders_view" as any)
         .select("*", { count: "exact" });
 
-      // Apply Filters
       columnFilters.forEach((filter) => {
         const { id, value } = filter;
         const valStr = String(value);
@@ -51,7 +49,6 @@ export function useBackordersTable({
         }
       });
 
-      // Apply Sorting
       if (sorting.length > 0) {
         const { id, desc } = sorting[0];
         query = query.order(id, { ascending: !desc });
@@ -69,5 +66,6 @@ export function useBackordersTable({
 
       return { data, count };
     },
+    placeholderData: (previousData) => previousData,
   });
 }

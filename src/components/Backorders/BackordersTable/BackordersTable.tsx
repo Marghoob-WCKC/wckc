@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, KeyboardEvent } from "react";
 import {
   createColumnHelper,
   getCoreRowModel,
@@ -46,13 +46,15 @@ export default function BackordersTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  // Modal State
+  const [jobInput, setJobInput] = useState("");
+  const [clientInput, setClientInput] = useState("");
+  const [commentInput, setCommentInput] = useState("");
+
   const [selectedBO, setSelectedBO] = useState<any>(null);
   const [editModalOpened, { open: openEditModal, close: closeEditModal }] =
     useDisclosure(false);
 
-  // Data Fetching
-  const { data, isLoading, isError } = useBackordersTable({
+  const { data, isLoading } = useBackordersTable({
     pagination,
     columnFilters,
     sorting,
@@ -61,11 +63,6 @@ export default function BackordersTable() {
   const tableData = data?.data || [];
   const totalCount = data?.count || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
-
-  const handleRowClick = (row: any) => {
-    setSelectedBO(row);
-    openEditModal();
-  };
 
   const columnHelper = createColumnHelper<any>();
 
@@ -104,7 +101,6 @@ export default function BackordersTable() {
       size: 130,
       cell: (info) => {
         const date = info.getValue();
-        // Check if late (and not complete)
         const isLate =
           date &&
           dayjs(date).isBefore(dayjs(), "day") &&
@@ -141,6 +137,24 @@ export default function BackordersTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const handleSearch = () => {
+    table.getColumn("job_number")?.setFilterValue(jobInput);
+    table.getColumn("shipping_client_name")?.setFilterValue(clientInput);
+    table.getColumn("comments")?.setFilterValue(commentInput);
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  const handleRowClick = (row: any) => {
+    setSelectedBO(row);
+    openEditModal();
+  };
+
   return (
     <Box
       p="md"
@@ -148,7 +162,6 @@ export default function BackordersTable() {
       display="flex"
       style={{ flexDirection: "column" }}
     >
-      {/* Header */}
       <Group mb="lg" justify="space-between">
         <Group>
           <ThemeIcon
@@ -168,27 +181,28 @@ export default function BackordersTable() {
         </Group>
       </Group>
 
-      {/* Filters */}
       <Group mb="md">
         <TextInput
           placeholder="Filter Job #..."
-          value={
-            (table.getColumn("job_number")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(e) =>
-            table.getColumn("job_number")?.setFilterValue(e.target.value)
-          }
+          value={jobInput}
+          onChange={(e) => setJobInput(e.currentTarget.value)}
+          onKeyDown={handleKeyDown}
           w={150}
+        />
+        <TextInput
+          placeholder="Filter Client..."
+          value={clientInput}
+          onChange={(e) => setClientInput(e.currentTarget.value)}
+          onKeyDown={handleKeyDown}
+          w={180}
         />
         <TextInput
           placeholder="Filter comments..."
           leftSection={<FaSearch size={14} />}
-          value={
-            (table.getColumn("comments")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(e) =>
-            table.getColumn("comments")?.setFilterValue(e.target.value)
-          }
+          value={commentInput}
+          onChange={(e) => setCommentInput(e.currentTarget.value)}
+          onKeyDown={handleKeyDown}
+          style={{ flex: 1 }}
         />
         <Select
           placeholder="Status"
@@ -200,13 +214,15 @@ export default function BackordersTable() {
           value={
             (table.getColumn("complete")?.getFilterValue() as string) ?? "all"
           }
-          onChange={(val) => table.getColumn("complete")?.setFilterValue(val)}
+          onChange={(val) => {
+            table.getColumn("complete")?.setFilterValue(val);
+            setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+          }}
           allowDeselect={false}
           w={150}
         />
       </Group>
 
-      {/* Table Area */}
       <ScrollArea style={{ flex: 1 }} type="hover">
         <Table striped highlightOnHover stickyHeader>
           <Table.Thead>
@@ -274,7 +290,6 @@ export default function BackordersTable() {
         </Table>
       </ScrollArea>
 
-      {/* Footer Pagination */}
       <Group justify="center" pt="md">
         <Pagination
           total={table.getPageCount()}
@@ -283,7 +298,6 @@ export default function BackordersTable() {
         />
       </Group>
 
-      {/* Edit Modal */}
       {selectedBO && (
         <EditBOModal
           opened={editModalOpened}
