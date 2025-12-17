@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   createColumnHelper,
@@ -33,20 +33,23 @@ import {
   SimpleGrid,
   Anchor,
   Indicator,
-  Checkbox,
   Switch,
+  Select,
+  Paper,
+  UnstyledButton,
+  Transition,
 } from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
 import {
-  FaPencilAlt,
   FaPlus,
   FaSearch,
   FaSort,
   FaSortDown,
   FaSortUp,
   FaCheckCircle,
-  FaTimesCircle,
   FaTools,
   FaTrash,
+  FaFilter,
 } from "react-icons/fa";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -69,24 +72,50 @@ export default function ServiceOrdersTable() {
     pageSize: 16,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
-
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
+
   const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
 
+  // Context Menu State
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    filterId: string | null;
+    filterValue: any | null;
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    filterId: null,
+    filterValue: null,
+  });
+
   const deleteServiceOrder = useDeleteServiceOrder();
+
+  useEffect(() => {
+    const handleClick = () => {
+      setContextMenu((prev) =>
+        prev.visible ? { ...prev, visible: false } : prev
+      );
+    };
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, []);
 
   const handleJobClick = (id: number) => {
     setDrawerJobId(id);
     openDrawer();
   };
-  const [statusFilter, setStatusFilter] = useState<
-    "ALL" | "OPEN" | "COMPLETED"
-  >("ALL");
 
-  const setInputFilterValue = (id: string, value: string) => {
+  // Unified Filter Setter
+  const setInputFilterValue = (
+    id: string,
+    value: string | undefined | null | [Date | null, Date | null]
+  ) => {
     setInputFilters((prev) => {
       const existing = prev.filter((f) => f.id !== id);
       if (!value) return existing;
@@ -95,7 +124,7 @@ export default function ServiceOrdersTable() {
   };
 
   const getInputFilterValue = (id: string) => {
-    return (inputFilters.find((f) => f.id === id)?.value as string) || "";
+    return inputFilters.find((f) => f.id === id)?.value || "";
   };
 
   const handleApplyFilters = () => {
@@ -109,9 +138,29 @@ export default function ServiceOrdersTable() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
 
-  const handleStatusChange = (status: "ALL" | "OPEN" | "COMPLETED") => {
-    setStatusFilter(status);
+  const handleQuickFilter = (id: string, value: any) => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    setInputFilters((prev) => {
+      const existing = prev.filter((f) => f.id !== id);
+      return [...existing, { id, value }];
+    });
+    setActiveFilters((prev) => {
+      const existing = prev.filter((f) => f.id !== id);
+      return [...existing, { id, value }];
+    });
+    setContextMenu((prev) => ({ ...prev, visible: false }));
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, id: string, value: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      filterId: id,
+      filterValue: value,
+    });
   };
 
   const handleDelete = (e: React.MouseEvent, id: number, soNumber: string) => {
@@ -129,7 +178,6 @@ export default function ServiceOrdersTable() {
     pagination,
     columnFilters: activeFilters,
     sorting,
-    statusFilter,
   });
 
   const tableData = (data?.data as unknown as ServiceOrderView[]) || [];
@@ -138,15 +186,43 @@ export default function ServiceOrdersTable() {
 
   const columnHelper = createColumnHelper<ServiceOrderView>();
 
+  // Helper for Context Menu Cells
+  const CellWrapper = ({
+    children,
+    onContextMenu,
+  }: {
+    children: React.ReactNode;
+    onContextMenu?: (e: React.MouseEvent) => void;
+  }) => (
+    <Box
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        cursor: "pointer",
+      }}
+      onContextMenu={onContextMenu}
+    >
+      {children}
+    </Box>
+  );
+
   const columns = [
     columnHelper.accessor("service_order_number", {
       header: "Service Order #",
       size: 150,
       minSize: 120,
       cell: (info) => (
-        <Text fw={600} size="sm">
-          {info.getValue()}
-        </Text>
+        <CellWrapper
+          onContextMenu={(e) =>
+            handleContextMenu(e, "service_order_number", info.getValue())
+          }
+        >
+          <Text fw={600} size="sm">
+            {info.getValue()}
+          </Text>
+        </CellWrapper>
       ),
     }),
     columnHelper.accessor("job_number", {
@@ -154,40 +230,55 @@ export default function ServiceOrdersTable() {
       size: 120,
       minSize: 100,
       cell: (info) => (
-        <Text fw={600} size="sm">
-          <Anchor
-            component="button"
-            size="sm"
-            fw={600}
-            w="100%"
-            c="#6f00ffff"
-            onClick={(e) => {
-              e.stopPropagation();
-              const jobId = info.row.original.job_id;
-              if (jobId) handleJobClick(jobId);
-            }}
-          >
-            {info.getValue()}
-          </Anchor>
-        </Text>
+        <Anchor
+          component="button"
+          size="sm"
+          fw={600}
+          w="100%"
+          c="#6f00ffff"
+          onClick={(e) => {
+            e.stopPropagation();
+            const jobId = info.row.original.job_id;
+            if (jobId) handleJobClick(jobId);
+          }}
+          onContextMenu={(e) =>
+            handleContextMenu(e, "job_number", info.getValue())
+          }
+        >
+          {info.getValue()}
+        </Anchor>
       ),
     }),
     columnHelper.accessor("client_name", {
       header: "Client Name",
       size: 180,
       minSize: 140,
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => (
+        <CellWrapper
+          onContextMenu={(e) =>
+            handleContextMenu(e, "client_name", info.getValue())
+          }
+        >
+          <Text size="sm">{info.getValue() || "—"}</Text>
+        </CellWrapper>
+      ),
     }),
     columnHelper.accessor("site_address", {
       header: "Site Address",
       size: 250,
       minSize: 180,
       cell: (info) => (
-        <Tooltip label={info.getValue()}>
-          <Text truncate size="sm">
-            {info.getValue() || "—"}
-          </Text>
-        </Tooltip>
+        <CellWrapper
+          onContextMenu={(e) =>
+            handleContextMenu(e, "site_address", info.getValue())
+          }
+        >
+          <Tooltip label={info.getValue()}>
+            <Text truncate size="sm">
+              {info.getValue() || "—"}
+            </Text>
+          </Tooltip>
+        </CellWrapper>
       ),
     }),
     columnHelper.accessor("installer_company", {
@@ -196,16 +287,19 @@ export default function ServiceOrdersTable() {
       minSize: 140,
       cell: (info) => {
         const installerRequested = info.row.original.installer_requested;
-        return installerRequested ? (
-          <Group>
-            {" "}
-            <Text size="sm" c="red" fw={600}>
-              Installer Requested
-            </Text>
-            <Indicator inline processing color="red" size={8} />
-          </Group>
-        ) : (
-          info.getValue() || "—"
+        return (
+          <CellWrapper>
+            {installerRequested ? (
+              <Group>
+                <Text size="sm" c="red" fw={600}>
+                  Installer Requested
+                </Text>
+                <Indicator inline processing color="red" size={8} />
+              </Group>
+            ) : (
+              <Text size="sm">{info.getValue() || "—"}</Text>
+            )}
+          </CellWrapper>
         );
       },
     }),
@@ -215,7 +309,11 @@ export default function ServiceOrdersTable() {
       minSize: 110,
       cell: (info) => {
         const date = info.getValue();
-        return date ? dayjs(date).format("YYYY-MM-DD") : "—";
+        return (
+          <CellWrapper>
+            {date ? dayjs(date).format("YYYY-MM-DD") : "—"}
+          </CellWrapper>
+        );
       },
     }),
     columnHelper.accessor("due_date", {
@@ -225,13 +323,22 @@ export default function ServiceOrdersTable() {
       cell: (info) => {
         const date = info.getValue();
         const isPast = dayjs(date).isBefore(dayjs(), "day");
+        const isCompleted = !!info.row.original.completed_at;
 
-        return date ? (
-          <Text size="sm" fw={isPast ? 700 : 400} c={isPast ? "red" : "dark"}>
-            {dayjs(date).format("YYYY-MM-DD")}
-          </Text>
-        ) : (
-          "—"
+        return (
+          <CellWrapper>
+            {date ? (
+              <Text
+                size="sm"
+                fw={isPast && !isCompleted ? 700 : 400}
+                c={isPast && !isCompleted ? "red" : "dark"}
+              >
+                {dayjs(date).format("YYYY-MM-DD")}
+              </Text>
+            ) : (
+              "—"
+            )}
+          </CellWrapper>
         );
       },
     }),
@@ -241,30 +348,35 @@ export default function ServiceOrdersTable() {
       minSize: 130,
       cell: (info) => {
         const date = info.getValue();
-        if (date) {
-          return (
-            <Group gap={6}>
-              <FaCheckCircle color="var(--mantine-color-green-6)" size={14} />
-              {date === "1999-09-19T00:00:00+00:00" ? (
-                <Text size="sm" c="green.8" fw={600}>
-                  Completed
-                </Text>
-              ) : (
-                <Text size="sm" c="green.8" fw={600}>
-                  {dayjs(date).format("YYYY-MM-DD")}
-                </Text>
-              )}
-            </Group>
-          );
-        }
         return (
-          <Badge
-            variant="gradient"
-            gradient={{ from: "#4da0ff", to: "#0066cc", deg: 135 }}
-            leftSection={<FaTools />}
+          <CellWrapper
+            onContextMenu={(e) =>
+              handleContextMenu(e, "status", date ? "COMPLETED" : "OPEN")
+            }
           >
-            Open
-          </Badge>
+            {date ? (
+              <Group gap={6}>
+                <FaCheckCircle color="var(--mantine-color-green-6)" size={14} />
+                {date === "1999-09-19T00:00:00+00:00" ? (
+                  <Text size="sm" c="green.8" fw={600}>
+                    Completed
+                  </Text>
+                ) : (
+                  <Text size="sm" c="green.8" fw={600}>
+                    {dayjs(date).format("YYYY-MM-DD")}
+                  </Text>
+                )}
+              </Group>
+            ) : (
+              <Badge
+                variant="gradient"
+                gradient={{ from: "#4da0ff", to: "#0066cc", deg: 135 }}
+                leftSection={<FaTools />}
+              >
+                Open
+              </Badge>
+            )}
+          </CellWrapper>
         );
       },
     }),
@@ -335,6 +447,7 @@ export default function ServiceOrdersTable() {
         flexDirection: "column",
         padding: rem(20),
         height: "calc(100vh - 45px)",
+        position: "relative",
       }}
     >
       <Group mb="md" justify="space-between">
@@ -372,7 +485,12 @@ export default function ServiceOrdersTable() {
         )}
       </Group>
 
-      <Accordion variant="contained" radius="md" mb="md">
+      <Accordion
+        variant="contained"
+        radius="md"
+        mb="md"
+        defaultValue="search-filters"
+      >
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
             Search Filters
@@ -382,7 +500,7 @@ export default function ServiceOrdersTable() {
               <TextInput
                 label="SO Number"
                 placeholder="Search..."
-                value={getInputFilterValue("service_order_number")}
+                value={getInputFilterValue("service_order_number") as string}
                 onChange={(e) =>
                   setInputFilterValue("service_order_number", e.target.value)
                 }
@@ -391,7 +509,7 @@ export default function ServiceOrdersTable() {
               <TextInput
                 label="Job Number"
                 placeholder="Search..."
-                value={getInputFilterValue("job_number")}
+                value={getInputFilterValue("job_number") as string}
                 onChange={(e) =>
                   setInputFilterValue("job_number", e.target.value)
                 }
@@ -400,50 +518,103 @@ export default function ServiceOrdersTable() {
               <TextInput
                 label="Client Name"
                 placeholder="Search..."
-                value={getInputFilterValue("client_name")}
+                value={getInputFilterValue("client_name") as string}
                 onChange={(e) =>
                   setInputFilterValue("client_name", e.target.value)
                 }
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
+              <Select
+                label="Order Status"
+                placeholder="Select status"
+                data={[
+                  { value: "ALL", label: "All Orders" },
+                  { value: "OPEN", label: "Open" },
+                  { value: "COMPLETED", label: "Completed" },
+                ]}
+                value={(getInputFilterValue("status") as string) || "ALL"}
+                onChange={(val) => setInputFilterValue("status", val)}
+              />
+
+              <DatePickerInput
+                type="range"
+                label="Date Entered Range"
+                placeholder="Pick dates"
+                allowSingleDateInRange
+                value={
+                  (getInputFilterValue("date_entered") as [
+                    Date | null,
+                    Date | null
+                  ]) || [null, null]
+                }
+                onChange={(val) =>
+                  setInputFilterValue("date_entered", val as any)
+                }
+                clearable
+                valueFormat="YYYY-MM-DD"
+                leftSection={<FaFilter size={14} color="gray" />}
+              />
+
+              <DatePickerInput
+                type="range"
+                label="Due Date Range"
+                placeholder="Pick dates"
+                allowSingleDateInRange
+                value={
+                  (getInputFilterValue("due_date") as [
+                    Date | null,
+                    Date | null
+                  ]) || [null, null]
+                }
+                onChange={(val) => setInputFilterValue("due_date", val as any)}
+                clearable
+                valueFormat="YYYY-MM-DD"
+                leftSection={<FaFilter size={14} color="gray" />}
+              />
+
               <TextInput
                 label="Site Address"
                 placeholder="Search..."
-                value={getInputFilterValue("site_address")}
+                value={getInputFilterValue("site_address") as string}
                 onChange={(e) =>
                   setInputFilterValue("site_address", e.target.value)
                 }
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
-              <Switch
-                label="Installer Requested"
-                size="md"
-                thumbIcon={<FaCheckCircle />}
-                styles={{
-                  track: {
-                    cursor: "pointer",
-                    background:
-                      getInputFilterValue("installer_requested") === "true"
-                        ? "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)"
-                        : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
-                    color: "white",
-                    border: "none",
-                  },
-                  thumb: {
-                    background:
-                      getInputFilterValue("installer_requested") === "true"
-                        ? "#6e54ffff"
-                        : "#d1d1d1ff",
-                  },
-                }}
-                checked={getInputFilterValue("installer_requested") === "true"}
-                onChange={(e) =>
-                  setInputFilterValue(
-                    "installer_requested",
-                    e.currentTarget.checked ? "true" : ""
-                  )
-                }
-              />
+
+              <Box pt={24}>
+                <Switch
+                  label="Installer Requested"
+                  size="md"
+                  thumbIcon={<FaCheckCircle />}
+                  styles={{
+                    track: {
+                      cursor: "pointer",
+                      background:
+                        getInputFilterValue("installer_requested") === "true"
+                          ? "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)"
+                          : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
+                      color: "white",
+                      border: "none",
+                    },
+                    thumb: {
+                      background:
+                        getInputFilterValue("installer_requested") === "true"
+                          ? "#6e54ffff"
+                          : "#d1d1d1ff",
+                    },
+                  }}
+                  checked={
+                    getInputFilterValue("installer_requested") === "true"
+                  }
+                  onChange={(e) =>
+                    setInputFilterValue(
+                      "installer_requested",
+                      e.currentTarget.checked ? "true" : ""
+                    )
+                  }
+                />
+              </Box>
             </SimpleGrid>
 
             <Group justify="flex-end" mt="md">
@@ -466,49 +637,7 @@ export default function ServiceOrdersTable() {
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
-      <Group mb="md">
-        {[
-          { key: "ALL", label: "All Orders" },
-          { key: "OPEN", label: "Open" },
-          { key: "COMPLETED", label: "Completed" },
-        ].map((item) => {
-          const isActive = statusFilter === item.key;
 
-          const gradients: Record<string, string> = {
-            ALL: "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
-            OPEN: "linear-gradient(135deg, #4da0ff 0%, #0066cc 100%)",
-            COMPLETED: "linear-gradient(135deg, #3ac47d 0%, #0f9f4f 100%)",
-          };
-
-          const gradientsLight: Record<string, string> = {
-            ALL: "linear-gradient(135deg, #e4d9ff 0%, #d7caff 100%)",
-            OPEN: "linear-gradient(135deg, #d7e9ff 0%, #c2ddff 100%)",
-            COMPLETED: "linear-gradient(135deg, #d0f2e1 0%, #b9ebd3 100%)",
-          };
-
-          return (
-            <Button
-              key={item.key}
-              radius="xl"
-              size="sm"
-              onClick={() => handleStatusChange(item.key as any)}
-              style={{
-                cursor: "pointer",
-                minWidth: 100,
-                background: isActive
-                  ? gradients[item.key]
-                  : gradientsLight[item.key],
-                color: isActive ? "white" : "black",
-                border: "none",
-                transition: "transform 0.1s ease",
-              }}
-              px={16}
-            >
-              {item.label}
-            </Button>
-          );
-        })}
-      </Group>
       <ScrollArea
         style={{
           flex: 1,
@@ -577,6 +706,7 @@ export default function ServiceOrdersTable() {
                     )
                   }
                   style={{ cursor: "pointer" }}
+                  onContextMenu={(e) => e.preventDefault()}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <Table.Td
@@ -624,6 +754,63 @@ export default function ServiceOrdersTable() {
           onChange={(page) => table.setPageIndex(page - 1)}
         />
       </Box>
+
+      {/* Quick Filter Context Menu */}
+      <Transition
+        mounted={contextMenu.visible}
+        transition="pop"
+        duration={200}
+        timingFunction="ease"
+      >
+        {(styles) => (
+          <Paper
+            shadow="md"
+            radius="sm"
+            withBorder
+            style={{
+              ...styles,
+              position: "fixed",
+              top: contextMenu.y,
+              left: contextMenu.x,
+              zIndex: 9999,
+              minWidth: 160,
+              overflow: "hidden",
+              padding: 4,
+            }}
+          >
+            <UnstyledButton
+              style={{
+                display: "flex",
+                alignItems: "center",
+                width: "100%",
+                padding: "8px 12px",
+                fontSize: "14px",
+                borderRadius: "4px",
+                transition: "background-color 0.1s",
+              }}
+              onClick={() => {
+                if (contextMenu.filterId && contextMenu.filterValue !== null) {
+                  handleQuickFilter(
+                    contextMenu.filterId,
+                    contextMenu.filterValue
+                  );
+                }
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor =
+                  "var(--mantine-color-gray-1)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+            >
+              <FaFilter style={{ marginRight: 8, color: "#666" }} size={12} />
+              <Text size="sm">Quick Filter</Text>
+            </UnstyledButton>
+          </Paper>
+        )}
+      </Transition>
+
       <JobDetailsDrawer
         jobId={drawerJobId}
         opened={drawerOpened}

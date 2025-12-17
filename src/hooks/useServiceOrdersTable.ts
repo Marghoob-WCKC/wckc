@@ -5,47 +5,52 @@ import {
   ColumnFiltersState,
   SortingState,
 } from "@tanstack/react-table";
+import dayjs from "dayjs";
 
 interface UseServiceOrdersTableParams {
   pagination: PaginationState;
   columnFilters: ColumnFiltersState;
   sorting: SortingState;
-  statusFilter: "ALL" | "OPEN" | "COMPLETED";
 }
 
 export function useServiceOrdersTable({
   pagination,
   columnFilters,
   sorting,
-  statusFilter,
 }: UseServiceOrdersTableParams) {
   const { supabase, isAuthenticated } = useSupabase();
 
   return useQuery({
-    queryKey: [
-      "service_orders_table_view",
-      pagination,
-      columnFilters,
-      sorting,
-      statusFilter,
-    ],
+    queryKey: ["service_orders_table_view", pagination, columnFilters, sorting],
     queryFn: async () => {
       let query = supabase
         .from("service_orders_table_view" as any)
         .select("*", { count: "exact" });
 
-      if (statusFilter === "OPEN") {
-        query = query.is("completed_at", null);
-      } else if (statusFilter === "COMPLETED") {
-        query = query.not("completed_at", "is", null);
-      }
-
       columnFilters.forEach((filter) => {
         const { id, value } = filter;
+
+        if (
+          (id === "date_entered" || id === "due_date") &&
+          Array.isArray(value)
+        ) {
+          const [start, end] = value;
+          if (start) query = query.gte(id, dayjs(start).format("YYYY-MM-DD"));
+          if (end) query = query.lte(id, dayjs(end).format("YYYY-MM-DD"));
+          return;
+        }
+
         const valStr = String(value);
         if (!valStr) return;
 
         switch (id) {
+          case "status":
+            if (valStr === "OPEN") {
+              query = query.is("completed_at", null);
+            } else if (valStr === "COMPLETED") {
+              query = query.not("completed_at", "is", null);
+            }
+            break;
           case "service_order_number":
             query = query.ilike("service_order_number", `%${valStr}%`);
             break;
@@ -59,10 +64,9 @@ export function useServiceOrdersTable({
             query = query.ilike("site_address", `%${valStr}%`);
             break;
           case "installer_requested":
-            query = query.eq("installer_requested", valStr);
-            break;
-          case "date_entered":
-            query = query.eq("date_entered", valStr);
+            if (valStr === "true") {
+              query = query.eq("installer_requested", true);
+            }
             break;
           default:
             break;
@@ -71,8 +75,7 @@ export function useServiceOrdersTable({
 
       if (sorting.length > 0) {
         const { id, desc } = sorting[0];
-        const dbColumn = id;
-        query = query.order(dbColumn, { ascending: !desc });
+        query = query.order(id, { ascending: !desc });
       } else {
         query = query.order("date_entered", { ascending: false });
       }
