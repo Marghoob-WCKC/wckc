@@ -50,6 +50,7 @@ import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
 import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/RelatedServiceOrders";
 import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 import JobAttachments from "../JobAttachments/JobAttachments";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type JoinedCabinet = Tables<"cabinets"> & {
   door_styles: { name: string } | null;
@@ -77,7 +78,6 @@ interface JobDetailsDrawerProps {
   opened: boolean;
   onClose: () => void;
 }
-
 
 const SectionHeader = ({
   icon: Icon,
@@ -139,6 +139,7 @@ export default function JobDetailsDrawer({
   onClose,
 }: JobDetailsDrawerProps) {
   const { supabase, isAuthenticated } = useSupabase();
+  const permissions = usePermissions();
 
   const { data: job, isLoading } = useQuery<FullJobData>({
     queryKey: ["job_quick_view", jobId],
@@ -513,7 +514,10 @@ export default function JobDetailsDrawer({
         {}
 
         {}
-        <RelatedServiceOrders jobId={jobId} readOnly />
+        <RelatedServiceOrders
+          jobId={jobId}
+          readOnly={!(permissions.isService || permissions.isAdmin)}
+        />
         <RelatedBackorders jobId={String(jobId)} readOnly />
       </Stack>
     );
@@ -524,7 +528,7 @@ export default function JobDetailsDrawer({
       opened={opened}
       onClose={onClose}
       position="right"
-      size="xl" 
+      size="xl"
       title={
         <Text fw={700} size="lg" c="violet">
           Job Quick View

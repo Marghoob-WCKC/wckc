@@ -38,6 +38,9 @@ export function useInstallationTable({
           case "client":
             query = query.ilike("shipping_client_name", `%${valStr}%`);
             break;
+          case "site_address":
+            query = query.ilike("site_address", `%${valStr}%`);
+            break;
           case "installer":
             query = query.or(
               `installer_company.ilike.%${valStr}%,installer_first_name.ilike.%${valStr}%,installer_last_name.ilike.%${valStr}%`

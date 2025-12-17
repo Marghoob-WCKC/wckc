@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useForm } from "@mantine/form";
@@ -376,6 +376,89 @@ export default function EditServiceOrder({
       }
     : null;
 
+  const switchControls = (
+    <Stack gap="md" mt="md">
+      <Switch
+        styles={{
+          track: {
+            cursor: "pointer",
+          },
+        }}
+        size="md"
+        color="violet"
+        label="Chargeable"
+        {...form.getInputProps("chargeable", { type: "checkbox" })}
+      />
+      <Group align="center" wrap="nowrap">
+        <Switch
+          styles={{
+            track: {
+              cursor: "pointer",
+            },
+          }}
+          size="md"
+          color="violet"
+          label="Warranty Order"
+          {...form.getInputProps("is_warranty_so", {
+            type: "checkbox",
+          })}
+        />
+
+        <Box
+          style={{
+            transition: "all 0.3s ease",
+            maxWidth: form.values.is_warranty_so ? rem(200) : 0,
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <NumberInput
+            w={rem(140)}
+            size="sm"
+            placeholder="Cost"
+            leftSection="$"
+            {...form.getInputProps("warranty_order_cost")}
+          />
+        </Box>
+      </Group>
+
+      <Group align="center" wrap="nowrap">
+        <Switch
+          styles={{
+            track: {
+              cursor: "pointer",
+            },
+          }}
+          label="Mark as Completed"
+          size="md"
+          color="violet"
+          checked={!!form.values.completed_at}
+          onChange={(event) => {
+            const isChecked = event.currentTarget.checked;
+            form.setFieldValue("completed_at", isChecked ? new Date() : null);
+          }}
+        />
+
+        <Box
+          style={{
+            transition: "all 0.3s ease",
+            maxWidth: form.values.completed_at ? rem(200) : 0,
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {form.values.completed_at &&
+            dayjs(form.values.completed_at).year() !== 1999 && (
+              <Text size="sm" c="dimmed">
+                Completed on:{" "}
+                {dayjs(form.values.completed_at).format("YYYY-MM-DD HH:mm")}
+              </Text>
+            )}
+        </Box>
+      </Group>
+    </Stack>
+  );
+
   return (
     <Container
       size="100%"
@@ -400,7 +483,6 @@ export default function EditServiceOrder({
         }}
       >
         <Stack gap="md">
-          {}
           <Paper p="md" radius="md" shadow="sm" bg="gray.1">
             <Group
               justify="space-between"
@@ -460,7 +542,6 @@ export default function EditServiceOrder({
             </SimpleGrid>
           </Paper>
 
-          {}
           <Paper p="md" radius="md" shadow="xl" bg="gray.1">
             <Stack>
               <Fieldset legend="Job & Identifier" variant="filled" bg="white">
@@ -488,7 +569,7 @@ export default function EditServiceOrder({
                 </SimpleGrid>
               </Fieldset>
 
-              <Fieldset legend="Logistics" variant="filled" bg="white">
+              <Fieldset legend="Details" variant="filled" bg="white">
                 <Box mt="md">
                   <Group
                     visibleFrom="lg"
@@ -496,7 +577,6 @@ export default function EditServiceOrder({
                     wrap="nowrap"
                     gap="lg"
                   >
-                    {}
                     <Stack gap="sm" style={{ flex: 1 }}>
                       <Group align="flex-end" gap="xs" wrap="nowrap">
                         <Select
@@ -566,65 +646,31 @@ export default function EditServiceOrder({
                         </Tooltip>
                       </Group>
 
-                      <SimpleGrid cols={2} spacing="xs">
-                        <DateInput
-                          label="Due Date"
-                          placeholder="YYYY-MM-DD"
-                          clearable
-                          valueFormat="YYYY-MM-DD"
-                          {...form.getInputProps("due_date")}
-                        />
-                        <NumberInput
-                          label="Est. Hours"
-                          min={0}
-                          {...form.getInputProps("hours_estimated")}
-                        />
-                      </SimpleGrid>
+                      <DateInput
+                        label="Due Date"
+                        placeholder="YYYY-MM-DD"
+                        clearable
+                        valueFormat="YYYY-MM-DD"
+                        {...form.getInputProps("due_date")}
+                      />
                     </Stack>
 
-                    {}
                     <Divider orientation="vertical" />
 
-                    {}
-                    <Group align="stretch" gap="xs" style={{ flex: 1 }}>
-                      <Stack gap={4} style={{ flex: 1 }}>
-                        <TextInput
-                          label="Service Type"
-                          placeholder="Type..."
-                          {...form.getInputProps("service_type")}
-                        />
-                        <TextInput
-                          placeholder="Detail..."
-                          {...form.getInputProps("service_type_detail")}
-                        />
-                      </Stack>
-
-                      {}
-                      <Divider orientation="vertical" />
-
-                      <Stack gap={4} style={{ flex: 1 }}>
-                        <TextInput
-                          label="Service By"
-                          placeholder="By..."
-                          {...form.getInputProps("service_by")}
-                        />
-                        <TextInput
-                          placeholder="Detail..."
-                          {...form.getInputProps("service_by_detail")}
-                        />
-                      </Stack>
-                    </Group>
-
-                    {}
-                    <Divider orientation="vertical" />
-
-                    {}
                     <Box style={{ flex: 1 }}>
                       <HomeOwnersInfo form={form} />
                     </Box>
+
+                    <Divider orientation="vertical" />
+
+                    <Box style={{ flex: 1 }}>
+                      <Text fw={500} size="sm" mb="xs" c="dimmed">
+                        Order Status & Type
+                      </Text>
+                      {switchControls}
+                    </Box>
                   </Group>
 
-                  {}
                   <Stack hiddenFrom="lg" gap="xl">
                     <Stack gap="sm">
                       <Group align="flex-end" gap="xs" wrap="nowrap">
@@ -643,37 +689,19 @@ export default function EditServiceOrder({
                           label="Due Date"
                           {...form.getInputProps("due_date")}
                         />
-                        <NumberInput
-                          label="Est. Hours"
-                          {...form.getInputProps("hours_estimated")}
-                        />
                       </SimpleGrid>
                     </Stack>
 
-                    <SimpleGrid cols={2}>
-                      <Stack gap={4}>
-                        <TextInput
-                          label="Service Type"
-                          {...form.getInputProps("service_type")}
-                        />
-                        <TextInput
-                          placeholder="Detail..."
-                          {...form.getInputProps("service_type_detail")}
-                        />
-                      </Stack>
-                      <Stack gap={4}>
-                        <TextInput
-                          label="Service By"
-                          {...form.getInputProps("service_by")}
-                        />
-                        <TextInput
-                          placeholder="Detail..."
-                          {...form.getInputProps("service_by_detail")}
-                        />
-                      </Stack>
-                    </SimpleGrid>
-
                     <HomeOwnersInfo form={form} />
+
+                    <Box>
+                      <Divider
+                        mb="md"
+                        label="Status & Type"
+                        labelPosition="center"
+                      />
+                      {switchControls}
+                    </Box>
                   </Stack>
                 </Box>
 
@@ -684,70 +712,10 @@ export default function EditServiceOrder({
                     onChange={(html) => form.setFieldValue("comments", html)}
                   />
                 </Box>
-
-                <SimpleGrid cols={2} p="md" mih={rem(100)}>
-                  <Group>
-                    <Switch
-                      size="md"
-                      color="violet"
-                      label="Chargeable"
-                      {...form.getInputProps("chargeable", {
-                        type: "checkbox",
-                      })}
-                    />
-
-                    <Switch
-                      size="md"
-                      color="violet"
-                      label="Warranty Order"
-                      {...form.getInputProps("is_warranty_so", {
-                        type: "checkbox",
-                      })}
-                    />
-                    <Collapse in={form.values.is_warranty_so} keepMounted>
-                      <NumberInput
-                        w={rem(200)}
-                        label="Warranty Cost"
-                        placeholder="e.g. 99.99"
-                        leftSection="$"
-                        {...form.getInputProps("warranty_order_cost")}
-                      />
-                    </Collapse>
-                  </Group>
-                  <Group justify="end" align="center">
-                    <Switch
-                      label="Mark as Completed"
-                      size="md"
-                      color="violet"
-                      checked={!!form.values.completed_at}
-                      onChange={(event) => {
-                        const isChecked = event.currentTarget.checked;
-                        form.setFieldValue(
-                          "completed_at",
-                          isChecked ? new Date() : null
-                        );
-                      }}
-                    />
-                    <Box w={rem(250)}>
-                      <Collapse in={!!form.values.completed_at}>
-                        {form.values.completed_at &&
-                          dayjs(form.values.completed_at).year() !== 1999 && (
-                            <Text size="sm" c="dimmed">
-                              Completed on:{" "}
-                              {dayjs(form.values.completed_at).format(
-                                "YYYY-MM-DD HH:mm"
-                              )}
-                            </Text>
-                          )}
-                      </Collapse>
-                    </Box>
-                  </Group>
-                </SimpleGrid>
               </Fieldset>
             </Stack>
           </Paper>
 
-          {}
           <Paper p="md" radius="md" shadow="xl">
             <Group justify="space-between" mb="md">
               <Text fw={600}>Required Parts</Text>

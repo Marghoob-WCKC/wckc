@@ -359,6 +359,44 @@ export default function NewServiceOrder({
     );
   }
 
+  const switchControls = (
+    <Stack gap="md" mt="md">
+      <Switch
+        size="md"
+        color="violet"
+        label="Chargeable"
+        {...form.getInputProps("chargeable", { type: "checkbox" })}
+      />
+      <Group align="center" wrap="nowrap">
+        <Switch
+          size="md"
+          color="violet"
+          label="Warranty Order"
+          {...form.getInputProps("is_warranty_so", {
+            type: "checkbox",
+          })}
+        />
+
+        <Box
+          style={{
+            transition: "all 0.3s ease",
+            maxWidth: form.values.is_warranty_so ? rem(200) : 0,
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <NumberInput
+            w={rem(140)}
+            size="sm"
+            placeholder="Cost"
+            leftSection="$"
+            {...form.getInputProps("warranty_order_cost")}
+          />
+        </Box>
+      </Group>
+    </Stack>
+  );
+
   return (
     <Container
       size="100%"
@@ -450,14 +488,16 @@ export default function NewServiceOrder({
                 </SimpleGrid>
               </Fieldset>
 
-              <Fieldset legend="Logistics" variant="filled" bg="white">
+              <Fieldset legend="Details" variant="filled" bg="white">
                 <Box mt="md">
+                  {}
                   <Group
                     visibleFrom="lg"
                     align="stretch"
                     wrap="nowrap"
                     gap="lg"
                   >
+                    {}
                     <Stack gap="sm" style={{ flex: 1 }}>
                       <Group align="flex-end" gap="xs" wrap="nowrap">
                         <Select
@@ -527,59 +567,34 @@ export default function NewServiceOrder({
                         </Tooltip>
                       </Group>
 
-                      <SimpleGrid cols={2} spacing="xs">
-                        <DateInput
-                          label="Due Date"
-                          placeholder="YYYY-MM-DD"
-                          clearable
-                          valueFormat="YYYY-MM-DD"
-                          {...form.getInputProps("due_date")}
-                        />
-                        <NumberInput
-                          label="Est. Hours"
-                          min={0}
-                          {...form.getInputProps("hours_estimated")}
-                        />
-                      </SimpleGrid>
+                      <DateInput
+                        label="Due Date"
+                        placeholder="YYYY-MM-DD"
+                        clearable
+                        valueFormat="YYYY-MM-DD"
+                        {...form.getInputProps("due_date")}
+                      />
                     </Stack>
 
                     <Divider orientation="vertical" />
 
-                    <Group align="stretch" gap="xs" style={{ flex: 1 }}>
-                      <Stack gap={4} style={{ flex: 1 }}>
-                        <TextInput
-                          label="Service Type"
-                          placeholder="Type..."
-                          {...form.getInputProps("service_type")}
-                        />
-                        <TextInput
-                          placeholder="Detail..."
-                          {...form.getInputProps("service_type_detail")}
-                        />
-                      </Stack>
-
-                      <Divider orientation="vertical" />
-
-                      <Stack gap={4} style={{ flex: 1 }}>
-                        <TextInput
-                          label="Service By"
-                          placeholder="By..."
-                          {...form.getInputProps("service_by")}
-                        />
-                        <TextInput
-                          placeholder="Detail..."
-                          {...form.getInputProps("service_by_detail")}
-                        />
-                      </Stack>
-                    </Group>
-
-                    <Divider orientation="vertical" />
-
+                    {}
                     <Box style={{ flex: 1 }}>
                       <HomeOwnersInfo form={form} />
                     </Box>
+
+                    <Divider orientation="vertical" />
+
+                    {}
+                    <Box style={{ flex: 1 }}>
+                      <Text fw={500} size="sm" mb="xs" c="dimmed">
+                        Order Status & Type
+                      </Text>
+                      {switchControls}
+                    </Box>
                   </Group>
 
+                  {}
                   <Stack hiddenFrom="lg" gap="xl">
                     <Stack gap="sm">
                       <Group align="flex-end" gap="xs" wrap="nowrap">
@@ -598,43 +613,23 @@ export default function NewServiceOrder({
                           label="Due Date"
                           {...form.getInputProps("due_date")}
                         />
-                        <NumberInput
-                          label="Est. Hours"
-                          {...form.getInputProps("hours_estimated")}
-                        />
                       </SimpleGrid>
                     </Stack>
 
-                    {}
-                    <SimpleGrid cols={2}>
-                      <Stack gap={4}>
-                        <TextInput
-                          label="Service Type"
-                          {...form.getInputProps("service_type")}
-                        />
-                        <TextInput
-                          placeholder="Detail..."
-                          {...form.getInputProps("service_type_detail")}
-                        />
-                      </Stack>
-                      <Stack gap={4}>
-                        <TextInput
-                          label="Service By"
-                          {...form.getInputProps("service_by")}
-                        />
-                        <TextInput
-                          placeholder="Detail..."
-                          {...form.getInputProps("service_by_detail")}
-                        />
-                      </Stack>
-                    </SimpleGrid>
+                    <HomeOwnersInfo form={form} />
 
                     {}
-                    <HomeOwnersInfo form={form} />
+                    <Box>
+                      <Divider
+                        mb="md"
+                        label="Status & Type"
+                        labelPosition="center"
+                      />
+                      {switchControls}
+                    </Box>
                   </Stack>
                 </Box>
 
-                {}
                 <Box mt="md">
                   <CustomRichTextEditor
                     label="Comments"
@@ -642,36 +637,10 @@ export default function NewServiceOrder({
                     onChange={(html) => form.setFieldValue("comments", html)}
                   />
                 </Box>
-                <Switch
-                  size="md"
-                  color="violet"
-                  mt="md"
-                  label="Chargeable"
-                  {...form.getInputProps("chargeable", { type: "checkbox" })}
-                />
-                <Switch
-                  size="md"
-                  color="violet"
-                  my="md"
-                  label="Warranty Order"
-                  {...form.getInputProps("is_warranty_so", {
-                    type: "checkbox",
-                  })}
-                />
-                <Collapse in={form.values.is_warranty_so}>
-                  <NumberInput
-                    w={rem(200)}
-                    label="Warranty Cost"
-                    placeholder="e.g. 99.99"
-                    leftSection="$"
-                    {...form.getInputProps("warranty_order_cost")}
-                  />
-                </Collapse>
               </Fieldset>
             </Stack>
           </Paper>
 
-          {}
           <Paper p="md" radius="md" shadow="xl">
             <Group justify="space-between" mb="md">
               <Text fw={600}>Required Parts</Text>

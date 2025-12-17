@@ -185,7 +185,7 @@ export default function RelatedBackorders({
               Related Backorders
             </Text>
 
-            {!readOnly && onAddBackorder && (
+            {!readOnly && (
               <Button
                 type="button"
                 size="xs"

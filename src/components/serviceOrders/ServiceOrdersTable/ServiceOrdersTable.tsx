@@ -51,7 +51,6 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { useServiceOrdersTable } from "@/hooks/useServiceOrdersTable";
 import { Views } from "@/types/db";
-import { useUser } from "@clerk/nextjs";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useDisclosure } from "@mantine/hooks";
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
@@ -378,7 +377,7 @@ export default function ServiceOrdersTable() {
               />
               <Switch
                 label="Installer Requested"
-                size="lg"
+                size="md"
                 thumbIcon={<FaCheckCircle />}
                 styles={{
                   track: {
@@ -436,9 +435,9 @@ export default function ServiceOrdersTable() {
           const isActive = statusFilter === item.key;
 
           const gradients: Record<string, string> = {
-            ALL: "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)", 
-            OPEN: "linear-gradient(135deg, #4da0ff 0%, #0066cc 100%)", 
-            COMPLETED: "linear-gradient(135deg, #3ac47d 0%, #0f9f4f 100%)", 
+            ALL: "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
+            OPEN: "linear-gradient(135deg, #4da0ff 0%, #0066cc 100%)",
+            COMPLETED: "linear-gradient(135deg, #3ac47d 0%, #0f9f4f 100%)",
           };
 
           const gradientsLight: Record<string, string> = {

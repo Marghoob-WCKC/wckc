@@ -161,12 +161,13 @@ export default function InstallationTable() {
 
         return (
           <Group gap={4} wrap="nowrap">
-            <Text size="sm" lineClamp={1}>
-              {row.installer_first_name}
-            </Text>
-            <Text size="xs" c="dimmed">
-              ({row.installer_company || "—"})
-            </Text>
+            {row.installer_company ? (
+              <Tooltip label={`${row.installer_company} `}>
+                <Text size="sm">{row.installer_first_name}</Text>
+              </Tooltip>
+            ) : (
+              <Text size="sm">{row.installer_first_name}</Text>
+            )}
           </Group>
         );
       },
@@ -195,21 +196,23 @@ export default function InstallationTable() {
 
     columnHelper.accessor("has_shipped", {
       header: "Shipped",
-      size: 120,
-      minSize: 100,
+      size: 80,
+      minSize: 80,
       cell: (info) => {
         const shipped = info.getValue();
         return (
-          <Badge
-            variant="gradient"
-            gradient={
-              shipped
-                ? { from: "lime", to: "green", deg: 90 }
-                : { from: "red", to: "#ff2c2cff", deg: 90 }
-            }
-          >
-            {shipped ? "YES" : "NO"}
-          </Badge>
+          <Center>
+            <Badge
+              variant="gradient"
+              gradient={
+                shipped
+                  ? { from: "lime", to: "green", deg: 90 }
+                  : { from: "red", to: "#ff2c2cff", deg: 90 }
+              }
+            >
+              {shipped ? "YES" : "NO"}
+            </Badge>
+          </Center>
         );
       },
     }),
@@ -235,8 +238,8 @@ export default function InstallationTable() {
     }),
     columnHelper.accessor("installation_completed", {
       header: "Installation",
-      size: 160,
-      minSize: 140,
+      size: 180,
+      minSize: 180,
       cell: (info) => {
         const date = info.getValue();
         if (date) {
@@ -290,6 +293,12 @@ export default function InstallationTable() {
           </Group>
         );
       },
+    }),
+    columnHelper.accessor("site_address", {
+      header: "Site Address",
+      size: 200,
+      minSize: 150,
+      cell: (info) => info.getValue() ?? "—",
     }),
   ];
 
@@ -367,6 +376,15 @@ export default function InstallationTable() {
                 value={getInputFilterValue("job_number")}
                 onChange={(e) =>
                   setInputFilterValue("job_number", e.target.value)
+                }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+              />
+              <TextInput
+                label="Site Address"
+                placeholder="e.g., 123 Main St, Anytown, CA"
+                value={getInputFilterValue("site_address")}
+                onChange={(e) =>
+                  setInputFilterValue("site_address", e.target.value)
                 }
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
@@ -557,10 +575,8 @@ export default function InstallationTable() {
                       <Table.Td
                         key={cell.id}
                         style={{
-                          width: cell.column.getSize(),
+                          minWidth: cell.column.getSize(),
                           whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
                         }}
                       >
                         {flexRender(

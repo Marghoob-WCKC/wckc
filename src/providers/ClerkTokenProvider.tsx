@@ -34,7 +34,6 @@ export default function ClerkTokenProvider({
           return;
         }
 
-        // refresh + get token
         const supabaseToken = await getToken({
           template: "supabase-test",
           skipCache: true,
@@ -46,12 +45,11 @@ export default function ClerkTokenProvider({
           const now = Date.now();
           const expiresIn = expiresAt * 1000 - now;
 
-          // Refresh token 1 minute BEFORE it expires
           const refreshTime = expiresIn - 60000;
 
           if (refreshTime > 0) {
             const timeout = setTimeout(() => {
-              initializeToken(); // Recursively refresh token
+              initializeToken(); 
             }, refreshTime);
 
             return () => clearTimeout(timeout);

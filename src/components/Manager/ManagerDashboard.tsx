@@ -315,7 +315,6 @@ export default function ManagerDashboardClient() {
               .select("*", { count: "exact", head: true })
               .is("completed_at", null),
 
-            // Updated Active Jobs Logic
             supabase
               .from("jobs")
               .select("id, installation!inner(wrap_completed, wrap_date)", {
@@ -323,8 +322,8 @@ export default function ManagerDashboardClient() {
                 head: true,
               })
               .eq("is_active", true)
-              .not("installation.wrap_date", "is", null) // Must have a scheduled wrap date
-              .is("installation.wrap_completed", null), // Must NOT be wrapped
+              .not("installation.wrap_date", "is", null) 
+              .is("installation.wrap_completed", null), 
 
             supabase
               .from("sales_orders")
@@ -361,7 +360,6 @@ export default function ManagerDashboardClient() {
 
         const [activeNotWrapped, shipments, pendingPlace, pendingOrders] =
           await Promise.all([
-            // Updated Active Jobs Logic
             supabase
               .from("jobs")
               .select("id, installation!inner(wrap_completed, wrap_date)", {
@@ -422,7 +420,6 @@ export default function ManagerDashboardClient() {
 
         const [activeNotWrapped, shipmentsMonth, shipments] = await Promise.all(
           [
-            // Updated Active Jobs Logic
             supabase
               .from("jobs")
               .select("id, installation!inner(wrap_completed, wrap_date)", {
