@@ -433,7 +433,7 @@ export default function PlantShippingTable() {
             </Text>
           </Stack>
         </Group>
-        {/* PDF Button */}
+        {}
         <Button
           variant="outline"
           color="violet"
@@ -444,7 +444,7 @@ export default function PlantShippingTable() {
         </Button>
       </Group>
 
-      {/* Filters Accordion */}
+      {}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -506,7 +506,7 @@ export default function PlantShippingTable() {
         </Accordion.Item>
       </Accordion>
 
-      {/* Accordion Table */}
+      {}
       <ScrollArea
         style={{ flex: 1 }}
         type="always"
@@ -631,7 +631,7 @@ export default function PlantShippingTable() {
         )}
       </ScrollArea>
 
-      {/* Pagination */}
+      {}
       <Box
         style={{
           borderTop: "1px solid #eee",
@@ -648,7 +648,7 @@ export default function PlantShippingTable() {
         />
       </Box>
 
-      {/* Modals */}
+      {}
       <ShippingPdfPreviewModal
         opened={pdfOpened}
         onClose={closePdf}

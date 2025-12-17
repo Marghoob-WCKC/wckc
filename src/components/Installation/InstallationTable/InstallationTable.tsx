@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   createColumnHelper,
@@ -32,6 +32,9 @@ import {
   Button,
   Anchor,
   Switch,
+  Paper,
+  UnstyledButton,
+  Transition,
 } from "@mantine/core";
 import {
   FaSearch,
@@ -43,9 +46,10 @@ import {
   FaCalendarCheck,
   FaFire,
   FaShippingFast,
+  FaFilter,
 } from "react-icons/fa";
 import dayjs from "dayjs";
-import { DateInput, DatePickerInput } from "@mantine/dates";
+import { DatePickerInput } from "@mantine/dates";
 import { useInstallationTable } from "@/hooks/useInstallationTable";
 import { Views } from "@/types/db";
 import { useDisclosure } from "@mantine/hooks";
@@ -67,13 +71,38 @@ export default function InstallationTable() {
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
 
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    filterId: string | null;
+    filterValue: any | null; 
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    filterId: null,
+    filterValue: null,
+  });
+
+  useEffect(() => {
+    const handleClick = () => {
+      setContextMenu((prev) =>
+        prev.visible ? { ...prev, visible: false } : prev
+      );
+    };
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, []);
+
   const handleJobClick = (id: number) => {
     setDrawerJobId(id);
     openDrawer();
   };
+
   const setInputFilterValue = (
     id: string,
-    value: string | undefined | null
+    value: string | undefined | null | [Date | null, Date | null]
   ) => {
     setInputFilters((prev) => {
       const existing = prev.filter((f) => f.id !== id);
@@ -83,7 +112,7 @@ export default function InstallationTable() {
   };
 
   const getInputFilterValue = (id: string) => {
-    return (inputFilters.find((f) => f.id === id)?.value as string) || "";
+    return inputFilters.find((f) => f.id === id)?.value || "";
   };
 
   const handleApplyFilters = () => {
@@ -97,6 +126,31 @@ export default function InstallationTable() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
 
+  const handleQuickFilter = (id: string, value: any) => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    setInputFilters((prev) => {
+      const existing = prev.filter((f) => f.id !== id);
+      return [...existing, { id, value }];
+    });
+    setActiveFilters((prev) => {
+      const existing = prev.filter((f) => f.id !== id);
+      return [...existing, { id, value }];
+    });
+    setContextMenu((prev) => ({ ...prev, visible: false }));
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, id: string, value: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      filterId: id,
+      filterValue: value,
+    });
+  };
+
   const { data, isLoading, isError, error } = useInstallationTable({
     pagination,
     columnFilters: activeFilters,
@@ -108,6 +162,27 @@ export default function InstallationTable() {
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
   const columnHelper = createColumnHelper<InstallationJobView>();
+
+  const CellWrapper = ({
+    children,
+    onContextMenu,
+  }: {
+    children: React.ReactNode;
+    onContextMenu?: (e: React.MouseEvent) => void;
+  }) => (
+    <Box
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        cursor: "context-menu",
+      }}
+      onContextMenu={onContextMenu}
+    >
+      {children}
+    </Box>
+  );
 
   const columns = [
     columnHelper.accessor("job_number", {
@@ -146,7 +221,15 @@ export default function InstallationTable() {
       header: "Client",
       size: 150,
       minSize: 120,
-      cell: (info) => info.getValue() ?? "—",
+      cell: (info) => (
+        <CellWrapper
+          onContextMenu={(e) =>
+            handleContextMenu(e, "client", info.getValue() as string)
+          }
+        >
+          <Text size="sm">{info.getValue() ?? "—"}</Text>
+        </CellWrapper>
+      ),
     }),
 
     columnHelper.accessor("installer_company", {
@@ -156,19 +239,28 @@ export default function InstallationTable() {
       minSize: 150,
       cell: (info) => {
         const row = info.row.original;
+        const filterValue =
+          row.installer_company || row.installer_first_name || "";
+
         if (!row.installer_id && !row.installer_first_name)
           return <Text c="orange">TBD</Text>;
 
         return (
-          <Group gap={4} wrap="nowrap">
-            {row.installer_company ? (
-              <Tooltip label={`${row.installer_company} `}>
+          <CellWrapper
+            onContextMenu={(e) =>
+              handleContextMenu(e, "installer", filterValue)
+            }
+          >
+            <Group gap={4} wrap="nowrap">
+              {row.installer_company ? (
+                <Tooltip label={`${row.installer_company} `}>
+                  <Text size="sm">{row.installer_first_name}</Text>
+                </Tooltip>
+              ) : (
                 <Text size="sm">{row.installer_first_name}</Text>
-              </Tooltip>
-            ) : (
-              <Text size="sm">{row.installer_first_name}</Text>
-            )}
-          </Group>
+              )}
+            </Group>
+          </CellWrapper>
         );
       },
     }),
@@ -180,7 +272,19 @@ export default function InstallationTable() {
       cell: (info) => {
         const date = info.getValue();
         if (!date) return <Text c="orange">TBD</Text>;
-        return dayjs(date).format("YYYY-MM-DD");
+        return (
+          <CellWrapper
+            onContextMenu={(e) =>
+              handleContextMenu(
+                e,
+                "wrap_date",
+                dayjs(date).format("YYYY-MM-DD")
+              )
+            }
+          >
+            {dayjs(date).format("YYYY-MM-DD")}
+          </CellWrapper>
+        );
       },
     }),
     columnHelper.accessor("ship_schedule", {
@@ -190,7 +294,18 @@ export default function InstallationTable() {
       cell: (info) => {
         const date = info.getValue();
         if (!date) return <Text c="orange">TBD</Text>;
-        return dayjs(date).format("YYYY-MM-DD");
+
+        const dateObj = dayjs(date).toDate();
+
+        return (
+          <CellWrapper
+            onContextMenu={(e) =>
+              handleContextMenu(e, "ship_schedule", [dateObj, dateObj])
+            }
+          >
+            {dayjs(date).format("YYYY-MM-DD")}
+          </CellWrapper>
+        );
       },
     }),
 
@@ -201,7 +316,17 @@ export default function InstallationTable() {
       cell: (info) => {
         const shipped = info.getValue();
         return (
-          <Center>
+          <Center
+            style={{
+              width: "100%",
+              height: "100%",
+              cursor: "context-menu",
+            }}
+            onContextMenu={(e) => {
+              const filterVal = shipped ? "false" : "true";
+              handleContextMenu(e, "has_shipped", filterVal);
+            }}
+          >
             <Badge
               variant="gradient"
               gradient={
@@ -223,7 +348,18 @@ export default function InstallationTable() {
       cell: (info) => {
         const date = info.getValue();
         if (!date) return <Text c="orange">TBD</Text>;
-        return dayjs(date).format("YYYY-MM-DD");
+
+        const dateObj = dayjs(date).toDate();
+
+        return (
+          <CellWrapper
+            onContextMenu={(e) =>
+              handleContextMenu(e, "installation_date", [dateObj, dateObj])
+            }
+          >
+            {dayjs(date).format("YYYY-MM-DD")}
+          </CellWrapper>
+        );
       },
     }),
     columnHelper.accessor("inspection_date", {
@@ -233,7 +369,19 @@ export default function InstallationTable() {
       cell: (info) => {
         const date = info.getValue();
         if (!date) return <Text c="orange">TBD</Text>;
-        return dayjs(date).format("YYYY-MM-DD");
+        return (
+          <CellWrapper
+            onContextMenu={(e) =>
+              handleContextMenu(
+                e,
+                "inspection_date",
+                dayjs(date).format("YYYY-MM-DD")
+              )
+            }
+          >
+            {dayjs(date).format("YYYY-MM-DD")}
+          </CellWrapper>
+        );
       },
     }),
     columnHelper.accessor("installation_completed", {
@@ -242,29 +390,42 @@ export default function InstallationTable() {
       minSize: 180,
       cell: (info) => {
         const date = info.getValue();
-        if (date) {
-          return (
-            <Group gap={6}>
-              <FaCheckCircle color="var(--mantine-color-green-6)" size={14} />
-              {date === "1999-09-19T00:00:00+00:00" ? (
-                <Text size="sm" c="green.8" fw={600}>
-                  Completed
-                </Text>
-              ) : (
-                <Text size="sm" c="green.8" fw={600}>
-                  {dayjs(date).format("YYYY-MM-DD")}
-                </Text>
-              )}
-            </Group>
-          );
-        }
         return (
-          <Group gap={6}>
-            <FaRegCircle color="gray" size={14} />
-            <Text size="sm" c="dimmed">
-              Pending
-            </Text>
-          </Group>
+          <CellWrapper
+            onContextMenu={(e) => {
+              if (date) {
+                handleContextMenu(
+                  e,
+                  "installation_completed",
+                  dayjs(date).format("YYYY-MM-DD")
+                );
+              } else {
+                handleContextMenu(e, "installation_completed", "pending");
+              }
+            }}
+          >
+            {date ? (
+              <Group gap={6}>
+                <FaCheckCircle color="var(--mantine-color-green-6)" size={14} />
+                {date === "1999-09-19T00:00:00+00:00" ? (
+                  <Text size="sm" c="green.8" fw={600}>
+                    Completed
+                  </Text>
+                ) : (
+                  <Text size="sm" c="green.8" fw={600}>
+                    {dayjs(date).format("YYYY-MM-DD")}
+                  </Text>
+                )}
+              </Group>
+            ) : (
+              <Group gap={6}>
+                <FaRegCircle color="gray" size={14} />
+                <Text size="sm" c="dimmed">
+                  Pending
+                </Text>
+              </Group>
+            )}
+          </CellWrapper>
         );
       },
     }),
@@ -274,23 +435,39 @@ export default function InstallationTable() {
       minSize: 140,
       cell: (info) => {
         const date = info.getValue();
-        if (date) {
-          return (
-            <Group gap={6}>
-              <FaCalendarCheck color="var(--mantine-color-blue-6)" size={14} />
-              <Text size="sm" c="blue.8" fw={600}>
-                {dayjs(date).format("YYYY-MM-DD")}
-              </Text>
-            </Group>
-          );
-        }
         return (
-          <Group gap={6}>
-            <FaRegCircle color="gray" size={14} />
-            <Text size="sm" c="dimmed">
-              Pending
-            </Text>
-          </Group>
+          <CellWrapper
+            onContextMenu={(e) => {
+              if (date) {
+                handleContextMenu(
+                  e,
+                  "inspection_completed",
+                  dayjs(date).format("YYYY-MM-DD")
+                );
+              } else {
+                handleContextMenu(e, "inspection_completed", "pending");
+              }
+            }}
+          >
+            {date ? (
+              <Group gap={6}>
+                <FaCalendarCheck
+                  color="var(--mantine-color-blue-6)"
+                  size={14}
+                />
+                <Text size="sm" c="blue.8" fw={600}>
+                  {dayjs(date).format("YYYY-MM-DD")}
+                </Text>
+              </Group>
+            ) : (
+              <Group gap={6}>
+                <FaRegCircle color="gray" size={14} />
+                <Text size="sm" c="dimmed">
+                  Pending
+                </Text>
+              </Group>
+            )}
+          </CellWrapper>
         );
       },
     }),
@@ -298,7 +475,15 @@ export default function InstallationTable() {
       header: "Site Address",
       size: 200,
       minSize: 150,
-      cell: (info) => info.getValue() ?? "—",
+      cell: (info) => (
+        <CellWrapper
+          onContextMenu={(e) =>
+            handleContextMenu(e, "site_address", info.getValue() as string)
+          }
+        >
+          <Text size="sm">{info.getValue() ?? "—"}</Text>
+        </CellWrapper>
+      ),
     }),
   ];
 
@@ -373,7 +558,7 @@ export default function InstallationTable() {
               <TextInput
                 label="Job Number"
                 placeholder="e.g., 202401"
-                value={getInputFilterValue("job_number")}
+                value={getInputFilterValue("job_number") as string}
                 onChange={(e) =>
                   setInputFilterValue("job_number", e.target.value)
                 }
@@ -382,7 +567,7 @@ export default function InstallationTable() {
               <TextInput
                 label="Site Address"
                 placeholder="e.g., 123 Main St, Anytown, CA"
-                value={getInputFilterValue("site_address")}
+                value={getInputFilterValue("site_address") as string}
                 onChange={(e) =>
                   setInputFilterValue("site_address", e.target.value)
                 }
@@ -391,20 +576,19 @@ export default function InstallationTable() {
               <TextInput
                 label="Client"
                 placeholder="e.g., Smith"
-                value={getInputFilterValue("client")}
+                value={getInputFilterValue("client") as string}
                 onChange={(e) => setInputFilterValue("client", e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
                 label="Installer"
                 placeholder="Company or Name"
-                value={getInputFilterValue("installer")}
+                value={getInputFilterValue("installer") as string}
                 onChange={(e) =>
                   setInputFilterValue("installer", e.target.value)
                 }
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
-              {/* testing */}
               <DatePickerInput
                 type="range"
                 label="Installation Date"
@@ -601,6 +785,7 @@ export default function InstallationTable() {
                         `/dashboard/installation/${row.original.job_id}`
                       )
                     }
+                    onContextMenu={(e) => e.preventDefault()} 
                     style={{ cursor: "pointer", backgroundColor: bgColor }}
                   >
                     {row.getVisibleCells().map((cell) => (
@@ -648,6 +833,63 @@ export default function InstallationTable() {
           onChange={(page) => table.setPageIndex(page - 1)}
         />
       </Box>
+
+      {}
+      <Transition
+        mounted={contextMenu.visible}
+        transition="pop"
+        duration={200}
+        timingFunction="ease"
+      >
+        {(styles) => (
+          <Paper
+            shadow="md"
+            radius="sm"
+            withBorder
+            style={{
+              ...styles,
+              position: "fixed",
+              top: contextMenu.y,
+              left: contextMenu.x,
+              zIndex: 9999,
+              minWidth: 160,
+              overflow: "hidden",
+              padding: 4,
+            }}
+          >
+            <UnstyledButton
+              style={{
+                display: "flex",
+                alignItems: "center",
+                width: "100%",
+                padding: "8px 12px",
+                fontSize: "14px",
+                borderRadius: "4px",
+                transition: "background-color 0.1s",
+              }}
+              onClick={() => {
+                if (contextMenu.filterId && contextMenu.filterValue !== null) {
+                  handleQuickFilter(
+                    contextMenu.filterId,
+                    contextMenu.filterValue
+                  );
+                }
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor =
+                  "var(--mantine-color-gray-1)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+            >
+              <FaFilter style={{ marginRight: 8, color: "#666" }} size={12} />
+              <Text size="sm">Quick Filter</Text>
+            </UnstyledButton>
+          </Paper>
+        )}
+      </Transition>
+
       <JobDetailsDrawer
         jobId={drawerJobId}
         opened={drawerOpened}

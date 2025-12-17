@@ -125,7 +125,7 @@ export const PlantShippingSchedulePdf = ({
   return (
     <Document>
       <Page size="A4" orientation="landscape" style={styles.page}>
-        {/* Header */}
+        {}
         <View style={styles.headerContainer}>
           <Text style={styles.reportTitle}>Plant Shipping Schedule</Text>
           <View>
@@ -147,7 +147,6 @@ export const PlantShippingSchedulePdf = ({
             ? "Unscheduled"
             : dayjs(dateKey).format("ddd, MMM D, YYYY");
 
-          // Calculate unique base jobs (e.g. 100-1 and 100-2 count as 1 job "100")
           const uniqueJobCount = new Set(
             rows.map((r) => {
               const val = r.job_number || "";
@@ -162,7 +161,7 @@ export const PlantShippingSchedulePdf = ({
 
           return (
             <View key={dateKey}>
-              {/* Group Header */}
+              {}
               <View style={styles.dateGroupHeader} wrap={false}>
                 <Text style={styles.dateGroupText}>
                   SHIP DATE: {displayDate}
@@ -177,7 +176,7 @@ export const PlantShippingSchedulePdf = ({
                 </Text>
               </View>
 
-              {/* Table Header */}
+              {}
               <View style={styles.tableHeader} wrap={false}>
                 <Text style={[styles.headerText, styles.colJob]}>Job #</Text>
                 <Text style={[styles.headerText, styles.colClient]}>
@@ -189,7 +188,7 @@ export const PlantShippingSchedulePdf = ({
                 <Text style={[styles.headerText, styles.colSpec]}>Species</Text>
                 <Text style={[styles.headerText, styles.colColor]}>Color</Text>
 
-                {/* Checkboxes */}
+                {}
                 <Text style={[styles.headerText, styles.colCheck]}>D</Text>
                 <Text style={[styles.headerText, styles.colCheck]}>P</Text>
                 <Text style={[styles.headerText, styles.colCheck]}>F/C</Text>
@@ -197,7 +196,7 @@ export const PlantShippingSchedulePdf = ({
                 <Text style={[styles.headerText, styles.colCheck]}>A</Text>
               </View>
 
-              {/* Rows */}
+              {}
               {rows.map((row) => (
                 <View style={styles.tableRow} key={row.job_id} wrap={false}>
                   <Text style={[styles.rowText, styles.colJob]}>
@@ -224,7 +223,7 @@ export const PlantShippingSchedulePdf = ({
                     {row.cabinet_color}
                   </Text>
 
-                  {/* Checkbox Cells */}
+                  {}
                   <View style={styles.colCheck}>
                     <Checkbox checked={!!row.doors_completed_actual} />
                   </View>
