@@ -434,6 +434,7 @@ export default function PlantTableWrap() {
               />
               <DatePickerInput
                 type="range"
+                allowSingleDateInRange
                 label="Wrap Date Range"
                 placeholder="Pick dates range"
                 value={dateRange}

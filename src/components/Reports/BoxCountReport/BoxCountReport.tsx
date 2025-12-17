@@ -112,6 +112,7 @@ export default function BoxCountReport() {
             <Group align="flex-end">
               <DatePickerInput
                 type="range"
+                allowSingleDateInRange
                 label="Date Range"
                 placeholder="Select dates"
                 value={dateRange}

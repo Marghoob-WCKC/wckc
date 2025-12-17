@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   createColumnHelper,
@@ -10,6 +10,7 @@ import {
   PaginationState,
   ColumnFiltersState,
   SortingState,
+  RowSelectionState,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -35,6 +36,7 @@ import {
   Paper,
   UnstyledButton,
   Transition,
+  Checkbox,
 } from "@mantine/core";
 import {
   FaSearch,
@@ -54,6 +56,7 @@ import { useInstallationTable } from "@/hooks/useInstallationTable";
 import { Views } from "@/types/db";
 import { useDisclosure } from "@mantine/hooks";
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
+import BulkScheduleModal from "../BulkInstallationScheduleModal/BulkInstallationScheduleModal";
 
 type InstallationJobView = Views<"installation_table_view">;
 
@@ -69,6 +72,10 @@ export default function InstallationTable() {
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
   const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
+    useDisclosure(false);
+
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [bulkModalOpen, { open: openBulkModal, close: closeBulkModal }] =
     useDisclosure(false);
 
   const [contextMenu, setContextMenu] = useState<{
@@ -185,6 +192,34 @@ export default function InstallationTable() {
   );
 
   const columns = [
+    {
+      id: "select",
+      // Disable sorting for the checkbox column
+      enableSorting: false,
+      header: ({ table }: any) => (
+        <Checkbox
+          color="violet"
+          styles={{ input: { cursor: "pointer" } }}
+          checked={table.getIsAllPageRowsSelected()}
+          indeterminate={table.getIsSomePageRowsSelected()}
+          onChange={table.getToggleAllPageRowsSelectedHandler()}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }: any) => (
+        <Center style={{ width: "100%", height: "100%" }}>
+          <Checkbox
+            color="violet"
+            styles={{ input: { cursor: "pointer" } }}
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            onChange={row.getToggleSelectedHandler()}
+            aria-label="Select row"
+          />
+        </Center>
+      ),
+      size: 40,
+    },
     columnHelper.accessor("job_number", {
       header: "Job No.",
       size: 150,
@@ -496,13 +531,17 @@ export default function InstallationTable() {
       pagination,
       sorting,
       columnFilters: activeFilters,
+      rowSelection,
     },
+    enableRowSelection: true,
     manualPagination: true,
     manualFiltering: true,
     manualSorting: true,
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => String(row.installation_id),
   });
 
   if (isLoading) {
@@ -528,6 +567,7 @@ export default function InstallationTable() {
         flexDirection: "column",
         padding: rem(20),
         height: "calc(100vh - 45px)",
+        position: "relative", // Ensure context for absolute positioning if needed, though we use fixed for the bar
       }}
     >
       <Group mb="md">
@@ -592,6 +632,7 @@ export default function InstallationTable() {
               />
               <DatePickerInput
                 type="range"
+                allowSingleDateInRange
                 label="Installation Date"
                 placeholder="Filter by Date Range"
                 clearable
@@ -606,6 +647,7 @@ export default function InstallationTable() {
               />
               <DatePickerInput
                 type="range"
+                allowSingleDateInRange
                 label="Shipping Date"
                 placeholder="Filter by Date Range"
                 clearable
@@ -711,6 +753,64 @@ export default function InstallationTable() {
         </Accordion.Item>
       </Accordion>
 
+      {/* Floating Action Bar - Moved here and wrapped in Transition */}
+      <Transition
+        mounted={Object.keys(rowSelection).length > 1}
+        transition="slide-up"
+        duration={200}
+        timingFunction="ease"
+      >
+        {(styles) => (
+          <Paper
+            shadow="xl"
+            radius="md"
+            withBorder
+            p="md"
+            style={{
+              ...styles,
+              position: "fixed",
+              bottom: rem(80),
+              left: rem(250),
+              right: 0,
+              marginInline: "auto", // Centers the fixed element
+              width: "fit-content",
+              zIndex: 200, // Ensure it sits above table content
+              backgroundColor: "var(--mantine-color-violet-0)",
+              borderColor: "var(--mantine-color-violet-2)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: rem(20),
+            }}
+          >
+            <Group>
+              <ThemeIcon color="violet" variant="light" size="lg">
+                <FaCheckCircle />
+              </ThemeIcon>
+              <Text fw={500} c="violet.9">
+                {Object.keys(rowSelection).length} jobs selected
+              </Text>
+            </Group>
+            <Group>
+              <Button
+                variant="white"
+                color="red"
+                onClick={() => setRowSelection({})}
+              >
+                Clear Selection
+              </Button>
+              <Button
+                color="violet"
+                onClick={openBulkModal}
+                leftSection={<FaCalendarCheck />}
+              >
+                Bulk Schedule
+              </Button>
+            </Group>
+          </Paper>
+        )}
+      </Transition>
+
       <ScrollArea
         style={{
           flex: 1,
@@ -735,29 +835,44 @@ export default function InstallationTable() {
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <Table.Th
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    onClick={header.column.getToggleSortingHandler()}
-                    style={{
-                      position: "relative",
-                      width: header.getSize(),
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                    <span className="inline-block ml-1">
-                      {header.column.getIsSorted() === "asc" && <FaSortUp />}
-                      {header.column.getIsSorted() === "desc" && <FaSortDown />}
-                      {!header.column.getIsSorted() && <FaSort opacity={0.1} />}
-                    </span>
-                  </Table.Th>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const canSort = header.column.getCanSort();
+                  return (
+                    <Table.Th
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      onClick={
+                        canSort
+                          ? header.column.getToggleSortingHandler()
+                          : undefined
+                      }
+                      style={{
+                        position: "relative",
+                        width: header.getSize(),
+                        cursor: canSort ? "pointer" : "default",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {canSort && (
+                        <span className="inline-block ml-1">
+                          {header.column.getIsSorted() === "asc" && (
+                            <FaSortUp />
+                          )}
+                          {header.column.getIsSorted() === "desc" && (
+                            <FaSortDown />
+                          )}
+                          {!header.column.getIsSorted() && (
+                            <FaSort opacity={0.1} />
+                          )}
+                        </span>
+                      )}
+                    </Table.Th>
+                  );
+                })}
               </Table.Tr>
             ))}
           </Table.Thead>
@@ -795,6 +910,13 @@ export default function InstallationTable() {
                         style={{
                           minWidth: cell.column.getSize(),
                           whiteSpace: "nowrap",
+                          padding:
+                            cell.column.id === "select" ? "0" : undefined,
+                        }}
+                        onClick={(e) => {
+                          if (cell.column.id === "select") {
+                            e.stopPropagation();
+                          }
                         }}
                       >
                         {flexRender(
@@ -835,7 +957,7 @@ export default function InstallationTable() {
         />
       </Box>
 
-      {}
+      {/* Quick Filter Context Menu */}
       <Transition
         mounted={contextMenu.visible}
         transition="pop"
@@ -895,6 +1017,12 @@ export default function InstallationTable() {
         jobId={drawerJobId}
         opened={drawerOpened}
         onClose={closeDrawer}
+      />
+      <BulkScheduleModal
+        opened={bulkModalOpen}
+        onClose={closeBulkModal}
+        selectedRows={table.getSelectedRowModel().rows}
+        clearSelection={() => setRowSelection({})}
       />
     </Box>
   );

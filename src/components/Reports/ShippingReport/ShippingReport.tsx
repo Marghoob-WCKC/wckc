@@ -122,6 +122,7 @@ export default function ShippingReport() {
             <Group align="flex-end">
               <DatePickerInput
                 type="range"
+                allowSingleDateInRange
                 label="Report Date Range"
                 placeholder="Select dates"
                 value={dateRange}

@@ -20,7 +20,7 @@ import { notifications } from "@mantine/notifications";
 import { zodResolver } from "@/utils/zodResolver/zodResolver";
 import { InvoiceSchema, InvoiceFormInput } from "@/zod/invoice.schema";
 import { useSupabase } from "@/hooks/useSupabase";
-import { useJobs } from "@/hooks/useJobs";
+import { useJobSearch } from "@/hooks/useJobSearch";
 
 interface AddInvoiceProps {
   opened: boolean;
@@ -28,16 +28,14 @@ interface AddInvoiceProps {
 }
 
 export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
-  const { supabase, isAuthenticated } = useSupabase();
+  const { supabase } = useSupabase();
   const queryClient = useQueryClient();
-
-  const { data: jobOptions, isLoading: jobsLoading } = useJobs(isAuthenticated);
 
   const form = useForm<InvoiceFormInput>({
     initialValues: {
       invoice_number: "",
       job_id: "",
-      date_entered: new Date(), 
+      date_entered: new Date(),
       date_due: null,
       paid_at: null,
       no_charge: false,
@@ -46,16 +44,33 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
     validate: zodResolver(InvoiceSchema),
   });
 
+  // FIX: Cast job_id to string to satisfy the hook's type definition
+  const {
+    options: jobOptions,
+    isLoading: jobsLoading,
+    search,
+    setSearch,
+  } = useJobSearch(form.values.job_id ? String(form.values.job_id) : null);
+
   useEffect(() => {
     if (opened) {
       form.reset();
       form.setFieldValue("date_entered", new Date());
+      setSearch("");
     }
   }, [opened]);
 
   const createMutation = useMutation({
     mutationFn: async (values: InvoiceFormInput) => {
-      const { error } = await supabase.from("invoices").insert(values);
+      // Ensure job_id is a number for the DB insert if needed,
+      // though Zod transform usually handles it on parse.
+      // Supabase insert expects the column type (integer).
+      const payload = {
+        ...values,
+        job_id: Number(values.job_id),
+      };
+
+      const { error } = await supabase.from("invoices").insert(payload);
 
       if (error) throw error;
     },
@@ -65,7 +80,7 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
         message: "Invoice created successfully",
         color: "green",
       });
-      queryClient.invalidateQueries({ queryKey: ["invoices_list"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices_list_server"] });
       onClose();
     },
     onError: (error: any) => {
@@ -97,8 +112,14 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
             <Select
               label="Link to Job"
               placeholder="Search Job Number"
-              data={jobOptions || []}
+              data={jobOptions}
               searchable
+              searchValue={search}
+              onSearchChange={setSearch}
+              nothingFoundMessage={
+                jobsLoading ? "Searching..." : "No jobs found"
+              }
+              filter={({ options }) => options}
               withAsterisk
               clearable
               {...form.getInputProps("job_id")}
@@ -139,7 +160,7 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
 
           <Switch
             label="No Charge"
-            color="#8400ffff"
+            color="violet"
             disabled={!form.values.job_id}
             styles={{
               track: {

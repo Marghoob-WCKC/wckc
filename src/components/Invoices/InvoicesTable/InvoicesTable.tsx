@@ -1,17 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createColumnHelper,
   getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
   useReactTable,
   flexRender,
   PaginationState,
   ColumnFiltersState,
-  getPaginationRowModel,
+  SortingState,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -34,7 +32,11 @@ import {
   Modal,
   Textarea,
   Menu,
+  Accordion,
+  SimpleGrid,
+  Select,
 } from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
 import {
   FaSearch,
   FaCheckCircle,
@@ -54,8 +56,8 @@ import { notifications } from "@mantine/notifications";
 import { Tables } from "@/types/db";
 import { useDisclosure } from "@mantine/hooks";
 import AddInvoice from "../AddInvoice/AddInvoice";
-import { useUser } from "@clerk/nextjs";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useInvoicesTable } from "@/hooks/useInvoicesTable"; // Import the new hook
 
 type InvoiceRow = Tables<"invoices"> & {
   job:
@@ -66,18 +68,24 @@ type InvoiceRow = Tables<"invoices"> & {
 };
 
 export default function InvoicesTable() {
-  const { supabase, isAuthenticated } = useSupabase();
+  const { supabase } = useSupabase();
   const queryClient = useQueryClient();
   const { canEditInvoices } = usePermissions();
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
+  // --- Server Side State ---
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 15,
   });
+  const [sorting, setSorting] = useState<SortingState>([]);
+  // We separate input filters (UI state) from active filters (Query state)
+  // to allow user to type without triggering fetches on every keystroke if desired,
+  // or primarily to manage the "Search" button flow.
+  const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
+  const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
 
   const [addModalOpened, { open: openAddModal, close: closeAddModal }] =
     useDisclosure(false);
-
   const [
     commentModalOpened,
     { open: openCommentModal, close: closeCommentModal },
@@ -87,36 +95,43 @@ export default function InvoicesTable() {
     text: string;
   } | null>(null);
 
-  const { data: invoices, isLoading } = useQuery<InvoiceRow[]>({
-    queryKey: ["invoices_list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("invoices")
-        .select(
-          `
-          *,
-          job:jobs (
-            job_number,
-            sales_orders (
-              shipping_street,
-              shipping_city,
-              shipping_province,
-              shipping_zip,
-              shipping_client_name
-            )
-          )
-        `
-        )
-        .order("date_entered", { ascending: false })
-        .order("invoice_id", { ascending: false });
-
-      if (error) throw error;
-      return data as unknown as InvoiceRow[];
-    },
-    enabled: isAuthenticated,
-    placeholderData: (previousData) => previousData,
+  // --- Fetch Data ---
+  const { data, isLoading } = useInvoicesTable({
+    pagination,
+    columnFilters: activeFilters,
+    sorting,
   });
 
+  const invoices = data?.data || [];
+  const totalCount = data?.count || 0;
+  const pageCount = Math.ceil(totalCount / pagination.pageSize);
+
+  // --- Helpers for Filter State ---
+  const setInputFilterValue = (id: string, value: any) => {
+    setInputFilters((prev) => {
+      const existing = prev.filter((f) => f.id !== id);
+      if (value === undefined || value === null || value === "")
+        return existing;
+      return [...existing, { id, value }];
+    });
+  };
+
+  const getInputFilterValue = (id: string) => {
+    return inputFilters.find((f) => f.id === id)?.value ?? "";
+  };
+
+  const handleApplyFilters = () => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    setActiveFilters(inputFilters);
+  };
+
+  const handleClearFilters = () => {
+    setInputFilters([]);
+    setActiveFilters([]);
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  };
+
+  // --- Mutations (Unchanged) ---
   const togglePaidMutation = useMutation({
     mutationFn: async ({ id, isPaid }: { id: number; isPaid: boolean }) => {
       const { error } = await supabase
@@ -129,7 +144,7 @@ export default function InvoicesTable() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoices_list"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices_list_server"] });
       notifications.show({
         title: "Success",
         message: "Invoice payment status updated.",
@@ -152,11 +167,10 @@ export default function InvoicesTable() {
         .from("invoices")
         .update({ comments: editingComment.text })
         .eq("invoice_id", editingComment.id);
-
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoices_list"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices_list_server"] });
       notifications.show({
         title: "Success",
         message: "Comment updated successfully.",
@@ -182,7 +196,7 @@ export default function InvoicesTable() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoices_list"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices_list_server"] });
       notifications.show({
         title: "Updated",
         message: "Invoice charge status updated.",
@@ -206,14 +220,12 @@ export default function InvoicesTable() {
       size: 110,
       cell: (info) => <Text fw={700}>{info.getValue() || "—"}</Text>,
     }),
-
     columnHelper.accessor("job.job_number", {
       id: "job_number",
       header: "Job #",
       size: 110,
       cell: (info) => <Text c="dimmed">{info.getValue() || "—"}</Text>,
     }),
-
     columnHelper.accessor("job.sales_orders.shipping_client_name", {
       id: "client",
       header: "Client",
@@ -224,14 +236,12 @@ export default function InvoicesTable() {
         </Text>
       ),
     }),
-
     columnHelper.accessor("date_entered", {
       header: "Entered",
       size: 110,
       cell: (info) =>
         info.getValue() ? dayjs(info.getValue()).format("YYYY-MM-DD") : "—",
     }),
-
     columnHelper.accessor("date_due", {
       header: "Due",
       size: 110,
@@ -247,7 +257,6 @@ export default function InvoicesTable() {
         );
       },
     }),
-
     columnHelper.accessor(
       (row) => {
         const so = row.job?.sales_orders;
@@ -265,6 +274,7 @@ export default function InvoicesTable() {
         id: "shipping",
         header: "Shipping Address",
         size: 250,
+        enableSorting: false, // Sorting by computed/nested fields usually disabled unless custom logic
         cell: (info) => (
           <Tooltip label={info.getValue()} openDelay={500}>
             <Text size="sm" lineClamp={1} c="dimmed">
@@ -274,15 +284,14 @@ export default function InvoicesTable() {
         ),
       }
     ),
-
     columnHelper.accessor("paid_at", {
       id: "status",
       header: "Paid Status",
       size: 130,
+      enableSorting: false,
       cell: (info) => {
         const paidAt = info.getValue();
         const noCharge = info.row.original.no_charge;
-
         if (noCharge)
           return (
             <Badge color="gray" variant="light">
@@ -306,26 +315,10 @@ export default function InvoicesTable() {
         );
       },
     }),
-
-    columnHelper.accessor("paid_at", {
-      id: "date_paid",
-      header: "Date Paid",
-      size: 110,
-      cell: (info) =>
-        info.getValue() ? (
-          <Text size="sm" c="green.8" fw={500}>
-            {dayjs(info.getValue()).format("YYYY-MM-DD")}
-          </Text>
-        ) : (
-          <Text size="sm" c="dimmed">
-            —
-          </Text>
-        ),
-    }),
-
     columnHelper.accessor("comments", {
       header: "Comments",
       size: 200,
+      enableSorting: false,
       cell: (info) => (
         <Box
           onClick={() => {
@@ -350,7 +343,6 @@ export default function InvoicesTable() {
         </Box>
       ),
     }),
-
     canEditInvoices
       ? columnHelper.display({
           id: "actions",
@@ -359,7 +351,6 @@ export default function InvoicesTable() {
           cell: (info) => {
             const isPaid = !!info.row.original.paid_at;
             const isNoCharge = info.row.original.no_charge;
-
             return (
               <Menu withinPortal position="bottom-end" shadow="sm">
                 <Menu.Target>
@@ -367,7 +358,6 @@ export default function InvoicesTable() {
                     <FaEllipsisH />
                   </ActionIcon>
                 </Menu.Target>
-
                 <Menu.Dropdown>
                   <Menu.Item
                     leftSection={<FaDollarSign size={14} />}
@@ -382,9 +372,7 @@ export default function InvoicesTable() {
                   >
                     {isPaid ? "Mark Unpaid" : "Mark Paid"}
                   </Menu.Item>
-
                   <Menu.Divider />
-
                   <Menu.Item
                     leftSection={
                       isNoCharge ? (
@@ -412,15 +400,16 @@ export default function InvoicesTable() {
   ].filter((col) => col !== null);
 
   const table = useReactTable({
-    data: invoices || [],
+    data: invoices,
     columns,
-    state: { columnFilters, pagination },
-    onColumnFiltersChange: setColumnFilters,
+    pageCount: pageCount,
+    state: { pagination, sorting, columnFilters: activeFilters },
+    manualPagination: true,
+    manualFiltering: true,
+    manualSorting: true,
     onPaginationChange: setPagination,
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   if (isLoading)
@@ -437,9 +426,8 @@ export default function InvoicesTable() {
       display="flex"
       style={{ flexDirection: "column" }}
     >
-      {}
       <Paper
-        p="xl"
+        p="lg"
         radius="lg"
         mb="md"
         style={{
@@ -448,50 +436,118 @@ export default function InvoicesTable() {
         }}
         shadow="sm"
       >
-        <Group justify="space-between" align="center">
+        <Group justify="space-between" align="center" mb="md">
           <Group>
             <ThemeIcon
-              size={50}
+              size={40}
               radius="md"
               variant="gradient"
               gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
             >
-              <FaFileInvoiceDollar size={26} />
+              <FaFileInvoiceDollar size={20} />
             </ThemeIcon>
             <Stack gap={0}>
-              <Title order={2} style={{ color: "#343a40" }}>
+              <Title order={3} style={{ color: "#343a40" }}>
                 Invoices
               </Title>
-              <Text size="sm" c="dimmed">
-                Track payments and billing status.
+              <Text size="xs" c="dimmed">
+                Track payments and billing.
               </Text>
             </Stack>
           </Group>
-
-          <Group>
-            <TextInput
-              placeholder="Search Job #..."
-              leftSection={<FaSearch size={14} />}
-              onChange={(e) => {
-                table.getColumn("job_number")?.setFilterValue(e.target.value);
-              }}
-              style={{ minWidth: 250 }}
-            />
-            {canEditInvoices && (
-              <Button
-                leftSection={<FaPlus size={14} />}
-                onClick={openAddModal}
-                variant="gradient"
-                gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
-              >
-                Add Invoice
-              </Button>
-            )}
-          </Group>
+          {canEditInvoices && (
+            <Button
+              leftSection={<FaPlus size={14} />}
+              onClick={openAddModal}
+              variant="gradient"
+              gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
+            >
+              Add Invoice
+            </Button>
+          )}
         </Group>
+
+        {/* Filter Accordion */}
+        <Accordion variant="contained" radius="md">
+          <Accordion.Item value="filters">
+            <Accordion.Control icon={<FaSearch size={14} />}>
+              <Text size="sm" fw={500}>
+                Search & Filters
+              </Text>
+            </Accordion.Control>
+            <Accordion.Panel>
+              <SimpleGrid cols={{ base: 1, sm: 4 }} spacing="md">
+                <TextInput
+                  label="Job Number"
+                  placeholder="2024..."
+                  value={getInputFilterValue("job_number") as string}
+                  onChange={(e) =>
+                    setInputFilterValue("job_number", e.target.value)
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+                />
+                <TextInput
+                  label="Invoice Number"
+                  placeholder="INV..."
+                  value={getInputFilterValue("invoice_number") as string}
+                  onChange={(e) =>
+                    setInputFilterValue("invoice_number", e.target.value)
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+                />
+                <TextInput
+                  label="Client Name"
+                  placeholder="Smith..."
+                  value={getInputFilterValue("client") as string}
+                  onChange={(e) =>
+                    setInputFilterValue("client", e.target.value)
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+                />
+                <Select
+                  label="Payment Status"
+                  placeholder="All"
+                  data={[
+                    { value: "all", label: "All" },
+                    { value: "paid", label: "Paid" },
+                    { value: "pending", label: "Pending" },
+                  ]}
+                  value={(getInputFilterValue("status") as string) || "all"}
+                  onChange={(val) =>
+                    setInputFilterValue(
+                      "status",
+                      val === "all" ? undefined : val
+                    )
+                  }
+                />
+                <DatePickerInput
+                  type="range"
+                  allowSingleDateInRange
+                  label="Date Entered"
+                  placeholder="Pick dates"
+                  value={
+                    (getInputFilterValue("date_entered") as [
+                      Date | null,
+                      Date | null
+                    ]) || [null, null]
+                  }
+                  onChange={(val) => setInputFilterValue("date_entered", val)}
+                  clearable
+                />
+              </SimpleGrid>
+              <Group justify="flex-end" mt="md">
+                <Button variant="default" onClick={handleClearFilters}>
+                  Clear
+                </Button>
+                <Button color="violet" onClick={handleApplyFilters}>
+                  Apply Filters
+                </Button>
+              </Group>
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
       </Paper>
 
-      {}
       <ScrollArea style={{ flex: 1 }}>
         <Table
           striped
@@ -508,8 +564,9 @@ export default function InvoicesTable() {
                     key={header.id}
                     style={{
                       width: header.getSize(),
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
+                      cursor: header.column.getCanSort()
+                        ? "pointer"
+                        : "default",
                     }}
                     onClick={header.column.getToggleSortingHandler()}
                   >
@@ -518,13 +575,13 @@ export default function InvoicesTable() {
                         header.column.columnDef.header,
                         header.getContext()
                       )}
-                      {header.column.getIsSorted() === "asc" ? (
-                        <FaSortUp />
-                      ) : header.column.getIsSorted() === "desc" ? (
-                        <FaSortDown />
-                      ) : (
-                        <FaSort style={{ opacity: 0.2 }} />
-                      )}
+                      {{
+                        asc: <FaSortUp />,
+                        desc: <FaSortDown />,
+                      }[header.column.getIsSorted() as string] ??
+                        (header.column.getCanSort() ? (
+                          <FaSort style={{ opacity: 0.2 }} />
+                        ) : null)}
                     </Group>
                   </Table.Th>
                 ))}
@@ -576,7 +633,6 @@ export default function InvoicesTable() {
 
       <AddInvoice opened={addModalOpened} onClose={closeAddModal} />
 
-      {}
       <Modal
         opened={commentModalOpened}
         onClose={closeCommentModal}
@@ -588,12 +644,11 @@ export default function InvoicesTable() {
             label="Comment"
             minRows={4}
             value={editingComment?.text || ""}
-            onChange={(e) => {
-              const val = e.currentTarget.value;
+            onChange={(e) =>
               setEditingComment((prev) =>
-                prev ? { ...prev, text: val } : null
-              );
-            }}
+                prev ? { ...prev, text: e.currentTarget.value } : null
+              )
+            }
             data-autofocus
           />
           <Group justify="flex-end">

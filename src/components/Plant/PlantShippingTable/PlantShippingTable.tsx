@@ -474,6 +474,7 @@ export default function PlantShippingTable() {
               />
               <DatePickerInput
                 type="range"
+                allowSingleDateInRange
                 label="Ship Date Range"
                 placeholder="Pick dates range"
                 value={dateRange}
