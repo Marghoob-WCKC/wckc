@@ -345,7 +345,7 @@ export default function Sidebar({ links }: SidebarProps) {
                 rootBox: { width: "100%" },
                 userButtonTrigger: {
                   width: "100%",
-                  justifyContent: collapsed ? "center" : "flex-start",
+                  justifyContent: "center",
                   background: linearGradients.lightViolet,
                   padding: collapsed ? "8px 0" : "8px 12px",
                   borderRadius: "8px",
