@@ -37,8 +37,10 @@ import dayjs from "dayjs";
 import { useDisclosure } from "@mantine/hooks";
 import EditBOModal from "@/components/Installation/EditBOModal/EditBOModal";
 import { useBackordersTable } from "@/hooks/useBackOrdersTable";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function BackordersTable() {
+  const permissions = usePermissions();
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 15,
@@ -306,6 +308,11 @@ export default function BackordersTable() {
             setSelectedBO(null);
           }}
           backorder={selectedBO}
+          readOnly={
+            !permissions.isInstaller ||
+            !permissions.isService ||
+            !permissions.isAdmin
+          }
         />
       )}
     </Box>

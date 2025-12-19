@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: 9,
     textAlign: "right",
-    justifyContent: "flex-end", 
+    justifyContent: "flex-end",
   },
   section: {
     marginBottom: 15,
@@ -138,7 +138,7 @@ export const BackorderPdf = ({ data }: BackorderPdfProps) => {
             <Text style={styles.value}>{cab.door_styles?.name || "—"}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Box Material:</Text>
+            <Text style={styles.label}>Box:</Text>
             <Text style={styles.value}>{cab.box || "—"}</Text>
           </View>
         </View>

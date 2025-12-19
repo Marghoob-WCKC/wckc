@@ -31,12 +31,14 @@ interface EditBackorderModalProps {
   opened: boolean;
   onClose: () => void;
   backorder: Backorder | null;
+  readOnly?: boolean;
 }
 
 export default function EditBackorderModal({
   opened,
   onClose,
   backorder,
+  readOnly,
 }: EditBackorderModalProps) {
   const { supabase } = useSupabase();
   const queryClient = useQueryClient();
@@ -131,6 +133,7 @@ export default function EditBackorderModal({
             label="Expected Due Date"
             placeholder="Select date"
             clearable
+            disabled={readOnly}
             valueFormat="YYYY-MM-DD"
             {...form.getInputProps("due_date")}
           />
@@ -140,6 +143,7 @@ export default function EditBackorderModal({
             minRows={5}
             autosize
             placeholder="Describe missing or damaged items..."
+            disabled={readOnly}
             {...form.getInputProps("comments")}
           />
 
@@ -156,10 +160,16 @@ export default function EditBackorderModal({
               <Switch
                 size="md"
                 color="green"
+                styles={{
+                  track: {
+                    cursor: "pointer",
+                  },
+                }}
                 onLabel={<FaCheck size={12} />}
                 offLabel={<FaTimes size={12} />}
                 {...form.getInputProps("complete", { type: "checkbox" })}
                 checked={form.values.complete}
+                disabled={readOnly}
               />
             </Group>
           </Paper>

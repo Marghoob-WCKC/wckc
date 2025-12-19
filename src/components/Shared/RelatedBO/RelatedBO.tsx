@@ -23,6 +23,7 @@ import { Tables } from "@/types/db";
 import EditBackorderModal from "@/components/Installation/EditBOModal/EditBOModal";
 import BackorderPdfPreviewModal from "../BOPdfModal/BOPdfModal";
 import { colors, linearGradients } from "@/theme";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type Backorder = Tables<"backorders">;
 
@@ -37,6 +38,7 @@ export default function RelatedBackorders({
   readOnly,
   onAddBackorder,
 }: RelatedBackordersProps) {
+  const permissions = usePermissions();
   const { supabase, isAuthenticated } = useSupabase();
 
   const [selectedBackorder, setSelectedBackorder] = useState<Backorder | null>(
@@ -278,6 +280,11 @@ export default function RelatedBackorders({
           setSelectedBackorder(null);
         }}
         backorder={selectedBackorder}
+        readOnly={
+          !permissions.isInstaller ||
+          !permissions.isService ||
+          !permissions.isAdmin
+        }
       />
 
       {}
