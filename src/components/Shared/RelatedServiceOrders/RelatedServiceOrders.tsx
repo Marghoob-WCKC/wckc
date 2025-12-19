@@ -57,7 +57,9 @@ export default function RelatedServiceOrders({
       if (!jobId) return [];
       const { data, error } = await supabase
         .from("service_orders")
-        .select("*")
+        .select(
+          "service_order_id, service_order_number, date_entered, due_date, completed_at"
+        )
         .eq("job_id", jobId)
         .order("date_entered", { ascending: false });
 
@@ -76,47 +78,29 @@ export default function RelatedServiceOrders({
           .from("service_orders")
           .select(
             `
-          *,
-          service_order_parts (*),
-          installers:installer_id (
-            first_name,
-            last_name,
-            company_name
-          ),
+          service_order_id,
+          service_order_number,
+          date_entered,
+          due_date,
+          comments,
+          service_order_parts (qty, part, description),
+          installers:installer_id (first_name, last_name, company_name),
           jobs:job_id (
             job_number,
+            homeowners_info (*),
             sales_orders:sales_orders (
               designer,
               shipping_street,
               shipping_city,
-              shipping_province,
-              shipping_zip,
               shipping_client_name,
-              shipping_phone_1,
-              shipping_phone_2,
-              shipping_email_1,
-              shipping_email_2,
-              order_type,
-              delivery_type,
-              install,
               cabinet:cabinets (
-                box,
-                glass,
-                glaze,
-                finish,
+                top_drawer_front,
                 interior,
                 drawer_box,
                 drawer_hardware,
-                glass_type,
-                piece_count,
-                doors_parts_only,
-                handles_selected,
-                handles_supplied,
-                hinge_soft_close,
-                top_drawer_front,
-                door_styles(name),
-                species(Species),
-                colors(Name)
+                door_styles (name),
+                species (Species),
+                colors (Name)
               )
             )
           )
@@ -142,7 +126,7 @@ export default function RelatedServiceOrders({
     setSelectedPrintId(null);
   };
 
-  const renderRows = (orders: Tables<"service_orders">[]) => {
+  const renderRows = (orders: Partial<Tables<"service_orders">>[]) => {
     return orders.map((so) => (
       <Table.Tr
         key={so.service_order_id}
@@ -159,7 +143,9 @@ export default function RelatedServiceOrders({
         <Table.Td w={140}>
           {dayjs(so.date_entered).format("YYYY-MM-DD")}
         </Table.Td>
-        <Table.Td w={140}>{dayjs(so.due_date).format("YYYY-MM-DD")}</Table.Td>
+        <Table.Td w={140}>
+          {so.due_date ? dayjs(so.due_date).format("YYYY-MM-DD") : "—"}
+        </Table.Td>
         <Table.Td w={140}>
           {so.completed_at ? (
             <Badge color="green" variant="light">
@@ -175,7 +161,7 @@ export default function RelatedServiceOrders({
           <ActionIcon
             variant="subtle"
             color="gray"
-            onClick={(e) => handlePrintClick(e, so.service_order_id)}
+            onClick={(e) => handlePrintClick(e, so.service_order_id!)}
             loading={isPrintLoading && selectedPrintId === so.service_order_id}
           >
             <FaPrint size={14} />
@@ -205,10 +191,9 @@ export default function RelatedServiceOrders({
               size="xs"
               variant="light"
               leftSection={<FaPlus size={10} />}
-              onClick={() => {
-                const targetUrl = `/dashboard/serviceorders/new/${jobId}`;
-                router.push(targetUrl);
-              }}
+              onClick={() =>
+                router.push(`/dashboard/serviceorders/new/${jobId}`)
+              }
               style={{
                 background: linearGradients.primary,
                 color: "white",
@@ -241,7 +226,6 @@ export default function RelatedServiceOrders({
                 radius="md"
                 mt="sm"
                 styles={{
-                  control: {},
                   label: { fontWeight: 500, color: colors.violet.primary },
                   item: {
                     border: `1px solid ${colors.gray.border}`,
