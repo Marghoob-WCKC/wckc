@@ -6,6 +6,9 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc"; //
+
+dayjs.extend(utc); //
 
 interface UseServiceOrdersTableParams {
   pagination: PaginationState;
@@ -35,8 +38,15 @@ export function useServiceOrdersTable({
           Array.isArray(value)
         ) {
           const [start, end] = value;
-          if (start) query = query.gte(id, dayjs(start).format("YYYY-MM-DD"));
-          if (end) query = query.lte(id, dayjs(end).format("YYYY-MM-DD"));
+          if (start) {
+            query = query.gte(
+              id,
+              dayjs.utc(start).startOf("day").toISOString()
+            );
+          }
+          if (end) {
+            query = query.lte(id, dayjs.utc(end).endOf("day").toISOString());
+          }
           return;
         }
 

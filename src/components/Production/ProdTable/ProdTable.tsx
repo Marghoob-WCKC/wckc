@@ -449,6 +449,7 @@ export default function ProdTable() {
                 }
                 onChange={(val) => setInputFilterValue("received_date", val)}
                 clearable
+                allowSingleDateInRange
                 valueFormat="YYYY-MM-DD"
               />
               <DatePickerInput
@@ -463,6 +464,7 @@ export default function ProdTable() {
                 }
                 onChange={(val) => setInputFilterValue("placement_date", val)}
                 clearable
+                allowSingleDateInRange
                 valueFormat="YYYY-MM-DD"
               />
               <DatePickerInput
@@ -477,6 +479,7 @@ export default function ProdTable() {
                 }
                 onChange={(val) => setInputFilterValue("ship_schedule", val)}
                 clearable
+                allowSingleDateInRange
                 valueFormat="YYYY-MM-DD"
               />
 
