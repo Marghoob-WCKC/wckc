@@ -235,12 +235,6 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
               </Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>Soft Close Hinge:</Text>
-              <Text style={{ ...styles.value }}>
-                {cab.hinge_soft_close ? "Yes" : "No"}
-              </Text>
-            </View>
-            <View style={styles.row}>
               <Text style={styles.label}>Drawer Box:</Text>
               <Text style={{ ...styles.value, textTransform: "uppercase" }}>
                 {cab.drawer_box || "—"}
@@ -282,7 +276,8 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
             </View>
             {(homeowner?.homeowner_name ||
               homeowner?.homeowner_phone ||
-              homeowner?.homeowner_email) && (
+              homeowner?.homeowner_email ||
+              homeowner?.homeowner_details) && (
               <View style={{ marginBottom: 15, flexDirection: "column" }}>
                 <Text
                   style={{ fontSize: 10, fontWeight: "bold", marginRight: 5 }}
@@ -300,6 +295,10 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
 
                 <Text style={{ fontSize: 10 }}>
                   {homeowner.homeowner_email || "—"}
+                </Text>
+
+                <Text style={{ fontSize: 10 }}>
+                  {homeowner.homeowner_details || "—"}
                 </Text>
               </View>
             )}

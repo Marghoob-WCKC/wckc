@@ -99,6 +99,7 @@ export default function NewServiceOrder({
       homeowner_name: "",
       homeowner_phone: "",
       homeowner_email: "",
+      homeowner_details: "",
     },
     validate: zodResolver(ServiceOrderSchema),
   });
@@ -141,6 +142,7 @@ export default function NewServiceOrder({
         form.setFieldValue("homeowner_name", data.homeowner_name || "");
         form.setFieldValue("homeowner_phone", data.homeowner_phone || "");
         form.setFieldValue("homeowner_email", data.homeowner_email || "");
+        form.setFieldValue("homeowner_details", data.homeowner_details || "");
       }
     };
 
@@ -309,7 +311,8 @@ export default function NewServiceOrder({
       if (
         values.homeowner_name ||
         values.homeowner_phone ||
-        values.homeowner_email
+        values.homeowner_email ||
+        values.homeowner_details
       ) {
         await supabase.from("homeowners_info").upsert(
           {
@@ -317,6 +320,7 @@ export default function NewServiceOrder({
             homeowner_name: values.homeowner_name,
             homeowner_phone: values.homeowner_phone,
             homeowner_email: values.homeowner_email,
+            homeowner_details: values.homeowner_details,
           },
           { onConflict: "job_id" }
         );

@@ -30,6 +30,7 @@ export const ServiceOrderSchema = z.object({
   homeowner_name: z.string().optional(),
   homeowner_phone: z.string().optional(),
   homeowner_email: z.string().optional(),
+  homeowner_details: z.string().optional(),
 });
 
 export type ServiceOrderPartType = z.infer<typeof ServiceOrderPartSchema>;

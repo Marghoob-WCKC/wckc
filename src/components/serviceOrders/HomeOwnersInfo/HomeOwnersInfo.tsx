@@ -28,6 +28,13 @@ export default function HomeOwnersInfo({ form }: HomeOwnersInfoProps) {
         mt="xs"
         {...form.getInputProps("homeowner_email")}
       />
+
+      <TextInput
+        label="Details"
+        placeholder="Homeowner Details"
+        mt="xs"
+        {...form.getInputProps("homeowner_details")}
+      />
     </div>
   );
 }

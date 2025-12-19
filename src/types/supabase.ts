@@ -296,6 +296,7 @@ export type Database = {
       homeowners_info: {
         Row: {
           created_at: string | null
+          homeowner_details: string | null
           homeowner_email: string | null
           homeowner_name: string | null
           homeowner_phone: string | null
@@ -304,6 +305,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          homeowner_details?: string | null
           homeowner_email?: string | null
           homeowner_name?: string | null
           homeowner_phone?: string | null
@@ -312,6 +314,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          homeowner_details?: string | null
           homeowner_email?: string | null
           homeowner_name?: string | null
           homeowner_phone?: string | null
@@ -322,49 +325,49 @@ export type Database = {
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "inspection_table_view"
             referencedColumns: ["job_id"]
           },
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "installation_table_view"
             referencedColumns: ["job_id"]
           },
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "plant_table_view"
             referencedColumns: ["job_id"]
           },
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "prod_table_view"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "sales_table_view"
             referencedColumns: ["job_id"]
           },
           {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "service_orders_table_view"
             referencedColumns: ["job_id"]
           },

@@ -120,6 +120,7 @@ export default function EditServiceOrder({
       homeowner_name: "",
       homeowner_phone: "",
       homeowner_email: "",
+      homeowner_details: "",
     },
     validate: zodResolver(ServiceOrderSchema),
   });
@@ -173,8 +174,6 @@ export default function EditServiceOrder({
               cabinet:cabinets (
                 box,
                 glass,
-                glaze,
-                finish,
                 interior,
                 drawer_box,
                 drawer_hardware,
@@ -183,7 +182,6 @@ export default function EditServiceOrder({
                 doors_parts_only,
                 handles_selected,
                 handles_supplied,
-                hinge_soft_close,
                 top_drawer_front,
                 door_styles(name),
                 species(Species),
@@ -243,6 +241,7 @@ export default function EditServiceOrder({
         homeowner_name: hoInfo?.homeowner_name || "",
         homeowner_phone: hoInfo?.homeowner_phone || "",
         homeowner_email: hoInfo?.homeowner_email || "",
+        homeowner_details: hoInfo?.homeowner_details || "",
       });
     }
   }, [serviceOrderData]);
@@ -279,7 +278,8 @@ export default function EditServiceOrder({
       if (
         values.homeowner_name ||
         values.homeowner_phone ||
-        values.homeowner_email
+        values.homeowner_email ||
+        values.homeowner_details
       ) {
         await supabase.from("homeowners_info").upsert(
           {
@@ -287,6 +287,7 @@ export default function EditServiceOrder({
             homeowner_name: values.homeowner_name,
             homeowner_phone: values.homeowner_phone,
             homeowner_email: values.homeowner_email,
+            homeowner_details: values.homeowner_details,
           },
           { onConflict: "job_id" }
         );

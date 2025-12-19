@@ -23,6 +23,7 @@ import {
   Typography,
   Table,
   SimpleGrid,
+  Modal,
 } from "@mantine/core";
 import {
   FaUser,
@@ -34,12 +35,15 @@ import {
   FaHammer,
   FaBoxOpen,
   FaMapMarkerAlt,
+  FaEye,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
 import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
 import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
+import { useDisclosure } from "@mantine/hooks";
+import PdfPreview from "../PdfPreview/PdfPreview";
 
 type ReadOnlyServiceOrderProps = {
   serviceOrderId: string;
@@ -119,8 +123,8 @@ export default function ReadOnlyServiceOrder({
   serviceOrderId,
 }: ReadOnlyServiceOrderProps) {
   const { supabase, isAuthenticated } = useSupabase();
-  const router = useRouter();
-
+  const [previewOpened, { open: openPreview, close: closePreview }] =
+    useDisclosure(false);
   const { data: so, isLoading } = useQuery({
     queryKey: ["service_order_readonly", serviceOrderId],
     queryFn: async () => {
@@ -139,6 +143,7 @@ export default function ReadOnlyServiceOrder({
             job_number,
             homeowners_info (*),
             sales_orders:sales_orders (
+              designer,
               shipping_street,
               shipping_city,
               shipping_province,
@@ -209,7 +214,7 @@ export default function ReadOnlyServiceOrder({
       }
     : null;
   const installer = so.installers;
-  const hoInfo = job?.homeowners_info?.[0]; 
+  const hoInfo = job?.homeowners_info;
   const isCompleted = !!so.completed_at;
   const statusColor = isCompleted ? "green" : "violet";
 
@@ -225,55 +230,53 @@ export default function ReadOnlyServiceOrder({
         flexDirection: "column",
       }}
     >
-      <Paper
-        p="md"
-        radius={0}
-        shadow="sm"
-        style={{
-          borderBottom: "1px solid #e0e0e0",
-          zIndex: 10,
-          background: "white",
-        }}
-      >
-        <Container size="100%" px="xs">
-          <Group justify="space-between" align="center">
-            <Group gap="md">
-              <ThemeIcon
-                size={48}
-                radius="md"
-                variant="gradient"
-                gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
-              >
-                <FaTools size={22} />
-              </ThemeIcon>
-              <Stack gap={0}>
-                <Group gap="sm" align="center">
-                  <Title order={2} style={{ color: "#343a40" }}>
-                    SO #{so.service_order_number}
-                  </Title>
-                  <Badge
-                    size="lg"
-                    variant="light"
-                    color={statusColor}
-                    radius="sm"
-                    tt="uppercase"
-                  >
-                    {isCompleted ? "Completed" : "In Progress"}
-                  </Badge>
-                </Group>
-                <Text size="sm" c="dimmed">
-                  Job #{job?.job_number} • Created{" "}
-                  {dayjs(so.date_entered).format("MMM D, YYYY")}
-                </Text>
-              </Stack>
-            </Group>
+      <Paper p="md" radius="md" shadow="sm" bg="gray.1" mb="md">
+        <Group
+          justify="space-between"
+          align="center"
+          bg="white"
+          p="md"
+          style={{ borderRadius: "6px" }}
+        >
+          <Stack>
+            <Text
+              fw={600}
+              size="lg"
+              style={{ display: "flex", alignItems: "center" }}
+            >
+              <FaTools size={20} style={{ marginRight: 8 }} color="#4A00E0" />
+              Service Order: {so?.service_order_number || "—"}
+            </Text>
+            <Text size="xs" c="dimmed">
+              Entered: {dayjs(so?.date_entered).format("YYYY-MM-DD") || "—"}
+            </Text>
+          </Stack>
+
+          <Group>
+            {so && (
+              <>
+                <Button
+                  variant="light"
+                  color="white"
+                  bg="linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%"
+                  rightSection={<Text size="xs">PDF</Text>}
+                  onClick={openPreview}
+                >
+                  <FaEye />
+                </Button>
+              </>
+            )}
+            <Divider orientation="vertical" />
+            <Text fw={600} size="md">
+              Job # {job?.job_number || "—"}
+            </Text>
           </Group>
-        </Container>
+        </Group>
       </Paper>
 
-      <Box style={{ flex: 1, overflowY: "auto" }} p="md">
-        <Container size="100%" px="xs">
-          <Paper p="md" radius="md" mb="md" withBorder bg="gray.1">
+      <Box style={{ flex: 1, overflowY: "auto" }}>
+        <Container size="100%" p={0}>
+          <Paper p="md" radius="md" mb="md" bg="gray.1">
             <SimpleGrid cols={2}>
               <Stack>
                 <ClientInfo shipping={shipping} />
@@ -282,272 +285,290 @@ export default function ReadOnlyServiceOrder({
               <CabinetSpecs cabinet={cabinet} />
             </SimpleGrid>
           </Paper>
+          <Paper p="md" radius="md" shadow="sm" bg="gray.1">
+            <Grid gutter="lg">
+              <Grid.Col span={{ base: 12, md: 4 }}>
+                <Stack>
+                  <Card shadow="sm" padding="lg" radius="md" withBorder>
+                    <SectionTitle
+                      icon={FaHammer}
+                      title="Service Logistics"
+                      color="orange"
+                    />
+                    <Stack gap="xs">
+                      <InfoRow
+                        label="Assigned Service Tech"
+                        value={
+                          installer ? (
+                            <Text size="sm">
+                              {installer.first_name} {installer.last_name}
+                            </Text>
+                          ) : so.installer_requested ? (
+                            <Badge color="orange" variant="light">
+                              Installer Requested
+                            </Badge>
+                          ) : (
+                            <Badge color="gray" variant="dot">
+                              Unassigned
+                            </Badge>
+                          )
+                        }
+                      />
+                      {installer?.company_name && (
+                        <InfoRow
+                          label="Company"
+                          value={installer.company_name}
+                        />
+                      )}
 
-          <Grid gutter="lg">
-            <Grid.Col span={{ base: 12, md: 4 }}>
-              <Stack>
-                <Card shadow="sm" padding="lg" radius="md" withBorder>
+                      <Divider my={4} />
+                      <InfoRow
+                        label="Chargeable"
+                        value={
+                          <BooleanBadge
+                            value={so.chargeable || false}
+                            label={so.chargeable ? "YES" : "NO"}
+                          />
+                        }
+                      />
+                      <InfoRow
+                        label="Warranty"
+                        value={
+                          <BooleanBadge
+                            value={so.is_warranty_so || false}
+                            label={so.is_warranty_so ? "YES" : "NO"}
+                          />
+                        }
+                      />
+                      {so.is_warranty_so && (
+                        <InfoRow
+                          label="Warranty Cost"
+                          value={`$${so.warranty_order_cost ?? 0}`}
+                          highlight
+                        />
+                      )}
+                    </Stack>
+                  </Card>
+
+                  {}
+                  <Card shadow="sm" padding="lg" radius="md" withBorder>
+                    <SectionTitle
+                      icon={FaUser}
+                      title="Homeowner Info"
+                      color="blue"
+                    />
+                    {hoInfo ? (
+                      <Stack gap="xs">
+                        <InfoRow label="Name" value={hoInfo.homeowner_name} />
+                        <InfoRow label="Phone" value={hoInfo.homeowner_phone} />
+                        <InfoRow label="Email" value={hoInfo.homeowner_email} />
+                        <InfoRow label="Details" value={hoInfo.homeowner_details} />
+                      </Stack>
+                    ) : (
+                      <Text size="sm" c="dimmed" fs="italic">
+                        No homeowner information available.
+                      </Text>
+                    )}
+                  </Card>
+                </Stack>
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, md: 4 }}>
+                <Stack>
+                  <Card
+                    shadow="sm"
+                    padding="lg"
+                    radius="md"
+                    withBorder
+                    style={{ flex: 1 }}
+                  >
+                    <SectionTitle
+                      icon={FaTools}
+                      title="Work Description"
+                      color="gray"
+                    />
+                    <Paper
+                      p="sm"
+                      bg="gray.0"
+                      radius="sm"
+                      style={{
+                        minHeight: rem(150),
+                        border: "1px solid #e9ecef",
+                      }}
+                    >
+                      {so.comments ? (
+                        <Typography p={0}>
+                          <div
+                            dangerouslySetInnerHTML={{ __html: so.comments }}
+                            style={{ fontSize: "14px", color: "#495057" }}
+                          />
+                        </Typography>
+                      ) : (
+                        <Center h="100%">
+                          <Text size="sm" c="dimmed" fs="italic">
+                            No description provided.
+                          </Text>
+                        </Center>
+                      )}
+                    </Paper>
+                  </Card>
+                </Stack>
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, md: 4 }}>
+                <Card
+                  shadow="sm"
+                  padding="lg"
+                  radius="md"
+                  mb="md"
+                  withBorder
+                  style={{
+                    borderTop: `4px solid var(--mantine-color-${statusColor}-5)`,
+                  }}
+                >
                   <SectionTitle
-                    icon={FaHammer}
-                    title="Service Logistics"
-                    color="orange"
+                    icon={FaCalendarAlt}
+                    title="Schedule"
+                    color={statusColor}
                   />
                   <Stack gap="xs">
                     <InfoRow
-                      label="Assigned Service Tech"
+                      label="Due Date"
                       value={
-                        installer ? (
-                          <Text size="sm">
-                            {installer.first_name} {installer.last_name}
+                        so.due_date ? (
+                          <Text c={isCompleted ? "dimmed" : "red.7"} fw={700}>
+                            {dayjs(so.due_date).format("MMM D, YYYY")}
                           </Text>
-                        ) : so.installer_requested ? (
-                          <Badge color="orange" variant="light">
-                            Installer Requested
-                          </Badge>
                         ) : (
-                          <Badge color="gray" variant="dot">
-                            Unassigned
-                          </Badge>
+                          "TBD"
                         )
                       }
                     />
-                    {installer?.company_name && (
-                      <InfoRow label="Company" value={installer.company_name} />
-                    )}
-                    <InfoRow label="Service Type" value={so.service_type} />
-                    <InfoRow label="Detail" value={so.service_type_detail} />
-                    <InfoRow label="Service By" value={so.service_by} />
-                    <Divider my={4} />
                     <InfoRow
-                      label="Chargeable"
+                      label="Est. Hours"
                       value={
-                        <BooleanBadge
-                          value={so.chargeable || false}
-                          label={so.chargeable ? "YES" : "NO"}
-                        />
+                        so.hours_estimated ? `${so.hours_estimated} hrs` : "0"
                       }
                     />
                     <InfoRow
-                      label="Warranty"
+                      label="Completed"
                       value={
-                        <BooleanBadge
-                          value={so.is_warranty_so || false}
-                          label={so.is_warranty_so ? "YES" : "NO"}
-                        />
+                        so.completed_at ? (
+                          <Badge color="teal" variant="light">
+                            {dayjs(so.completed_at).format("MMM D, YYYY")}
+                          </Badge>
+                        ) : (
+                          "Pending"
+                        )
                       }
                     />
-                    {so.is_warranty_so && (
-                      <InfoRow
-                        label="Warranty Cost"
-                        value={`$${so.warranty_order_cost ?? 0}`}
-                        highlight
-                      />
-                    )}
                   </Stack>
                 </Card>
-
-                {}
-                <Card shadow="sm" padding="lg" radius="md" withBorder>
-                  <SectionTitle
-                    icon={FaUser}
-                    title="Homeowner Info"
-                    color="blue"
-                  />
-                  {hoInfo ? (
-                    <Stack gap="xs">
-                      <InfoRow label="Name" value={hoInfo.homeowner_name} />
-                      <InfoRow label="Phone" value={hoInfo.homeowner_phone} />
-                      <InfoRow label="Email" value={hoInfo.homeowner_email} />
-                    </Stack>
-                  ) : (
-                    <Text size="sm" c="dimmed" fs="italic">
-                      No homeowner information available.
-                    </Text>
-                  )}
-                </Card>
-              </Stack>
-            </Grid.Col>
-
-            <Grid.Col span={{ base: 12, md: 4 }}>
-              <Stack>
                 <Card
                   shadow="sm"
                   padding="lg"
                   radius="md"
                   withBorder
-                  style={{ flex: 1 }}
+                  h="fit-content"
                 >
                   <SectionTitle
-                    icon={FaTools}
-                    title="Work Description"
-                    color="gray"
+                    icon={FaBoxOpen}
+                    title="Required Parts"
+                    color="grape"
                   />
-                  <Paper
-                    p="sm"
-                    bg="gray.0"
-                    radius="sm"
-                    style={{ minHeight: rem(150), border: "1px solid #e9ecef" }}
-                  >
-                    {so.comments ? (
-                      <Typography p={0}>
-                        <div
-                          dangerouslySetInnerHTML={{ __html: so.comments }}
-                          style={{ fontSize: "14px", color: "#495057" }}
-                        />
-                      </Typography>
-                    ) : (
-                      <Center h="100%">
-                        <Text size="sm" c="dimmed" fs="italic">
-                          No description provided.
-                        </Text>
-                      </Center>
-                    )}
-                  </Paper>
-                </Card>
-              </Stack>
-            </Grid.Col>
 
-            <Grid.Col span={{ base: 12, md: 4 }}>
-              <Card
-                shadow="sm"
-                padding="lg"
-                radius="md"
-                mb="md"
-                withBorder
-                style={{
-                  borderTop: `4px solid var(--mantine-color-${statusColor}-5)`,
-                }}
-              >
-                <SectionTitle
-                  icon={FaCalendarAlt}
-                  title="Schedule"
-                  color={statusColor}
-                />
-                <Stack gap="xs">
-                  <InfoRow
-                    label="Due Date"
-                    value={
-                      so.due_date ? (
-                        <Text c={isCompleted ? "dimmed" : "red.7"} fw={700}>
-                          {dayjs(so.due_date).format("MMM D, YYYY")}
-                        </Text>
-                      ) : (
-                        "TBD"
-                      )
-                    }
-                  />
-                  <InfoRow
-                    label="Est. Hours"
-                    value={
-                      so.hours_estimated ? `${so.hours_estimated} hrs` : "0"
-                    }
-                  />
-                  <InfoRow
-                    label="Completed"
-                    value={
-                      so.completed_at ? (
-                        <Badge color="teal" variant="light">
-                          {dayjs(so.completed_at).format("MMM D, YYYY")}
-                        </Badge>
-                      ) : (
-                        "Pending"
-                      )
-                    }
-                  />
-                </Stack>
-              </Card>
-              <Card
-                shadow="sm"
-                padding="lg"
-                radius="md"
-                withBorder
-                h="fit-content"
-              >
-                <SectionTitle
-                  icon={FaBoxOpen}
-                  title="Required Parts"
-                  color="grape"
-                />
-
-                {so.service_order_parts && so.service_order_parts.length > 0 ? (
-                  <Box
-                    style={{
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "8px",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <Table striped highlightOnHover verticalSpacing="sm">
-                      <Table.Thead bg="gray.1">
-                        <Table.Tr>
-                          <Table.Th w={60} style={{ textAlign: "center" }}>
-                            Qty
-                          </Table.Th>
-                          <Table.Th>Part Details</Table.Th>
-                        </Table.Tr>
-                      </Table.Thead>
-                      <Table.Tbody>
-                        {so.service_order_parts.map((part: any) => (
-                          <Table.Tr key={part.id}>
-                            <Table.Td style={{ textAlign: "center" }}>
-                              <Badge
-                                variant="outline"
-                                color="dark"
-                                size="md"
-                                radius="sm"
-                              >
-                                {part.qty}
-                              </Badge>
-                            </Table.Td>
-                            <Table.Td>
-                              <Text size="sm" fw={600}>
-                                {part.part}
-                              </Text>
-                              {part.description && (
-                                <Text
-                                  size="xs"
-                                  c="dimmed"
-                                  style={{ lineHeight: 1.2 }}
-                                >
-                                  {part.description}
-                                </Text>
-                              )}
-                            </Table.Td>
-                          </Table.Tr>
-                        ))}
-                      </Table.Tbody>
-                    </Table>
-                  </Box>
-                ) : (
-                  <Center
-                    p="xl"
-                    bg="gray.0"
-                    mt="md"
-                    style={{
-                      borderRadius: 8,
-                      flexDirection: "column",
-                      border: "1px dashed #ced4da",
-                    }}
-                  >
-                    <ThemeIcon
-                      color="gray"
-                      variant="light"
-                      size="xl"
-                      radius="xl"
-                      mb="sm"
+                  {so.service_order_parts &&
+                  so.service_order_parts.length > 0 ? (
+                    <Box
+                      style={{
+                        border: "1px solid #e0e0e0",
+                        borderRadius: "8px",
+                        overflow: "hidden",
+                      }}
                     >
-                      <FaBoxOpen size={24} />
-                    </ThemeIcon>
-                    <Text c="dimmed" size="sm" fw={500}>
-                      No parts listed for this order.
-                    </Text>
-                  </Center>
-                )}
-              </Card>
-            </Grid.Col>
-          </Grid>
+                      <Table striped highlightOnHover verticalSpacing="sm">
+                        <Table.Thead bg="gray.1">
+                          <Table.Tr>
+                            <Table.Th w={60} style={{ textAlign: "center" }}>
+                              Qty
+                            </Table.Th>
+                            <Table.Th>Part Details</Table.Th>
+                          </Table.Tr>
+                        </Table.Thead>
+                        <Table.Tbody>
+                          {so.service_order_parts.map((part: any) => (
+                            <Table.Tr key={part.id}>
+                              <Table.Td style={{ textAlign: "center" }}>
+                                <Badge
+                                  variant="outline"
+                                  color="dark"
+                                  size="md"
+                                  radius="sm"
+                                >
+                                  {part.qty}
+                                </Badge>
+                              </Table.Td>
+                              <Table.Td>
+                                <Text size="sm" fw={600}>
+                                  {part.part}
+                                </Text>
+                                {part.description && (
+                                  <Text
+                                    size="xs"
+                                    c="dimmed"
+                                    style={{ lineHeight: 1.2 }}
+                                  >
+                                    {part.description}
+                                  </Text>
+                                )}
+                              </Table.Td>
+                            </Table.Tr>
+                          ))}
+                        </Table.Tbody>
+                      </Table>
+                    </Box>
+                  ) : (
+                    <Center
+                      p="xl"
+                      bg="gray.0"
+                      mt="md"
+                      style={{
+                        borderRadius: 8,
+                        flexDirection: "column",
+                        border: "1px dashed #ced4da",
+                      }}
+                    >
+                      <ThemeIcon
+                        color="gray"
+                        variant="light"
+                        size="xl"
+                        radius="xl"
+                        mb="sm"
+                      >
+                        <FaBoxOpen size={24} />
+                      </ThemeIcon>
+                      <Text c="dimmed" size="sm" fw={500}>
+                        No parts listed for this order.
+                      </Text>
+                    </Center>
+                  )}
+                </Card>
+              </Grid.Col>
+            </Grid>
+          </Paper>
         </Container>
       </Box>
+      <Modal
+        opened={previewOpened}
+        onClose={closePreview}
+        title="Service Order Preview"
+        fullScreen
+        styles={{
+          body: { height: "80vh" },
+        }}
+      >
+        <PdfPreview data={so} />
+      </Modal>
     </Container>
   );
 }
