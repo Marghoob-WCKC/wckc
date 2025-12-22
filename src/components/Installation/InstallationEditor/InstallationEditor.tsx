@@ -30,7 +30,6 @@ import {
   ActionIcon,
   Stack,
   Collapse,
-  Alert,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { DateInput } from "@mantine/dates";
@@ -47,7 +46,6 @@ import {
   FaTools,
   FaPlus,
   FaTruckLoading,
-  FaShippingFast,
   FaBoxOpen,
   FaExclamationCircle,
   FaEdit,
@@ -326,9 +324,16 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
       }
 
       const { prod_id, ship_schedule, ship_status, ...installValues } = values;
+      const timestamp = new Date().toISOString();
+      
+      let finalWrapCompleted = installValues.wrap_completed;
+      if (installValues.has_shipped && !installValues.partially_shipped) {
+          finalWrapCompleted = finalWrapCompleted || timestamp;
+      }
 
       const installPayload = {
         ...installValues,
+        wrap_completed: finalWrapCompleted,
         wrap_date: installValues.wrap_date
           ? dayjs(installValues.wrap_date).format("YYYY-MM-DD")
           : null,
@@ -348,17 +353,32 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         .update(installPayload as any)
         .eq("installation_id", jobData.installation.installation_id);
       if (installError) throw installError;
-
-      const prodPayload = {
+      
+      let prodUpdates: Record<string, any> = {
         ship_schedule: ship_schedule
           ? dayjs(ship_schedule).format("YYYY-MM-DD")
           : null,
         ship_status: ship_status,
       };
 
+      if ((installValues.has_shipped && !installValues.partially_shipped) || finalWrapCompleted) {
+         const autoCompleteFields = [
+            "doors_completed_actual",
+            "cut_finish_completed_actual",
+            "custom_finish_completed_actual",
+            "drawer_completed_actual",
+            "cut_melamine_completed_actual",
+            "paint_completed_actual",
+            "assembly_completed_actual"
+         ];
+         autoCompleteFields.forEach(field => {
+             prodUpdates[field] = timestamp;
+         });
+      }
+
       const { error: prodError } = await supabase
         .from("production_schedule")
-        .update(prodPayload)
+        .update(prodUpdates)
         .eq("prod_id", prod_id);
       if (prodError) throw prodError;
 
@@ -668,14 +688,12 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             <Paper bg={"gray.1"} p="md" radius="md">
               <Paper p="md" radius="md" pb={30}>
                 <Stack gap="xl">
-                  {}
                   <Box>
                     <Group mb={8} style={{ color: "#4A00E0" }}>
                       <FaTools size={18} />
                       <Text fw={600}>Installer & Key Dates</Text>
                     </Group>
                     <SimpleGrid cols={3} spacing="md">
-                      {}
                       <Group align="flex-end" gap="xs">
                         <Select
                           styles={{
@@ -738,7 +756,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
 
                   <Divider />
 
-                  {}
                   <Box>
                     <Group mb="md" style={{ color: "#218838" }}>
                       <FaTruckLoading size={18} />
@@ -746,7 +763,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                     </Group>
 
                     <Stack gap="lg">
-                      {}
                       <SimpleGrid cols={{ base: 1, sm: 5 }} spacing="md">
                         <DateInput
                           styles={{
@@ -1059,9 +1075,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             {jobId && <RelatedServiceOrders jobId={jobId} />}
           </Grid.Col>
 
-          {}
           <Grid.Col span={2} style={{ borderLeft: "1px solid #ccc" }}>
-            {}
             <Box pt="md" pos="sticky" style={{ justifyItems: "center" }}>
               <Text
                 fw={600}
@@ -1275,7 +1289,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         </Grid>
       </form>
 
-      {}
       <Paper
         p="md"
         bg={"gray.1"}
@@ -1317,7 +1330,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         </Group>
       </Paper>
 
-      {}
       <Modal
         opened={isBackorderPromptOpen}
         onClose={() => {

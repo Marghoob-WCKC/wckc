@@ -29,7 +29,6 @@ import {
   FaCogs,
   FaCut,
   FaDoorOpen,
-  FaIndustry,
   FaPaintBrush,
   FaSearch,
   FaClipboardList,
@@ -101,19 +100,15 @@ export default function ProductionActuals() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({
-      field,
-      value,
-    }: {
-      field: CompletionField;
-      value: string | null;
-    }) => {
+    mutationFn: async (
+      updates: Partial<Record<CompletionField, string | null>>
+    ) => {
       const prodId = (jobData?.production_schedule as any)?.prod_id;
       if (!prodId) throw new Error("No schedule found");
 
       const { error } = await supabase
         .from("production_schedule")
-        .update({ [field]: value })
+        .update(updates)
         .eq("prod_id", prodId);
 
       if (error) throw error;
@@ -198,7 +193,27 @@ export default function ProductionActuals() {
     currentValue: string | null
   ) => {
     const newValue = currentValue ? null : new Date().toISOString();
-    updateMutation.mutate({ field, value: newValue });
+
+    if (field === "assembly_completed_actual" && newValue) {
+      const allFields: CompletionField[] = [
+        "doors_completed_actual",
+        "cut_finish_completed_actual",
+        "custom_finish_completed_actual",
+        "drawer_completed_actual",
+        "cut_melamine_completed_actual",
+        "paint_completed_actual",
+        "assembly_completed_actual",
+      ];
+
+      const updates = allFields.reduce((acc, key) => {
+        acc[key] = newValue;
+        return acc;
+      }, {} as Record<CompletionField, string>);
+
+      updateMutation.mutate(updates);
+    } else {
+      updateMutation.mutate({ [field]: newValue });
+    }
   };
 
   const progress = useMemo(() => {
@@ -268,7 +283,6 @@ export default function ProductionActuals() {
       </Paper>
       <Container size={"xl"}>
         <Stack gap="xl">
-          {}
           {!selectedJobId ? (
             <Center
               h={400}
@@ -300,7 +314,6 @@ export default function ProductionActuals() {
             </Center>
           ) : (
             <Stack gap="lg">
-              {}
               <Group justify="space-between" align="flex-end">
                 <Stack gap={4}>
                   <Text
@@ -322,7 +335,6 @@ export default function ProductionActuals() {
                   </Text>
                 </Stack>
 
-                {}
                 <Group gap="xs">
                   <Text fw={600} size="sm" c="dimmed">
                     Completion
@@ -343,7 +355,6 @@ export default function ProductionActuals() {
 
               <Divider />
 
-              {}
               <Paper p="lg" radius="md" shadow="xs" withBorder>
                 <Group mb="md" style={{ color: "#4A00E0" }}>
                   <FaClipboardList size={18} />
@@ -396,7 +407,6 @@ export default function ProductionActuals() {
 
               <Divider />
 
-              {}
               <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing="lg">
                 {actualSteps.map((step) => (
                   <Paper

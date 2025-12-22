@@ -96,18 +96,44 @@ export default function PlantShippingTable() {
   const toggleShippedMutation = useMutation({
     mutationFn: async ({
       installId,
+      jobId,
       currentStatus,
     }: {
       installId: number;
+      jobId: number | null;
       currentStatus: boolean;
     }) => {
-      const { error } = await supabase
+      const timestamp = new Date().toISOString();
+      const { error: installError } = await supabase
         .from("installation")
         .update({
           has_shipped: !currentStatus,
+          wrap_completed: !currentStatus ? timestamp : undefined,
         })
         .eq("installation_id", installId);
-      if (error) throw error;
+      if (installError) throw installError;
+
+      if (!currentStatus && jobId) {
+        const autoCompleteFields = [
+          "doors_completed_actual",
+          "cut_finish_completed_actual",
+          "custom_finish_completed_actual",
+          "drawer_completed_actual",
+          "cut_melamine_completed_actual",
+          "paint_completed_actual",
+          "assembly_completed_actual",
+        ];
+        const prodUpdates = autoCompleteFields.reduce((acc, field) => {
+          acc[field] = timestamp;
+          return acc;
+        }, {} as Record<string, any>);
+
+        const { error: prodError } = await supabase
+          .from("production_schedule")
+          .update(prodUpdates)
+          .eq("job_id", jobId);
+        if (prodError) throw prodError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plant_shipping_table"] });
@@ -188,6 +214,7 @@ export default function PlantShippingTable() {
       cell: (info) => {
         const isShipped = !!info.getValue();
         const installId = info.row.original.installation_id;
+        const jobId = info.row.original.job_id;
         const partially = info.row.original.partially_shipped;
 
         return (
@@ -208,6 +235,7 @@ export default function PlantShippingTable() {
                   if (installId) {
                     toggleShippedMutation.mutate({
                       installId,
+                      jobId,
                       currentStatus: isShipped,
                     });
                   }
@@ -438,7 +466,6 @@ export default function PlantShippingTable() {
             </Text>
           </Stack>
         </Group>
-        {}
         <Button
           variant="outline"
           color="violet"
@@ -449,7 +476,6 @@ export default function PlantShippingTable() {
         </Button>
       </Group>
 
-      {}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -512,7 +538,6 @@ export default function PlantShippingTable() {
         </Accordion.Item>
       </Accordion>
 
-      {}
       <ScrollArea
         style={{ flex: 1 }}
         type="always"
@@ -637,7 +662,6 @@ export default function PlantShippingTable() {
         )}
       </ScrollArea>
 
-      {}
       <Box
         style={{
           borderTop: "1px solid #eee",
@@ -654,7 +678,6 @@ export default function PlantShippingTable() {
         />
       </Box>
 
-      {}
       <ShippingPdfPreviewModal
         opened={pdfOpened}
         onClose={closePdf}
