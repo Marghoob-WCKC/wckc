@@ -354,7 +354,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         .eq("installation_id", jobData.installation.installation_id);
       if (installError) throw installError;
       
-      let prodUpdates: Record<string, any> = {
+      const prodUpdates: Record<string, any> = {
         ship_schedule: ship_schedule
           ? dayjs(ship_schedule).format("YYYY-MM-DD")
           : null,

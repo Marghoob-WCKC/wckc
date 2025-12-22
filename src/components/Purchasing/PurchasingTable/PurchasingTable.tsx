@@ -143,7 +143,7 @@ export default function PurchasingTable() {
       logMessage?: string;
       initialComment?: string;
     }) => {
-      let finalUpdates = { ...updates };
+      const finalUpdates = { ...updates };
       if (logMessage) {
         const timestamp = dayjs().format("YYYY-MM-DD HH:mm");
         const newCommentLine = `${logMessage} [${timestamp}]`;
@@ -323,7 +323,7 @@ export default function PurchasingTable() {
     const recKey = `${keyPrefix}_received_at`;
     const incKey = `${keyPrefix}_received_incomplete_at`;
 
-    let updates: any = {};
+    const updates: any = {};
     let logMsg = "";
 
     updates[ordKey] = new Date().toISOString();
@@ -374,7 +374,7 @@ export default function PurchasingTable() {
     const recKey = `${keyPrefix}_received_at`;
     const incKey = `${keyPrefix}_received_incomplete_at`;
 
-    let updates: any = {};
+    const updates: any = {};
     let logMsg = "";
 
     const itemDetails = items
