@@ -314,6 +314,9 @@ export default function JobDetailsDrawer({
                 shipping_street: so?.shipping_street,
                 shipping_city: so?.shipping_city,
                 shipping_zip: so?.shipping_zip,
+                shipping_phone_2: so?.shipping_phone_2,
+                shipping_email_2: so?.shipping_email_2,
+                shipping_province: so?.shipping_province,
               }}
             />
             <OrderDetails

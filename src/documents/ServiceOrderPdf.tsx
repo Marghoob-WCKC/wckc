@@ -112,9 +112,22 @@ const htmlStyles = {
     fontSize: 10,
     lineHeight: 1.4,
   },
-  p: { fontSize: 10 },
-  ul: { fontSize: 10 },
-  li: { fontSize: 10 },
+  p: {
+    fontSize: 10,
+    marginBottom: 4,
+  },
+  ul: {
+    fontSize: 10,
+    marginBottom: 5,
+    marginTop: 0,
+    paddingLeft: 0,
+  },
+  li: {
+    fontSize: 10,
+    marginBottom: 2,
+    marginLeft: 0,
+    paddingLeft: 0,
+  },
   strong: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
@@ -136,6 +149,7 @@ const htmlStyles = {
     fontStyle: "normal" as const,
   },
 };
+
 interface PdfProps {
   data: any;
 }
@@ -157,7 +171,9 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
     const isHtml = /<[a-z][\s\S]*>/i.test(content);
 
     if (isHtml) {
-      return content;
+      return content
+        .replace(/<li>\s*<p[^>]*>/g, "<li>")
+        .replace(/<\/p>\s*<\/li>/g, "</li>");
     }
 
     return content.replace(/\n/g, "<br />");
@@ -166,7 +182,6 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {}
         <View style={styles.headerContainer}>
           <Text style={styles.title}>
             Service Order: {data.service_order_number}
@@ -187,9 +202,7 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
           </View>
         </View>
 
-        {}
         <View style={styles.infoContainer}>
-          {}
           <View style={styles.leftCol}>
             <View style={styles.row}>
               <Text style={styles.label}>Job Number:</Text>
@@ -247,8 +260,6 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
               </Text>
             </View>
           </View>
-
-          {}
           <View style={styles.rightCol}>
             <View style={{ marginBottom: 15 }}>
               <Text
@@ -305,16 +316,13 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
           </View>
         </View>
 
-        {}
         <View style={styles.commentsSection}>
           <Text style={styles.commentsHeader}>Comments</Text>
-          {}
           <Html stylesheet={htmlStyles} style={{ fontSize: 10 }}>
             {processContent(data.comments)}
           </Html>
         </View>
 
-        {}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
             <View style={styles.colQty}>
@@ -353,7 +361,6 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
           )}
         </View>
 
-        {}
         <Text
           style={{
             position: "absolute",

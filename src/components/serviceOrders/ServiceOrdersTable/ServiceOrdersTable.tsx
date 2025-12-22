@@ -286,7 +286,13 @@ export default function ServiceOrdersTable() {
       size: 180,
       minSize: 140,
       cell: (info) => {
-        const installerRequested = info.row.original.installer_requested;
+        const row = info.row.original;
+        const installerRequested = row.installer_requested;
+        const displayName =
+          row.installer_company ||
+          row.installer_first ||
+          row.installer_last ||
+          "—";
         return (
           <CellWrapper>
             {installerRequested ? (
@@ -297,7 +303,7 @@ export default function ServiceOrdersTable() {
                 <Indicator inline processing color="red" size={8} />
               </Group>
             ) : (
-              <Text size="sm">{info.getValue() || "—"}</Text>
+              <Text size="sm">{displayName}</Text>
             )}
           </CellWrapper>
         );

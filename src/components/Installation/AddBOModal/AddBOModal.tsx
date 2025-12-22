@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Modal, Button, Stack, Textarea, Group, Text } from "@mantine/core";
+import { Modal, Button, Stack, Textarea, Group } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
 import dayjs from "dayjs";
@@ -9,6 +9,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabase } from "@/hooks/useSupabase";
 import { zodResolver } from "@/utils/zodResolver/zodResolver";
 import { BackorderFormValues, BackorderSchema } from "@/zod/backorders.schema";
+import { useEffect } from "react";
 
 interface AddBackorderModalProps {
   opened: boolean;
@@ -16,6 +17,8 @@ interface AddBackorderModalProps {
   jobId: string;
   jobNumber: string;
   onSuccess?: () => void;
+  onSaveDraft?: (values: BackorderFormValues) => void;
+  initialData?: BackorderFormValues | null;
 }
 
 export default function AddBackorderModal({
@@ -24,6 +27,8 @@ export default function AddBackorderModal({
   jobId,
   jobNumber,
   onSuccess,
+  onSaveDraft,
+  initialData,
 }: AddBackorderModalProps) {
   const { supabase } = useSupabase();
   const queryClient = useQueryClient();
@@ -38,9 +43,16 @@ export default function AddBackorderModal({
     validate: zodResolver(BackorderSchema),
   });
 
-  if (form.values.job_id !== String(jobId)) {
-    form.setFieldValue("job_id", String(jobId));
-  }
+  useEffect(() => {
+    if (opened) {
+      if (initialData) {
+        form.setValues(initialData);
+      } else {
+        form.reset();
+        form.setFieldValue("job_id", String(jobId));
+      }
+    }
+  }, [opened, initialData, jobId]);
 
   const createMutation = useMutation({
     mutationFn: async (values: BackorderFormValues) => {
@@ -82,7 +94,12 @@ export default function AddBackorderModal({
   });
 
   const handleSubmit = (values: BackorderFormValues) => {
-    createMutation.mutate(values);
+    if (onSaveDraft) {
+      onSaveDraft(values);
+      onClose();
+    } else {
+      createMutation.mutate(values);
+    }
   };
 
   return (
@@ -122,7 +139,7 @@ export default function AddBackorderModal({
                 background: "linear-gradient(135deg, #FF5E62 0%, #FF9966 100%)",
               }}
             >
-              Log Backorder
+              {onSaveDraft ? "Save to Job" : "Log Backorder"}
             </Button>
           </Group>
         </Stack>

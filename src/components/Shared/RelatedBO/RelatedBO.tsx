@@ -59,7 +59,7 @@ export default function RelatedBackorders({
         .from("backorders")
         .select("*")
         .eq("job_id", jobId)
-        .order("date_entered", { ascending: false });
+        .order("id", { ascending: false });
 
       if (error) throw error;
       return data as Backorder[];

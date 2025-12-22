@@ -30,6 +30,7 @@ import {
   ActionIcon,
   Stack,
   Collapse,
+  Alert,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { DateInput } from "@mantine/dates";
@@ -48,6 +49,8 @@ import {
   FaTruckLoading,
   FaShippingFast,
   FaBoxOpen,
+  FaExclamationCircle,
+  FaEdit,
 } from "react-icons/fa";
 
 import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
@@ -58,6 +61,7 @@ import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 import AddInstaller from "@/components/Installers/AddInstaller/AddInstaller";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
+import { BackorderFormValues } from "@/zod/backorders.schema";
 
 type InstallationType = Tables<"installation"> & {
   partially_shipped?: boolean;
@@ -103,6 +107,9 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
 
   const [isBackorderPromptOpen, setIsBackorderPromptOpen] = useState(false);
   const [isAddBackorderModalOpen, setIsAddBackorderModalOpen] = useState(false);
+  const [pendingBackorder, setPendingBackorder] =
+    useState<BackorderFormValues | null>(null);
+
   const [
     isAddInstallerOpen,
     { open: openAddInstaller, close: closeAddInstaller },
@@ -208,7 +215,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
   });
 
   const { setIsDirty } = useNavigationGuard();
-  const isDirty = form.isDirty();
+  const isDirty = form.isDirty() || !!pendingBackorder;
   useEffect(() => {
     setIsDirty(isDirty);
     return () => setIsDirty(false);
@@ -354,6 +361,20 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         .update(prodPayload)
         .eq("prod_id", prod_id);
       if (prodError) throw prodError;
+
+      if (pendingBackorder) {
+        const boPayload = {
+          job_id: pendingBackorder.job_id,
+          due_date: pendingBackorder.due_date
+            ? dayjs(pendingBackorder.due_date).format("YYYY-MM-DD")
+            : null,
+          comments: pendingBackorder.comments || null,
+        };
+        const { error: boError } = await supabase
+          .from("backorders")
+          .insert(boPayload);
+        if (boError) throw boError;
+      }
     },
     onSuccess: () => {
       notifications.show({
@@ -431,6 +452,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     if (isCompleteShipment) {
       form.setFieldValue("has_shipped", true);
       form.setFieldValue("partially_shipped", false);
+      setPendingBackorder(null);
     } else {
       setIsAddBackorderModalOpen(true);
     }
@@ -442,6 +464,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     } else {
       form.setFieldValue("has_shipped", false);
       form.setFieldValue("partially_shipped", false);
+      setPendingBackorder(null);
     }
   };
 
@@ -821,7 +844,11 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           <Switch
                             size="xl"
                             onLabel="SHIPPED"
-                            offLabel="Not Shipped"
+                            offLabel={
+                              form.values.partially_shipped
+                                ? "Partially Shipped"
+                                : "Not Shipped"
+                            }
                             thumbIcon={<FaTruckLoading size={12} />}
                             checked={form.values.has_shipped}
                             onChange={(e) =>
@@ -852,6 +879,8 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                               trackLabel: {
                                 color: form.values.has_shipped
                                   ? "white"
+                                  : form.values.partially_shipped
+                                  ? "red"
                                   : "gray",
                                 fontWeight: 600,
                                 fontSize: "12px",
@@ -860,16 +889,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           />
                         </Box>
                       </SimpleGrid>
-
-                      {form.values.partially_shipped && (
-                        <Group mt={-10}>
-                          <Tooltip label="This job has been partially shipped. Check Related Backorders for more information.">
-                            <Badge color="orange" size="sm" variant="light">
-                              Partially Shipped
-                            </Badge>
-                          </Tooltip>
-                        </Group>
-                      )}
                     </Stack>
                   </Box>
                   <Group gap={50}>
@@ -969,6 +988,65 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                       />
                     </Stack>
                   </Box>
+                  {pendingBackorder && (
+                    <Paper
+                      withBorder
+                      p="sm"
+                      bg="violet.0"
+                      style={{
+                        borderColor: "var(--mantine-color-violet-3)",
+                      }}
+                    >
+                      <Group justify="space-between" align="flex-start">
+                        <Group align="flex-start" gap="sm">
+                          <ThemeIcon
+                            color="violet"
+                            variant="light"
+                            size="md"
+                            radius="xl"
+                          >
+                            <FaExclamationCircle size={12} />
+                          </ThemeIcon>
+                          <Box>
+                            <Text
+                              size="sm"
+                              fw={700}
+                              c="violet.9"
+                              style={{ lineHeight: 1.2 }}
+                            >
+                              Pending Backorder Log (Unsaved)
+                            </Text>
+                            <Text size="xs" c="dimmed" mt={4}>
+                              Due:{" "}
+                              {pendingBackorder.due_date
+                                ? dayjs(pendingBackorder.due_date).format(
+                                    "MMM D, YYYY"
+                                  )
+                                : "No Date"}
+                            </Text>
+                            <Text
+                              size="xs"
+                              c="dark.3"
+                              mt={2}
+                              lineClamp={2}
+                              style={{ maxWidth: 300 }}
+                            >
+                              {pendingBackorder.comments}
+                            </Text>
+                          </Box>
+                        </Group>
+                        <Button
+                          variant="subtle"
+                          color="violet"
+                          size="xs"
+                          leftSection={<FaEdit size={12} />}
+                          onClick={() => setIsAddBackorderModalOpen(true)}
+                        >
+                          Edit
+                        </Button>
+                      </Group>
+                    </Paper>
+                  )}
                 </Stack>
               </Paper>
             </Paper>
@@ -1221,11 +1299,14 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             size="md"
             color="blue"
             loading={updateMutation.isPending}
-            disabled={!form.isDirty() || updateMutation.isPending}
+            disabled={
+              (!form.isDirty() && !pendingBackorder) || updateMutation.isPending
+            }
             style={{
-              background: !form.isDirty()
-                ? "linear-gradient(135deg, #c6c6c6 0%, #9e9e9e 100%)"
-                : "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
+              background:
+                !form.isDirty() && !pendingBackorder
+                  ? "linear-gradient(135deg, #c6c6c6 0%, #9e9e9e 100%)"
+                  : "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
               color: "white",
               border: "none",
             }}
@@ -1312,14 +1393,17 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           onClose={() => setIsAddBackorderModalOpen(false)}
           jobId={String(jobData.id)}
           jobNumber={jobData.job_number}
-          onSuccess={() => {
-            const newValues = {
-              ...form.values,
-              has_shipped: false,
-              partially_shipped: true,
-            };
+          initialData={pendingBackorder}
+          onSaveDraft={(values) => {
+            setPendingBackorder(values);
             form.setFieldValue("has_shipped", false);
             form.setFieldValue("partially_shipped", true);
+            notifications.show({
+              title: "Backorder Queued",
+              message:
+                "Backorder details will be saved when you update the installation.",
+              color: "blue",
+            });
           }}
         />
       )}

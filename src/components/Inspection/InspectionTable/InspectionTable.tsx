@@ -31,23 +31,20 @@ import {
   Button,
   Anchor,
   Modal,
-  Badge,
 } from "@mantine/core";
 import {
   FaSearch,
-  FaSort,
   FaSortDown,
   FaSortUp,
   FaFire,
   FaClipboardCheck,
-  FaCheck,
-  FaTimes,
-  FaCalendarAlt,
-  FaPencilAlt,
   FaCheckCircle,
   FaTrash,
+  FaCalendarAlt,
+  FaPencilAlt,
 } from "react-icons/fa";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { DateInput } from "@mantine/dates";
 import { useSupabase } from "@/hooks/useSupabase";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
@@ -56,6 +53,17 @@ import { useDisclosure } from "@mantine/hooks";
 import { useInspectionTable } from "@/hooks/useInspectionTable";
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 import { usePermissions } from "@/hooks/usePermissions";
+
+dayjs.extend(utc);
+
+// --- HELPER: Server UTC String -> Local Date Object ---
+// Solves the "Day before" issue by forcing the browser to create a date
+// based on the string (e.g., "2024-12-28") rather than the UTC timestamp.
+const parseIsoToLocalDate = (isoString: string | null): Date | null => {
+  if (!isoString) return null;
+  const dateStr = dayjs.utc(isoString).format("YYYY-MM-DD");
+  return dayjs(dateStr).toDate();
+};
 
 type InspectionTableView = {
   job_id: number;
@@ -203,7 +211,7 @@ export default function InspectionTable() {
     setSelectedInstallId(row.installation_id);
 
     if (row.inspection_completed) {
-      setCompletionDateInput(dayjs(row.inspection_completed).toDate());
+      setCompletionDateInput(parseIsoToLocalDate(row.inspection_completed));
       setIsCurrentlyCompleted(true);
     } else {
       setCompletionDateInput(new Date());
@@ -211,6 +219,12 @@ export default function InspectionTable() {
     }
 
     setCompletionModalOpen(true);
+  };
+
+  const handleScheduleClick = (row: InspectionTableView) => {
+    setSelectedInstallId(row.installation_id);
+    setScheduleDateInput(parseIsoToLocalDate(row.inspection_date));
+    setScheduleModalOpen(true);
   };
 
   const confirmCompletionDate = () => {
@@ -229,15 +243,6 @@ export default function InspectionTable() {
         date: null,
       });
     }
-  };
-
-  const handleScheduleClick = (row: InspectionTableView) => {
-    setSelectedInstallId(row.installation_id);
-    const currentDate = row.inspection_date
-      ? dayjs(row.inspection_date).toDate()
-      : null;
-    setScheduleDateInput(currentDate);
-    setScheduleModalOpen(true);
   };
 
   const confirmScheduleDate = () => {
@@ -327,7 +332,7 @@ export default function InspectionTable() {
               TBD
             </Text>
           );
-        return <Text size="sm">{dayjs(date).format("YYYY-MM-DD")}</Text>;
+        return <Text size="sm">{dayjs.utc(date).format("YYYY-MM-DD")}</Text>;
       },
     }),
     columnHelper.accessor("inspection_date", {
@@ -367,7 +372,7 @@ export default function InspectionTable() {
               section: { margin: 0 },
             }}
           >
-            {date ? dayjs(date).format("MMM D, YYYY") : "Schedule"}
+            {date ? dayjs.utc(date).format("MMM D, YYYY") : "Schedule"}
           </Button>
         );
       },
@@ -399,7 +404,7 @@ export default function InspectionTable() {
             }
           >
             {isCompleted
-              ? dayjs(completedDate).format("MMM D, YYYY")
+              ? dayjs.utc(completedDate).format("MMM D, YYYY")
               : "Mark Complete"}
           </Button>
         );
@@ -468,7 +473,7 @@ export default function InspectionTable() {
         </Stack>
       </Group>
 
-      {}
+      {/* Filters Accordion */}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -509,10 +514,13 @@ export default function InspectionTable() {
                 clearable
                 value={
                   getInputFilterValue("inspection_date")
-                    ? dayjs(getInputFilterValue("inspection_date")).toDate()
+                    ? parseIsoToLocalDate(
+                        getInputFilterValue("inspection_date")
+                      )
                     : null
                 }
-                onChange={(date) => {
+                onChange={(val: any) => {
+                  const date = val ? dayjs(val).toDate() : null;
                   const formattedDate = date
                     ? dayjs(date).format("YYYY-MM-DD")
                     : undefined;
@@ -666,7 +674,7 @@ export default function InspectionTable() {
         onClose={closeDrawer}
       />
 
-      {}
+      {/* Completion Modal */}
       <Modal
         opened={completionModalOpen}
         onClose={() => setCompletionModalOpen(false)}
@@ -688,15 +696,16 @@ export default function InspectionTable() {
             label="Completion Date"
             placeholder="YYYY-MM-DD"
             value={completionDateInput}
-            onChange={(date) =>
-              setCompletionDateInput(date ? dayjs(date).toDate() : null)
+            // Using 'any' bypasses the TS definition error while ensuring safe conversion
+            onChange={(val: any) =>
+              setCompletionDateInput(val ? dayjs(val).toDate() : null)
             }
             valueFormat="YYYY-MM-DD"
             allowDeselect={false}
             data-autofocus
           />
           <Group justify="space-between" mt="md">
-            {}
+            {/* Left side actions (Remove) */}
             {isCurrentlyCompleted ? (
               <Button
                 variant="light"
@@ -730,7 +739,7 @@ export default function InspectionTable() {
         </Stack>
       </Modal>
 
-      {}
+      {/* Schedule Modal */}
       <Modal
         opened={scheduleModalOpen}
         onClose={() => setScheduleModalOpen(false)}
@@ -746,8 +755,9 @@ export default function InspectionTable() {
             label="Scheduled Date"
             placeholder="YYYY-MM-DD"
             value={scheduleDateInput}
-            onChange={(date) =>
-              setScheduleDateInput(date ? dayjs(date).toDate() : null)
+            // Using 'any' bypasses the TS definition error while ensuring safe conversion
+            onChange={(val: any) =>
+              setScheduleDateInput(val ? dayjs(val).toDate() : null)
             }
             valueFormat="YYYY-MM-DD"
             clearable

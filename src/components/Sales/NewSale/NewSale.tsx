@@ -393,6 +393,9 @@ export default function NewSale() {
         form.reset();
         setSelectedClientData(null);
         queryClient.invalidateQueries({ queryKey: ["sales_orders"] });
+        queryClient.invalidateQueries({
+          queryKey: ["sales_table"],
+        });
         router.push("/dashboard/sales");
         setSuccessBannerData(null);
       }, 3000);
