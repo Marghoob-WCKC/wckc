@@ -1024,6 +1024,7 @@ export type Database = {
           counter_top: string | null
           counter_type: string | null
           created_at: string
+          date_sold: string | null
           delivery_type: string | null
           deposit: number | null
           designer: string | null
@@ -1065,6 +1066,7 @@ export type Database = {
           counter_top?: string | null
           counter_type?: string | null
           created_at?: string
+          date_sold?: string | null
           delivery_type?: string | null
           deposit?: number | null
           designer?: string | null
@@ -1106,6 +1108,7 @@ export type Database = {
           counter_top?: string | null
           counter_type?: string | null
           created_at?: string
+          date_sold?: string | null
           delivery_type?: string | null
           deposit?: number | null
           designer?: string | null

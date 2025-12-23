@@ -8,6 +8,7 @@ import { zodResolver } from "@/utils/zodResolver/zodResolver";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";
+import utc from "dayjs/plugin/utc";
 import {
   Container,
   Button,
@@ -57,8 +58,8 @@ import { useClientSearch } from "@/hooks/useClientSearch";
 import { useSpeciesSearch } from "@/hooks/useSpeciesSearch";
 import { useColorSearch } from "@/hooks/useColorSearch";
 import { useDoorStyleSearch } from "@/hooks/useDoorStyleSearch";
-
-const FEATURE_MANUAL_JOB_ENTRY = true;
+import dayjs from "dayjs";
+dayjs.extend(utc);
 
 interface ExtendedMasterOrderInput extends MasterOrderInput {
   manual_job_base: string;
@@ -108,6 +109,7 @@ export default function NewSale() {
 
   const form = useForm<ExtendedMasterOrderInput>({
     initialValues: {
+      date_sold: null,
       client_id: 0,
       stage: "QUOTE",
       total: 0,
@@ -322,6 +324,7 @@ export default function NewSale() {
         manual_job_suffix?.toLowerCase().includes("x") ||
         false;
       const transactionPayload = {
+        date_sold: stage === "SOLD" ? dayjs.utc().format() : null,
         client_id: client_id,
         stage: stage,
         total: total,

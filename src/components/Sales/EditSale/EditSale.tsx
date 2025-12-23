@@ -8,6 +8,7 @@ import { zodResolver } from "@/utils/zodResolver/zodResolver";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";
+import utc from "dayjs/plugin/utc";
 import {
   Container,
   Button,
@@ -58,7 +59,8 @@ import { useClientSearch } from "@/hooks/useClientSearch";
 import { useSpeciesSearch } from "@/hooks/useSpeciesSearch";
 import { useColorSearch } from "@/hooks/useColorSearch";
 import { useDoorStyleSearch } from "@/hooks/useDoorStyleSearch";
-
+import dayjs from "dayjs";
+dayjs.extend(utc);
 const FEATURE_MANUAL_JOB_ENTRY = true;
 
 type EditSaleProps = {
@@ -109,6 +111,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
 
   const form = useForm<ExtendedMasterOrderInput>({
     initialValues: {
+      date_sold: null,
       designer: "",
       client_id: 0,
       stage: "QUOTE",
@@ -312,6 +315,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
     if (salesOrderData) {
       const cabinet = salesOrderData.cabinet;
       form.initialize({
+        date_sold: salesOrderData.date_sold,
         designer: salesOrderData.designer,
         client_id: salesOrderData.client_id,
         stage: salesOrderData.stage,
@@ -321,7 +325,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         comments: salesOrderData.comments || "",
         order_type: salesOrderData.order_type,
         delivery_type: salesOrderData.delivery_type,
-        manual_job_base: salesOrderData.job?.job_base_number,
+        manual_job_base: salesOrderData.job?.job_base_number || "",
         manual_job_suffix: salesOrderData.job?.job_suffix || "",
         is_active: salesOrderData.job?.is_active || true,
         is_memo: salesOrderData.is_memo,
@@ -409,9 +413,16 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         .update(cabinetPayload)
         .eq("id", salesOrderData.cabinet.id);
 
+      const dateSold =
+        salesOrderData.date_sold === null && values.stage === "SOLD"
+          ? dayjs.utc().format()
+          : salesOrderData.stage === "SOLD"
+          ? salesOrderData.date_sold
+          : null;
       const { error: soError } = await supabase
         .from("sales_orders")
         .update({
+          date_sold: dateSold,
           client_id: values.client_id,
           stage: values.stage,
           total: values.total,
@@ -620,7 +631,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                         );
                       }}
                       style={{ width: 80 }}
-                      maxLength={5}
+                      maxLength={10}
                     />
                   </Group>
                 </Collapse>
@@ -703,9 +714,18 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                   justifyContent: "flex-end",
                 }}
               >
-                <Text size="xs" c="dimmed">
-                  Created By: {salesOrderData?.designer}
-                </Text>
+                <Group>
+                  {salesOrderData?.date_sold && (
+                    <Text size="xs" c="dimmed">
+                      Date Sold:{" "}
+                      {dayjs(salesOrderData?.date_sold).format("DD-MM-YYYY")}
+                    </Text>
+                  )}
+
+                  <Text size="xs" c="dimmed">
+                    Created By: {salesOrderData?.designer}
+                  </Text>
+                </Group>
                 <Group>
                   <Switch
                     onLabel="Memo"
@@ -722,7 +742,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                     disabled
                     styles={{
                       track: {
-                        cursor: "pointer",
+                        cursor: "not-allowed",
                         background: isMemoChecked
                           ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
                           : "linear-gradient(135deg, #ddddddff 0%, #dadadaff 100%)",
