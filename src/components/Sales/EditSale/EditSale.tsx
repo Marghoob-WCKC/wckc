@@ -718,7 +718,9 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                   {salesOrderData?.date_sold && (
                     <Text size="xs" c="dimmed">
                       Date Sold:{" "}
-                      {dayjs(salesOrderData?.date_sold).format("DD-MM-YYYY")}
+                      {dayjs
+                        .utc(salesOrderData?.date_sold)
+                        .format("DD-MM-YYYY")}
                     </Text>
                   )}
 

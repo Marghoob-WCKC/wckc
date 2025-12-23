@@ -6,7 +6,6 @@ import {
   Group,
   Text,
   rem,
-  useMantineTheme,
   Box,
   Collapse,
   UnstyledButton,
@@ -113,6 +112,13 @@ function MainLink({
     transition: "background 150ms ease",
   };
 
+  const handleNavigation = (e: React.MouseEvent, path: string | undefined) => {
+    if (!path) return;
+    if (e.metaKey || e.ctrlKey || e.button === 1) return;
+    e.preventDefault();
+    navigatePush(path);
+  };
+
   if (collapsed) {
     if (hasLinks) {
       return (
@@ -151,7 +157,11 @@ function MainLink({
                 <Menu.Item
                   key={link.label}
                   leftSection={<SubIcon size={14} />}
-                  onClick={() => link.path && navigatePush(link.path)}
+                  component={(link.path ? Link : "button") as any}
+                  href={link.path || undefined}
+                  onClick={(e: React.MouseEvent) =>
+                    handleNavigation(e, link.path)
+                  }
                   style={{
                     color:
                       pathname === link.path ? "#fff" : "rgba(255,255,255,0.8)",
@@ -173,9 +183,11 @@ function MainLink({
     return (
       <Tooltip label={item.label} position="right" withArrow openDelay={200}>
         <UnstyledButton
+          component={(item.path ? Link : "button") as any}
+          href={item.path || undefined}
           p="xs"
           style={navItemStyle}
-          onClick={() => item.path && navigatePush(item.path)}
+          onClick={(e: React.MouseEvent) => handleNavigation(e, item.path)}
         >
           <Center style={{ width: "100%" }}>
             <Icon size={20} />
@@ -188,9 +200,15 @@ function MainLink({
   return (
     <>
       <UnstyledButton
-        onClick={() =>
-          hasLinks ? setOpened((o) => !o) : item.path && navigatePush(item.path)
-        }
+        component={(!hasLinks && item.path ? Link : "button") as any}
+        href={!hasLinks && item.path ? item.path : undefined}
+        onClick={(e: React.MouseEvent) => {
+          if (hasLinks) {
+            setOpened((o) => !o);
+          } else {
+            handleNavigation(e, item.path);
+          }
+        }}
         p="xs"
         style={navItemStyle}
       >

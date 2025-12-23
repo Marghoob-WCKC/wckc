@@ -105,6 +105,11 @@ const dashboardLinks: SidebarLink[] = [
         label: "Box Count",
         path: "/dashboard/reports/boxcountreport",
       },
+      {
+        iconName: "FaFileInvoice",
+        label: "Not Invoiced",
+        path: "/dashboard/reports/shippednotinvoiced",
+      },
     ],
   },
 

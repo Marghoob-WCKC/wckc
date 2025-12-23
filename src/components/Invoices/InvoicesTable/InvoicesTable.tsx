@@ -49,6 +49,7 @@ import {
   FaPencilAlt,
   FaEllipsisH,
   FaBan,
+  FaCheckSquare,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
@@ -303,12 +304,12 @@ export default function InvoicesTable() {
               gradient={{ from: "teal", to: "lime", deg: 90 }}
               leftSection={<FaCheckCircle size={10} />}
             >
-              PAID
+              POSTED
             </Badge>
           );
         return (
           <Badge color="red" variant="light">
-            Pending
+            NOT POSTED
           </Badge>
         );
       },
@@ -359,7 +360,7 @@ export default function InvoicesTable() {
                 </Menu.Target>
                 <Menu.Dropdown>
                   <Menu.Item
-                    leftSection={<FaDollarSign size={14} />}
+                    leftSection={<FaCheckSquare size={14} />}
                     onClick={() =>
                       togglePaidMutation.mutate({
                         id: info.row.original.invoice_id,
@@ -369,7 +370,7 @@ export default function InvoicesTable() {
                     disabled={isNoCharge ? true : false}
                     color={isPaid ? "red" : "green"}
                   >
-                    {isPaid ? "Mark Unpaid" : "Mark Paid"}
+                    {isPaid ? "Not Posted" : "Post"}
                   </Menu.Item>
                   <Menu.Divider />
                   <Menu.Item

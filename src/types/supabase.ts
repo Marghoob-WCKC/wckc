@@ -87,6 +87,13 @@ export type Database = {
             referencedRelation: "service_orders_table_view"
             referencedColumns: ["job_id"]
           },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "shipped_not_invoiced_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       cabinets: {
@@ -366,6 +373,13 @@ export type Database = {
             referencedRelation: "service_orders_table_view"
             referencedColumns: ["job_id"]
           },
+          {
+            foreignKeyName: "homeowners_info_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "shipped_not_invoiced_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       installation: {
@@ -580,6 +594,13 @@ export type Database = {
             referencedRelation: "service_orders_table_view"
             referencedColumns: ["job_id"]
           },
+          {
+            foreignKeyName: "invoices_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "shipped_not_invoiced_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       job_attachments: {
@@ -665,6 +686,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "service_orders_table_view"
             referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "job_attachments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "shipped_not_invoiced_view"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1010,6 +1038,13 @@ export type Database = {
             referencedRelation: "service_orders_table_view"
             referencedColumns: ["job_id"]
           },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "shipped_not_invoiced_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sales_orders: {
@@ -1313,6 +1348,13 @@ export type Database = {
             referencedRelation: "service_orders_table_view"
             referencedColumns: ["job_id"]
           },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "shipped_not_invoiced_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       species: {
@@ -1401,6 +1443,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "service_orders_table_view"
             referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "shipped_not_invoiced_view"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1657,6 +1706,13 @@ export type Database = {
             referencedRelation: "service_orders_table_view"
             referencedColumns: ["job_id"]
           },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "shipped_not_invoiced_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sales_table_view: {
@@ -1712,6 +1768,16 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shipped_not_invoiced_view: {
+        Row: {
+          id: number | null
+          job_number: string | null
+          ship_date: string | null
+          shipping_address: string | null
+          shipping_client_name: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
