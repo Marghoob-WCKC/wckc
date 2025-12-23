@@ -110,6 +110,11 @@ const dashboardLinks: SidebarLink[] = [
         label: "Not Invoiced",
         path: "/dashboard/reports/shippednotinvoiced",
       },
+      {
+        iconName: "FaFileInvoice",
+        label: "Job Status",
+        path: "/dashboard/reports/jobstatusreport",
+      },
     ],
   },
 

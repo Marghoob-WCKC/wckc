@@ -14,16 +14,17 @@ import {
   Container,
   Center,
   Loader,
-  Box,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
-import { FaCalendarAlt, FaPrint, FaSearch } from "react-icons/fa";
+import { FaPrint, FaSearch, FaFileExcel } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
 import {
   ShippingReportPdf,
   ShippingReportJob,
 } from "@/documents/ShippingReportPdf";
+import { exportToExcel } from "@/utils/exportToExcel";
+import "@mantine/dates/styles.css";
 
 const PDFViewer = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
@@ -63,22 +64,31 @@ export default function ShippingReport() {
         .from("jobs")
         .select(
           `
-    *,
-    sales_orders:sales_orders (
-      shipping_street,
-      shipping_city,
-      shipping_zip,
-      shipping_client_name,
-      cabinet:cabinets (
-        box,
-        species(Species),
-        colors(Name),
-        door_styles(name)
-      )
-    ),
-    production_schedule!inner (*),
-    installation:installation_id!inner (has_shipped)
-  `
+          id,
+          job_number,
+          sales_orders!inner (
+            shipping_client_name,
+            shipping_street,
+            shipping_city,
+            cabinet:cabinets (
+              box,
+              species (Species),
+              colors (Name),
+              door_styles (name)
+            )
+          ),
+          production_schedule!inner (
+            ship_schedule,
+            doors_completed_actual,
+            cut_finish_completed_actual,
+            custom_finish_completed_actual,
+            paint_completed_actual,
+            assembly_completed_actual
+          ),
+          installation:installation_id!inner (
+            has_shipped
+          )
+        `
         )
         .gte("production_schedule.ship_schedule", startDate)
         .lte("production_schedule.ship_schedule", endDate)
@@ -94,10 +104,57 @@ export default function ShippingReport() {
     enabled: isAuthenticated && !!dateRange[0] && !!dateRange[1],
   });
 
+  const handleExport = () => {
+    if (!reportData) return;
+
+    const excelData = reportData.map((job) => {
+      const so = Array.isArray(job.sales_orders)
+        ? job.sales_orders[0]
+        : job.sales_orders;
+      const cab = so?.cabinet
+        ? Array.isArray(so.cabinet)
+          ? so.cabinet[0]
+          : so.cabinet
+        : null;
+      const ps = Array.isArray(job.production_schedule)
+        ? job.production_schedule[0]
+        : job.production_schedule;
+
+      const address =
+        [so?.shipping_street, so?.shipping_city].filter(Boolean).join(", ") ||
+        "";
+
+      return {
+        "Ship Date": ps?.ship_schedule
+          ? dayjs(ps.ship_schedule).format("YYYY-MM-DD")
+          : "",
+        "Job #": job.job_number,
+        Customer: so?.shipping_client_name || "",
+        Address: address,
+        Box: cab?.box || "",
+        "Door Style": Array.isArray(cab?.door_styles)
+          ? cab.door_styles[0]?.name
+          : cab?.door_styles?.name || "",
+        Species: Array.isArray(cab?.species)
+          ? cab.species[0]?.Species
+          : cab?.species?.Species || "",
+        Color: Array.isArray(cab?.colors)
+          ? cab.colors[0]?.Name
+          : cab?.colors?.Name || "",
+        D: ps?.doors_completed_actual ? "Yes" : "No",
+        P: ps?.cut_finish_completed_actual ? "Yes" : "No",
+        "F/C": ps?.custom_finish_completed_actual ? "Yes" : "No",
+        "P/S": ps?.paint_completed_actual ? "Yes" : "No",
+        A: ps?.assembly_completed_actual ? "Yes" : "No",
+      };
+    });
+
+    exportToExcel(excelData, "Shipping_Report");
+  };
+
   return (
     <Container size="100%" p="md">
       <Stack gap="lg">
-        {}
         <Paper p="md" radius="md" shadow="sm" bg="white">
           <Group justify="space-between" align="flex-end">
             <Group>
@@ -141,11 +198,19 @@ export default function ShippingReport() {
               >
                 Generate
               </Button>
+              <Button
+                onClick={handleExport}
+                disabled={!reportData || reportData.length === 0}
+                leftSection={<FaFileExcel size={14} />}
+                variant="outline"
+                color="green"
+              >
+                Export Excel
+              </Button>
             </Group>
           </Group>
         </Paper>
 
-        {}
         <Paper
           shadow="md"
           p={0}

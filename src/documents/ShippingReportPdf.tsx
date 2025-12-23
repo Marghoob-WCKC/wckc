@@ -74,17 +74,22 @@ const styles = StyleSheet.create({
   colDoor: { width: "15%" },
   colSpec: { width: "10%" },
   colColor: { width: "10%" },
-  colCheck: { width: "3%", textAlign: "center" },
+  colCheck: { width: "3%", alignItems: "center" }, // Added alignment here
 
   checkbox: {
-    width: 8,
-    height: 8,
+    width: 10, // Increased from 8
+    height: 10, // Increased from 8
     borderWidth: 1,
     borderColor: "#000",
     alignItems: "center",
     justifyContent: "center",
   },
-  checkMark: { fontSize: 6, fontWeight: "bold", paddingBottom: 1 },
+  checkMark: {
+    fontSize: 8,
+    fontWeight: "bold",
+    lineHeight: 1, // Fix alignment issues
+    marginTop: -1, // Slight visual adjustment for centering
+  },
 
   footer: {
     position: "absolute",
@@ -126,11 +131,21 @@ const ColumnHeaders = () => (
     <Text style={[styles.headerText, styles.colDoor]}>Door Style</Text>
     <Text style={[styles.headerText, styles.colSpec]}>Species</Text>
     <Text style={[styles.headerText, styles.colColor]}>Color</Text>
-    <Text style={[styles.headerText, styles.colCheck]}>D</Text>
-    <Text style={[styles.headerText, styles.colCheck]}>P</Text>
-    <Text style={[styles.headerText, styles.colCheck]}>F/C</Text>
-    <Text style={[styles.headerText, styles.colCheck]}>P/S</Text>
-    <Text style={[styles.headerText, styles.colCheck]}>A</Text>
+    <Text style={[styles.headerText, styles.colCheck, { textAlign: "center" }]}>
+      D
+    </Text>
+    <Text style={[styles.headerText, styles.colCheck, { textAlign: "center" }]}>
+      P
+    </Text>
+    <Text style={[styles.headerText, styles.colCheck, { textAlign: "center" }]}>
+      F/C
+    </Text>
+    <Text style={[styles.headerText, styles.colCheck, { textAlign: "center" }]}>
+      P/S
+    </Text>
+    <Text style={[styles.headerText, styles.colCheck, { textAlign: "center" }]}>
+      A
+    </Text>
   </View>
 );
 
@@ -245,19 +260,19 @@ export const ShippingReportPdf = ({
           </Text>
 
           <View style={styles.colCheck}>
-            <Checkbox checked={!!ps?.doors_completed_actual} />
+            <Checkbox checked={Boolean(ps?.doors_completed_actual)} />
           </View>
           <View style={styles.colCheck}>
-            <Checkbox checked={!!ps?.cut_finish_completed_actual} />
+            <Checkbox checked={Boolean(ps?.cut_finish_completed_actual)} />
           </View>
           <View style={styles.colCheck}>
-            <Checkbox checked={!!ps?.custom_finish_completed_actual} />
+            <Checkbox checked={Boolean(ps?.custom_finish_completed_actual)} />
           </View>
           <View style={styles.colCheck}>
-            <Checkbox checked={!!ps?.paint_completed_actual} />
+            <Checkbox checked={Boolean(ps?.paint_completed_actual)} />
           </View>
           <View style={styles.colCheck}>
-            <Checkbox checked={!!ps?.assembly_completed_actual} />
+            <Checkbox checked={Boolean(ps?.assembly_completed_actual)} />
           </View>
         </View>
       );
