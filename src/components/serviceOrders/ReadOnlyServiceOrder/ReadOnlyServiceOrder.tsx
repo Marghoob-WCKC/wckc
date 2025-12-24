@@ -340,13 +340,12 @@ export default function ReadOnlyServiceOrder({
                           />
                         }
                       />
-                      {so.is_warranty_so && (
-                        <InfoRow
-                          label="Warranty Cost"
-                          value={`$${so.warranty_order_cost ?? 0}`}
-                          highlight
-                        />
-                      )}
+
+                      <InfoRow
+                        label="Associated Cost"
+                        value={`$${so.warranty_order_cost ?? 0}`}
+                        highlight
+                      />
                     </Stack>
                   </Card>
 
@@ -362,7 +361,10 @@ export default function ReadOnlyServiceOrder({
                         <InfoRow label="Name" value={hoInfo.homeowner_name} />
                         <InfoRow label="Phone" value={hoInfo.homeowner_phone} />
                         <InfoRow label="Email" value={hoInfo.homeowner_email} />
-                        <InfoRow label="Details" value={hoInfo.homeowner_details} />
+                        <InfoRow
+                          label="Details"
+                          value={hoInfo.homeowner_details}
+                        />
                       </Stack>
                     ) : (
                       <Text size="sm" c="dimmed" fs="italic">

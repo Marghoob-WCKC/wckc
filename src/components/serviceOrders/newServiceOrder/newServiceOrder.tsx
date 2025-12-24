@@ -382,24 +382,14 @@ export default function NewServiceOrder({
             type: "checkbox",
           })}
         />
-
-        <Box
-          style={{
-            transition: "all 0.3s ease",
-            maxWidth: form.values.is_warranty_so ? rem(200) : 0,
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <NumberInput
-            w={rem(140)}
-            size="sm"
-            placeholder="Cost"
-            leftSection="$"
-            {...form.getInputProps("warranty_order_cost")}
-          />
-        </Box>
       </Group>
+      <NumberInput
+        w={rem(250)}
+        size="sm"
+        placeholder="Associated Cost"
+        leftSection="$"
+        {...form.getInputProps("warranty_order_cost")}
+      />
     </Stack>
   );
 

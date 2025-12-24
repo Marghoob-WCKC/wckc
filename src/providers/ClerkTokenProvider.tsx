@@ -3,12 +3,18 @@
 import React, { ReactNode, createContext, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 
-interface SessionClaims {
-  exp: number;
-  [key: string]: unknown;
-}
-
 export const ClerkTokenContext = createContext<string | null>(null);
+
+const parseJwt = (token: string) => {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = window.atob(base64);
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+};
 
 export default function ClerkTokenProvider({
   children,
@@ -19,21 +25,10 @@ export default function ClerkTokenProvider({
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     const initializeToken = async () => {
       try {
-        if (!sessionClaims) {
-          console.warn("No session claims available");
-          return;
-        }
-
-        const claims = sessionClaims as SessionClaims;
-        const expiresAt = claims.exp;
-
-        if (!expiresAt) {
-          console.warn("No token expiration time available");
-          return;
-        }
-
         const supabaseToken = await getToken({
           template: process.env.NEXT_PUBLIC_CLERK_SUPABASE_TEMPLATE,
           skipCache: true,
@@ -41,19 +36,18 @@ export default function ClerkTokenProvider({
 
         if (supabaseToken) {
           setToken(supabaseToken);
+          const decoded = parseJwt(supabaseToken);
+          const expiresAt = decoded?.exp;
 
-          const now = Date.now();
-          const expiresIn = expiresAt * 1000 - now;
+          if (!expiresAt) return;
 
-          const refreshTime = expiresIn - 60000;
+          const now = Math.floor(Date.now() / 1000);
+          const expiresInSeconds = expiresAt - now;
+          const refreshTimeMs = Math.max((expiresInSeconds - 60) * 1000, 10000);
 
-          if (refreshTime > 0) {
-            const timeout = setTimeout(() => {
-              initializeToken();
-            }, refreshTime);
-
-            return () => clearTimeout(timeout);
-          }
+          timeoutId = setTimeout(() => {
+            initializeToken();
+          }, refreshTimeMs);
         }
       } catch (error) {
         console.error("Failed to initialize Clerk token:", error);
@@ -61,7 +55,13 @@ export default function ClerkTokenProvider({
       }
     };
 
-    initializeToken();
+    if (sessionClaims) {
+      initializeToken();
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [getToken, sessionClaims]);
 
   return (

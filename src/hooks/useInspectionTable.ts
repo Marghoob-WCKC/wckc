@@ -22,10 +22,15 @@ export function useInspectionTable({
   return useQuery({
     queryKey: ["inspection_table_view", pagination, columnFilters, sorting],
     queryFn: async () => {
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      const cutoffDate = threeDaysAgo.toISOString().split("T")[0];
+
       let query = supabase
         .from("inspection_table_view" as any)
         .select("*", { count: "exact" })
-        .not("installation_date", "is", null);
+        .not("installation_date", "is", null)
+        .gte("installation_date", cutoffDate);
 
       columnFilters.forEach((filter) => {
         const { id, value } = filter;
