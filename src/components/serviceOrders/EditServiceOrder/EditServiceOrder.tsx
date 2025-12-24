@@ -50,7 +50,7 @@ import {
 
 import { useJobSearch } from "@/hooks/useJobSearch";
 import { useInstallerSearch } from "@/hooks/useInstallerSearch";
-
+import utc from "dayjs/plugin/utc";
 import CustomRichTextEditor from "@/components/RichTextEditor/RichTextEditor";
 import PdfPreview from "../PdfPreview/PdfPreview";
 import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
@@ -61,6 +61,7 @@ import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 import HomeOwnersInfo from "../HomeOwnersInfo/HomeOwnersInfo";
 
+dayjs.extend(utc);
 interface EditServiceOrderProps {
   serviceOrderId: string;
 }
@@ -434,10 +435,10 @@ export default function EditServiceOrder({
           }}
         >
           {form.values.completed_at &&
-            dayjs(form.values.completed_at).year() !== 1999 && (
+            dayjs.utc(form.values.completed_at).year() !== 1999 && (
               <Text size="sm" c="dimmed">
                 Completed on:{" "}
-                {dayjs(form.values.completed_at).format("YYYY-MM-DD HH:mm")}
+                {dayjs.utc(form.values.completed_at).format("YYYY-MM-DD HH:mm")}
               </Text>
             )}
         </Box>
@@ -499,8 +500,9 @@ export default function EditServiceOrder({
                 </Text>
                 <Text size="xs" c="dimmed">
                   Entered:{" "}
-                  {dayjs(serviceOrderData?.date_entered).format("YYYY-MM-DD") ||
-                    "—"}
+                  {dayjs
+                    .utc(serviceOrderData?.date_entered)
+                    .format("YYYY-MM-DD") || "—"}
                 </Text>
               </Stack>
 
