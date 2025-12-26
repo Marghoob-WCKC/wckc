@@ -97,8 +97,13 @@ const dashboardLinks: SidebarLink[] = [
     links: [
       {
         iconName: "FaTruckLoading",
-        label: "Shipping",
+        label: "Not Shipped",
         path: "/dashboard/reports/shippingreport",
+      },
+      {
+        iconName: "FaTruckLoading",
+        label: "Past Shipping",
+        path: "/dashboard/reports/pastshipreport",
       },
       {
         iconName: "FaBoxOpen",

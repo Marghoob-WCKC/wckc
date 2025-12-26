@@ -883,7 +883,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                                   ? undefined
                                   : "#e9ecef",
                                 backgroundImage: form.values.has_shipped
-                                  ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
+                                  ? "linear-gradient(135deg, #00851fff 0%, #218838 100%)"
                                   : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
                                 transition: "background 200ms ease",
                               },
@@ -915,7 +915,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                       <Switch
                         size="md"
                         color="violet"
-                        label="Inst. Report Received"
+                        label="Installation Report Received"
                         checked={!!form.values.installation_report_received}
                         onChange={(event) => {
                           const isChecked = event.currentTarget.checked;
@@ -1105,7 +1105,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                       <Box
                         style={{
                           backgroundColor: form.values.installation_completed
-                            ? "#28a745"
+                            ? "#00851fff"
                             : "#6b6b6b",
                           borderRadius: "50%",
                           width: 24,
@@ -1122,12 +1122,12 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                     styles={{
                       item: {
                         "--tl-color": form.values.installation_completed
-                          ? "#28a745"
+                          ? "#00851fff"
                           : "#e0e0e0",
                       },
                       itemTitle: {
                         color: form.values.installation_completed
-                          ? "#28a745"
+                          ? "#00851fff"
                           : "#6b6b6b",
                         fontSize: "12px",
                       },
@@ -1172,7 +1172,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                       <Box
                         style={{
                           backgroundColor: form.values.inspection_completed
-                            ? "#28a745"
+                            ? "#00851fff"
                             : "#6b6b6b",
                           borderRadius: "50%",
                           width: 24,
@@ -1189,12 +1189,12 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                     styles={{
                       item: {
                         "--tl-color": form.values.inspection_completed
-                          ? "#28a745"
+                          ? "#00851fff"
                           : "#e0e0e0",
                       },
                       itemTitle: {
                         color: form.values.inspection_completed
-                          ? "#28a745"
+                          ? "#00851fff"
                           : "#6b6b6b",
                         fontSize: "12px",
                       },
@@ -1231,9 +1231,11 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                 >
                   {actualSteps.map((step, idx) => {
                     const bulletColor = step.isCompleted
-                      ? "#28a745"
+                      ? "#00851fff"
                       : "#6b6b6b";
-                    const lineColor = step.isCompleted ? "#28a745" : "#e0e0e0";
+                    const lineColor = step.isCompleted
+                      ? "#00851fff"
+                      : "#e0e0e0";
                     return (
                       <Timeline.Item
                         key={idx}
@@ -1264,7 +1266,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                         styles={{
                           item: { "--tl-color": lineColor },
                           itemTitle: {
-                            color: step.isCompleted ? "#28a745" : "#6b6b6b",
+                            color: step.isCompleted ? "#00851fff" : "#6b6b6b",
                           },
                         }}
                       >
