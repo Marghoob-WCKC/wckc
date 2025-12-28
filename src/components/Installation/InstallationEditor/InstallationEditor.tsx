@@ -185,10 +185,14 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
   });
 
   const installerOptions = useMemo(() => {
-    return (installers || []).map((i) => ({
-      value: String(i.installer_id),
-      label: i.company_name || `${i.first_name} ${i.last_name}`,
-    }));
+    return (installers || []).map((i) => {
+      const namePart = `${i.first_name || ""} ${i.last_name || ""}`.trim();
+      const companyPart = i.company_name || "";
+      return {
+        value: String(i.installer_id),
+        label: [namePart, companyPart].filter(Boolean).join(" - "),
+      };
+    });
   }, [installers]);
 
   const form = useForm<CombinedInstallFormValues>({

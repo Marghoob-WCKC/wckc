@@ -590,8 +590,9 @@ export default function ProdTable() {
                   <Table.Tr
                     key={row.id}
                     onClick={() =>
-                      router.push(
-                        `/dashboard/production/schedule/${row.original.id}`
+                      window.open(
+                        `/dashboard/production/schedule/${row.original.id}`,
+                        "_blank"
                       )
                     }
                     style={{ cursor: "pointer", backgroundColor: bgColor }}

@@ -74,7 +74,7 @@ export default function SalesTable() {
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 16,
+    pageSize: 30,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
@@ -362,6 +362,15 @@ export default function SalesTable() {
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
               <TextInput
+                label="Designer Name"
+                placeholder="Search Designer..."
+                value={(getInputFilterValue("designerName") as string) || ""}
+                onChange={(e) =>
+                  setInputFilterValue("designerName", e.target.value)
+                }
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
+              <TextInput
                 label="Site Address"
                 placeholder="Search Site Address..."
                 value={(getInputFilterValue("site_address") as string) || ""}
@@ -395,9 +404,18 @@ export default function SalesTable() {
                 checked={!!getInputFilterValue("my_jobs")}
                 onChange={(e) => {
                   const val = e.currentTarget.checked
-                    ? user?.fullName || user?.firstName || "CurrentUser"
+                    ? user?.username
                     : undefined;
                   setInputFilterValue("my_jobs", val);
+                  const otherFilters = inputFilters.filter(
+                    (f) => f.id !== "my_jobs"
+                  );
+                  const newActiveFilters = val
+                    ? [...otherFilters, { id: "my_jobs", value: val }]
+                    : otherFilters;
+
+                  setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                  setActiveFilters(newActiveFilters);
                 }}
                 styles={{
                   track: {

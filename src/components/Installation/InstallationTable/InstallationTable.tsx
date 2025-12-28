@@ -901,8 +901,9 @@ export default function InstallationTable() {
                   <Table.Tr
                     key={row.id}
                     onClick={() =>
-                      router.push(
-                        `/dashboard/installation/${row.original.job_id}`
+                      window.open(
+                        `/dashboard/installation/${row.original.job_id}`,
+                        "_blank"
                       )
                     }
                     onContextMenu={(e) => e.preventDefault()}
