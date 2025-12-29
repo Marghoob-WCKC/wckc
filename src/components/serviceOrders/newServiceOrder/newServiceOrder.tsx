@@ -328,7 +328,7 @@ export default function NewServiceOrder({
 
       return newId;
     },
-    onSuccess: () => {
+    onSuccess: (newId) => {
       notifications.show({
         title: "Success",
         message: "Service Order created successfully.",
@@ -337,7 +337,7 @@ export default function NewServiceOrder({
       queryClient.invalidateQueries({
         queryKey: ["service_orders_table_view"],
       });
-      router.push("/dashboard/serviceorders");
+      router.push(`/dashboard/serviceorders/${newId}`);
     },
     onError: (err: any) => {
       notifications.show({
