@@ -694,7 +694,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                   <Box>
                     <Group mb="md" style={{ color: "#4A00E0" }}>
                       <FaTools size={18} />
-                      <Text fw={600}>Installation & Loading Logistics</Text>
+                      <Text fw={600}>Installation Schedule</Text>
                     </Group>
 
                     <Grid gutter="xl">
@@ -795,7 +795,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           />
                         </SimpleGrid>
                         <Box mt={rem(20)}>
-                          <Group mb={8}>
+                          <Group mb={8} style={{ color: "#4A00E0" }}>
                             <FaCalendarCheck size={18} />
                             <Text fw={600}>Notes</Text>
                           </Group>
@@ -803,7 +803,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                             <Textarea
                               minRows={10}
                               styles={{ input: { minHeight: "150px" } }}
-                              label="Installation/Site Notes"
                               placeholder="Document site conditions, issues, or specific instructions here."
                               {...form.getInputProps("installation_notes")}
                             />
