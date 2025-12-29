@@ -1323,7 +1323,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                     <Group gap="sm">
                       <Checkbox
                         size="xs"
-                        label="+ GST"
+                        label="+ GST (5%)"
                         color="#4A00E0"
                         checked={viewGst}
                         onChange={(e) => setViewGst(e.currentTarget.checked)}
@@ -1334,7 +1334,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       />
                       <Checkbox
                         size="xs"
-                        label="+ PST"
+                        label="+ PST (7%)"
                         color="#4A00E0"
                         checked={viewPst}
                         onChange={(e) => setViewPst(e.currentTarget.checked)}
@@ -1346,7 +1346,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                     </Group>
                     <Collapse in={viewGst || viewPst} transitionDuration={50}>
                       <Text size="sm" fw={700} c="violet">
-                        Incl: {getInclusiveTotal()}
+                        After Taxes: {getInclusiveTotal()}
                       </Text>
                     </Collapse>
                   </Group>
