@@ -12,22 +12,20 @@ import {
   Divider,
   Loader,
   Center,
-  Button,
   ThemeIcon,
   Box,
   Grid,
   Title,
+  Card,
+  rem,
 } from "@mantine/core";
 import {
   FaUser,
   FaBoxOpen,
   FaClipboardList,
-  FaMoneyBillWave,
   FaTruck,
   FaLayerGroup,
-  FaArrowLeft,
-  FaCheck,
-  FaTimes,
+  FaCommentAlt,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
@@ -37,12 +35,26 @@ type ReadOnlySaleProps = {
   salesOrderId: number;
 };
 
-const SectionTitle = ({ icon: Icon, title }: { icon: any; title: string }) => (
-  <Group mb="sm" gap="xs">
-    <ThemeIcon size="sm" radius="sm" variant="light" color="violet">
-      <Icon size={12} />
+const SectionTitle = ({
+  icon: Icon,
+  title,
+  color = "violet",
+}: {
+  icon: any;
+  title: string;
+  color?: string;
+}) => (
+  <Group mb="md" gap="xs">
+    <ThemeIcon size="md" radius="md" variant="light" color={color}>
+      <Icon size={14} />
     </ThemeIcon>
-    <Text fw={700} size="sm" tt="uppercase" c="dimmed">
+    <Text
+      fw={700}
+      size="sm"
+      tt="uppercase"
+      c="dimmed"
+      style={{ letterSpacing: "0.5px" }}
+    >
       {title}
     </Text>
   </Group>
@@ -59,39 +71,26 @@ const InfoRow = ({
 }) => (
   <Group
     justify="space-between"
-    align="center"
+    align="flex-start"
     style={{
-      borderBottom: "1px dashed #f1f3f5",
-      paddingBottom: 4,
-      minHeight: 24,
+      borderBottom: "1px dashed #e9ecef",
+      paddingBottom: 8,
+      marginBottom: 8,
     }}
   >
-    <Text size="xs" c="dimmed" fw={500}>
+    <Text size="sm" c="dimmed" fw={500}>
       {label}
     </Text>
     <Text
+      component="div"
       size="sm"
       fw={highlight ? 700 : 500}
       c={highlight ? "dark" : "dimmed"}
-      style={{ textAlign: "right", maxWidth: "65%" }}
-      truncate
+      style={{ textAlign: "right", maxWidth: "60%", lineHeight: 1.4 }}
     >
       {value || "—"}
     </Text>
   </Group>
-);
-
-const BooleanBadge = ({ value, label }: { value: boolean; label: string }) => (
-  <Badge
-    variant={value ? "filled" : "outline"}
-    color={value ? "violet" : "gray"}
-    leftSection={value ? <FaCheck size={8} /> : <FaTimes size={8} />}
-    size="xs"
-    radius="sm"
-    styles={{ root: { opacity: value ? 1 : 0.6 } }}
-  >
-    {label}
-  </Badge>
 );
 
 export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
@@ -142,8 +141,8 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
 
   if (isLoading || !order) {
     return (
-      <Center h="100vh">
-        <Loader color="violet" />
+      <Center h="100vh" bg="gray.0">
+        <Loader color="violet" type="bars" />
       </Center>
     );
   }
@@ -165,27 +164,20 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
   return (
     <Container
       size="100%"
-      w={"100%"}
+      pl={10}
+      w="100%"
       style={{
+        paddingRight: 0,
         height: "100vh",
         display: "flex",
         flexDirection: "column",
-        paddingRight: 0,
         background: "linear-gradient(135deg, #DDE6F5 0%, #E7D9F0 100%)",
       }}
     >
-      <Stack
-        gap="lg"
-        px={10}
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflowY: "auto",
-        }}
-      >
-        <Paper p="md" radius="md" shadow="xs" withBorder>
-          <Group justify="space-between" align="flex-start">
+      <Box style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+        {/* Header Section */}
+        <Paper p="md" radius="md" shadow="sm" bg="white" mb="md">
+          <Group justify="space-between" align="center">
             <Group align="center">
               <ThemeIcon
                 size={50}
@@ -227,7 +219,7 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
                     </Badge>
                   )}
                 </Group>
-                <Text size="sm" c="dimmed">
+                <Text size="sm" c="dimmed" mt={4}>
                   Created by {order.designer || "Unknown"} on{" "}
                   {dayjs(order.created_at).format("MMMM D, YYYY")}
                 </Text>
@@ -236,18 +228,26 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
           </Group>
         </Paper>
 
-        <Grid gutter="md">
+        {/* Main Content Grid */}
+        <Grid gutter="lg" align="stretch">
+          {/* Column 1: Client & Logistics (Stacked for balance) */}
           <Grid.Col span={{ base: 12, md: 4 }}>
-            <Stack gap="md">
-              <Paper p="md" radius="md" shadow="xs" withBorder>
-                <SectionTitle icon={FaUser} title="Client Details" />
-                <Stack gap="xs" mt="md">
+            <Stack gap="lg" h="100%">
+              <Card shadow="sm" padding="lg" radius="md" withBorder>
+                <SectionTitle
+                  icon={FaUser}
+                  title="Client Details"
+                  color="blue"
+                />
+                <Stack gap="xs">
                   <Box>
-                    <Text size="xs" c="dimmed" fw={700}>
+                    <Text size="xs" c="dimmed" fw={700} mb={4}>
                       BILLING
                     </Text>
-                    <Text fw={600}>{client?.lastName}</Text>
-                    <Text size="sm" c="dimmed">
+                    <Text fw={600} size="sm">
+                      {client?.lastName}
+                    </Text>
+                    <Text size="sm" c="dimmed" style={{ lineHeight: 1.3 }}>
                       {formatAddress(
                         client?.street,
                         client?.city,
@@ -255,26 +255,26 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
                         client?.zip
                       )}
                     </Text>
-                    <Group gap="xs" mt={4}>
-                      <Badge variant="outline" color="gray" size="xs">
+                    <Group gap="xs" mt={8}>
+                      <Badge variant="light" color="gray" size="sm">
                         {client?.phone1 || "No Phone"}
                       </Badge>
-                      <Text size="xs" c="blue">
+                      <Text size="sm" c="blue" td="underline">
                         {client?.email1}
                       </Text>
                     </Group>
                   </Box>
 
-                  <Divider />
+                  <Divider my="sm" />
 
                   <Box>
-                    <Text size="xs" c="dimmed" fw={700}>
+                    <Text size="xs" c="dimmed" fw={700} mb={4}>
                       SHIPPING
                     </Text>
-                    <Text fw={600}>
+                    <Text fw={600} size="sm">
                       {order.shipping_client_name || client?.lastName}
                     </Text>
-                    <Text size="sm" c="dimmed">
+                    <Text size="sm" c="dimmed" style={{ lineHeight: 1.3 }}>
                       {formatAddress(
                         order.shipping_street,
                         order.shipping_city,
@@ -282,65 +282,72 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
                         order.shipping_zip
                       )}
                     </Text>
-                    <Group gap="xs" mt={4}>
+                    <Group gap="xs" mt={8}>
                       {order.shipping_phone_1 && (
-                        <Badge variant="outline" color="gray" size="xs">
+                        <Badge variant="light" color="gray" size="sm">
                           {order.shipping_phone_1}
                         </Badge>
                       )}
                       {order.shipping_email_1 && (
-                        <Text size="xs" c="blue">
+                        <Text size="sm" c="blue" td="underline">
                           {order.shipping_email_1}
                         </Text>
                       )}
                     </Group>
                   </Box>
                 </Stack>
-              </Paper>
+              </Card>
 
-              <Paper p="md" radius="md" shadow="xs" withBorder>
-                <SectionTitle icon={FaMoneyBillWave} title="Financials" />
-                <Stack gap="xs" mt="sm">
+              <Card
+                shadow="sm"
+                padding="lg"
+                radius="md"
+                withBorder
+                style={{ flex: 1 }}
+              >
+                <SectionTitle
+                  icon={FaTruck}
+                  title="Logistics & Details"
+                  color="orange"
+                />
+                <Stack gap="xs">
+                  <InfoRow label="Order Type" value={order.order_type} />
+                  <InfoRow label="Delivery" value={order.delivery_type} />
                   <InfoRow
-                    label="Total"
-                    value={`$${order.total?.toLocaleString() ?? "0.00"}`}
-                    highlight
+                    label="Installation"
+                    value={
+                      <Badge
+                        variant={order.install ? "filled" : "light"}
+                        color={order.install ? "teal" : "gray"}
+                        size="sm"
+                      >
+                        {order.install ? "REQUIRED" : "NO"}
+                      </Badge>
+                    }
                   />
                   <InfoRow
-                    label="Deposit"
-                    value={`$${order.deposit?.toLocaleString() ?? "0.00"}`}
+                    label="Flooring Type"
+                    value={`${order.flooring_type || "TBD"}`}
                   />
-                  <Paper
-                    p="xs"
-                    radius="sm"
-                    bg="gray.1"
-                    style={{ border: "1px solid #dee2e6" }}
-                  >
-                    <Group justify="space-between">
-                      <Text size="sm" fw={700}>
-                        Balance Due
-                      </Text>
-                      <Text size="sm" fw={700} c="red.7">
-                        $
-                        {(
-                          (order.total || 0) - (order.deposit || 0)
-                        ).toLocaleString()}
-                      </Text>
-                    </Group>
-                  </Paper>
+                  <InfoRow
+                    label="Flooring Clearance"
+                    value={`${order.flooring_clearance || ""}`}
+                  />
                 </Stack>
-              </Paper>
+              </Card>
             </Stack>
           </Grid.Col>
 
+          {/* Column 2: Cabinet Specs (Tallest item) */}
           <Grid.Col span={{ base: 12, md: 4 }}>
-            <Paper p="md" radius="md" shadow="xs" withBorder h="100%">
+            <Card shadow="sm" padding="lg" radius="md" withBorder h="100%">
               <SectionTitle
                 icon={FaLayerGroup}
                 title="Cabinet Specifications"
+                color="violet"
               />
 
-              <Stack gap="xs" mt="md">
+              <Stack gap="xs">
                 <InfoRow
                   label="Species"
                   value={String(cab.species_name || "")}
@@ -356,75 +363,91 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
                 <InfoRow label="Drawer Box" value={cab.drawer_box} />
                 <InfoRow label="Drawer Hardware" value={cab.drawer_hardware} />
 
-                <Text size="xs" fw={700} c="violet" mt="md">
-                  FEATURES & PARTS
-                </Text>
+                <Divider
+                  label="Features & Parts"
+                  labelPosition="center"
+                  my="sm"
+                />
+
                 <InfoRow
                   label="Handles Supplied"
-                  value={cab.handles_supplied ? "Yes" : "No"}
+                  value={
+                    <Badge
+                      variant={cab.handles_supplied ? "filled" : "light"}
+                      color={cab.handles_supplied ? "violet" : "gray"}
+                      size="sm"
+                    >
+                      {cab.handles_supplied ? "YES" : "NO"}
+                    </Badge>
+                  }
                 />
                 <InfoRow
                   label="Handles Selected"
-                  value={cab.handles_selected ? "Yes" : "No"}
+                  value={
+                    <Badge
+                      variant={cab.handles_selected ? "filled" : "light"}
+                      color={cab.handles_selected ? "violet" : "gray"}
+                      size="sm"
+                    >
+                      {cab.handles_selected ? "YES" : "NO"}
+                    </Badge>
+                  }
                 />
 
                 {(cab.glass || cab.doors_parts_only) && (
-                  <Stack gap={4}>
+                  <>
                     {cab.glass && (
                       <InfoRow label="Glass Type" value={cab.glass_type} />
                     )}
                     {cab.doors_parts_only && (
                       <InfoRow label="Piece Count" value={cab.piece_count} />
                     )}
-                  </Stack>
+                  </>
                 )}
               </Stack>
-            </Paper>
+            </Card>
           </Grid.Col>
 
+          {/* Column 3: Notes & Related Orders */}
           <Grid.Col span={{ base: 12, md: 4 }}>
-            <Stack gap="md" h="100%">
-              <Paper p="md" radius="md" shadow="xs" withBorder>
-                <SectionTitle icon={FaTruck} title="Logistics & Details" />
-                <Stack gap="xs" mt="sm">
-                  <InfoRow label="Order Type" value={order.order_type} />
-                  <InfoRow label="Delivery" value={order.delivery_type} />
-                  <InfoRow
-                    label="Installation"
-                    value={order.install ? "Required" : "No"}
-                  />
-                  <InfoRow
-                    label="Flooring Type"
-                    value={`${order.flooring_type || "TBD"}`}
-                  />
-                  <InfoRow
-                    label="Flooring Clearance"
-                    value={`${order.flooring_clearance || ""}`}
-                  />
-                </Stack>
-
-                <Divider my="md" />
-                <Text size="xs" fw={700} c="violet" mt="xs">
-                  Notes
-                </Text>
-                <Text
-                  size="sm"
-                  c="dimmed"
-                  mih={"100px"}
+            <Stack gap="lg" h="100%">
+              <Card shadow="sm" padding="lg" radius="md" withBorder>
+                <SectionTitle icon={FaCommentAlt} title="Notes" color="gray" />
+                <Paper
+                  p="sm"
+                  bg="gray.0"
+                  radius="sm"
                   style={{
-                    whiteSpace: "pre-wrap",
-                    border: "1px solid #dee2e6",
-                    padding: "4px",
+                    minHeight: rem(120),
+                    border: "1px dashed #ced4da",
                   }}
                 >
-                  {order.comments || "No comments available."}
-                </Text>
-              </Paper>
-              {jobId && <RelatedServiceOrders jobId={jobId} readOnly />}
+                  {order.comments ? (
+                    <Text
+                      size="sm"
+                      c="dimmed"
+                      style={{ whiteSpace: "pre-wrap" }}
+                    >
+                      {order.comments}
+                    </Text>
+                  ) : (
+                    <Center h="100%">
+                      <Text size="sm" c="dimmed" fs="italic">
+                        No comments available.
+                      </Text>
+                    </Center>
+                  )}
+                </Paper>
+              </Card>
+
+              {/* Related Service Orders takes remaining space if needed, or flows naturally */}
+              <Box style={{ flex: 1 }}>
+                {jobId && <RelatedServiceOrders jobId={jobId} readOnly />}
+              </Box>
             </Stack>
           </Grid.Col>
         </Grid>
-      </Stack>
+      </Box>
     </Container>
   );
 }
