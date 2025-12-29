@@ -38,6 +38,11 @@ import { useDisclosure } from "@mantine/hooks";
 import EditBOModal from "@/components/Installation/EditBOModal/EditBOModal";
 import { useBackordersTable } from "@/hooks/useBackOrdersTable";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useQuery } from "@tanstack/react-query";
+import { useSupabase } from "@/hooks/useSupabase";
+import BackorderPdfPreviewModal from "@/components/Shared/BOPdfModal/BOPdfModal";
+import { ActionIcon } from "@mantine/core";
+import { FaPrint } from "react-icons/fa";
 
 export default function BackordersTable() {
   const permissions = usePermissions();
@@ -55,6 +60,59 @@ export default function BackordersTable() {
   const [selectedBO, setSelectedBO] = useState<any>(null);
   const [editModalOpened, { open: openEditModal, close: closeEditModal }] =
     useDisclosure(false);
+
+  const { supabase, isAuthenticated } = useSupabase();
+  const [printBackorderId, setPrintBackorderId] = useState<number | null>(null);
+  const [printModalOpened, { open: openPrintModal, close: closePrintModal }] =
+    useDisclosure(false);
+
+  const { data: printData, isLoading: isPrintLoading } = useQuery({
+    queryKey: ["backorder-print-data", printBackorderId],
+    queryFn: async () => {
+      if (!printBackorderId) return null;
+
+      const { data, error } = await supabase
+        .from("backorders")
+        .select(
+          `
+          *,
+          jobs:job_id (
+            job_number,
+            sales_orders:sales_orders (
+              shipping_client_name,
+              shipping_street,
+              shipping_city,
+              shipping_province,
+              shipping_zip,
+              cabinet:cabinets (
+                box,
+                species:species (Species),
+                colors:colors (Name),
+                door_styles:door_styles (name)
+              )
+            )
+          )
+        `
+        )
+        .eq("id", printBackorderId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAuthenticated && !!printBackorderId,
+  });
+
+  const handlePrintClick = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setPrintBackorderId(id);
+    openPrintModal();
+  };
+
+  const handleClosePrint = () => {
+    closePrintModal();
+    setPrintBackorderId(null);
+  };
 
   const { data, isLoading } = useBackordersTable({
     pagination,
@@ -121,6 +179,20 @@ export default function BackordersTable() {
         <Badge color={info.getValue() ? "green" : "red"} variant="light">
           {info.getValue() ? "Complete" : "Pending"}
         </Badge>
+      ),
+    }),
+    columnHelper.display({
+      id: "print",
+      size: 60,
+      cell: (info) => (
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          onClick={(e) => handlePrintClick(e, info.row.original.id)}
+          loading={isPrintLoading && printBackorderId === info.row.original.id}
+        >
+          <FaPrint size={14} />
+        </ActionIcon>
       ),
     }),
   ];
@@ -311,6 +383,12 @@ export default function BackordersTable() {
           readOnly={!permissions.canEditInstallation}
         />
       )}
+
+      <BackorderPdfPreviewModal
+        opened={printModalOpened}
+        onClose={handleClosePrint}
+        data={printData}
+      />
     </Box>
   );
 }
