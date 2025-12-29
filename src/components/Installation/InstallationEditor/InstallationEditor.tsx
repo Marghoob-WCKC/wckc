@@ -32,6 +32,7 @@ import {
   Stack,
   Collapse,
   Fieldset,
+  rem,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { DateInput } from "@mantine/dates";
@@ -380,9 +381,14 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           "cut_melamine_completed_actual",
           "paint_completed_actual",
           "assembly_completed_actual",
-        ];
+        ] as const;
+
+        const currentSchedule = jobData.production_schedule;
+
         autoCompleteFields.forEach((field) => {
-          prodUpdates[field] = timestamp;
+          if (currentSchedule && !currentSchedule[field]) {
+            prodUpdates[field] = timestamp;
+          }
         });
       }
 
@@ -720,7 +726,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
 
                           <DateInput
                             styles={{ label: { fontWeight: "bold" } }}
-                            label="Scheduled Ship Date"
+                            label="Ship Date"
                             placeholder="Select Date"
                             clearable
                             valueFormat="YYYY-MM-DD"
@@ -746,7 +752,20 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
 
                           <DateInput
                             styles={{ label: { fontWeight: "bold" } }}
-                            label="Scheduled Installation Date"
+                            label={
+                              <Group gap="xs">
+                                Installation Date
+                                {form.values.installation_completed && (
+                                  <Badge
+                                    color="green"
+                                    size="xs"
+                                    variant="filled"
+                                  >
+                                    Completed
+                                  </Badge>
+                                )}
+                              </Group>
+                            }
                             placeholder="Select Date"
                             clearable
                             valueFormat="YYYY-MM-DD"
@@ -757,7 +776,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                             styles={{ label: { fontWeight: "bold" } }}
                             label={
                               <Group gap="xs">
-                                Scheduled Inspection Date
+                                Inspection Date
                                 {form.values.inspection_completed && (
                                   <Badge
                                     color="green"
@@ -775,6 +794,21 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                             {...form.getInputProps("inspection_date")}
                           />
                         </SimpleGrid>
+                        <Box mt={rem(20)}>
+                          <Group mb={8}>
+                            <FaCalendarCheck size={18} />
+                            <Text fw={600}>Notes</Text>
+                          </Group>
+                          <Stack>
+                            <Textarea
+                              minRows={10}
+                              styles={{ input: { minHeight: "150px" } }}
+                              label="Installation/Site Notes"
+                              placeholder="Document site conditions, issues, or specific instructions here."
+                              {...form.getInputProps("installation_notes")}
+                            />
+                          </Stack>
+                        </Box>
                       </Grid.Col>
 
                       <Grid.Col
@@ -859,7 +893,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                             <Switch
                               size="md"
                               color="violet"
-                              label="Report Received"
+                              label="Installation Report Received"
                               checked={
                                 !!form.values.installation_report_received
                               }
@@ -955,22 +989,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                         </Stack>
                       </Grid.Col>
                     </Grid>
-                  </Box>
-
-                  <Box>
-                    <Group mb={8}>
-                      <FaCalendarCheck size={18} />
-                      <Text fw={600}>Notes & Reference</Text>
-                    </Group>
-                    <Stack>
-                      <Textarea
-                        minRows={10}
-                        styles={{ input: { minHeight: "200px" } }}
-                        label="Installation/Site Notes"
-                        placeholder="Document site conditions, issues, or specific instructions here."
-                        {...form.getInputProps("installation_notes")}
-                      />
-                    </Stack>
                   </Box>
                 </Stack>
               </Paper>
