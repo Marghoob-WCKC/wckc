@@ -708,7 +708,10 @@ export default function InstallationTable() {
                 ]}
                 value={(getInputFilterValue("ship_status") as string) || "all"}
                 onChange={(val) => {
-                  setInputFilterValue("ship_status", val || "all");
+                  setInputFilterValue(
+                    "ship_status",
+                    val === "all" ? null : val
+                  );
                 }}
                 allowDeselect={false}
               />
