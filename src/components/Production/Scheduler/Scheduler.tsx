@@ -408,9 +408,7 @@ export default function EditProductionSchedulePage({
         <Grid>
           <Grid.Col span={10}>
             <Stack mb="md">
-              {}
               <Paper p="md" radius="md" shadow="sm" bg="gray.1">
-                {}
                 <SimpleGrid cols={2}>
                   <Stack>
                     <ClientInfo shipping={shipping} />
@@ -421,11 +419,9 @@ export default function EditProductionSchedulePage({
                 </SimpleGrid>
               </Paper>
 
-              {}
               <Paper p="md" radius="md" shadow="xl" pb={30} bg="gray.1">
                 <Paper p="md" radius="md" shadow="xl" bg="white">
                   <Stack>
-                    {}
                     <Switch
                       size="xl"
                       offLabel="Normal"
@@ -590,7 +586,6 @@ export default function EditProductionSchedulePage({
                       </SimpleGrid>
                     </Box>
 
-                    {}
                     {[
                       {
                         title: "Doors Schedule",
@@ -671,7 +666,6 @@ export default function EditProductionSchedulePage({
             {jobId && <RelatedServiceOrders jobId={jobId} />}
           </Grid.Col>
 
-          {}
           <Grid.Col span={2}>
             <Box pt="md" style={{ justifyItems: "center" }}>
               <Paper p="md" radius="md" w={"100%"}>
@@ -760,7 +754,6 @@ export default function EditProductionSchedulePage({
         </Grid>
       </form>
 
-      {}
       <Paper
         p="md"
         style={{

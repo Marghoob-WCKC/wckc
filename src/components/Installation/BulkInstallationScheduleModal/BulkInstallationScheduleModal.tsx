@@ -47,10 +47,8 @@ export default function BulkScheduleModal({
   const { supabase } = useSupabase();
   const { mutate, isPending } = useBulkSchedule();
 
-  // --- Local State for Form Fields ---
   const [updates, setUpdates] = useState<Partial<BulkSchedulePayload>>({});
 
-  // --- Completion Modal State ---
   const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [completionDateInput, setCompletionDateInput] = useState<Date | null>(
     new Date()
@@ -59,7 +57,6 @@ export default function BulkScheduleModal({
     "installation_completed" | null
   >(null);
 
-  // --- Fetch Installers ---
   const { data: installers } = useQuery({
     queryKey: ["installers-list"],
     queryFn: async () => {
@@ -80,7 +77,6 @@ export default function BulkScheduleModal({
     }));
   }, [installers]);
 
-  // --- Handlers ---
   const handleUpdate = (key: keyof BulkSchedulePayload, value: any) => {
     setUpdates((prev) => ({ ...prev, [key]: value }));
   };
@@ -106,7 +102,6 @@ export default function BulkScheduleModal({
     onClose();
   };
 
-  // --- Completion Logic ---
   const openCompletionModal = (field: "installation_completed") => {
     setTargetCompletionField(field);
     setCompletionDateInput(new Date());
@@ -115,8 +110,6 @@ export default function BulkScheduleModal({
 
   const confirmCompletionDate = () => {
     if (targetCompletionField && completionDateInput) {
-      // FIX: Set time to Noon (12:00) to prevent timezone shifts (e.g. UTC-5)
-      // from rolling the date back to the previous day when converting to ISO/UTC.
       const safeDate = dayjs(completionDateInput)
         .hour(12)
         .minute(0)
@@ -129,7 +122,6 @@ export default function BulkScheduleModal({
     }
   };
 
-  // Extract job numbers for display
   const selectedJobNumbers = useMemo(() => {
     return selectedRows.map((row) => row.original.job_number).filter(Boolean);
   }, [selectedRows]);
@@ -150,8 +142,7 @@ export default function BulkScheduleModal({
         size="lg"
       >
         <Stack gap="lg">
-          {/* Selected Job Numbers Display */}
-          <Box>
+                    <Box>
             <Text size="sm" fw={500} mb={4}>
               Selected Jobs:
             </Text>
@@ -170,8 +161,7 @@ export default function BulkScheduleModal({
             Adjust fields below. Leave empty to keep existing values.
           </Text>
 
-          {/* 1. Installer & Key Dates */}
-          <Box>
+                    <Box>
             <Group mb="xs" c="violet.9">
               <FaTools />{" "}
               <Text fw={600} size="sm">
@@ -194,8 +184,6 @@ export default function BulkScheduleModal({
                 placeholder="No Change"
                 clearable
                 valueFormat="YYYY-MM-DD"
-                // For standard dates (stored as YYYY-MM-DD date type), standard Date object is fine
-                // as the hook formats it as YYYY-MM-DD string directly.
                 onChange={(val) => handleUpdate("installation_date", val)}
               />
               <DateInput
@@ -210,8 +198,7 @@ export default function BulkScheduleModal({
 
           <Divider />
 
-          {/* 2. Shipping Management */}
-          <Box>
+                    <Box>
             <Group mb="xs" c="green.9">
               <FaTruckLoading />{" "}
               <Text fw={600} size="sm">
@@ -241,8 +228,7 @@ export default function BulkScheduleModal({
               />
             </SimpleGrid>
             <Group mt="md" grow>
-              {/* Wrapped Switch */}
-              <Box>
+                            <Box>
                 <Switch
                   size="md"
                   label="Mark as Wrapped"
@@ -268,8 +254,7 @@ export default function BulkScheduleModal({
                 </Text>
               </Box>
 
-              {/* Shipped Switch */}
-              <Box>
+                            <Box>
                 <Switch
                   size="md"
                   label="Mark as Shipped"
@@ -293,8 +278,7 @@ export default function BulkScheduleModal({
 
           <Divider />
 
-          {/* 3. Completion Phase */}
-          <Box>
+                    <Box>
             <Group mb="xs" c="blue.9">
               <FaCheckCircle />{" "}
               <Text fw={600} size="sm">
@@ -344,8 +328,7 @@ export default function BulkScheduleModal({
         </Stack>
       </Modal>
 
-      {/* Helper Modal for Completion Dates */}
-      <Modal
+            <Modal
         opened={completionModalOpen}
         onClose={() => setCompletionModalOpen(false)}
         title="Set Completion Date"

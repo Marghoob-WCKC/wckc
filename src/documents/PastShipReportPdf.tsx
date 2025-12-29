@@ -212,7 +212,6 @@ export const PastShippingReportPdf = ({
   return (
     <Document>
       <Page size="A4" orientation="landscape" style={styles.page}>
-        {/* Fixed Header: Repeats on every page */}
         <View style={styles.headerContainer} fixed>
           <Text style={styles.reportTitle}>Past Shipping Report</Text>
           <View>
@@ -232,7 +231,6 @@ export const PastShippingReportPdf = ({
           </View>
         </View>
 
-        {/* Content Body */}
         <View>
           {sortedDates.map((dateKey) => {
             const jobs = grouped[dateKey];
@@ -298,11 +296,7 @@ export const PastShippingReportPdf = ({
                   const invNum = inv?.invoice_number || "—";
 
                   return (
-                    <View
-                      style={styles.tableRow}
-                      key={job.id}
-                      wrap={false} // Prevents row splitting
-                    >
+                    <View style={styles.tableRow} key={job.id} wrap={false}>
                       <Text style={[styles.colJob, { fontSize: 8 }]}>
                         {jobNum}
                       </Text>
@@ -359,7 +353,6 @@ export const PastShippingReportPdf = ({
           })}
         </View>
 
-        {/* Fixed Footer: Repeats on every page */}
         <Text
           style={styles.footer}
           fixed

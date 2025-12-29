@@ -285,7 +285,6 @@ export default function PlantMasterTable() {
       display="flex"
       style={{ flexDirection: "column" }}
     >
-      {}
       <Group mb="md">
         <ThemeIcon
           size={50}
@@ -305,7 +304,6 @@ export default function PlantMasterTable() {
         </Stack>
       </Group>
 
-      {}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -365,7 +363,6 @@ export default function PlantMasterTable() {
         </Accordion.Item>
       </Accordion>
 
-      {}
       <Group mb="md" align="center">
         {[
           { key: "ALL", label: "All Records", count: stats?.ALL || 0 },
@@ -432,7 +429,6 @@ export default function PlantMasterTable() {
         })}
       </Group>
 
-      {}
       <ScrollArea style={{ flex: 1 }} type="hover">
         <Table
           striped
@@ -512,7 +508,6 @@ export default function PlantMasterTable() {
         </Table>
       </ScrollArea>
 
-      {}
       <Box
         style={{
           borderTop: "1px solid #eee",

@@ -770,8 +770,6 @@ export default function PurchasingTable() {
         />
       </Box>
 
-      {}
-
       <Modal
         opened={commentModalOpened}
         onClose={closeCommentModal}

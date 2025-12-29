@@ -6,9 +6,9 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc"; //
+import utc from "dayjs/plugin/utc"; 
 
-dayjs.extend(utc); //
+dayjs.extend(utc); 
 
 interface UseServiceOrdersTableParams {
   pagination: PaginationState;

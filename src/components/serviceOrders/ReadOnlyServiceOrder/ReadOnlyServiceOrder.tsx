@@ -349,7 +349,6 @@ export default function ReadOnlyServiceOrder({
                     </Stack>
                   </Card>
 
-                  {}
                   <Card shadow="sm" padding="lg" radius="md" withBorder>
                     <SectionTitle
                       icon={FaUser}

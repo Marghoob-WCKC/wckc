@@ -82,11 +82,9 @@ export default function CabinetSpecs({ cabinet }: CabinetSpecsProps) {
       </Text>
 
       <Grid>
-        {}
         <Grid.Col span={7}>
           <StackSpacing>
             <SpecRow label="Box" value={getDisplayValue(cabinet, "box")} />
-            {}
             <SpecRow label="Color" value={getDisplayValue(cabinet, "color")} />
 
             <SpecRow
@@ -116,10 +114,8 @@ export default function CabinetSpecs({ cabinet }: CabinetSpecsProps) {
           </StackSpacing>
         </Grid.Col>
 
-        {}
         <Grid.Col span={5}>
           <StackSpacing>
-            {}
             <div>
               {cabinet.glass && (
                 <BooleanRow label="Glass" value={cabinet.glass} />
@@ -132,7 +128,6 @@ export default function CabinetSpecs({ cabinet }: CabinetSpecsProps) {
               )}
             </div>
 
-            {}
             <div>
               {cabinet.doors_parts_only && (
                 <BooleanRow

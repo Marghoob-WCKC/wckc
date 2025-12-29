@@ -80,7 +80,7 @@ export default function NavigationGuardProvider({
   );
 
   const handleConfirmLeave = () => {
-    setIsDirty(false); 
+    setIsDirty(false);
     close();
     if (pendingAction) pendingAction();
   };
@@ -97,7 +97,6 @@ export default function NavigationGuardProvider({
     >
       {children}
 
-      {}
       <Modal
         opened={opened}
         onClose={close}

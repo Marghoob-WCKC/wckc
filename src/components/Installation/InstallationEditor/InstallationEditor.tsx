@@ -677,9 +677,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             <Paper bg={"gray.1"} p="md" radius="md">
               <Paper p="md" radius="md" pb={30}>
                 <Stack gap="xl">
-                  {/* Removed the separate sections for installer and shipping management */}
-                  {/* Replaced with a unified section below */}
-
                   <Box>
                     <Group mb="md" style={{ color: "#4A00E0" }}>
                       <FaTools size={18} />
@@ -687,7 +684,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                     </Group>
 
                     <Grid gutter="xl">
-                      {/* LEFT COLUMN: All Inputs */}
                       <Grid.Col span={{ base: 12, md: 8 }}>
                         <SimpleGrid cols={2} spacing="md">
                           <Select
@@ -773,7 +769,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                         </SimpleGrid>
                       </Grid.Col>
 
-                      {/* RIGHT COLUMN: Switches */}
                       <Grid.Col
                         span={{ base: 12, md: 4 }}
                         style={{ borderLeft: "1px solid #eee" }}
@@ -877,7 +872,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                               </Text>
                             )}
                           </Group>
-                          {/* In Warehouse switch remains below, assumed to follow naturally */}
                           <Divider variant="dashed" />
                           <Group justify="space-between">
                             <Switch
@@ -935,7 +929,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           </Grid.Col>
 
           <Grid.Col span={2} style={{ borderLeft: "1px solid #ccc" }}>
-            {/* Removed Installation Phase timeline as items moved to main form */}
             <Box pt="md" style={{ justifyItems: "center" }}>
               <Text
                 fw={600}

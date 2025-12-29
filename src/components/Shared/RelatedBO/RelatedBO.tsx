@@ -158,7 +158,6 @@ export default function RelatedBackorders({
             {bo.complete ? "Complete" : "Pending"}
           </Badge>
         </Table.Td>
-        {}
         <Table.Td w={60}>
           <ActionIcon
             variant="subtle"
@@ -272,7 +271,6 @@ export default function RelatedBackorders({
         </Paper>
       </Paper>
 
-      {}
       <EditBackorderModal
         opened={editModalOpened}
         onClose={() => {
@@ -283,7 +281,6 @@ export default function RelatedBackorders({
         readOnly={!permissions.canEditInstallation}
       />
 
-      {}
       <BackorderPdfPreviewModal
         opened={printModalOpened}
         onClose={handleClosePrint}

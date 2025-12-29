@@ -74,11 +74,11 @@ const styles = StyleSheet.create({
   colDoor: { width: "15%" },
   colSpec: { width: "10%" },
   colColor: { width: "10%" },
-  colCheck: { width: "3%", alignItems: "center" }, // Added alignment here
+  colCheck: { width: "3%", alignItems: "center" }, 
 
   checkbox: {
-    width: 10, // Increased from 8
-    height: 10, // Increased from 8
+    width: 10, 
+    height: 10, 
     borderWidth: 1,
     borderColor: "#000",
     alignItems: "center",
@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
   checkMark: {
     fontSize: 8,
     fontWeight: "bold",
-    lineHeight: 1, // Fix alignment issues
-    marginTop: -1, // Slight visual adjustment for centering
+    lineHeight: 1, 
+    marginTop: -1, 
   },
 
   footer: {

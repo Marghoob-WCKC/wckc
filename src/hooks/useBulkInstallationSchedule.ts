@@ -5,20 +5,16 @@ import dayjs from "dayjs";
 
 export interface BulkSchedulePayload {
   installationIds: number[];
-  // Installation Table Fields
   installer_id?: number | null;
   installation_date?: Date | null;
   inspection_date?: Date | null;
   installation_notes?: string;
   wrap_date?: Date | null;
-  wrap_completed?: string | null; // ISO string or null
+  wrap_completed?: string | null; 
   has_shipped?: boolean;
-  installation_completed?: string | null; // ISO string or null
-  inspection_completed?: string | null; // ISO string or null
+  installation_completed?: string | null; 
+  inspection_completed?: string | null; 
 
-  // Production Schedule Fields (requires join, but we handle via ID lookup or assumption)
-  // Note: We typically need prod_ids. For bulk simplicity, we might update via job link
-  // or assume backend trigger. Here we will update via the relation in Supabase.
   ship_schedule?: Date | null;
   ship_status?: "unprocessed" | "tentative" | "confirmed";
 }
@@ -31,7 +27,6 @@ export function useBulkSchedule() {
     mutationFn: async (payload: BulkSchedulePayload) => {
       const { installationIds, ...updates } = payload;
 
-      // 1. Separate updates for 'installation' and 'production_schedule'
       const installUpdates: any = {};
       const prodUpdates: any = {};
 
@@ -67,7 +62,6 @@ export function useBulkSchedule() {
 
       const promises = [];
 
-      // 2. Perform Installation Update
       if (Object.keys(installUpdates).length > 0) {
         promises.push(
           supabase
@@ -77,10 +71,6 @@ export function useBulkSchedule() {
         );
       }
 
-      // 3. Perform Production Schedule Update
-      // We need to find the prod_ids associated with these installations/jobs.
-      // Since we only have installation_ids, we rely on the 'jobs' link or Update via Join if Supabase supported it directly.
-      // Strategy: Fetch prod_ids first.
       if (Object.keys(prodUpdates).length > 0) {
         const { data: jobs } = await supabase
           .from("jobs")

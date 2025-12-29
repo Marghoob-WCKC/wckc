@@ -65,7 +65,6 @@ export default function EditInvoice({
     if (opened && invoice) {
       form.setValues({
         invoice_number: invoice.invoice_number,
-        // FIX: Cast job_id to String so it matches the Select options
         job_id: String(invoice.job_id),
         date_entered: invoice.date_entered
           ? new Date(invoice.date_entered)

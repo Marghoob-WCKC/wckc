@@ -349,7 +349,6 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
         flexDirection: "column",
       }}
     >
-      {}
       <Paper
         p="md"
         radius={0}
@@ -382,13 +381,10 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
         </Group>
       </Paper>
 
-      {}
       <Box style={{ flex: 1, overflowY: "auto" }} p="md">
         <Grid gutter="lg">
-          {}
           <Grid.Col span={{ base: 12, lg: 10 }}>
             <Stack gap="md">
-              {}
               <Paper p="md" radius="md" shadow="xs" withBorder bg="gray.1">
                 <SimpleGrid cols={3}>
                   <Stack>
@@ -599,7 +595,6 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
                 </Timeline>
               </Card>
 
-              {}
               <Card shadow="sm" padding="lg" radius="md" withBorder>
                 <SectionTitle
                   icon={FaCogs}

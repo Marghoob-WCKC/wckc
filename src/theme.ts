@@ -1,11 +1,4 @@
-/**
- * Centralized Theme Constants
- * All colors and gradients used across the application
- */
 
-// ============================================
-// Color Primitives
-// ============================================
 export const colors = {
   violet: {
     primary: "#4A00E0",
@@ -40,10 +33,9 @@ export const colors = {
   },
 } as const;
 
-// ============================================
-// Mantine Gradient Objects
-// For use with Mantine's gradient prop
-// ============================================
+
+
+
 export const gradients = {
   primary: {
     from: colors.violet.secondary,
@@ -71,10 +63,9 @@ export const gradients = {
   inactive: { from: colors.gray.borderLight, to: colors.gray.border, deg: 135 },
 } as const;
 
-// ============================================
-// CSS Linear Gradient Strings
-// For use in inline styles
-// ============================================
+
+
+
 export const linearGradients = {
   primary: `linear-gradient(135deg, ${colors.violet.secondary} 0%, ${colors.violet.primary} 100%)`,
   primaryVertical: `linear-gradient(0deg, ${colors.violet.lighter} 20%, ${colors.violet.primary} 80%)`,
@@ -87,9 +78,9 @@ export const linearGradients = {
   pageBackground: `linear-gradient(135deg, #DDE6F5 0%, #E7D9F0 100%)`,
 } as const;
 
-// ============================================
-// Service Order Status Gradients
-// ============================================
+
+
+
 export const serviceStatusGradients = {
   ALL: `linear-gradient(135deg, ${colors.violet.light} 0%, ${colors.violet.primary} 100%)`,
   OPEN: `linear-gradient(135deg, ${colors.blue.secondary} 0%, ${colors.blue.primary} 100%)`,

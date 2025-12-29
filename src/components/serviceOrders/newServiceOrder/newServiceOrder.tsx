@@ -486,14 +486,12 @@ export default function NewServiceOrder({
 
               <Fieldset legend="Details" variant="filled" bg="white">
                 <Box mt="md">
-                  {}
                   <Group
                     visibleFrom="lg"
                     align="stretch"
                     wrap="nowrap"
                     gap="lg"
                   >
-                    {}
                     <Stack gap="sm" style={{ flex: 1 }}>
                       <Group align="flex-end" gap="xs" wrap="nowrap">
                         <Select
@@ -574,14 +572,12 @@ export default function NewServiceOrder({
 
                     <Divider orientation="vertical" />
 
-                    {}
                     <Box style={{ flex: 1 }}>
                       <HomeOwnersInfo form={form} />
                     </Box>
 
                     <Divider orientation="vertical" />
 
-                    {}
                     <Box style={{ flex: 1 }}>
                       <Text fw={500} size="sm" mb="xs" c="dimmed">
                         Order Status & Type
@@ -590,7 +586,6 @@ export default function NewServiceOrder({
                     </Box>
                   </Group>
 
-                  {}
                   <Stack hiddenFrom="lg" gap="xl">
                     <Stack gap="sm">
                       <Group align="flex-end" gap="xs" wrap="nowrap">
@@ -614,7 +609,6 @@ export default function NewServiceOrder({
 
                     <HomeOwnersInfo form={form} />
 
-                    {}
                     <Box>
                       <Divider
                         mb="md"
@@ -651,7 +645,6 @@ export default function NewServiceOrder({
                 Add Part
               </Button>
             </Group>
-            {/* test */}
             {form.values.parts && form.values.parts.length > 0 ? (
               <Table withTableBorder withColumnBorders>
                 <Table.Thead>

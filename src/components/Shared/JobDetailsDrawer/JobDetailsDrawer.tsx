@@ -244,7 +244,6 @@ export default function JobDetailsDrawer({
 
     return (
       <Stack gap="md" pb="xl">
-        {}
         <Paper p="md" radius="md" bg="gray.1">
           <JobAttachments jobId={jobId as number} />
           <Group justify="space-between" align="flex-start" mt="md">
@@ -287,7 +286,6 @@ export default function JobDetailsDrawer({
               </Stack>
             </Group>
 
-            {}
             <Tooltip label="Open Full Edit Page">
               <ActionIcon
                 component={Link}
@@ -303,7 +301,6 @@ export default function JobDetailsDrawer({
           </Group>
         </Paper>
 
-        {}
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <Stack gap="xs">
             <ClientInfo
@@ -330,7 +327,6 @@ export default function JobDetailsDrawer({
           <CabinetSpecs cabinet={cabinet} />
         </SimpleGrid>
 
-        {}
         <Paper p="md" radius="md" withBorder shadow="sm">
           <SectionHeader
             icon={FaIndustry}
@@ -338,7 +334,6 @@ export default function JobDetailsDrawer({
             color="blue"
           />
 
-          {}
           <Group justify="space-between" mb="lg" wrap="nowrap" gap={4}>
             {productionSteps.map((step) => {
               const isDone = !!prod?.[step.key];
@@ -372,7 +367,6 @@ export default function JobDetailsDrawer({
 
           <Divider mb="md" />
 
-          {}
           <SimpleGrid cols={4} spacing="xs">
             <CompactDateBlock label="Placement" date={prod?.placement_date} />
             <CompactDateBlock label="Wrap Date" date={install?.wrap_date} />
@@ -408,7 +402,6 @@ export default function JobDetailsDrawer({
           </SimpleGrid>
         </Paper>
 
-        {}
         <Paper p="md" radius="md" withBorder shadow="sm">
           <SectionHeader
             icon={FaShippingFast}
@@ -472,7 +465,6 @@ export default function JobDetailsDrawer({
           </Stack>
         </Paper>
 
-        {}
         <Paper p="md" radius="md" withBorder shadow="sm">
           <SectionHeader
             icon={FaClipboardList}
@@ -517,9 +509,7 @@ export default function JobDetailsDrawer({
             </Box>
           </Stack>
         </Paper>
-        {}
 
-        {}
         <RelatedServiceOrders
           jobId={jobId}
           readOnly={!(permissions.isService || permissions.isAdmin)}

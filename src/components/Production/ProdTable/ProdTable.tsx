@@ -48,7 +48,7 @@ import {
 } from "react-icons/fa";
 import { FaGears } from "react-icons/fa6";
 import dayjs from "dayjs";
-import { DatePickerInput } from "@mantine/dates"; // Changed from DateInput
+import { DatePickerInput } from "@mantine/dates";
 import { useProdTable } from "@/hooks/useProdTable";
 import { Views } from "@/types/db";
 import { useDisclosure } from "@mantine/hooks";
@@ -83,7 +83,6 @@ export default function ProdTable() {
     openDrawer();
   };
 
-  // Updated to accept any value type (string | Date range)
   const setInputFilterValue = (id: string, value: any) => {
     setInputFilters((prev) => {
       const existing = prev.filter((f) => f.id !== id);
@@ -117,7 +116,6 @@ export default function ProdTable() {
   const totalCount = data?.count || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
-  // Debug logging
   if (typeof window !== "undefined" && tableData.length > 0) {
     console.log("ProdTable Row Data Sample:", tableData[0]);
   }
@@ -270,7 +268,6 @@ export default function ProdTable() {
         );
       },
     }),
-    // ... Rest of the columns remain unchanged ...
     columnHelper.accessor("shipping_client_name", {
       id: "client",
       header: "Client",
@@ -576,7 +573,6 @@ export default function ProdTable() {
         </Accordion.Item>
       </Accordion>
 
-      {/* Floating Action Bar */}
       <Transition
         mounted={Object.keys(rowSelection).length > 1}
         transition="slide-up"
@@ -655,7 +651,6 @@ export default function ProdTable() {
           withColumnBorders
           style={{ minWidth: "2600px" }}
         >
-          {/* Table Header and Body Code remains standard... */}
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>

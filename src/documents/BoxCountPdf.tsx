@@ -154,7 +154,6 @@ export const BoxCountReportPdf = ({
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {}
         <View style={styles.headerContainer}>
           <View>
             <Text style={styles.reportTitle}>Monthly Box Volume</Text>
@@ -170,9 +169,7 @@ export const BoxCountReportPdf = ({
           </View>
         </View>
 
-        {}
         <View style={styles.table}>
-          {}
           <View style={styles.tableHeader}>
             <Text style={[styles.headerText, styles.colMonth]}>Month</Text>
             <Text style={[styles.headerText, styles.colJobs]}>Total Jobs</Text>
@@ -184,7 +181,6 @@ export const BoxCountReportPdf = ({
             </Text>
           </View>
 
-          {}
           {sortedKeys.map((key) => {
             const row = groupedData[key];
             const avg =
@@ -210,7 +206,6 @@ export const BoxCountReportPdf = ({
             );
           })}
 
-          {}
           <View style={styles.totalRow}>
             <Text style={[styles.rowText, styles.colMonth, styles.boldText]}>
               GRAND TOTAL
@@ -227,7 +222,6 @@ export const BoxCountReportPdf = ({
           </View>
         </View>
 
-        {}
         <Text
           render={({ pageNumber, totalPages }) =>
             `Page ${pageNumber} of ${totalPages}`

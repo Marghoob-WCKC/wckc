@@ -79,7 +79,6 @@ export default function ServiceOrdersTable() {
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
 
-  // Context Menu State
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
     x: number;
@@ -111,7 +110,6 @@ export default function ServiceOrdersTable() {
     openDrawer();
   };
 
-  // Unified Filter Setter
   const setInputFilterValue = (
     id: string,
     value: string | undefined | null | [Date | null, Date | null]
@@ -186,7 +184,6 @@ export default function ServiceOrdersTable() {
 
   const columnHelper = createColumnHelper<ServiceOrderView>();
 
-  // Helper for Context Menu Cells
   const CellWrapper = ({
     children,
     onContextMenu,
@@ -761,7 +758,6 @@ export default function ServiceOrdersTable() {
         />
       </Box>
 
-      {/* Quick Filter Context Menu */}
       <Transition
         mounted={contextMenu.visible}
         transition="pop"

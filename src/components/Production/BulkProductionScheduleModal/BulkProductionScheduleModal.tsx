@@ -103,7 +103,6 @@ export default function BulkProductionScheduleModal({
       size="xl"
     >
       <Stack gap="lg">
-        {/* Selected Job Numbers Display */}
         <Box>
           <Text size="sm" fw={500} mb={4}>
             Selected Jobs:
@@ -123,7 +122,6 @@ export default function BulkProductionScheduleModal({
           Adjust fields below. Leave empty to keep existing values.
         </Text>
 
-        {/* Placement & Shipping */}
         <Box>
           <Group mb="xs" c="violet.9">
             <FaShippingFast />
@@ -181,7 +179,6 @@ export default function BulkProductionScheduleModal({
 
         <Divider />
 
-        {/* Doors Schedule */}
         <Box>
           <Group mb="xs" c="blue.9">
             <FaDoorOpen />
@@ -211,7 +208,6 @@ export default function BulkProductionScheduleModal({
 
         <Divider />
 
-        {/* Cutting Schedule */}
         <Box>
           <Group mb="xs" c="orange.9">
             <FaCut />
@@ -241,7 +237,6 @@ export default function BulkProductionScheduleModal({
 
         <Divider />
 
-        {/* Paint Schedule */}
         <Box>
           <Group mb="xs" c="pink.9">
             <FaPaintBrush />
@@ -271,7 +266,6 @@ export default function BulkProductionScheduleModal({
 
         <Divider />
 
-        {/* Assembly */}
         <Box>
           <Group mb="xs" c="green.9">
             <FaCogs />

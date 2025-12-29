@@ -44,7 +44,6 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
     validate: zodResolver(InvoiceSchema),
   });
 
-  // FIX: Cast job_id to string to satisfy the hook's type definition
   const {
     options: jobOptions,
     isLoading: jobsLoading,
@@ -62,9 +61,6 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
 
   const createMutation = useMutation({
     mutationFn: async (values: InvoiceFormInput) => {
-      // Ensure job_id is a number for the DB insert if needed,
-      // though Zod transform usually handles it on parse.
-      // Supabase insert expects the column type (integer).
       const payload = {
         ...values,
         job_id: Number(values.job_id),

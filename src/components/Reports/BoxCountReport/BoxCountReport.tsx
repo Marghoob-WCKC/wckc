@@ -87,7 +87,6 @@ export default function BoxCountReport() {
   return (
     <Container size="100%" p="md">
       <Stack gap="lg">
-        {}
         <Paper p="md" radius="md" shadow="sm" bg="white">
           <Group justify="space-between" align="flex-end">
             <Group>
@@ -135,7 +134,6 @@ export default function BoxCountReport() {
           </Group>
         </Paper>
 
-        {}
         <Paper
           shadow="md"
           p={0}

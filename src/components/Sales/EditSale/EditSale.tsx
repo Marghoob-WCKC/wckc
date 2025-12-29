@@ -619,7 +619,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         }}
       >
         <Stack gap={5}>
-          {/* Top Section */}
           <Paper p="md" radius="md" shadow="xl" withBorder>
             <SimpleGrid cols={3}>
               <Group align="end">
@@ -839,7 +838,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
             </SimpleGrid>
           </Paper>
 
-          {/* Billing & Shipping Section */}
           {selectedClientData ? (
             <SimpleGrid
               cols={{ base: 1, lg: 2 }}
@@ -985,10 +983,8 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
             </Center>
           )}
 
-          {/* Main Form Area */}
           <Paper p="md" withBorder bg={"gray.1"}>
             <SimpleGrid cols={{ base: 1, xl: 2 }} spacing={30}>
-              {/* Left Column */}
               <Stack>
                 <Fieldset
                   legend="Basic Information"
@@ -1140,10 +1136,9 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       data={[]}
                       {...form.getInputProps(`cabinet.box`)}
                     />
-                    {/* Drawer Hardware Select with Legacy Support */}
                     <Select
                       label="Drawer Hardware"
-                      key={form.values.cabinet.drawer_box} // Force re-render on box change
+                      key={form.values.cabinet.drawer_box}
                       placeholder={
                         form.values.cabinet.drawer_box
                           ? "Select Hardware"
@@ -1157,7 +1152,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                         form.values.cabinet.drawer_hardware
                       )}
                       {...form.getInputProps("cabinet.drawer_hardware")}
-                      value={form.values.cabinet.drawer_hardware || null} // Handle empty string correctly
+                      value={form.values.cabinet.drawer_hardware || null}
                       disabled={!form.values.cabinet.drawer_box}
                     />
                     <Autocomplete
@@ -1235,7 +1230,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                 </Fieldset>
               </Stack>
 
-              {/* Right Column */}
               <Stack>
                 <Fieldset legend="Details" variant="filled" bg={"white"}>
                   <Textarea
@@ -1400,7 +1394,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         </Stack>
       </form>
 
-      {/* Modals */}
       <Modal
         opened={speciesModalOpened}
         onClose={closeSpeciesModal}

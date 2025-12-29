@@ -296,7 +296,6 @@ export default function SalesTable() {
         height: "calc(100vh - 45px)",
       }}
     >
-      {}
       <Group mb="md" justify="space-between">
         <Group>
           <ThemeIcon
@@ -331,7 +330,6 @@ export default function SalesTable() {
         )}
       </Group>
 
-      {}
       <Accordion variant="contained" radius="md" mb="md" w={"100%"}>
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -452,7 +450,6 @@ export default function SalesTable() {
         </Accordion.Item>
       </Accordion>
 
-      {}
       <Group mb="md" align="center" style={{ width: "100%" }}>
         <Group wrap="wrap">
           {[
@@ -533,7 +530,6 @@ export default function SalesTable() {
         <div style={{ flex: 1 }} />
       </Group>
 
-      {}
       <ScrollArea
         style={{
           flex: 1,
@@ -632,7 +628,6 @@ export default function SalesTable() {
         </Table>
       </ScrollArea>
 
-      {}
       <Box
         style={{
           position: "fixed",

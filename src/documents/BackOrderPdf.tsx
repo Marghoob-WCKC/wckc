@@ -82,22 +82,18 @@ export const BackorderPdf = ({ data }: BackorderPdfProps) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {}
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>Backorder</Text>
-            {}
             <Text style={{ fontSize: 14, fontWeight: "bold", marginTop: 5 }}>
               ID: BO-{data.id}
             </Text>
-            {}
             <Text style={{ fontSize: 14, fontWeight: "bold", marginTop: 2 }}>
               Job #: {job.job_number}
             </Text>
           </View>
 
           <View style={styles.meta}>
-            {}
             <Text>
               Date Entered: {dayjs(data.date_entered).format("MMM D, YYYY")}
             </Text>
@@ -109,7 +105,6 @@ export const BackorderPdf = ({ data }: BackorderPdfProps) => {
             </Text>
           </View>
         </View>
-        {}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Client & Shipping</Text>

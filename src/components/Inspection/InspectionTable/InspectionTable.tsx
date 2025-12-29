@@ -56,9 +56,6 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 dayjs.extend(utc);
 
-// --- HELPER: Server UTC String -> Local Date Object ---
-// Solves the "Day before" issue by forcing the browser to create a date
-// based on the string (e.g., "2024-12-28") rather than the UTC timestamp.
 const parseIsoToLocalDate = (isoString: string | null): Date | null => {
   if (!isoString) return null;
   const dateStr = dayjs.utc(isoString).format("YYYY-MM-DD");
@@ -475,7 +472,6 @@ export default function InspectionTable() {
         </Stack>
       </Group>
 
-      {/* Filters Accordion */}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -676,7 +672,6 @@ export default function InspectionTable() {
         onClose={closeDrawer}
       />
 
-      {/* Completion Modal */}
       <Modal
         opened={completionModalOpen}
         onClose={() => setCompletionModalOpen(false)}
@@ -698,7 +693,6 @@ export default function InspectionTable() {
             label="Completion Date"
             placeholder="YYYY-MM-DD"
             value={completionDateInput}
-            // Using 'any' bypasses the TS definition error while ensuring safe conversion
             onChange={(val: any) =>
               setCompletionDateInput(val ? dayjs(val).toDate() : null)
             }
@@ -707,7 +701,6 @@ export default function InspectionTable() {
             data-autofocus
           />
           <Group justify="space-between" mt="md">
-            {/* Left side actions (Remove) */}
             {isCurrentlyCompleted ? (
               <Button
                 variant="light"
@@ -741,7 +734,6 @@ export default function InspectionTable() {
         </Stack>
       </Modal>
 
-      {/* Schedule Modal */}
       <Modal
         opened={scheduleModalOpen}
         onClose={() => setScheduleModalOpen(false)}
@@ -757,7 +749,6 @@ export default function InspectionTable() {
             label="Scheduled Date"
             placeholder="YYYY-MM-DD"
             value={scheduleDateInput}
-            // Using 'any' bypasses the TS definition error while ensuring safe conversion
             onChange={(val: any) =>
               setScheduleDateInput(val ? dayjs(val).toDate() : null)
             }

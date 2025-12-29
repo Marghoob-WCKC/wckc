@@ -41,13 +41,11 @@ export default function ClientInfo({ shipping }: ClientInfoProps) {
         <FaUser style={{ marginRight: 8 }} /> Client Details
       </Text>
       <Stack gap={3}>
-        {}
         <InfoRow label="Client" value={shipping?.shipping_client_name} />
         <InfoRow label="Phone 1" value={shipping?.shipping_phone_1} />
         <InfoRow label="Phone 2" value={shipping?.shipping_phone_2} />
         <InfoRow label="Email 1" value={shipping?.shipping_email_1} />
         <InfoRow label="Email 2" value={shipping?.shipping_email_2} />
-        {}
         <InfoRow label="Address" value={formattedAddress} />
       </Stack>
     </Paper>

@@ -63,7 +63,7 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
   }, [isUploading, open]);
 
   const handleDrop = (files: File[]) => {
-    if (!category) return; 
+    if (!category) return;
     files.forEach((file) => {
       uploadFile({ file, category });
     });
@@ -71,7 +71,6 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
 
   return (
     <Paper p="sm" radius="md" withBorder shadow="sm" bg="white">
-      {}
       <UnstyledButton
         onClick={toggle}
         style={{ width: "100%", display: "block" }}
@@ -103,7 +102,6 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
 
       <Collapse in={opened}>
         <Stack gap="sm">
-          {}
           <ScrollArea.Autosize mah={220} type="hover" offsetScrollbars>
             <Stack gap={4}>
               {isLoading ? (
@@ -154,7 +152,6 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
                           <Text size="xs" fw={600} truncate c="dark" lh={1.2}>
                             {file.file_name}
                           </Text>
-                          {}
                           <Badge
                             size="xs"
                             variant="outline"
@@ -201,7 +198,6 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
           </ScrollArea.Autosize>
 
           <Stack gap={4}>
-            {}
             <Select
               data={CATEGORIES}
               value={category}
@@ -223,7 +219,6 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
               }}
             />
 
-            {}
             <Dropzone
               onDrop={handleDrop}
               onReject={() => console.log("File rejected")}
@@ -231,7 +226,7 @@ export default function JobAttachments({ jobId }: { jobId: number }) {
               accept={PDF_MIME_TYPE}
               loading={isUploading}
               multiple
-              disabled={!category} 
+              disabled={!category}
               h={36}
               p={0}
               radius="sm"

@@ -25,6 +25,11 @@ import {
   Stack,
   ThemeIcon,
   Select,
+  Button,
+  Accordion,
+  SimpleGrid,
+  Switch,
+  rem,
 } from "@mantine/core";
 import {
   FaSearch,
@@ -32,17 +37,19 @@ import {
   FaSortDown,
   FaSortUp,
   FaClipboardList,
+  FaPrint,
 } from "react-icons/fa";
 import dayjs from "dayjs";
 import { useDisclosure } from "@mantine/hooks";
+import { DatePickerInput } from "@mantine/dates";
 import EditBOModal from "@/components/Installation/EditBOModal/EditBOModal";
 import { useBackordersTable } from "@/hooks/useBackOrdersTable";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useQuery } from "@tanstack/react-query";
 import { useSupabase } from "@/hooks/useSupabase";
 import BackorderPdfPreviewModal from "@/components/Shared/BOPdfModal/BOPdfModal";
+import BackordersListPdfModal from "@/components/Backorders/BackordersListPdfModal/BackordersListPdfModal";
 import { ActionIcon } from "@mantine/core";
-import { FaPrint } from "react-icons/fa";
 
 export default function BackordersTable() {
   const permissions = usePermissions();
@@ -51,11 +58,9 @@ export default function BackordersTable() {
     pageSize: 15,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  const [jobInput, setJobInput] = useState("");
-  const [clientInput, setClientInput] = useState("");
-  const [commentInput, setCommentInput] = useState("");
+  const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
+  const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
 
   const [selectedBO, setSelectedBO] = useState<any>(null);
   const [editModalOpened, { open: openEditModal, close: closeEditModal }] =
@@ -63,8 +68,29 @@ export default function BackordersTable() {
 
   const { supabase, isAuthenticated } = useSupabase();
   const [printBackorderId, setPrintBackorderId] = useState<number | null>(null);
-  const [printModalOpened, { open: openPrintModal, close: closePrintModal }] =
-    useDisclosure(false);
+  const [
+    printItemModalOpened,
+    { open: openPrintItemModal, close: closePrintItemModal },
+  ] = useDisclosure(false);
+
+  const [
+    printListModalOpened,
+    { open: openPrintListModal, close: closePrintListModal },
+  ] = useDisclosure(false);
+
+  const { data, isLoading } = useBackordersTable({
+    pagination,
+    columnFilters: activeFilters,
+    sorting,
+  });
+
+  const { data: printListData, isLoading: isPrintListLoading } =
+    useBackordersTable({
+      pagination: { pageIndex: 0, pageSize: 0 },
+      columnFilters: activeFilters, 
+      sorting,
+      fetchAll: true,
+    });
 
   const { data: printData, isLoading: isPrintLoading } = useQuery({
     queryKey: ["backorder-print-data", printBackorderId],
@@ -103,22 +129,43 @@ export default function BackordersTable() {
     enabled: isAuthenticated && !!printBackorderId,
   });
 
-  const handlePrintClick = (e: React.MouseEvent, id: number) => {
+  const handlePrintItemClick = (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
     setPrintBackorderId(id);
-    openPrintModal();
+    openPrintItemModal();
   };
 
-  const handleClosePrint = () => {
-    closePrintModal();
+  const handleClosePrintItem = () => {
+    closePrintItemModal();
     setPrintBackorderId(null);
   };
 
-  const { data, isLoading } = useBackordersTable({
-    pagination,
-    columnFilters,
-    sorting,
-  });
+  const setInputFilterValue = (
+    id: string,
+    value: string | undefined | null | [Date | null, Date | null]
+  ) => {
+    setInputFilters((prev) => {
+      const existing = prev.filter((f) => f.id !== id);
+      if (value === undefined || value === null || value === "")
+        return existing;
+      return [...existing, { id, value }];
+    });
+  };
+
+  const getInputFilterValue = (id: string) => {
+    return inputFilters.find((f) => f.id === id)?.value || "";
+  };
+
+  const handleApplyFilters = () => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    setActiveFilters(inputFilters);
+  };
+
+  const handleClearFilters = () => {
+    setInputFilters([]);
+    setActiveFilters([]);
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  };
 
   const tableData = data?.data || [];
   const totalCount = data?.count || 0;
@@ -127,6 +174,15 @@ export default function BackordersTable() {
   const columnHelper = createColumnHelper<any>();
 
   const columns = [
+    columnHelper.accessor("id", {
+      header: "BO #",
+      size: 80,
+      cell: (info) => (
+        <Text fw={600} size="sm">
+          BO-{info.getValue()}
+        </Text>
+      ),
+    }),
     columnHelper.accessor("job_number", {
       header: "Job #",
       size: 100,
@@ -188,7 +244,7 @@ export default function BackordersTable() {
         <ActionIcon
           variant="subtle"
           color="gray"
-          onClick={(e) => handlePrintClick(e, info.row.original.id)}
+          onClick={(e) => handlePrintItemClick(e, info.row.original.id)}
           loading={isPrintLoading && printBackorderId === info.row.original.id}
         >
           <FaPrint size={14} />
@@ -201,33 +257,23 @@ export default function BackordersTable() {
     data: tableData,
     columns,
     pageCount,
-    state: { pagination, sorting, columnFilters },
+    state: { pagination, sorting, columnFilters: activeFilters },
     manualPagination: true,
     manualFiltering: true,
     manualSorting: true,
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
   });
-
-  const handleSearch = () => {
-    table.getColumn("job_number")?.setFilterValue(jobInput);
-    table.getColumn("shipping_client_name")?.setFilterValue(clientInput);
-    table.getColumn("comments")?.setFilterValue(commentInput);
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
 
   const handleRowClick = (row: any) => {
     setSelectedBO(row);
     openEditModal();
   };
+
+  const dateEnteredFilter = activeFilters.find((f) => f.id === "date_entered")
+    ?.value as [Date | null, Date | null] | undefined;
+  const printDateRange = dateEnteredFilter || [null, null];
 
   return (
     <Box
@@ -253,49 +299,131 @@ export default function BackordersTable() {
             </Text>
           </Stack>
         </Group>
+        <Button
+          leftSection={<FaPrint />}
+          onClick={openPrintListModal}
+          variant="outline"
+          color="violet"
+        >
+          Print Backorders List
+        </Button>
       </Group>
 
-      <Group mb="md">
-        <TextInput
-          placeholder="Filter Job #..."
-          value={jobInput}
-          onChange={(e) => setJobInput(e.currentTarget.value)}
-          onKeyDown={handleKeyDown}
-          w={150}
-        />
-        <TextInput
-          placeholder="Filter Client..."
-          value={clientInput}
-          onChange={(e) => setClientInput(e.currentTarget.value)}
-          onKeyDown={handleKeyDown}
-          w={180}
-        />
-        <TextInput
-          placeholder="Filter comments..."
-          leftSection={<FaSearch size={14} />}
-          value={commentInput}
-          onChange={(e) => setCommentInput(e.currentTarget.value)}
-          onKeyDown={handleKeyDown}
-          style={{ flex: 1 }}
-        />
-        <Select
-          placeholder="Status"
-          data={[
-            { label: "All", value: "all" },
-            { label: "Pending", value: "false" },
-            { label: "Complete", value: "true" },
-          ]}
-          value={
-            (table.getColumn("complete")?.getFilterValue() as string) ?? "all"
-          }
-          onChange={(val) => {
-            table.getColumn("complete")?.setFilterValue(val);
-            setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-          }}
-          allowDeselect={false}
-          w={150}
-        />
-      </Group>
+      <Accordion variant="contained" radius="md" mb="md">
+        <Accordion.Item value="search-filters">
+          <Accordion.Control icon={<FaSearch size={16} />}>
+            Search Filters
+          </Accordion.Control>
+          <Accordion.Panel>
+            <SimpleGrid cols={{ base: 1, sm: 3, md: 4 }} mt="sm" spacing="md">
+              <TextInput
+                label="BO Number (ID)"
+                placeholder="e.g. 123"
+                value={getInputFilterValue("id") as string}
+                onChange={(e) => setInputFilterValue("id", e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+              />
+              <TextInput
+                label="Job Number"
+                placeholder="e.g. 24001"
+                value={getInputFilterValue("job_number") as string}
+                onChange={(e) =>
+                  setInputFilterValue("job_number", e.target.value)
+                }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+              />
+              <TextInput
+                label="Client"
+                placeholder="Client Name"
+                value={getInputFilterValue("shipping_client_name") as string}
+                onChange={(e) =>
+                  setInputFilterValue("shipping_client_name", e.target.value)
+                }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+              />
+              <TextInput
+                label="Comments"
+                placeholder="Search comments..."
+                value={getInputFilterValue("comments") as string}
+                onChange={(e) =>
+                  setInputFilterValue("comments", e.target.value)
+                }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+              />
+              <DatePickerInput
+                type="range"
+                allowSingleDateInRange
+                label="Date Entered"
+                placeholder="Filter by Date Range"
+                clearable
+                value={
+                  (inputFilters.find((f) => f.id === "date_entered")?.value as [
+                    Date | null,
+                    Date | null
+                  ]) || [null, null]
+                }
+                onChange={(value) => {
+                  setInputFilterValue("date_entered", value as any);
+                }}
+                valueFormat="YYYY-MM-DD"
+              />
+              <DatePickerInput
+                type="range"
+                allowSingleDateInRange
+                label="Due Date"
+                placeholder="Filter by Date Range"
+                clearable
+                value={
+                  (inputFilters.find((f) => f.id === "due_date")?.value as [
+                    Date | null,
+                    Date | null
+                  ]) || [null, null]
+                }
+                onChange={(value) => {
+                  setInputFilterValue("due_date", value as any);
+                }}
+                valueFormat="YYYY-MM-DD"
+              />
+              <Select
+                label="Status"
+                placeholder="Status"
+                data={[
+                  { label: "All", value: "all" },
+                  { label: "Pending", value: "false" },
+                  { label: "Complete", value: "true" },
+                ]}
+                value={(getInputFilterValue("complete") as string) || "all"}
+                onChange={(val) => {
+                  setInputFilterValue("complete", val || "all");
+                }}
+                allowDeselect={false}
+              />
+            </SimpleGrid>
+
+            <Group justify="flex-end" mt="md">
+              <Button
+                variant="default"
+                color="gray"
+                onClick={handleClearFilters}
+              >
+                Clear Filters
+              </Button>
+              <Button
+                variant="filled"
+                color="blue"
+                leftSection={<FaSearch size={14} />}
+                onClick={handleApplyFilters}
+                style={{
+                  background:
+                    "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
+                }}
+              >
+                Apply Filters
+              </Button>
+            </Group>
+          </Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
 
       <ScrollArea style={{ flex: 1 }} type="hover">
         <Table striped highlightOnHover stickyHeader>
@@ -384,10 +512,17 @@ export default function BackordersTable() {
         />
       )}
 
-      <BackorderPdfPreviewModal
-        opened={printModalOpened}
-        onClose={handleClosePrint}
+            <BackorderPdfPreviewModal
+        opened={printItemModalOpened}
+        onClose={handleClosePrintItem}
         data={printData}
+      />
+
+            <BackordersListPdfModal
+        opened={printListModalOpened}
+        onClose={closePrintListModal}
+        data={printListData?.data || []}
+        dateRange={printDateRange}
       />
     </Box>
   );

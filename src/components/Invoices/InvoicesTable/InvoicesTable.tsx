@@ -58,7 +58,7 @@ import { notifications } from "@mantine/notifications";
 import { Tables } from "@/types/db";
 import { useDisclosure } from "@mantine/hooks";
 import AddInvoice from "../AddInvoice/AddInvoice";
-import EditInvoice from "../EditInvoice/EditInvoice"; // Import the new component
+import EditInvoice from "../EditInvoice/EditInvoice";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useInvoicesTable } from "@/hooks/useInvoicesTable";
 import { colors, gradients } from "@/theme";
@@ -85,7 +85,6 @@ export default function InvoicesTable() {
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
 
-  // Modals
   const [addModalOpened, { open: openAddModal, close: closeAddModal }] =
     useDisclosure(false);
   const [editModalOpened, { open: openEditModal, close: closeEditModal }] =
@@ -96,7 +95,6 @@ export default function InvoicesTable() {
     { open: openCommentModal, close: closeCommentModal },
   ] = useDisclosure(false);
 
-  // State for editing
   const [editingComment, setEditingComment] = useState<{
     id: number;
     text: string;
@@ -105,7 +103,6 @@ export default function InvoicesTable() {
     null
   );
 
-  // --- Fetch Data ---
   const { data, isLoading } = useInvoicesTable({
     pagination,
     columnFilters: activeFilters,
@@ -116,7 +113,6 @@ export default function InvoicesTable() {
   const totalCount = data?.count || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
-  // --- Helpers for Filter State ---
   const setInputFilterValue = (id: string, value: any) => {
     setInputFilters((prev) => {
       const existing = prev.filter((f) => f.id !== id);
@@ -141,7 +137,6 @@ export default function InvoicesTable() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
 
-  // --- Mutations ---
   const togglePaidMutation = useMutation({
     mutationFn: async ({ id, isPaid }: { id: number; isPaid: boolean }) => {
       const { error } = await supabase
@@ -277,7 +272,6 @@ export default function InvoicesTable() {
       cell: (info) =>
         info.getValue() ? dayjs(info.getValue()).format("YYYY-MM-DD") : "—",
     }),
-    // REMOVED "Due Date" Column as requested
     columnHelper.accessor(
       (row) => {
         const so = row.job?.sales_orders;
@@ -682,7 +676,6 @@ export default function InvoicesTable() {
 
       <AddInvoice opened={addModalOpened} onClose={closeAddModal} />
 
-      {/* Edit Invoice Modal */}
       <EditInvoice
         opened={editModalOpened}
         onClose={() => {
@@ -692,7 +685,6 @@ export default function InvoicesTable() {
         invoice={selectedInvoice}
       />
 
-      {/* Quick Comment Edit Modal */}
       <Modal
         opened={commentModalOpened}
         onClose={closeCommentModal}

@@ -25,7 +25,6 @@ export function useBulkProductionSchedule() {
 
       const prodUpdates: any = {};
 
-      // Handle all date fields
       if (updates.received_date !== undefined)
         prodUpdates.received_date = updates.received_date
           ? dayjs(updates.received_date).format("YYYY-MM-DD")
@@ -36,7 +35,6 @@ export function useBulkProductionSchedule() {
           ? dayjs(updates.placement_date).format("YYYY-MM-DD")
           : null;
 
-      // wrap_date is on the installation table, handled separately below
 
       if (updates.ship_schedule !== undefined)
         prodUpdates.ship_schedule = updates.ship_schedule
@@ -46,7 +44,6 @@ export function useBulkProductionSchedule() {
       if (updates.ship_status !== undefined)
         prodUpdates.ship_status = updates.ship_status;
 
-      // Doors schedule
       if (updates.doors_in_schedule !== undefined)
         prodUpdates.doors_in_schedule = updates.doors_in_schedule
           ? dayjs(updates.doors_in_schedule).format("YYYY-MM-DD")
@@ -57,7 +54,6 @@ export function useBulkProductionSchedule() {
           ? dayjs(updates.doors_out_schedule).format("YYYY-MM-DD")
           : null;
 
-      // Cutting schedule
       if (updates.cut_finish_schedule !== undefined)
         prodUpdates.cut_finish_schedule = updates.cut_finish_schedule
           ? dayjs(updates.cut_finish_schedule).format("YYYY-MM-DD")
@@ -68,7 +64,6 @@ export function useBulkProductionSchedule() {
           ? dayjs(updates.cut_melamine_schedule).format("YYYY-MM-DD")
           : null;
 
-      // Paint schedule
       if (updates.paint_in_schedule !== undefined)
         prodUpdates.paint_in_schedule = updates.paint_in_schedule
           ? dayjs(updates.paint_in_schedule).format("YYYY-MM-DD")
@@ -79,7 +74,6 @@ export function useBulkProductionSchedule() {
           ? dayjs(updates.paint_out_schedule).format("YYYY-MM-DD")
           : null;
 
-      // Assembly
       if (updates.assembly_schedule !== undefined)
         prodUpdates.assembly_schedule = updates.assembly_schedule
           ? dayjs(updates.assembly_schedule).format("YYYY-MM-DD")
@@ -87,7 +81,6 @@ export function useBulkProductionSchedule() {
 
       const promises = [];
 
-      // Perform bulk update for production_schedule
       if (Object.keys(prodUpdates).length > 0) {
         const { data, error } = await supabase
           .from("production_schedule")
@@ -101,19 +94,15 @@ export function useBulkProductionSchedule() {
           console.warn(
             "Update succeeded but returned no data. Check RLS policies or IDs."
           );
-          // We won't throw here to avoid failing if other parts succeed, but we should note it.
-          // Actually, if RLS blocked it, we want to know.
         }
         promises.push(Promise.resolve(data));
       }
 
-      // Handle wrap_date update on installation table
       if (updates.wrap_date !== undefined) {
         const formattedWrapDate = updates.wrap_date
           ? dayjs(updates.wrap_date).format("YYYY-MM-DD")
           : null;
 
-        // Fetch installation IDs linked to these production IDs
         const { data: jobs } = await supabase
           .from("jobs")
           .select("installation_id")

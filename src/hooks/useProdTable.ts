@@ -42,7 +42,6 @@ export function useProdTable({
           return;
         }
 
-        // Handle Standard Text Filters
         const valStr = String(value);
         if (!valStr) return;
 

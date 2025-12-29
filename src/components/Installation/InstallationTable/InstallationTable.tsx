@@ -571,7 +571,7 @@ export default function InstallationTable() {
         flexDirection: "column",
         padding: rem(20),
         height: "calc(100vh - 45px)",
-        position: "relative", // Ensure context for absolute positioning if needed, though we use fixed for the bar
+        position: "relative",
       }}
     >
       <Group mb="md">
@@ -757,7 +757,6 @@ export default function InstallationTable() {
         </Accordion.Item>
       </Accordion>
 
-      {/* Floating Action Bar - Moved here and wrapped in Transition */}
       <Transition
         mounted={Object.keys(rowSelection).length > 1}
         transition="slide-up"
@@ -776,9 +775,9 @@ export default function InstallationTable() {
               bottom: rem(80),
               left: rem(250),
               right: 0,
-              marginInline: "auto", // Centers the fixed element
+              marginInline: "auto",
               width: "fit-content",
-              zIndex: 200, // Ensure it sits above table content
+              zIndex: 200,
               backgroundColor: "var(--mantine-color-violet-0)",
               borderColor: "var(--mantine-color-violet-2)",
               display: "flex",
@@ -962,7 +961,6 @@ export default function InstallationTable() {
         />
       </Box>
 
-      {/* Quick Filter Context Menu */}
       <Transition
         mounted={contextMenu.visible}
         transition="pop"
