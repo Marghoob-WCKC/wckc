@@ -6,9 +6,9 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc"; 
+import utc from "dayjs/plugin/utc";
 
-dayjs.extend(utc); 
+dayjs.extend(utc);
 
 interface UseServiceOrdersTableParams {
   pagination: PaginationState;
@@ -88,6 +88,7 @@ export function useServiceOrdersTable({
         query = query.order(id, { ascending: !desc });
       } else {
         query = query.order("date_entered", { ascending: false });
+        query = query.order("service_order_id", { ascending: false });
       }
 
       const from = pagination.pageIndex * pagination.pageSize;

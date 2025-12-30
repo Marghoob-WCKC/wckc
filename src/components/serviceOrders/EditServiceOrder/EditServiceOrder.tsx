@@ -212,7 +212,7 @@ export default function EditServiceOrder({
     if (serviceOrderData) {
       const hoInfo = serviceOrderData.jobs?.homeowners_info;
 
-      form.setValues({
+      form.initialize({
         job_id: String(serviceOrderData.job_id),
         service_order_number: serviceOrderData.service_order_number,
         due_date: serviceOrderData.due_date
