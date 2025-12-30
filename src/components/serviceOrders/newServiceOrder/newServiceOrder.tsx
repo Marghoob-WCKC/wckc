@@ -63,9 +63,22 @@ interface NewServiceOrderProps {
   preselectedJobId?: string;
 }
 
-export default function NewServiceOrder({
+export default function NewServiceOrder(props: NewServiceOrderProps) {
+  const [formKey, setFormKey] = useState(0);
+
+  const handleReset = () => {
+    setFormKey((prev) => prev + 1);
+  };
+
+  return (
+    <ServiceOrderFormContent key={formKey} {...props} onReset={handleReset} />
+  );
+}
+
+function ServiceOrderFormContent({
   preselectedJobId,
-}: NewServiceOrderProps) {
+  onReset,
+}: NewServiceOrderProps & { onReset: () => void }) {
   const { supabase, isAuthenticated } = useSupabase();
   const { user } = useUser();
   const router = useRouter();
@@ -80,7 +93,9 @@ export default function NewServiceOrder({
     isCreateNewSoOpen,
     { open: openCreateNewSO, close: closeCreateNewSO },
   ] = useDisclosure(false);
-  const [newID, setNewID] = useState(null);
+
+  const [newID, setNewID] = useState<number | null>(null);
+
   const form = useForm<ServiceOrderFormValues>({
     initialValues: {
       job_id: preselectedJobId || "",
@@ -135,6 +150,7 @@ export default function NewServiceOrder({
 
   const { setIsDirty } = useNavigationGuard();
   const isDirty = form.isDirty();
+
   useEffect(() => {
     setIsDirty(isDirty);
     return () => setIsDirty(false);
@@ -809,14 +825,7 @@ export default function NewServiceOrder({
             <Button
               size="sm"
               leftSection={<FaSave size={16} />}
-              onClick={() => {
-                form.reset();
-                setJobData(null);
-                setExistingSOCount(null);
-                form.setFieldValue("job_id", "");
-                form.setFieldValue("parts", []);
-                closeCreateNewSO();
-              }}
+              onClick={onReset}
               style={{
                 flex: 1,
                 background: "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
