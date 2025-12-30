@@ -13,14 +13,12 @@ import {
   Text,
   Loader,
   Center,
-  Divider,
   Box,
   Timeline,
   Grid,
   Card,
   ThemeIcon,
   Badge,
-  Button,
   SimpleGrid,
 } from "@mantine/core";
 import dayjs from "dayjs";
@@ -34,7 +32,6 @@ import {
   FaIndustry,
   FaPaintBrush,
   FaShippingFast,
-  FaArrowLeft,
   FaRegCircle,
   FaClipboardList,
 } from "react-icons/fa";
@@ -169,7 +166,12 @@ export default function ReadOnlyScheduler({ jobId }: { jobId: number }) {
     const stepsData = [
       {
         key: "in_plant_actual",
-        label: "In Plant Entry",
+        label: "In Plant (Doors)",
+        icon: <FaIndustry size={12} />,
+      },
+      {
+        key: "in_plant_cabinets_actual",
+        label: "In Plant (Cabinets)",
         icon: <FaIndustry size={12} />,
       },
       {
@@ -344,7 +346,10 @@ export default function ReadOnlyScheduler({ jobId }: { jobId: number }) {
                       <Box
                         p={8}
                         bg="gray.0"
-                        style={{ borderRadius: 6, border: "1px solid #e9ecef" }}
+                        style={{
+                          borderRadius: 6,
+                          border: "1px solid #e9ecef",
+                        }}
                       >
                         <Text size="xs" c="dimmed" mb={2} fw={600}>
                           Ship Date Status

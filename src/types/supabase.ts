@@ -823,6 +823,7 @@ export type Database = {
           doors_out_schedule: string | null
           drawer_completed_actual: string | null
           in_plant_actual: string | null
+          in_plant_cabinets_actual: string | null
           paint_completed_actual: string | null
           paint_in_schedule: string | null
           paint_out_schedule: string | null
@@ -851,6 +852,7 @@ export type Database = {
           doors_out_schedule?: string | null
           drawer_completed_actual?: string | null
           in_plant_actual?: string | null
+          in_plant_cabinets_actual?: string | null
           paint_completed_actual?: string | null
           paint_in_schedule?: string | null
           paint_out_schedule?: string | null
@@ -879,6 +881,7 @@ export type Database = {
           doors_out_schedule?: string | null
           drawer_completed_actual?: string | null
           in_plant_actual?: string | null
+          in_plant_cabinets_actual?: string | null
           paint_completed_actual?: string | null
           paint_in_schedule?: string | null
           paint_out_schedule?: string | null
@@ -1606,6 +1609,7 @@ export type Database = {
           has_shipped: boolean | null
           id: number | null
           in_plant_actual: string | null
+          in_plant_cabinets_actual: string | null
           job_number: string | null
           paint_completed_actual: string | null
           placement_date: string | null

@@ -286,8 +286,13 @@ export default function ProdTable() {
         const steps = [
           {
             key: "in_plant_actual",
-            label: "In Plant",
+            label: "Plant (D/P)",
             val: row.in_plant_actual,
+          },
+          {
+            key: "in_plant_cabinets_actual",
+            label: "Plant (C)",
+            val: row.in_plant_cabinets_actual,
           },
           {
             key: "doors_completed_actual",
@@ -639,7 +644,6 @@ export default function ProdTable() {
         style={{
           flex: 1,
           minHeight: 0,
-          padding: rem(10),
         }}
         styles={{
           thumb: {

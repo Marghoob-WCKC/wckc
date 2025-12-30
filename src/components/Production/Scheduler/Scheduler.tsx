@@ -19,11 +19,9 @@ import {
   SimpleGrid,
   Loader,
   Center,
-  Divider,
   Select,
   Box,
   Timeline,
-  TimelineItem,
   Grid,
   ThemeIcon,
   Badge,
@@ -33,9 +31,7 @@ import { DateInput } from "@mantine/dates";
 import dayjs from "dayjs";
 import { notifications } from "@mantine/notifications";
 import {
-  FaArrowLeft,
   FaCalendarCheck,
-  FaCheck,
   FaCheckCircle,
   FaCogs,
   FaCut,
@@ -53,6 +49,9 @@ import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/RelatedServiceOrders";
 import AddBackorderModal from "@/components/Installation/AddBOModal/AddBOModal";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
 
 type CabinetSpecsJoined = Tables<"cabinets"> & {
   door_styles: { name: string } | null;
@@ -109,24 +108,24 @@ export default function EditProductionSchedulePage({
             delivery_type,
             install,
             cabinet:cabinets (
-        id,
-        box,
-        glass,
-        glaze,
-        finish,
-        interior,
-        drawer_box,
-        glass_type,
-        piece_count,
-        doors_parts_only,
-        handles_selected,
-        handles_supplied,
-        hinge_soft_close,
-        top_drawer_front,
-        door_styles(name),
-        species(Species),
-        colors(Name)
-      )
+              id,
+              box,
+              glass,
+              glaze,
+              finish,
+              interior,
+              drawer_box,
+              glass_type,
+              piece_count,
+              doors_parts_only,
+              handles_selected,
+              handles_supplied,
+              hinge_soft_close,
+              top_drawer_front,
+              door_styles(name),
+              species(Species),
+              colors(Name)
+            )
           )
         `
         )
@@ -137,6 +136,7 @@ export default function EditProductionSchedulePage({
     },
     enabled: isAuthenticated && !!jobId,
   });
+
   const handleBackorderPromptDecision = (isCompleteShipment: boolean) => {
     setIsBackorderPromptOpen(false);
 
@@ -163,6 +163,7 @@ export default function EditProductionSchedulePage({
       wrap_date: null,
       ship_schedule: null,
       in_plant_actual: null,
+      in_plant_cabinets_actual: null,
       ship_status: "unprocessed",
       production_comments: "",
       doors_completed_actual: null,
@@ -202,7 +203,12 @@ export default function EditProductionSchedulePage({
     }[] = [
       {
         key: "in_plant_actual",
-        label: "In Plant Entry",
+        label: "In Plant (Doors)",
+        icon: <FaIndustry size={12} />,
+      },
+      {
+        key: "in_plant_cabinets_actual",
+        label: "In Plant (Cabinets)",
         icon: <FaIndustry size={12} />,
       },
       {
@@ -405,7 +411,7 @@ export default function EditProductionSchedulePage({
             </Group>
           </Group>
         </Paper>
-        <Grid>
+        <Grid gutter="xs">
           <Grid.Col span={10}>
             <Stack mb="md">
               <Paper p="md" radius="md" shadow="sm" bg="gray.1">
@@ -422,39 +428,51 @@ export default function EditProductionSchedulePage({
               <Paper p="md" radius="md" shadow="xl" pb={30} bg="gray.1">
                 <Paper p="md" radius="md" shadow="xl" bg="white">
                   <Stack>
-                    <Switch
-                      size="xl"
-                      offLabel="Normal"
-                      onLabel="Rush"
-                      thumbIcon={<FaFire />}
-                      {...form.getInputProps("rush", { type: "checkbox" })}
-                      checked={form.values.rush}
-                      onChange={(e) =>
-                        form.setFieldValue("rush", e.currentTarget.checked)
-                      }
-                      styles={{
-                        root: {
-                          display: "flex",
-                        },
-                        track: {
-                          padding: "5px",
-                          cursor: "pointer",
-                          background: form.values.rush
-                            ? "linear-gradient(135deg, #ff4d4d 0%, #c80000 100%)"
-                            : "linear-gradient(135deg, #555555 0%, #131111ff 100%)",
-                          border: "none",
-                          color: form.values.rush ? "white" : "black",
-                          transition: "background 200ms ease",
-                        },
-                        trackLabel: {
-                          color: form.values.rush ? "white" : "white",
-                        },
-                        thumb: {
-                          background: form.values.rush ? "#ff6b6b" : "#fff",
-                        },
-                        label: { fontWeight: 600, display: "inline-block" },
-                      }}
-                    />
+                    {/* Status Switches Section */}
+                    <Box mb="md">
+                      <Group gap="xl" align="center">
+                        <Switch
+                          size="md"
+                          color="red"
+                          label="Rush Job"
+                          checked={form.values.rush}
+                          onChange={(e) =>
+                            form.setFieldValue("rush", e.currentTarget.checked)
+                          }
+                          styles={{ label: { fontWeight: 600 } }}
+                        />
+                        <Switch
+                          size="md"
+                          color="violet"
+                          label="In Plant (Doors)"
+                          checked={!!form.values.in_plant_actual}
+                          onChange={(e) =>
+                            form.setFieldValue(
+                              "in_plant_actual",
+                              e.currentTarget.checked
+                                ? new Date().toISOString()
+                                : null
+                            )
+                          }
+                          styles={{ label: { fontWeight: 600 } }}
+                        />
+                        <Switch
+                          size="md"
+                          color="violet"
+                          label="In Plant (Cabinets)"
+                          checked={!!form.values.in_plant_cabinets_actual}
+                          onChange={(e) =>
+                            form.setFieldValue(
+                              "in_plant_cabinets_actual",
+                              e.currentTarget.checked
+                                ? new Date().toISOString()
+                                : null
+                            )
+                          }
+                          styles={{ label: { fontWeight: 600 } }}
+                        />
+                      </Group>
+                    </Box>
 
                     <Box>
                       <Group mb={8}>
@@ -521,7 +539,7 @@ export default function EditProductionSchedulePage({
                               fontWeight: "bold",
                             },
                           }}
-                          w={"180px"}
+                          w={"100%"}
                           data={[
                             { value: "unprocessed", label: "Unprocessed" },
                             { value: "tentative", label: "Tentative" },
@@ -534,55 +552,6 @@ export default function EditProductionSchedulePage({
                             ) : null
                           }
                         />
-                        <Box
-                          style={{
-                            display: "flex",
-                            alignItems: "flex-end",
-                            paddingBottom: 2,
-                          }}
-                        >
-                          <Switch
-                            size="xl"
-                            offLabel="Not In Plant"
-                            onLabel="In Plant"
-                            thumbIcon={<FaIndustry />}
-                            checked={!!form.values.in_plant_actual}
-                            onChange={(e) =>
-                              form.setFieldValue(
-                                "in_plant_actual",
-                                e.currentTarget.checked
-                                  ? new Date().toISOString()
-                                  : null
-                              )
-                            }
-                            styles={{
-                              track: {
-                                padding: "4px",
-                                cursor: "pointer",
-                                background: form.values.in_plant_actual
-                                  ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
-                                  : "linear-gradient(135deg, #0010eeff 0%, #af26ffff 100%)",
-                                border: "none",
-                                color: form.values.in_plant_actual
-                                  ? "white"
-                                  : "black",
-                                transition: "background 200ms ease",
-                              },
-                              trackLabel: {
-                                color: "white",
-                              },
-                              thumb: {
-                                background: form.values.in_plant_actual
-                                  ? "#218838"
-                                  : "#fff",
-                              },
-                              label: {
-                                fontWeight: 600,
-                                display: "inline-block",
-                              },
-                            }}
-                          />
-                        </Box>
                       </SimpleGrid>
                     </Box>
 
@@ -666,7 +635,7 @@ export default function EditProductionSchedulePage({
             {jobId && <RelatedServiceOrders jobId={jobId} />}
           </Grid.Col>
 
-          <Grid.Col span={2}>
+          <Grid.Col span={2} style={{ borderLeft: "1px solid #ccc" }}>
             <Box pt="md" style={{ justifyItems: "center" }}>
               <Paper p="md" radius="md" w={"100%"}>
                 <Center>
@@ -721,9 +690,7 @@ export default function EditProductionSchedulePage({
                           </Box>
                         }
                         styles={{
-                          item: {
-                            "--tl-color": lineColor,
-                          },
+                          item: { "--tl-color": lineColor },
                           itemTitle: {
                             color: step.isCompleted ? "#28a745" : "#6b6b6b",
                           },

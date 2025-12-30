@@ -283,7 +283,12 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     }[] = [
       {
         key: "in_plant_actual",
-        label: "In Plant Entry",
+        label: "In Plant (Doors)",
+        icon: <FaIndustry size={12} />,
+      },
+      {
+        key: "in_plant_cabinets_actual",
+        label: "In Plant (Cabinets)",
         icon: <FaIndustry size={12} />,
       },
       {
