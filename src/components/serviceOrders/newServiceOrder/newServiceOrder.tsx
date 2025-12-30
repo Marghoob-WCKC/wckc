@@ -30,9 +30,19 @@ import {
   Divider,
   Switch,
   rem,
+  Modal,
+  ThemeIcon,
+  Title,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
-import { FaPlus, FaTrash, FaTools, FaSave, FaCheck } from "react-icons/fa";
+import {
+  FaPlus,
+  FaTrash,
+  FaTools,
+  FaSave,
+  FaCheck,
+  FaCheckCircle,
+} from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import {
   ServiceOrderFormValues,
@@ -66,6 +76,11 @@ export default function NewServiceOrder({
     { open: openAddInstaller, close: closeAddInstaller },
   ] = useDisclosure(false);
 
+  const [
+    isCreateNewSoOpen,
+    { open: openCreateNewSO, close: closeCreateNewSO },
+  ] = useDisclosure(false);
+  const [newID, setNewID] = useState(null);
   const form = useForm<ServiceOrderFormValues>({
     initialValues: {
       job_id: preselectedJobId || "",
@@ -341,7 +356,8 @@ export default function NewServiceOrder({
       queryClient.invalidateQueries({
         queryKey: ["service_orders_table_view"],
       });
-      router.push(`/dashboard/serviceorders/${newId}`);
+      setNewID(newId);
+      openCreateNewSO();
     },
     onError: (err: any) => {
       notifications.show({
@@ -752,6 +768,66 @@ export default function NewServiceOrder({
           queryClient.invalidateQueries({ queryKey: ["installer-search"] });
         }}
       />
+
+      <Modal
+        opened={isCreateNewSoOpen}
+        onClose={closeCreateNewSO}
+        centered
+        withCloseButton={false}
+        padding="lg"
+        radius="md"
+        size="xl"
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+      >
+        <Stack align="center" gap="lg">
+          <ThemeIcon size={60} radius="xl" color="green" variant="light">
+            <FaCheckCircle size={32} />
+          </ThemeIcon>
+
+          <Stack gap={4} align="center">
+            <Title order={3} ta="center" c="dark.7">
+              Service Order Created!
+            </Title>
+            <Text c="dimmed" ta="center" size="sm" maw={280}>
+              Do you want to create another one?
+            </Text>
+          </Stack>
+
+          <Group w="100%" gap="sm">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => router.push(`/dashboard/serviceorders/${newID}`)}
+              style={{ flex: 1 }}
+            >
+              No, View Order
+            </Button>
+
+            <Button
+              size="sm"
+              leftSection={<FaSave size={16} />}
+              onClick={() => {
+                form.reset();
+                setJobData(null);
+                setExistingSOCount(null);
+                form.setFieldValue("job_id", "");
+                form.setFieldValue("parts", []);
+                closeCreateNewSO();
+              }}
+              style={{
+                flex: 1,
+                background: "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
+                border: 0,
+              }}
+            >
+              Create Another
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Container>
   );
 }
