@@ -230,16 +230,14 @@ export default function SalesTable() {
           header: "Site Address",
           size: 200,
           cell: (info) => (
-            <Tooltip label={info.getValue()}>
-              <Text size="sm" truncate>
-                {info.getValue()}
-              </Text>
-            </Tooltip>
+            <Text size="sm" truncate>
+              {info.getValue()}
+            </Text>
           ),
         }
       ),
-      columnHelper.accessor("invoice_balance", {
-        header: "Balance",
+      columnHelper.accessor("total", {
+        header: "Price",
         size: 100,
         cell: (info) => `$${(info.getValue() as number)?.toFixed(2) || "0.00"}`,
       }),

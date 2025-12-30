@@ -31,6 +31,7 @@ import {
   Collapse,
   Radio,
   Textarea,
+  Grid,
 } from "@mantine/core";
 import { FaCopy, FaPlus, FaCheckCircle, FaCircle } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
@@ -97,7 +98,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
     is_made_in_house: false,
   });
 
-  const [viewGst, setViewGst] = useState(false);
+  const [viewGst, setViewGst] = useState(true);
   const [viewPst, setViewPst] = useState(false);
 
   const getInclusiveTotal = () => {
@@ -1263,87 +1264,73 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                 </Fieldset>
 
                 <Fieldset legend="Financials" variant="filled" bg={"white"}>
-                  <SimpleGrid cols={3}>
-                    <NumberInput
-                      label="Total Amount"
-                      placeholder="0.00"
-                      prefix="$"
-                      min={0}
-                      thousandSeparator=","
-                      decimalScale={2}
-                      fixedDecimalScale
-                      {...form.getInputProps(`total`)}
-                      styles={{ input: { fontWeight: 700 } }}
-                    />
-
-                    <NumberInput
-                      label="Deposit"
-                      placeholder="0.00"
-                      prefix="$"
-                      min={0}
-                      thousandSeparator=","
-                      decimalScale={2}
-                      fixedDecimalScale
-                      {...form.getInputProps(`deposit`)}
-                    />
-
-                    <TextInput
-                      label="Balance"
-                      readOnly
-                      variant="filled"
-                      value={
-                        (form.values.total || 0) - (form.values.deposit || 0)
-                          ? `$${(
-                              (form.values.total || 0) -
-                              (form.values.deposit || 0)
-                            ).toLocaleString("en-CA", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}`
-                          : "$0.00"
-                      }
-                      styles={{
-                        input: {
-                          fontWeight: 700,
-                          color:
-                            form.values.total - form.values.deposit > 0
-                              ? "#d6336c"
-                              : "#0ca678",
-                        },
-                      }}
-                    />
-                  </SimpleGrid>
-                  <Group h={35}>
-                    <Group gap="sm">
-                      <Checkbox
-                        size="xs"
-                        label="+ GST (5%)"
-                        color="#4A00E0"
-                        checked={viewGst}
-                        onChange={(e) => setViewGst(e.currentTarget.checked)}
-                        styles={{
-                          label: { fontWeight: 500, cursor: "pointer" },
-                          input: { cursor: "pointer" },
-                        }}
+                  <Grid align="flex-end">
+                    <Grid.Col span={3}>
+                      <NumberInput
+                        label="Price"
+                        placeholder="0.00"
+                        prefix="$"
+                        min={0}
+                        thousandSeparator=","
+                        decimalScale={2}
+                        fixedDecimalScale
+                        {...form.getInputProps(`total`)}
+                        styles={{ input: { fontWeight: 700 } }}
                       />
-                      <Checkbox
-                        size="xs"
-                        label="+ PST (7%)"
-                        color="#4A00E0"
-                        checked={viewPst}
-                        onChange={(e) => setViewPst(e.currentTarget.checked)}
-                        styles={{
-                          label: { fontWeight: 500, cursor: "pointer" },
-                          input: { cursor: "pointer" },
-                        }}
-                      />
-                    </Group>
-                    <Collapse in={viewGst || viewPst} transitionDuration={50}>
-                      <Text size="sm" fw={700} c="violet">
-                        After Taxes: {getInclusiveTotal()}
-                      </Text>
-                    </Collapse>
-                  </Group>
+                    </Grid.Col>
+                    <Grid.Col span={3}>
+                      <NumberInput
+                        label="Deposit"
+                        placeholder="0.00"
+                        prefix="$"
+                        min={0}
+                        thousandSeparator=","
+                        decimalScale={2}
+                        fixedDecimalScale
+                        {...form.getInputProps(`deposit`)}
+                      />{" "}
+                    </Grid.Col>
+                    <Grid.Col span={6} mb={"8px"}>
+                      <Group>
+                        <Group gap="sm">
+                          <Checkbox
+                            size="xs"
+                            label="+ GST"
+                            color="#4A00E0"
+                            checked={viewGst}
+                            onChange={(e) =>
+                              setViewGst(e.currentTarget.checked)
+                            }
+                            styles={{
+                              label: { fontWeight: 500, cursor: "pointer" },
+                              input: { cursor: "pointer" },
+                            }}
+                          />
+                          <Checkbox
+                            size="xs"
+                            label="+ PST (7%)"
+                            color="#4A00E0"
+                            checked={viewPst}
+                            onChange={(e) =>
+                              setViewPst(e.currentTarget.checked)
+                            }
+                            styles={{
+                              label: { fontWeight: 500, cursor: "pointer" },
+                              input: { cursor: "pointer" },
+                            }}
+                          />
+                        </Group>
+                        <Collapse
+                          in={viewGst || viewPst}
+                          transitionDuration={50}
+                        >
+                          <Text size="sm" fw={700} c="violet">
+                            After Taxes: {getInclusiveTotal()}
+                          </Text>
+                        </Collapse>
+                      </Group>
+                    </Grid.Col>
+                  </Grid>
                 </Fieldset>
               </Stack>
             </SimpleGrid>
