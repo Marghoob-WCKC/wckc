@@ -624,7 +624,10 @@ export default function SalesTable() {
                   key={row.id}
                   style={{ cursor: "pointer" }}
                   onClick={() =>
-                    router.push(`/dashboard/sales/editsale/${row.original.id}`)
+                    window.open(
+                      `/dashboard/sales/editsale/${row.original.id}`,
+                      "_blank"
+                    )
                   }
                 >
                   {row.getVisibleCells().map((cell) => (

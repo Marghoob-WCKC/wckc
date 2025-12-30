@@ -704,8 +704,9 @@ export default function ServiceOrdersTable() {
                 <Table.Tr
                   key={row.id}
                   onClick={() =>
-                    router.push(
-                      `/dashboard/serviceorders/${row.original.service_order_id}`
+                    window.open(
+                      `/dashboard/serviceorders/${row.original.service_order_id}`,
+                      "_blank"
                     )
                   }
                   style={{ cursor: "pointer" }}
