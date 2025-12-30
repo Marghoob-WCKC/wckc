@@ -527,6 +527,7 @@ export type Database = {
           date_entered: string | null
           invoice_id: number
           invoice_number: string | null
+          is_creditmemo: boolean | null
           job_id: number
           no_charge: boolean | null
           paid_at: string | null
@@ -539,6 +540,7 @@ export type Database = {
           date_entered?: string | null
           invoice_id?: number
           invoice_number?: string | null
+          is_creditmemo?: boolean | null
           job_id: number
           no_charge?: boolean | null
           paid_at?: string | null
@@ -551,6 +553,7 @@ export type Database = {
           date_entered?: string | null
           invoice_id?: number
           invoice_number?: string | null
+          is_creditmemo?: boolean | null
           job_id?: number
           no_charge?: boolean | null
           paid_at?: string | null

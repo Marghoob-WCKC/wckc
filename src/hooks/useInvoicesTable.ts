@@ -91,6 +91,14 @@ export function useInvoicesTable({
               query = query.is("no_charge", true);
             }
             break;
+
+          case "type":
+            if (valStr === "invoices") {
+              query = query.is("is_creditmemo", false);
+            } else if (valStr === "creditmemos") {
+              query = query.is("is_creditmemo", true);
+            }
+            break;
         }
       }
 

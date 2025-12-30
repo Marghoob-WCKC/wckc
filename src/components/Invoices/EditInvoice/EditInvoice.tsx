@@ -31,12 +31,14 @@ interface EditInvoiceProps {
   opened: boolean;
   onClose: () => void;
   invoice: InvoiceRow | null;
+  isCreditMemo?: Boolean;
 }
 
 export default function EditInvoice({
   opened,
   onClose,
   invoice,
+  isCreditMemo,
 }: EditInvoiceProps) {
   const { supabase } = useSupabase();
   const queryClient = useQueryClient();
@@ -46,7 +48,6 @@ export default function EditInvoice({
       invoice_number: "",
       job_id: "",
       date_entered: null,
-      date_due: null,
       paid_at: null,
       no_charge: false,
       comments: "",
@@ -69,7 +70,6 @@ export default function EditInvoice({
         date_entered: invoice.date_entered
           ? new Date(invoice.date_entered)
           : null,
-        date_due: invoice.date_due ? new Date(invoice.date_due) : null,
         paid_at: invoice.paid_at ? new Date(invoice.paid_at) : null,
         no_charge: invoice.no_charge ?? false,
         comments: invoice.comments || "",
@@ -85,6 +85,7 @@ export default function EditInvoice({
       const payload = {
         ...values,
         job_id: Number(values.job_id),
+        is_creditmemo: isCreditMemo,
         updated_at: new Date().toISOString(),
       };
 
@@ -98,7 +99,9 @@ export default function EditInvoice({
     onSuccess: () => {
       notifications.show({
         title: "Success",
-        message: "Invoice updated successfully",
+        message: isCreditMemo
+          ? "Invoice updated successfully"
+          : "Credit Memo updated Successfully",
         color: "green",
       });
       queryClient.invalidateQueries({ queryKey: ["invoices_list_server"] });
@@ -117,7 +120,7 @@ export default function EditInvoice({
     <Modal
       opened={opened}
       onClose={onClose}
-      title="Edit Invoice"
+      title={isCreditMemo ? "Edit Credit Memo" : "Edit Invoice"}
       size="lg"
       centered
     >
@@ -146,7 +149,7 @@ export default function EditInvoice({
               {...form.getInputProps("job_id")}
             />
             <TextInput
-              label="Invoice Number"
+              label={isCreditMemo ? "Credit No." : "Invoice Number"}
               withAsterisk
               {...form.getInputProps("invoice_number")}
             />
@@ -159,23 +162,25 @@ export default function EditInvoice({
               clearable
               {...form.getInputProps("date_entered")}
             />
-            <DateInput
-              label="Date Due"
-              valueFormat="YYYY-MM-DD"
-              clearable
-              {...form.getInputProps("date_due")}
-            />
+            {!isCreditMemo && (
+              <Switch
+                label="No Charge"
+                color="violet"
+                styles={{
+                  root: {
+                    display: "flex",
+                    alignItems: "flex-end",
+                    marginBottom: "10px",
+                  },
+                  track: { cursor: "pointer" },
+                }}
+                checked={form.values.no_charge || false}
+                onChange={(event) =>
+                  form.setFieldValue("no_charge", event.currentTarget.checked)
+                }
+              />
+            )}
           </SimpleGrid>
-
-          <Switch
-            label="No Charge"
-            color="violet"
-            styles={{ track: { cursor: "pointer" } }}
-            checked={form.values.no_charge || false}
-            onChange={(event) =>
-              form.setFieldValue("no_charge", event.currentTarget.checked)
-            }
-          />
 
           <Textarea
             label="Comments"

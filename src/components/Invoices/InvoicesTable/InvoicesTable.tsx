@@ -85,10 +85,22 @@ export default function InvoicesTable() {
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
   const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
 
-  const [addModalOpened, { open: openAddModal, close: closeAddModal }] =
-    useDisclosure(false);
-  const [editModalOpened, { open: openEditModal, close: closeEditModal }] =
-    useDisclosure(false);
+  const [
+    addInvoiceModalOpened,
+    { open: openAddInvoiceModal, close: closeAddInvoiceModal },
+  ] = useDisclosure(false);
+  const [
+    editInvoiceModalOpened,
+    { open: openEditInvoiceModal, close: closeEditInvoiceModal },
+  ] = useDisclosure(false);
+  const [
+    addCreditModalOpened,
+    { open: openAddCreditModal, close: closeAddCreditModal },
+  ] = useDisclosure(false);
+  const [
+    editCreditModalOpened,
+    { open: openEditCreditModal, close: closeEditCreditModal },
+  ] = useDisclosure(false);
 
   const [
     commentModalOpened,
@@ -152,7 +164,7 @@ export default function InvoicesTable() {
       queryClient.invalidateQueries({ queryKey: ["invoices_list_server"] });
       notifications.show({
         title: "Success",
-        message: "Invoice payment status updated.",
+        message: "Posted status updated.",
         color: "green",
       });
     },
@@ -218,18 +230,26 @@ export default function InvoicesTable() {
   });
 
   const deleteInvoiceMutation = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async ({
+      id,
+      isCreditMemo,
+    }: {
+      id: number;
+      isCreditMemo: boolean;
+    }) => {
       const { error } = await supabase
         .from("invoices")
         .delete()
         .eq("invoice_id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, isCreditMemo) => {
       queryClient.invalidateQueries({ queryKey: ["invoices_list_server"] });
       notifications.show({
         title: "Deleted",
-        message: "Invoice deleted permanently.",
+        message: !isCreditMemo
+          ? "Invoice deleted permanently"
+          : "Credit Memo deleted permanently",
         color: "red",
       });
     },
@@ -245,9 +265,25 @@ export default function InvoicesTable() {
   const columnHelper = createColumnHelper<InvoiceRow>();
 
   const columns = [
-    columnHelper.accessor("invoice_number", {
-      header: "Invoice #",
+    columnHelper.accessor("is_creditmemo", {
+      header: "Type",
       size: 110,
+      cell: (info) => (
+        <Badge
+          variant="gradient"
+          gradient={
+            info.getValue()
+              ? { from: "#002e41ff", to: "#007c53ff", deg: 270 }
+              : { from: "#2600ffff", to: "#ae00ffff", deg: 270 }
+          }
+        >
+          {info.getValue() ? "Credit" : "Invoice"}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("invoice_number", {
+      header: "Invoice/Credit No.",
+      size: 150,
       cell: (info) => <Text fw={700}>{info.getValue() || "—"}</Text>,
     }),
     columnHelper.accessor("job.job_number", {
@@ -365,7 +401,7 @@ export default function InvoicesTable() {
           header: "Actions",
           size: 80,
           cell: (info) => {
-            const isPaid = !!info.row.original.paid_at;
+            const isPosted = !!info.row.original.paid_at;
             const isNoCharge = info.row.original.no_charge;
             return (
               <Menu withinPortal position="bottom-end" shadow="sm">
@@ -381,32 +417,36 @@ export default function InvoicesTable() {
                     onClick={() =>
                       togglePaidMutation.mutate({
                         id: info.row.original.invoice_id,
-                        isPaid: !isPaid,
+                        isPaid: !isPosted,
                       })
                     }
                     disabled={!!isNoCharge}
-                    color={isPaid ? "red" : "green"}
+                    color={isPosted ? "red" : "green"}
                   >
-                    {isPaid ? "Mark Unpaid" : "Mark Paid"}
+                    {isPosted ? "Mark Not Posted" : "Mark Posted"}
                   </Menu.Item>
-                  <Menu.Item
-                    leftSection={
-                      isNoCharge ? (
-                        <FaFileInvoiceDollar size={14} />
-                      ) : (
-                        <FaBan size={14} />
-                      )
-                    }
-                    onClick={() =>
-                      toggleNoChargeMutation.mutate({
-                        id: info.row.original.invoice_id,
-                        noCharge: !isNoCharge,
-                      })
-                    }
-                    color={isNoCharge ? "blue" : "gray"}
-                  >
-                    {isNoCharge ? "Revert to Chargeable" : "Mark as No Charge"}
-                  </Menu.Item>
+                  {!info.row.original.is_creditmemo && (
+                    <Menu.Item
+                      leftSection={
+                        isNoCharge ? (
+                          <FaFileInvoiceDollar size={14} />
+                        ) : (
+                          <FaBan size={14} />
+                        )
+                      }
+                      onClick={() =>
+                        toggleNoChargeMutation.mutate({
+                          id: info.row.original.invoice_id,
+                          noCharge: !isNoCharge,
+                        })
+                      }
+                      color={isNoCharge ? "blue" : "gray"}
+                    >
+                      {isNoCharge
+                        ? "Revert to Chargeable"
+                        : "Mark as No Charge"}
+                    </Menu.Item>
+                  )}
 
                   <Menu.Divider />
                   <Menu.Label>Edit</Menu.Label>
@@ -414,21 +454,32 @@ export default function InvoicesTable() {
                     leftSection={<FaEdit size={14} />}
                     onClick={() => {
                       setSelectedInvoice(info.row.original);
-                      openEditModal();
+                      {
+                        info.row.original.is_creditmemo
+                          ? openEditCreditModal()
+                          : openEditInvoiceModal();
+                      }
                     }}
                   >
-                    Edit Invoice
+                    Edit
                   </Menu.Item>
                   <Menu.Item
                     leftSection={<FaTrash size={14} />}
                     color="red"
                     onClick={() => {
                       if (
-                        confirm("Are you sure you want to delete this invoice?")
+                        info.row.original.is_creditmemo
+                          ? confirm(
+                              "Are you sure you want to delete this Credit Memo?"
+                            )
+                          : confirm(
+                              "Are you sure you want to delete this invoice?"
+                            )
                       ) {
-                        deleteInvoiceMutation.mutate(
-                          info.row.original.invoice_id
-                        );
+                        deleteInvoiceMutation.mutate({
+                          id: info.row.original.invoice_id,
+                          isCreditMemo: !!info.row.original.is_creditmemo,
+                        });
                       }
                     }}
                   >
@@ -499,14 +550,24 @@ export default function InvoicesTable() {
             </Stack>
           </Group>
           {permissions.canEditInvoices && (
-            <Button
-              leftSection={<FaPlus size={14} />}
-              onClick={openAddModal}
-              variant="gradient"
-              gradient={gradients.primary}
-            >
-              Add Invoice
-            </Button>
+            <Group>
+              <Button
+                leftSection={<FaPlus size={14} />}
+                onClick={openAddInvoiceModal}
+                variant="gradient"
+                gradient={gradients.primary}
+              >
+                Add Invoice
+              </Button>
+              <Button
+                leftSection={<FaPlus size={14} />}
+                onClick={openAddCreditModal}
+                variant="gradient"
+                gradient={{ from: "#004d1dff", to: "#007c53ff", deg: 90 }}
+              >
+                Add Credit Memo
+              </Button>
+            </Group>
           )}
         </Group>
 
@@ -521,7 +582,7 @@ export default function InvoicesTable() {
               <SimpleGrid cols={{ base: 1, sm: 4 }} spacing="md">
                 <TextInput
                   label="Job Number"
-                  placeholder="2024..."
+                  placeholder="12345-A..."
                   value={getInputFilterValue("job_number") as string}
                   onChange={(e) =>
                     setInputFilterValue("job_number", e.target.value)
@@ -530,7 +591,7 @@ export default function InvoicesTable() {
                 />
                 <TextInput
                   label="Invoice Number"
-                  placeholder="INV..."
+                  placeholder="12345..."
                   value={getInputFilterValue("invoice_number") as string}
                   onChange={(e) =>
                     setInputFilterValue("invoice_number", e.target.value)
@@ -539,12 +600,25 @@ export default function InvoicesTable() {
                 />
                 <TextInput
                   label="Client Name"
-                  placeholder="Smith..."
+                  placeholder="Genesis..."
                   value={getInputFilterValue("client") as string}
                   onChange={(e) =>
                     setInputFilterValue("client", e.target.value)
                   }
                   onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+                />
+                <Select
+                  label="Type"
+                  placeholder="All"
+                  data={[
+                    { value: "invoices", label: "Invoices" },
+                    { value: "creditmemos", label: "Credit Memos" },
+                    { value: "all", label: "All" },
+                  ]}
+                  value={(getInputFilterValue("type") as string) || "all"}
+                  onChange={(val) =>
+                    setInputFilterValue("type", val === "all" ? undefined : val)
+                  }
                 />
                 <Select
                   label="Payment Status"
@@ -674,15 +748,32 @@ export default function InvoicesTable() {
         />
       </Center>
 
-      <AddInvoice opened={addModalOpened} onClose={closeAddModal} />
+      <AddInvoice
+        opened={addInvoiceModalOpened}
+        onClose={closeAddInvoiceModal}
+      />
+      <AddInvoice
+        opened={addCreditModalOpened}
+        onClose={closeAddCreditModal}
+        isCreditMemo={true}
+      />
 
       <EditInvoice
-        opened={editModalOpened}
+        opened={editInvoiceModalOpened}
         onClose={() => {
-          closeEditModal();
+          closeEditInvoiceModal();
           setSelectedInvoice(null);
         }}
         invoice={selectedInvoice}
+      />
+      <EditInvoice
+        opened={editCreditModalOpened}
+        onClose={() => {
+          closeEditCreditModal();
+          setSelectedInvoice(null);
+        }}
+        invoice={selectedInvoice}
+        isCreditMemo={true}
       />
 
       <Modal

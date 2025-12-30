@@ -25,9 +25,14 @@ import { useJobSearch } from "@/hooks/useJobSearch";
 interface AddInvoiceProps {
   opened: boolean;
   onClose: () => void;
+  isCreditMemo?: Boolean;
 }
 
-export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
+export default function AddInvoice({
+  opened,
+  onClose,
+  isCreditMemo,
+}: AddInvoiceProps) {
   const { supabase } = useSupabase();
   const queryClient = useQueryClient();
 
@@ -36,7 +41,6 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
       invoice_number: "",
       job_id: "",
       date_entered: new Date(),
-      date_due: null,
       paid_at: null,
       no_charge: false,
       comments: "",
@@ -63,6 +67,7 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
     mutationFn: async (values: InvoiceFormInput) => {
       const payload = {
         ...values,
+        is_creditmemo: isCreditMemo,
         job_id: Number(values.job_id),
       };
 
@@ -73,7 +78,9 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
     onSuccess: () => {
       notifications.show({
         title: "Success",
-        message: "Invoice created successfully",
+        message: isCreditMemo
+          ? "Invoice created successfully"
+          : "Credit Memo created Successfully",
         color: "green",
       });
       queryClient.invalidateQueries({ queryKey: ["invoices_list_server"] });
@@ -92,7 +99,7 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
     <Modal
       opened={opened}
       onClose={onClose}
-      title="Add New Invoice"
+      title={isCreditMemo ? "Add New Credit Memo" : "Add New Invoice"}
       size="lg"
       centered
     >
@@ -121,7 +128,7 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
               {...form.getInputProps("job_id")}
             />
             <TextInput
-              label="Invoice Number"
+              label={isCreditMemo ? "Credit No." : "Invoice Number"}
               placeholder="e.g. 27000..."
               withAsterisk
               data-autofocus
@@ -139,35 +146,28 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
               clearable
               {...form.getInputProps("date_entered")}
             />
-            <DateInput
-              label="Date Due"
-              placeholder="YYYY-MM-DD"
-              valueFormat="YYYY-MM-DD"
-              clearable
-              disabled={!form.values.job_id}
-              minDate={
-                form.values.date_entered instanceof Date
-                  ? form.values.date_entered
-                  : undefined
-              }
-              {...form.getInputProps("date_due")}
-            />
+            {!isCreditMemo && (
+              <Switch
+                label="No Charge"
+                color="violet"
+                disabled={!form.values.job_id}
+                styles={{
+                  root: {
+                    display: "flex",
+                    alignItems: "flex-end",
+                    marginBottom: "10px",
+                  },
+                  track: {
+                    cursor: "pointer",
+                  },
+                }}
+                checked={form.values.no_charge || false}
+                onChange={(event) =>
+                  form.setFieldValue("no_charge", event.currentTarget.checked)
+                }
+              />
+            )}
           </SimpleGrid>
-
-          <Switch
-            label="No Charge"
-            color="violet"
-            disabled={!form.values.job_id}
-            styles={{
-              track: {
-                cursor: "pointer",
-              },
-            }}
-            checked={form.values.no_charge || false}
-            onChange={(event) =>
-              form.setFieldValue("no_charge", event.currentTarget.checked)
-            }
-          />
 
           <Textarea
             label="Comments"
@@ -192,7 +192,7 @@ export default function AddInvoice({ opened, onClose }: AddInvoiceProps) {
                 color: !form.values.job_id ? "#000000ff" : "white",
               }}
             >
-              Create Invoice
+              Create Credit Memo
             </Button>
           </Group>
         </Stack>
