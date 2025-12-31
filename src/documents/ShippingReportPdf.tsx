@@ -17,6 +17,8 @@ export type ShippingReportJob = Tables<"jobs"> & {
 };
 
 const ITEMS_PER_PAGE = 45;
+const BORDER_COLOR = "#e0e0e0";
+const HEADER_BORDER_COLOR = "#000";
 
 const styles = StyleSheet.create({
   page: {
@@ -45,40 +47,63 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 5,
     marginTop: 5,
-    marginBottom: 2,
+    borderTopWidth: 1,
+    borderTopColor: "#000",
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
   },
   dateGroupText: { fontSize: 10, fontWeight: "bold", paddingHorizontal: 5 },
 
+  // Table Structure
   tableHeader: {
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#000",
-    paddingVertical: 4,
-    marginBottom: 2,
     backgroundColor: "#f8f9fa",
+    alignItems: "stretch",
   },
-  headerText: { fontSize: 8, fontWeight: "bold" },
-
   tableRow: {
     flexDirection: "row",
-    paddingVertical: 3,
     borderBottomWidth: 0.5,
-    borderBottomColor: "#e0e0e0",
-    alignItems: "center",
+    borderBottomColor: BORDER_COLOR,
+    alignItems: "stretch",
   },
 
-  colJob: { width: "10%" },
-  colCust: { width: "15%" },
-  colAddr: { width: "20%" },
-  colBox: { width: "5%", textAlign: "center" },
+  // Cell Styling
+  cellBase: {
+    paddingVertical: 3,
+    paddingHorizontal: 2,
+    borderRightWidth: 0.5,
+    borderRightColor: BORDER_COLOR,
+    justifyContent: "center",
+  },
+  headerCellBase: {
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+    borderRightWidth: 0.5,
+    borderRightColor: HEADER_BORDER_COLOR,
+    justifyContent: "center",
+    backgroundColor: "#f8f9fa",
+  },
+
+  // Column Widths
+  colJob: { width: "8%" },
+  colCust: { width: "14%" },
+  colAddr: { width: "18%" },
+  colBox: { width: "5%", alignItems: "center" },
   colDoor: { width: "15%" },
   colSpec: { width: "10%" },
   colColor: { width: "10%" },
-  colCheck: { width: "3%", alignItems: "center" }, 
+  colCheck: { width: "4%", alignItems: "center" },
+
+  // Text Styles
+  headerText: { fontSize: 8, fontWeight: "bold", textAlign: "center" },
+  cellText: { fontSize: 8 },
+  cellTextSmall: { fontSize: 7 },
 
   checkbox: {
-    width: 10, 
-    height: 10, 
+    width: 10,
+    height: 10,
     borderWidth: 1,
     borderColor: "#000",
     alignItems: "center",
@@ -87,8 +112,8 @@ const styles = StyleSheet.create({
   checkMark: {
     fontSize: 8,
     fontWeight: "bold",
-    lineHeight: 1, 
-    marginTop: -1, 
+    lineHeight: 1,
+    marginTop: -1,
   },
 
   footer: {
@@ -124,28 +149,44 @@ const safeGet = (data: any) => {
 
 const ColumnHeaders = () => (
   <View style={styles.tableHeader}>
-    <Text style={[styles.headerText, styles.colJob]}>Job #</Text>
-    <Text style={[styles.headerText, styles.colCust]}>Customer</Text>
-    <Text style={[styles.headerText, styles.colAddr]}>Address</Text>
-    <Text style={[styles.headerText, styles.colBox]}>Box</Text>
-    <Text style={[styles.headerText, styles.colDoor]}>Door Style</Text>
-    <Text style={[styles.headerText, styles.colSpec]}>Species</Text>
-    <Text style={[styles.headerText, styles.colColor]}>Color</Text>
-    <Text style={[styles.headerText, styles.colCheck, { textAlign: "center" }]}>
-      D
-    </Text>
-    <Text style={[styles.headerText, styles.colCheck, { textAlign: "center" }]}>
-      P
-    </Text>
-    <Text style={[styles.headerText, styles.colCheck, { textAlign: "center" }]}>
-      F/C
-    </Text>
-    <Text style={[styles.headerText, styles.colCheck, { textAlign: "center" }]}>
-      P/S
-    </Text>
-    <Text style={[styles.headerText, styles.colCheck, { textAlign: "center" }]}>
-      A
-    </Text>
+    <View style={[styles.headerCellBase, styles.colJob]}>
+      <Text style={styles.headerText}>Job #</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colCust]}>
+      <Text style={styles.headerText}>Customer</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colAddr]}>
+      <Text style={styles.headerText}>Address</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colBox]}>
+      <Text style={styles.headerText}>Box</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colDoor]}>
+      <Text style={styles.headerText}>Door Style</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colSpec]}>
+      <Text style={styles.headerText}>Species</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colColor]}>
+      <Text style={styles.headerText}>Color</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colCheck]}>
+      <Text style={styles.headerText}>D</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colCheck]}>
+      <Text style={styles.headerText}>P</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colCheck]}>
+      <Text style={styles.headerText}>F/C</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colCheck]}>
+      <Text style={styles.headerText}>P/S</Text>
+    </View>
+    <View
+      style={[styles.headerCellBase, styles.colCheck, { borderRightWidth: 0 }]}
+    >
+      <Text style={styles.headerText}>A</Text>
+    </View>
   </View>
 );
 
@@ -237,41 +278,45 @@ export const ShippingReportPdf = ({
 
       currentPage.push(
         <View style={styles.tableRow} key={job.id} wrap={false}>
-          <Text style={[styles.colJob, { fontSize: 8 }]}>{jobNum}</Text>
-          <Text style={[styles.colCust, { fontSize: 8 }]}>
-            {clientName.substring(0, 20)}
-          </Text>
-          <Text style={[styles.colAddr, { fontSize: 8 }]}>
-            {address.substring(0, 25)}
-          </Text>
-
-          <View style={styles.colBox}>
-            <Text style={{ fontWeight: "bold" }}>{box}</Text>
+          <View style={[styles.cellBase, styles.colJob]}>
+            <Text style={styles.cellText}>{jobNum}</Text>
           </View>
-          <View style={[styles.colDoor, { fontSize: 8 }]}>
-            <Text>{door.substring(0, 15)}</Text>
+          <View style={[styles.cellBase, styles.colCust]}>
+            <Text style={styles.cellText}>{clientName.substring(0, 20)}</Text>
+          </View>
+          <View style={[styles.cellBase, styles.colAddr]}>
+            <Text style={styles.cellTextSmall}>{address.substring(0, 25)}</Text>
           </View>
 
-          <Text style={[styles.colSpec, { fontSize: 8 }]}>
-            {species.substring(0, 10)}
-          </Text>
-          <Text style={[styles.colColor, { fontSize: 8 }]}>
-            {color.substring(0, 10)}
-          </Text>
+          <View style={[styles.cellBase, styles.colBox]}>
+            <Text style={[styles.cellText, { fontWeight: "bold" }]}>{box}</Text>
+          </View>
+          <View style={[styles.cellBase, styles.colDoor]}>
+            <Text style={styles.cellTextSmall}>{door.substring(0, 20)}</Text>
+          </View>
 
-          <View style={styles.colCheck}>
+          <View style={[styles.cellBase, styles.colSpec]}>
+            <Text style={styles.cellTextSmall}>{species.substring(0, 15)}</Text>
+          </View>
+          <View style={[styles.cellBase, styles.colColor]}>
+            <Text style={styles.cellTextSmall}>{color.substring(0, 15)}</Text>
+          </View>
+
+          <View style={[styles.cellBase, styles.colCheck]}>
             <Checkbox checked={Boolean(ps?.doors_completed_actual)} />
           </View>
-          <View style={styles.colCheck}>
+          <View style={[styles.cellBase, styles.colCheck]}>
             <Checkbox checked={Boolean(ps?.cut_finish_completed_actual)} />
           </View>
-          <View style={styles.colCheck}>
+          <View style={[styles.cellBase, styles.colCheck]}>
             <Checkbox checked={Boolean(ps?.custom_finish_completed_actual)} />
           </View>
-          <View style={styles.colCheck}>
+          <View style={[styles.cellBase, styles.colCheck]}>
             <Checkbox checked={Boolean(ps?.paint_completed_actual)} />
           </View>
-          <View style={styles.colCheck}>
+          <View
+            style={[styles.cellBase, styles.colCheck, { borderRightWidth: 0 }]}
+          >
             <Checkbox checked={Boolean(ps?.assembly_completed_actual)} />
           </View>
         </View>
@@ -308,7 +353,7 @@ export const ShippingReportPdf = ({
       {pages.map((pageContent, index) => (
         <Page key={index} size="A4" orientation="landscape" style={styles.page}>
           <View style={styles.headerContainer} fixed>
-            <Text style={styles.reportTitle}>Orders Shipping by Date</Text>
+            <Text style={styles.reportTitle}>Upcoming Shipments</Text>
             <View>
               <Text style={styles.metaInfo}>
                 Printed: {dayjs().format("DD-MMM-YY")}

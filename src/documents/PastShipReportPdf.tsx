@@ -47,9 +47,13 @@ export type PastShippingJob = {
     | null;
 };
 
+// Common border color for the grid
+const BORDER_COLOR = "#e0e0e0";
+const HEADER_BORDER_COLOR = "#000";
+
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
+    padding: 20,
     fontFamily: "Helvetica",
     fontSize: 9,
     lineHeight: 1.3,
@@ -74,39 +78,64 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 5,
     marginTop: 5,
-    marginBottom: 2,
+    borderTopWidth: 1,
+    borderTopColor: "#000",
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
   },
   dateGroupText: { fontSize: 10, fontWeight: "bold", paddingHorizontal: 5 },
 
+  // Table Row & Header
   tableHeader: {
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#000",
-    paddingVertical: 4,
-    marginBottom: 2,
     backgroundColor: "#f8f9fa",
+    alignItems: "stretch", // Ensures borders go top to bottom
   },
-  headerText: { fontSize: 8, fontWeight: "bold" },
-
   tableRow: {
     flexDirection: "row",
-    paddingVertical: 3,
     borderBottomWidth: 0.5,
-    borderBottomColor: "#e0e0e0",
-    alignItems: "center",
+    borderBottomColor: BORDER_COLOR,
+    alignItems: "stretch", // Ensures borders go top to bottom
   },
 
+  // Base Cell Style (Divider Logic)
+  cellBase: {
+    paddingVertical: 3,
+    paddingHorizontal: 2,
+    borderRightWidth: 0.5,
+    borderRightColor: BORDER_COLOR,
+    justifyContent: "center", // Vertically Center Content
+  },
+  headerCellBase: {
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+    borderRightWidth: 0.5,
+    borderRightColor: HEADER_BORDER_COLOR,
+    justifyContent: "center", // Vertically Center Header Text
+    backgroundColor: "#f8f9fa",
+  },
+
+  // Specific Column Widths
   colJob: { width: "6%" },
-  colCust: { width: "12%" },
-  colAddr: { width: "15%" },
-  colBox: { width: "4%", textAlign: "center" },
-  colDel: { width: "7%" },
-  colInstDate: { width: "13%" },
+  colCust: { width: "11%" },
+  colAddr: { width: "13%" },
+  colBox: { width: "4%", alignItems: "center" },
+  colDel: { width: "6%" },
+  colInstDate: { width: "8%", alignItems: "center" },
+  colInstComp: { width: "8%", alignItems: "center" },
   colInstName: { width: "10%" },
-  colInspect: { width: "13%" },
+  colInspect: { width: "8%", alignItems: "center" },
+  colInspectComp: { width: "8%", alignItems: "center" },
   colInv: { width: "6%", alignItems: "center" },
-  colInvDate: { width: "6%" },
-  colInvNum: { width: "6%" },
+  colInvDate: { width: "6%", alignItems: "center" },
+  colInvNum: { width: "6%", borderRightWidth: 0 }, // Last column, no border
+
+  // Text Styles
+  headerText: { fontSize: 7, fontWeight: "bold", textAlign: "center" },
+  cellText: { fontSize: 8 },
+  cellTextSmall: { fontSize: 7 }, // For longer addresses/names
 
   checkbox: {
     width: 10,
@@ -141,15 +170,6 @@ const styles = StyleSheet.create({
     borderTopColor: "#000",
   },
   totalText: { fontSize: 9, fontWeight: "bold" },
-  rowCell: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-start",
-  },
-  dateText: {
-    fontSize: 8,
-    marginRight: 4,
-  },
 });
 
 const Checkbox = ({ checked }: { checked: boolean }) => (
@@ -165,21 +185,47 @@ const safeGet = (data: any) => {
 
 const ColumnHeaders = () => (
   <View style={styles.tableHeader}>
-    <Text style={[styles.headerText, styles.colJob]}>Job #</Text>
-    <Text style={[styles.headerText, styles.colCust]}>Client</Text>
-    <Text style={[styles.headerText, styles.colAddr]}>Address</Text>
-    <Text style={[styles.headerText, styles.colBox]}>Box</Text>
-    <Text style={[styles.headerText, styles.colDel]}>Delivery</Text>
-    <Text style={[styles.headerText, styles.colInstDate]}>
-      Installation Date
-    </Text>
-    <Text style={[styles.headerText, styles.colInstName]}>Installer</Text>
-    <Text style={[styles.headerText, styles.colInspect]}>Inspection</Text>
-    <Text style={[styles.headerText, styles.colInv, { textAlign: "center" }]}>
-      Invoiced
-    </Text>
-    <Text style={[styles.headerText, styles.colInvDate]}>Inv Date</Text>
-    <Text style={[styles.headerText, styles.colInvNum]}>Inv #</Text>
+    <View style={[styles.headerCellBase, styles.colJob]}>
+      <Text style={styles.headerText}>Job #</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colCust]}>
+      <Text style={styles.headerText}>Client</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colAddr]}>
+      <Text style={styles.headerText}>Address</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colBox]}>
+      <Text style={styles.headerText}>Box</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colDel]}>
+      <Text style={styles.headerText}>Delivery</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colInstDate]}>
+      <Text style={styles.headerText}>Installation</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colInstComp]}>
+      <Text style={styles.headerText}>Installation Comp</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colInstName]}>
+      <Text style={styles.headerText}>Installer</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colInspect]}>
+      <Text style={styles.headerText}>Inspection</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colInspectComp]}>
+      <Text style={styles.headerText}>Inspection Comp</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colInv]}>
+      <Text style={styles.headerText}>Invoiced</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colInvDate]}>
+      <Text style={styles.headerText}>Inv Date</Text>
+    </View>
+    <View
+      style={[styles.headerCellBase, styles.colInvNum, { borderRightWidth: 0 }]}
+    >
+      <Text style={styles.headerText}>Inv #</Text>
+    </View>
   </View>
 );
 
@@ -282,13 +328,22 @@ export const PastShippingReportPdf = ({
                       "—";
                   }
 
-                  const shipped = !!inst?.has_shipped;
                   const installDate = inst?.installation_date
                     ? dayjs(inst.installation_date).format("DD/MM/YY")
                     : "—";
+
+                  const installCompDate = inst?.installation_completed
+                    ? dayjs(inst.installation_completed).format("DD/MM/YY")
+                    : "—";
+
                   const inspectDate = inst?.inspection_date
                     ? dayjs(inst.inspection_date).format("DD/MM/YY")
                     : "—";
+
+                  const inspectCompDate = inst?.inspection_completed
+                    ? dayjs(inst.inspection_completed).format("DD/MM/YY")
+                    : "—";
+
                   const hasInvoice = !!inv;
                   const invDate = inv?.date_entered
                     ? dayjs(inv.date_entered).format("DD/MM/YY")
@@ -297,50 +352,73 @@ export const PastShippingReportPdf = ({
 
                   return (
                     <View style={styles.tableRow} key={job.id} wrap={false}>
-                      <Text style={[styles.colJob, { fontSize: 8 }]}>
-                        {jobNum}
-                      </Text>
-                      <Text style={[styles.colCust, { fontSize: 8 }]}>
-                        {clientName.substring(0, 18)}
-                      </Text>
-                      <Text style={[styles.colAddr, { fontSize: 8 }]}>
-                        {address.substring(0, 22)}
-                      </Text>
-
-                      <View style={styles.colBox}>
-                        <Text style={{ fontWeight: "bold" }}>{box}</Text>
+                      <View style={[styles.cellBase, styles.colJob]}>
+                        <Text style={styles.cellText}>{jobNum}</Text>
+                      </View>
+                      <View style={[styles.cellBase, styles.colCust]}>
+                        <Text style={styles.cellText}>
+                          {clientName.substring(0, 18)}
+                        </Text>
+                      </View>
+                      <View style={[styles.cellBase, styles.colAddr]}>
+                        <Text style={styles.cellTextSmall}>
+                          {address.substring(0, 22)}
+                        </Text>
                       </View>
 
-                      <Text style={[styles.colDel, { fontSize: 8 }]}>
-                        {delivery.substring(0, 10)}
-                      </Text>
-
-                      <View style={[styles.colInstDate, styles.rowCell]}>
-                        <Text style={styles.dateText}>{installDate}</Text>
-                        {inst?.installation_date && (
-                          <Checkbox checked={!!inst?.installation_completed} />
-                        )}
-                      </View>
-                      <Text style={[styles.colInstName, { fontSize: 8 }]}>
-                        {installerName.substring(0, 15)}
-                      </Text>
-                      <View style={[styles.colInspect, styles.rowCell]}>
-                        <Text style={styles.dateText}>{inspectDate}</Text>
-                        {inst?.inspection_date && (
-                          <Checkbox checked={!!inst?.inspection_completed} />
-                        )}
+                      <View style={[styles.cellBase, styles.colBox]}>
+                        <Text style={[styles.cellText, { fontWeight: "bold" }]}>
+                          {box}
+                        </Text>
                       </View>
 
-                      <View style={styles.colInv}>
+                      <View style={[styles.cellBase, styles.colDel]}>
+                        <Text style={styles.cellTextSmall}>
+                          {delivery.substring(0, 10)}
+                        </Text>
+                      </View>
+
+                      <View style={[styles.cellBase, styles.colInstDate]}>
+                        <Text style={styles.cellText}>{installDate}</Text>
+                      </View>
+
+                      <View style={[styles.cellBase, styles.colInstComp]}>
+                        <Text style={styles.cellText}>{installCompDate}</Text>
+                      </View>
+
+                      <View style={[styles.cellBase, styles.colInstName]}>
+                        <Text style={styles.cellTextSmall}>
+                          {installerName.substring(0, 15)}
+                        </Text>
+                      </View>
+
+                      <View style={[styles.cellBase, styles.colInspect]}>
+                        <Text style={styles.cellText}>{inspectDate}</Text>
+                      </View>
+
+                      <View style={[styles.cellBase, styles.colInspectComp]}>
+                        <Text style={styles.cellText}>{inspectCompDate}</Text>
+                      </View>
+
+                      <View style={[styles.cellBase, styles.colInv]}>
                         <Checkbox checked={hasInvoice} />
                       </View>
 
-                      <Text style={[styles.colInvDate, { fontSize: 8 }]}>
-                        {invDate}
-                      </Text>
-                      <Text style={[styles.colInvNum, { fontSize: 8 }]}>
-                        {invNum.substring(0, 10)}
-                      </Text>
+                      <View style={[styles.cellBase, styles.colInvDate]}>
+                        <Text style={styles.cellText}>{invDate}</Text>
+                      </View>
+
+                      <View
+                        style={[
+                          styles.cellBase,
+                          styles.colInvNum,
+                          { borderRightWidth: 0 },
+                        ]}
+                      >
+                        <Text style={styles.cellText}>
+                          {invNum.substring(0, 10)}
+                        </Text>
+                      </View>
                     </View>
                   );
                 })}

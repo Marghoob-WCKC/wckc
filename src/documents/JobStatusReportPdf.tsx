@@ -88,6 +88,7 @@ export const JobStatusPdf = ({ data }: { data: JobStatusItem[] }) => (
     <Page size="A4" orientation="landscape" style={styles.page}>
       <View style={styles.header}>
         <Text style={styles.title}>Job Status Report</Text>
+        <Text>(Job's In Plant)</Text>
         <View>
           <Text style={styles.meta}>
             Generated: {dayjs().format("DD-MMM-YY HH:mm")}

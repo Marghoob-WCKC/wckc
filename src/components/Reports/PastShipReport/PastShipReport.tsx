@@ -42,8 +42,8 @@ export default function PastShipReport() {
   const { supabase, isAuthenticated } = useSupabase();
 
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
+    dayjs().subtract(7, "day").toDate(),
     dayjs().toDate(),
-    dayjs().add(7, "day").toDate(),
   ]);
 
   const {
