@@ -46,7 +46,6 @@ import AddClient from "@/components/Clients/AddClient/AddClient";
 import {
   DeliveryTypeOptions,
   DrawerBoxOptions,
-  DrawerHardwareOptions,
   HARDWARE_MAPPING,
   flooringClearanceOptions,
   flooringTypeOptions,
@@ -61,6 +60,7 @@ import { useSpeciesSearch } from "@/hooks/useSpeciesSearch";
 import { useColorSearch } from "@/hooks/useColorSearch";
 import { useDoorStyleSearch } from "@/hooks/useDoorStyleSearch";
 import dayjs from "dayjs";
+import { handleTabSelect } from "@/utils/handleTabSelect";
 dayjs.extend(utc);
 
 interface ExtendedMasterOrderInput extends MasterOrderInput {
@@ -111,7 +111,6 @@ export default function NewSale() {
       currency: "CAD",
     });
   };
-
   const [
     speciesModalOpened,
     { open: openSpeciesModal, close: closeSpeciesModal },
@@ -847,6 +846,7 @@ export default function NewSale() {
                     <Select
                       label="Delivery Type"
                       withAsterisk
+                      rightSection
                       placeholder="Pickup, Delivery..."
                       data={DeliveryTypeOptions}
                       searchable
@@ -866,8 +866,20 @@ export default function NewSale() {
                       placeholder="Select Species"
                       data={speciesOptions}
                       searchable
+                      allowDeselect
+                      clearable
+                      rightSection
                       searchValue={speciesSearchValue}
                       onSearchChange={setSpeciesSearch}
+                      onKeyDown={(e) => {
+                        handleTabSelect(
+                          e,
+                          speciesOptions,
+                          "cabinet.species",
+                          setSpeciesSearch,
+                          form
+                        );
+                      }}
                       nothingFoundMessage={
                         speciesSearchValue.trim().length > 0 && (
                           <Button
@@ -890,8 +902,19 @@ export default function NewSale() {
                       placeholder="Select Color"
                       data={colorOptions}
                       searchable
+                      clearable
+                      rightSection
                       searchValue={colorSearchValue}
                       onSearchChange={setColorSearch}
+                      onKeyDown={(e) =>
+                        handleTabSelect(
+                          e,
+                          colorOptions,
+                          "cabinet.color",
+                          setColorSearch,
+                          form
+                        )
+                      }
                       nothingFoundMessage={
                         colorSearchValue.trim().length > 0 && (
                           <Button
@@ -914,8 +937,19 @@ export default function NewSale() {
                       placeholder="Select Door Style"
                       data={doorStyleOptions}
                       searchable
+                      clearable
+                      rightSection
                       searchValue={doorStyleSearchValue}
                       onSearchChange={setDoorStyleSearch}
+                      onKeyDown={(e) =>
+                        handleTabSelect(
+                          e,
+                          doorStyleOptions,
+                          "cabinet.door_style",
+                          setDoorStyleSearch,
+                          form
+                        )
+                      }
                       nothingFoundMessage={
                         doorStyleSearchValue.trim().length > 0 && (
                           <Button
@@ -947,32 +981,36 @@ export default function NewSale() {
                     />
                     <Select
                       label="Interior Material"
+                      clearable
+                      rightSection
                       data={InteriorOptions}
                       {...getInputPropsWithDefault(
                         "cabinet.interior",
                         "WHITE MEL"
                       )}
                     />
+
+                    <Autocomplete
+                      label="Box"
+                      data={[]}
+                      {...form.getInputProps(`cabinet.box`)}
+                    />
+                  </SimpleGrid>
+
+                  <SimpleGrid cols={4} mt="md">
                     <Select
                       label="Drawer Box"
                       data={DrawerBoxOptions}
+                      rightSection
                       {...form.getInputProps("cabinet.drawer_box")}
                       onChange={(val) => {
                         form.setFieldValue("cabinet.drawer_box", val || "");
                         form.setFieldValue("cabinet.drawer_hardware", null);
                       }}
                     />
-                  </SimpleGrid>
-
-                  <SimpleGrid cols={4} mt="md">
-                    <Autocomplete
-                      label="Box"
-                      data={[]}
-                      {...form.getInputProps(`cabinet.box`)}
-                    />
-
                     <Select
                       label="Drawer Hardware"
+                      rightSection
                       data={
                         form.values.cabinet.drawer_box
                           ? HARDWARE_MAPPING[form.values.cabinet.drawer_box]

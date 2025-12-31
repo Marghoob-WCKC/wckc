@@ -60,6 +60,7 @@ import { useSpeciesSearch } from "@/hooks/useSpeciesSearch";
 import { useColorSearch } from "@/hooks/useColorSearch";
 import { useDoorStyleSearch } from "@/hooks/useDoorStyleSearch";
 import dayjs from "dayjs";
+import { handleTabSelect } from "@/utils/handleTabSelect";
 dayjs.extend(utc);
 const FEATURE_MANUAL_JOB_ENTRY = true;
 
@@ -1003,6 +1004,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                     <Select
                       label="Delivery Type"
                       withAsterisk
+                      rightSection
                       placeholder="Pickup, Delivery..."
                       data={DeliveryTypeOptions}
                       searchable
@@ -1023,8 +1025,20 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       placeholder="Select Species"
                       data={speciesOptions}
                       searchable
+                      allowDeselect
+                      clearable
+                      rightSection
                       searchValue={speciesSearch}
                       onSearchChange={setSpeciesSearch}
+                      onKeyDown={(e) => {
+                        handleTabSelect(
+                          e,
+                          speciesOptions,
+                          "cabinet.species",
+                          setSpeciesSearch,
+                          form
+                        );
+                      }}
                       nothingFoundMessage={
                         speciesSearch.trim().length > 0 && (
                           <Button
@@ -1047,8 +1061,19 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       placeholder="Select Color"
                       data={colorOptions}
                       searchable
+                      clearable
+                      rightSection
                       searchValue={colorSearch}
                       onSearchChange={setColorSearch}
+                      onKeyDown={(e) =>
+                        handleTabSelect(
+                          e,
+                          colorOptions,
+                          "cabinet.color",
+                          setColorSearch,
+                          form
+                        )
+                      }
                       nothingFoundMessage={
                         colorSearch.trim().length > 0 && (
                           <Button
@@ -1071,8 +1096,19 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       placeholder="Select Door Style"
                       data={doorStyleOptions}
                       searchable
+                      clearable
+                      rightSection
                       searchValue={doorStyleSearch}
                       onSearchChange={setDoorStyleSearch}
+                      onKeyDown={(e) =>
+                        handleTabSelect(
+                          e,
+                          doorStyleOptions,
+                          "cabinet.door_style",
+                          setDoorStyleSearch,
+                          form
+                        )
+                      }
                       nothingFoundMessage={
                         doorStyleSearch.trim().length > 0 && (
                           <Button
@@ -1106,6 +1142,8 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                     <Select
                       label="Interior Material"
                       searchable
+                      clearable
+                      rightSection
                       data={getSafeOptions(
                         InteriorOptions,
                         form.values.cabinet.interior
@@ -1115,13 +1153,21 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                         "WHITE MEL"
                       )}
                     />
+                    <Autocomplete
+                      label="Box"
+                      data={[]}
+                      {...form.getInputProps(`cabinet.box`)}
+                    />
+                  </SimpleGrid>
 
+                  <SimpleGrid cols={4} mt="md">
                     <Select
                       label="Drawer Box"
                       data={getSafeOptions(
                         DrawerBoxOptions,
                         form.values.cabinet.drawer_box
                       )}
+                      rightSection
                       {...form.getInputProps("cabinet.drawer_box")}
                       onChange={(val) => {
                         form.setFieldValue("cabinet.drawer_box", val || "");
@@ -1129,16 +1175,10 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       }}
                       allowDeselect={false}
                     />
-                  </SimpleGrid>
 
-                  <SimpleGrid cols={4} mt="md">
-                    <Autocomplete
-                      label="Box"
-                      data={[]}
-                      {...form.getInputProps(`cabinet.box`)}
-                    />
                     <Select
                       label="Drawer Hardware"
+                      rightSection
                       key={form.values.cabinet.drawer_box}
                       placeholder={
                         form.values.cabinet.drawer_box
