@@ -84,7 +84,7 @@ export default function NewSale() {
   const [selectedClientData, setSelectedClientData] =
     useState<Tables<"client"> | null>(null);
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
-
+  const [unitNumber, setUnitNumber] = useState("");
   const [successBannerData, setSuccessBannerData] = useState<{
     jobNum: string;
     type: string;
@@ -329,7 +329,7 @@ export default function NewSale() {
         handles_supplied: values.cabinet.handles_supplied,
         handles_selected: values.cabinet.handles_selected,
         glass: values.cabinet.glass,
-
+        doors_parts_only: values.cabinet.doors_parts_only,
         glass_type: values.cabinet.glass ? values.cabinet.glass_type : "",
         piece_count: values.cabinet.doors_parts_only
           ? values.cabinet.piece_count
@@ -493,7 +493,6 @@ export default function NewSale() {
   const handleSubmit = (values: ExtendedMasterOrderInput) => {
     if (Object.keys(form.errors).length > 0) {
       console.error("Zod Validation Blocked Submission:", form.errors);
-
       notifications.show({
         title: "Validation Failed",
         message: "Please correct the highlighted fields before submitting.",
@@ -502,7 +501,17 @@ export default function NewSale() {
       return;
     }
 
-    submitMutation.mutate(values);
+    const payload = { ...values };
+    if (unitNumber.trim()) {
+      payload.shipping = {
+        ...payload.shipping,
+        shipping_street: `${unitNumber.trim()} - ${
+          payload.shipping.shipping_street
+        }`,
+      };
+    }
+
+    submitMutation.mutate(payload);
   };
   const isMemoChecked =
     form.values.stage === "SOLD" &&
@@ -637,6 +646,7 @@ export default function NewSale() {
                   setSelectedClientData(fullObj as Tables<"client">);
                   form.setFieldValue(`shipping`, {
                     shipping_client_name: "",
+                    project_name: "",
                     shipping_street: "",
                     shipping_city: "",
                     shipping_province: "",
@@ -786,17 +796,18 @@ export default function NewSale() {
                     />
                   </SimpleGrid>
                   <Grid>
-                    {/* <GridCol span={6}>
+                    <GridCol span={1.5}>
                       <TextInput
                         label="Unit #"
-                        placeholder="1234..."
-                        {...form.getInputProps(`shipping.shipping_street`)}
+                        placeholder="123.."
+                        value={unitNumber}
+                        onChange={(e) => setUnitNumber(e.currentTarget.value)}
                       />
-                    </GridCol> */}
-                    <GridCol span={6}>
+                    </GridCol>
+                    <GridCol span={4.5}>
                       <TextInput
                         label="Street Address"
-                        placeholder="123 Main St"
+                        placeholder="123 Main St..."
                         {...form.getInputProps(`shipping.shipping_street`)}
                       />
                     </GridCol>

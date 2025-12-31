@@ -90,7 +90,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   const [selectedClientData, setSelectedClientData] =
     useState<Tables<"client"> | null>(null);
-
+  const [unitNumber, setUnitNumber] = useState("");
   const [newItemValue, setNewItemValue] = useState("");
 
   const [newDoorStyle, setNewDoorStyle] = useState<NewDoorStyleState>({
@@ -363,6 +363,15 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
   useEffect(() => {
     if (salesOrderData) {
       const cabinet = salesOrderData.cabinet;
+      let loadedStreet = salesOrderData.shipping_street || "";
+      const unitMatch = loadedStreet.match(/^([a-zA-Z0-9]+)\s*-\s*(.*)$/);
+      if (unitMatch) {
+        setUnitNumber(unitMatch[1]);
+        loadedStreet = unitMatch[2];
+      } else {
+        setUnitNumber("");
+      }
+
       form.initialize({
         date_sold: salesOrderData.date_sold,
         designer: salesOrderData.designer,
@@ -399,7 +408,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         shipping: {
           shipping_client_name: salesOrderData.shipping_client_name || "",
           project_name: salesOrderData.project_name || "",
-          shipping_street: salesOrderData.shipping_street || "",
+          shipping_street: loadedStreet,
           shipping_city: salesOrderData.shipping_city || "",
           shipping_province: salesOrderData.shipping_province || "",
           shipping_zip: salesOrderData.shipping_zip || "",
@@ -593,7 +602,18 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
       });
       return;
     }
-    updateMutation.mutate(values);
+
+    const payload = { ...values };
+    if (unitNumber.trim()) {
+      payload.shipping = {
+        ...payload.shipping,
+        shipping_street: `${unitNumber.trim()}-${
+          payload.shipping.shipping_street
+        }`,
+      };
+    }
+
+    updateMutation.mutate(payload);
   };
 
   const isMemoChecked =
@@ -746,6 +766,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                   setSelectedClientData(fullObj as Tables<"client">);
                   form.setFieldValue("shipping", {
                     shipping_client_name: "",
+                    project_name: "",
                     shipping_street: "",
                     shipping_city: "",
                     shipping_province: "",
@@ -945,7 +966,15 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                     />
                   </SimpleGrid>
                   <Grid>
-                    <GridCol span={6}>
+                    <GridCol span={2}>
+                      <TextInput
+                        label="Unit #"
+                        placeholder="123.."
+                        value={unitNumber}
+                        onChange={(e) => setUnitNumber(e.currentTarget.value)}
+                      />
+                    </GridCol>
+                    <GridCol span={4}>
                       <TextInput
                         label="Street Address"
                         placeholder="123 Main St"
