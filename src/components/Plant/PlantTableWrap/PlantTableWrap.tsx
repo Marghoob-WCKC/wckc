@@ -526,7 +526,7 @@ export default function PlantTableWrap() {
                         <Table.Tr>
                           {table
                             .getFlatHeaders()
-                            .slice(2)
+                            .slice(1)
                             .map((header) => (
                               <Table.Th
                                 style={{
@@ -548,7 +548,7 @@ export default function PlantTableWrap() {
                           <Table.Tr key={row.id}>
                             {row
                               .getVisibleCells()
-                              .slice(2)
+                              .slice(1)
                               .map((cell) => (
                                 <Table.Td
                                   key={cell.id}

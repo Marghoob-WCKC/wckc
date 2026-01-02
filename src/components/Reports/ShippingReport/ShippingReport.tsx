@@ -79,6 +79,7 @@ export default function ShippingReport() {
           ),
           production_schedule!inner (
             ship_schedule,
+            placement_date,
             doors_completed_actual,
             cut_finish_completed_actual,
             custom_finish_completed_actual,

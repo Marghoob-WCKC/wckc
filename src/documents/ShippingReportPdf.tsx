@@ -87,12 +87,13 @@ const styles = StyleSheet.create({
   },
 
   // Column Widths
+  colPlace: { width: "6%", alignItems: "center" },
   colJob: { width: "8%" },
   colCust: { width: "14%" },
   colAddr: { width: "18%" },
-  colBox: { width: "5%", alignItems: "center" },
+  colBox: { width: "3%", alignItems: "center" },
   colDoor: { width: "15%" },
-  colSpec: { width: "10%" },
+  colSpec: { width: "6%" },
   colColor: { width: "10%" },
   colCheck: { width: "4%", alignItems: "center" },
 
@@ -149,6 +150,9 @@ const safeGet = (data: any) => {
 
 const ColumnHeaders = () => (
   <View style={styles.tableHeader}>
+    <View style={[styles.headerCellBase, styles.colPlace]}>
+      <Text style={styles.headerText}>Placement</Text>
+    </View>
     <View style={[styles.headerCellBase, styles.colJob]}>
       <Text style={styles.headerText}>Job #</Text>
     </View>
@@ -278,6 +282,9 @@ export const ShippingReportPdf = ({
 
       currentPage.push(
         <View style={styles.tableRow} key={job.id} wrap={false}>
+          <View style={[styles.cellBase, styles.colPlace]}>
+            <Checkbox checked={Boolean(ps?.placement_date)} />
+          </View>
           <View style={[styles.cellBase, styles.colJob]}>
             <Text style={styles.cellText}>{jobNum}</Text>
           </View>

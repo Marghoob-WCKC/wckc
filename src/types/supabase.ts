@@ -1587,6 +1587,8 @@ export type Database = {
           job_number: string | null
           paint_completed_actual: string | null
           partially_shipped: boolean | null
+          placement_date: string | null
+          project_name: string | null
           ship_schedule: string | null
           shipping_city: string | null
           shipping_province: string | null
