@@ -14,6 +14,7 @@ import {
   Menu,
   ActionIcon,
   Code,
+  ScrollArea,
 } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { useMediaQuery } from "@mantine/hooks";
@@ -87,7 +88,7 @@ function MainLink({
 
   const isActive = item.path
     ? pathname === item.path ||
-      (item.path !== "/dashboard" && pathname.startsWith(item.path))
+    (item.path !== "/dashboard" && pathname.startsWith(item.path))
     : false;
   const isChildActive = hasLinks
     ? item.links?.some((link) => pathname === link.path) ?? false
@@ -336,23 +337,44 @@ export default function Sidebar({ links }: SidebarProps) {
         </Box>
       </Box>
 
-      <Stack
-        gap={4}
-        px="md"
-        style={{
-          flexGrow: 1,
-          overflowY: "auto",
-          overflowX: "hidden",
-          scrollbarWidth: "none",
+      <ScrollArea
+        type="hover"
+        scrollbars="y"
+        style={{ flexGrow: 1 }}
+        styles={{
+          scrollbar: {
+            backgroundColor: "transparent",
+            "&:hover": {
+              backgroundColor: "transparent",
+            },
+            width: "15px",
+          },
+          thumb: {
+            backgroundColor: colors.violet.light,
+            borderRadius: "100vh",
+            border: "2px solid transparent",
+            backgroundClip: "content-box",
+            opacity: 0.8,
+            transition: "opacity 0.1s ease, background-color 0.1s ease",
+            "&:hover": {
+              backgroundColor: "#fff",
+              opacity: 0.9,
+            },
+          },
+          corner: {
+            backgroundColor: "transparent",
+          },
         }}
       >
-        {links.map(
-          (link) =>
-            !link.permission && (
-              <MainLink key={link.label} item={link} collapsed={collapsed} />
-            )
-        )}
-      </Stack>
+        <Stack gap={4} px="md">
+          {links.map(
+            (link) =>
+              !link.permission && (
+                <MainLink key={link.label} item={link} collapsed={collapsed} />
+              )
+          )}
+        </Stack>
+      </ScrollArea>
 
       <Box p="md" mt="auto">
         <SignedIn>
