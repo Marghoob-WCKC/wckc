@@ -70,6 +70,9 @@ export function useSalesTable({
           case "clientlastName":
             query = query.ilike("shipping_client_name", `%${valStr}%`);
             break;
+          case "projectName":
+            query = query.ilike("project_name", `%${valStr}%`);
+            break;
           case "designerName":
             query = query.ilike("designer", `%${valStr}%`);
             break;

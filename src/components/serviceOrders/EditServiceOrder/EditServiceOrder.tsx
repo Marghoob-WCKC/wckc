@@ -165,6 +165,7 @@ export default function EditServiceOrder({
               shipping_province,
               shipping_zip,
               shipping_client_name,
+              project_name,
               shipping_phone_1,
               shipping_phone_2,
               shipping_email_1,
@@ -366,6 +367,7 @@ export default function EditServiceOrder({
     ? {
         shipping_client_name:
           serviceOrderData.jobs.sales_orders.shipping_client_name,
+        project_name: serviceOrderData.jobs.sales_orders.project_name,
         shipping_phone_1: serviceOrderData.jobs.sales_orders.shipping_phone_1,
         shipping_phone_2: serviceOrderData.jobs.sales_orders.shipping_phone_2,
         shipping_email_1: serviceOrderData.jobs.sales_orders.shipping_email_1,

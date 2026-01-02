@@ -214,6 +214,24 @@ export default function SalesTable() {
         id: "clientlastName",
         header: "Client Name",
         size: 150,
+        cell: (info) => {
+          const projectName = info.row.original.project_name;
+          const clientName = info.getValue();
+
+          return (
+            <Text size="sm" fw={500}>
+              {projectName && (
+                <>
+                  <Text span fs="italic" fw={600}>
+                    {projectName}
+                  </Text>
+                  {" - "}
+                </>
+              )}
+              {clientName || "—"}
+            </Text>
+          );
+        },
       }),
       columnHelper.accessor(
         (row) =>
@@ -358,6 +376,15 @@ export default function SalesTable() {
                 value={(getInputFilterValue("clientlastName") as string) || ""}
                 onChange={(e) =>
                   setInputFilterValue("clientlastName", e.target.value)
+                }
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
+              <TextInput
+                label="Project Name"
+                placeholder="Search Project..."
+                value={(getInputFilterValue("projectName") as string) || ""}
+                onChange={(e) =>
+                  setInputFilterValue("projectName", e.target.value)
                 }
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />

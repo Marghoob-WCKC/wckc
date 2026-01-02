@@ -271,7 +271,17 @@ export default function InstallationTable() {
             handleContextMenu(e, "client", info.getValue() as string)
           }
         >
-          <Text size="sm">{info.getValue() ?? "—"}</Text>
+          <Text size="sm" fw={500}>
+            {info.row.original.project_name && (
+              <>
+                <Text span fs="italic" fw={600}>
+                  {info.row.original.project_name}
+                </Text>
+                {" - "}
+              </>
+            )}
+            {info.getValue() || "—"}
+          </Text>
         </CellWrapper>
       ),
     }),
@@ -656,6 +666,15 @@ export default function InstallationTable() {
                 placeholder="e.g., Smith"
                 value={getInputFilterValue("client") as string}
                 onChange={(e) => setInputFilterValue("client", e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+              />
+              <TextInput
+                label="Project Name"
+                placeholder="Search Project..."
+                value={(getInputFilterValue("projectName") as string) || ""}
+                onChange={(e) =>
+                  setInputFilterValue("projectName", e.target.value)
+                }
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput

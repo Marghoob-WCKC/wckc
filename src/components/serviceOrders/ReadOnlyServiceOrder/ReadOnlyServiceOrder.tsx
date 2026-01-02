@@ -149,6 +149,7 @@ export default function ReadOnlyServiceOrder({
               shipping_province,
               shipping_zip,
               shipping_client_name,
+              project_name,
               shipping_phone_1,
               shipping_email_1,
               order_type,
@@ -196,6 +197,7 @@ export default function ReadOnlyServiceOrder({
   const shipping = job?.sales_orders
     ? {
         shipping_client_name: job.sales_orders.shipping_client_name,
+        project_name: so?.project_name,
         shipping_phone_1: job.sales_orders.shipping_phone_1,
         shipping_phone_2: job.sales_orders.shipping_phone_2,
         shipping_email_1: job.sales_orders.shipping_email_1,

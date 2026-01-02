@@ -122,6 +122,7 @@ export default function ReadOnlyScheduler({ jobId }: { jobId: number }) {
             shipping_province,
             shipping_zip,
             shipping_client_name,
+            project_name,
             shipping_phone_1,
             shipping_email_1,
             shipping_phone_2,
@@ -232,6 +233,7 @@ export default function ReadOnlyScheduler({ jobId }: { jobId: number }) {
   const shipping = data.sales_orders
     ? {
         shipping_client_name: data.sales_orders.shipping_client_name,
+        project_name: data.sales_orders.project_name,
         shipping_phone_1: data.sales_orders.shipping_phone_1,
         shipping_phone_2: data.sales_orders.shipping_phone_2,
         shipping_email_1: data.sales_orders.shipping_email_1,

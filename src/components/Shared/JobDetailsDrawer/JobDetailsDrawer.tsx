@@ -152,7 +152,6 @@ export default function JobDetailsDrawer({
           *,
           sales_orders!fk_jobs_sales_order_id (
             *,
-            client:client_id (*),
             cabinet:cabinet_id (
               *,
               door_styles(name),
@@ -306,6 +305,7 @@ export default function JobDetailsDrawer({
             <ClientInfo
               shipping={{
                 shipping_client_name: so?.shipping_client_name,
+                project_name: so?.project_name,
                 shipping_phone_1: so?.shipping_phone_1,
                 shipping_email_1: so?.shipping_email_1,
                 shipping_street: so?.shipping_street,

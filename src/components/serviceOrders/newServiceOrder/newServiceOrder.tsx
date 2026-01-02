@@ -230,6 +230,7 @@ function ServiceOrderFormContent({
               shipping_province,
               shipping_zip,
               shipping_client_name,
+              project_name,
               shipping_phone_1,
               shipping_phone_2,
               shipping_email_1,
@@ -273,6 +274,7 @@ function ServiceOrderFormContent({
   const cabinet = jobData?.sales_orders?.cabinet;
   const shipping = jobData?.sales_orders
     ? {
+        project_name: jobData.sales_orders.project_name,
         shipping_client_name: jobData.sales_orders.shipping_client_name,
         shipping_phone_1: jobData.sales_orders.shipping_phone_1,
         shipping_phone_2: jobData.sales_orders.shipping_phone_2,

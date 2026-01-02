@@ -1523,6 +1523,7 @@ export type Database = {
           installer_last_name: string | null
           job_id: number | null
           job_number: string | null
+          project_name: string | null
           rush: boolean | null
           sales_order_id: number | null
           ship_schedule: string | null
@@ -1748,6 +1749,7 @@ export type Database = {
           invoice_balance: number | null
           job_id: number | null
           job_number: string | null
+          project_name: string | null
           sales_order_number: string | null
           ship_schedule: string | null
           shipping_city: string | null
