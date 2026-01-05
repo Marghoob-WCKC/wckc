@@ -38,7 +38,6 @@ import {
   Popover,
   List,
   ThemeIcon,
-
 } from "@mantine/core";
 import { FaCopy, FaPlus, FaCheckCircle, FaCircle, FaInfoCircle } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
@@ -369,10 +368,14 @@ export default function NewSale() {
           : "",
       };
 
-      const effectiveIsMemo =
-        is_memo === true ||
-        manual_job_suffix?.toLowerCase().includes("x") ||
-        false;
+      // --- CALCULATE MEMO STATUS FOR SUBMISSION ---
+      // Checks matches for M-Base OR X-Suffix OR Manual Toggle
+      const isPatternMemo =
+        /^M\d+$/i.test(manual_job_base || "") ||
+        (manual_job_suffix?.toLowerCase() || "").includes("x");
+
+      const effectiveIsMemo = is_memo === true || isPatternMemo;
+
       const transactionPayload = {
         date_sold: stage === "SOLD" ? dayjs.utc().format() : null,
         client_id: client_id,
@@ -470,10 +473,10 @@ export default function NewSale() {
       form.setFieldValue("manual_job_suffix", "");
     }
   }, [form.values.stage]);
+
   const { data: existingJobs, isLoading: isCheckingJobs } = useQuery({
     queryKey: ["existing-Job", debouncedJobNum],
     queryFn: async () => {
-
       if (!debouncedJobNum) return [];
 
       const { data, error } = await supabase
@@ -495,55 +498,42 @@ export default function NewSale() {
   });
 
   useEffect(() => {
-
     form.setFieldValue("manual_job_suffix", "");
     setIsVariantAutofilled(false);
     setAutofilledSourceJob(null);
   }, [jobNum]);
 
-
   useEffect(() => {
-
     if (form.values.order_type !== "Multi Fam") return;
 
     if (existingJobs && existingJobs.length > 0) {
-
       const suffixes = existingJobs.map((j) => j.job_suffix);
       const next = getNextVariant(suffixes);
-
 
       if (!form.values.manual_job_suffix) {
         form.setFieldValue("manual_job_suffix", next);
         setIsVariantAutofilled(true);
       }
 
-
       const latestJob = existingJobs[0];
       if (latestJob?.sales_orders) {
         const rawSo = latestJob.sales_orders;
-
         const so: any = Array.isArray(rawSo) ? rawSo[0] : rawSo;
         const client = so?.client;
 
         if (client) {
-
           setSelectedClientData(client);
-
           form.setFieldValue("client_id", Number(client.id));
-
           form.setFieldValue("shipping.shipping_client_name", client.lastName);
           queryClient.invalidateQueries({
-
             queryKey: ["client-lookup", client.id],
           });
         }
       }
     } else {
-
       setIsVariantAutofilled(false);
     }
   }, [existingJobs, form.values.order_type]);
-
 
   const relatedProjectOptions = useMemo(() => {
     if (!existingJobs) return [];
@@ -551,7 +541,9 @@ export default function NewSale() {
     const seen = new Set();
 
     existingJobs.forEach((job) => {
-      const so: any = Array.isArray(job.sales_orders) ? job.sales_orders[0] : job.sales_orders;
+      const so: any = Array.isArray(job.sales_orders)
+        ? job.sales_orders[0]
+        : job.sales_orders;
       if (so && so.project_name && !seen.has(so.project_name)) {
         seen.add(so.project_name);
         options.push({
@@ -563,12 +555,8 @@ export default function NewSale() {
     return options;
   }, [existingJobs]);
 
-
   useEffect(() => {
-
-
     const currentProjectName = form.values.shipping.project_name;
-
 
     if (form.values.order_type !== "Multi Fam") return;
 
@@ -577,7 +565,6 @@ export default function NewSale() {
       relatedProjectOptions.length > 0 &&
       currentProjectName
     ) {
-
       const exactMatch = relatedProjectOptions.find(
         (p) =>
           p.project_name?.toLowerCase().trim() ===
@@ -586,16 +573,13 @@ export default function NewSale() {
 
       if (exactMatch) {
         const so = exactMatch;
-
         setAutofilledSourceJob(`Job #${so._source_job_number}`);
 
         form.setFieldValue("shipping", {
           shipping_client_name: so.shipping_client_name || "",
           project_name: so.project_name || "",
-
           shipping_street: (() => {
             const rawStreet = so.shipping_street || "";
-
             const match = rawStreet.match(/^\d+\s*-\s*(.*)/);
             return match ? match[1] : rawStreet;
           })(),
@@ -692,10 +676,17 @@ export default function NewSale() {
 
     submitMutation.mutate(payload);
   };
-  const isMemoChecked =
+
+  // --- DERIVE MEMO STATUS FOR UI ---
+  // Calculates if the text inputs force a memo status
+  const isPatternMemo =
     form.values.stage === "SOLD" &&
-    (form.values.is_memo === true ||
-      form.values.manual_job_suffix?.toLowerCase().includes("x"));
+    (/^M\d+$/i.test(form.values.manual_job_base || "") ||
+      (form.values.manual_job_suffix?.toLowerCase() || "").includes("x"));
+
+  // The actual check status: Manual Toggle OR Pattern Match
+  const isMemoChecked = form.values.is_memo === true || isPatternMemo;
+
   return (
     <Container
       size="100%"
@@ -770,8 +761,9 @@ export default function NewSale() {
                         label="Job Number"
                         placeholder="40000..."
                         onChange={(e) => {
-                          setJobNum(e.currentTarget.value);
-                          form.setFieldValue("manual_job_base", e.currentTarget.value);
+                          const val = e.currentTarget.value;
+                          setJobNum(val);
+                          form.setFieldValue("manual_job_base", val);
                         }}
                         style={{ width: 120 }}
                         withAsterisk
@@ -804,14 +796,18 @@ export default function NewSale() {
                                 >
                                   <ThemeIcon
                                     size="xs"
-                                    color={isVariantAutofilled ? "orange" : "blue"}
+                                    color={
+                                      isVariantAutofilled ? "orange" : "blue"
+                                    }
                                     variant="light"
                                   >
                                     <FaInfoCircle size={10} />
                                   </ThemeIcon>
                                 </div>
                               </Popover.Target>
-                              <Popover.Dropdown style={{ pointerEvents: "none" }}>
+                              <Popover.Dropdown
+                                style={{ pointerEvents: "none" }}
+                              >
                                 <Text size="xs" fw={700} mb={5}>
                                   Existing Variants
                                 </Text>
@@ -829,11 +825,6 @@ export default function NewSale() {
                         onChange={(event) => {
                           const value = event.currentTarget.value;
                           form.setFieldValue("manual_job_suffix", value);
-                          form.setFieldValue(
-                            "is_memo",
-                            value.toLowerCase().includes("x")
-                          );
-
                           setIsVariantAutofilled(false);
                         }}
                       />
@@ -912,18 +903,25 @@ export default function NewSale() {
                     onLabel="Memo"
                     offLabel="Memo"
                     size="xl"
-                    thumbIcon={isMemoChecked ? <FaCheckCircle /> : <FaCircle />}
+                    thumbIcon={
+                      isMemoChecked ? <FaCheckCircle /> : <FaCircle />
+                    }
                     checked={!!isMemoChecked}
                     onChange={(e) => {
-                      form.setFieldValue(
-                        "is_memo",
-                        e.currentTarget.checked ? true : false
-                      );
+                      // If it is forced by pattern, we don't allow toggling off here
+                      // But if it is NOT forced by pattern, we update the manual 'is_memo'
+                      if (!isPatternMemo) {
+                        form.setFieldValue(
+                          "is_memo",
+                          e.currentTarget.checked ? true : false
+                        );
+                      }
                     }}
-                    disabled
+                    // Disable manual toggle only if the Pattern forces it to be TRUE
+                    disabled={!!isPatternMemo}
                     styles={{
                       track: {
-                        cursor: "not-allowed",
+                        cursor: isPatternMemo ? "not-allowed" : "pointer",
                         background: isMemoChecked
                           ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
                           : "linear-gradient(135deg, #ddddddff 0%, #dadadaff 100%)",
@@ -1412,8 +1410,6 @@ export default function NewSale() {
                     styles={{ input: { minHeight: "200px" } }}
                     {...form.getInputProps(`comments`)}
                   />
-
-
                 </Fieldset>
                 <Fieldset legend="Financials" variant="filled" bg={"white"}>
                   <Grid align="flex-end">
