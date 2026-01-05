@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useSupabase } from "@/hooks/useSupabase";
-import { Tables } from "@/types/db";
 
 export function useClientSearch(selectedId?: string | number | null) {
   const { supabase } = useSupabase();

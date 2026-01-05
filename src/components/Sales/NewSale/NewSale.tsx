@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useForm } from "@mantine/form";
 import { zodResolver } from "@/utils/zodResolver/zodResolver";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
-import { useDisclosure } from "@mantine/hooks";
+import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import utc from "dayjs/plugin/utc";
 import {
   Container,
@@ -35,8 +35,12 @@ import {
   Divider,
   Grid,
   GridCol,
+  Popover,
+  List,
+  ThemeIcon,
+
 } from "@mantine/core";
-import { FaCopy, FaPlus, FaCheckCircle, FaCircle } from "react-icons/fa";
+import { FaCopy, FaPlus, FaCheckCircle, FaCircle, FaInfoCircle } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import {
   MasterOrderInput,
@@ -64,6 +68,22 @@ import dayjs from "dayjs";
 import { handleTabSelect } from "@/utils/handleTabSelect";
 dayjs.extend(utc);
 
+function getNextVariant(existingSuffixes: (string | null)[]): string {
+  const clean = existingSuffixes
+    .filter((s): s is string => !!s && s.trim() !== "")
+    .map((s) => s.trim().toUpperCase())
+    .filter((s) => s.length === 1 && /^[A-Z]$/.test(s))
+    .sort((a, b) => a.localeCompare(b));
+
+  if (clean.length === 0) return "A";
+
+  const last = clean[clean.length - 1];
+
+  if (last === "Z") return "AA";
+
+  return String.fromCharCode(last.charCodeAt(0) + 1);
+}
+
 interface ExtendedMasterOrderInput extends MasterOrderInput {
   manual_job_base: string;
   manual_job_suffix?: string;
@@ -85,6 +105,14 @@ export default function NewSale() {
     useState<Tables<"client"> | null>(null);
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   const [unitNumber, setUnitNumber] = useState("");
+
+  const [jobNum, setJobNum] = useState("");
+  const [debouncedJobNum] = useDebouncedValue(jobNum, 300);
+  const [isVariantAutofilled, setIsVariantAutofilled] = useState(false);
+  const [autofilledSourceJob, setAutofilledSourceJob] = useState<string | null>(
+    null
+  );
+  const [popoverOpened, setPopoverOpened] = useState(false);
   const [successBannerData, setSuccessBannerData] = useState<{
     jobNum: string;
     type: string;
@@ -171,12 +199,17 @@ export default function NewSale() {
     validate: zodResolver(MasterOrderSchema),
   });
 
+  const [debouncedProjectName] = useDebouncedValue(
+    form.values.shipping.project_name,
+    500
+  );
+
   const {
     options: clientOptions,
     isLoading: clientsLoading,
     setSearch: setClientSearch,
     search: clientSearch,
-  } = useClientSearch(null);
+  } = useClientSearch(form.values.client_id || null);
 
   const {
     options: speciesOptions,
@@ -413,6 +446,7 @@ export default function NewSale() {
         form.reset();
         setSelectedClientData(null);
         queryClient.invalidateQueries({ queryKey: ["sales_orders"] });
+        queryClient.invalidateQueries({ queryKey: ["existing-Job"] });
         queryClient.invalidateQueries({
           queryKey: ["sales_table"],
         });
@@ -436,6 +470,152 @@ export default function NewSale() {
       form.setFieldValue("manual_job_suffix", "");
     }
   }, [form.values.stage]);
+  const { data: existingJobs, isLoading: isCheckingJobs } = useQuery({
+    queryKey: ["existing-Job", debouncedJobNum],
+    queryFn: async () => {
+
+      if (!debouncedJobNum) return [];
+
+      const { data, error } = await supabase
+        .from("jobs")
+        .select(
+          "id, job_base_number, job_suffix, created_at, sales_orders!fk_jobs_sales_order_id( *, client:client_id(*) )"
+        )
+        .eq("job_base_number", debouncedJobNum)
+        .order("job_suffix", { ascending: false });
+
+      if (error) {
+        console.error("Error checking jobs:", error);
+        return [];
+      }
+      return data;
+    },
+
+    enabled: !!debouncedJobNum && debouncedJobNum.length > 2,
+  });
+
+  useEffect(() => {
+
+    form.setFieldValue("manual_job_suffix", "");
+    setIsVariantAutofilled(false);
+    setAutofilledSourceJob(null);
+  }, [jobNum]);
+
+
+  useEffect(() => {
+
+    if (form.values.order_type !== "Multi Fam") return;
+
+    if (existingJobs && existingJobs.length > 0) {
+
+      const suffixes = existingJobs.map((j) => j.job_suffix);
+      const next = getNextVariant(suffixes);
+
+
+      if (!form.values.manual_job_suffix) {
+        form.setFieldValue("manual_job_suffix", next);
+        setIsVariantAutofilled(true);
+      }
+
+
+      const latestJob = existingJobs[0];
+      if (latestJob?.sales_orders) {
+        const rawSo = latestJob.sales_orders;
+
+        const so: any = Array.isArray(rawSo) ? rawSo[0] : rawSo;
+        const client = so?.client;
+
+        if (client) {
+
+          setSelectedClientData(client);
+
+          form.setFieldValue("client_id", Number(client.id));
+
+          form.setFieldValue("shipping.shipping_client_name", client.lastName);
+          queryClient.invalidateQueries({
+
+            queryKey: ["client-lookup", client.id],
+          });
+        }
+      }
+    } else {
+
+      setIsVariantAutofilled(false);
+    }
+  }, [existingJobs, form.values.order_type]);
+
+
+  const relatedProjectOptions = useMemo(() => {
+    if (!existingJobs) return [];
+    const options: any[] = [];
+    const seen = new Set();
+
+    existingJobs.forEach((job) => {
+      const so: any = Array.isArray(job.sales_orders) ? job.sales_orders[0] : job.sales_orders;
+      if (so && so.project_name && !seen.has(so.project_name)) {
+        seen.add(so.project_name);
+        options.push({
+          ...so,
+          _source_job_number: `${job.job_base_number}-${job.job_suffix}`,
+        });
+      }
+    });
+    return options;
+  }, [existingJobs]);
+
+
+  useEffect(() => {
+
+
+    const currentProjectName = form.values.shipping.project_name;
+
+
+    if (form.values.order_type !== "Multi Fam") return;
+
+    if (
+      relatedProjectOptions &&
+      relatedProjectOptions.length > 0 &&
+      currentProjectName
+    ) {
+
+      const exactMatch = relatedProjectOptions.find(
+        (p) =>
+          p.project_name?.toLowerCase().trim() ===
+          currentProjectName.toLowerCase().trim()
+      );
+
+      if (exactMatch) {
+        const so = exactMatch;
+
+        setAutofilledSourceJob(`Job #${so._source_job_number}`);
+
+        form.setFieldValue("shipping", {
+          shipping_client_name: so.shipping_client_name || "",
+          project_name: so.project_name || "",
+
+          shipping_street: (() => {
+            const rawStreet = so.shipping_street || "";
+
+            const match = rawStreet.match(/^\d+\s*-\s*(.*)/);
+            return match ? match[1] : rawStreet;
+          })(),
+          shipping_city: so.shipping_city || "",
+          shipping_province: so.shipping_province || "",
+          shipping_zip: so.shipping_zip || "",
+          shipping_phone_1: so.shipping_phone_1 || "",
+          shipping_phone_2: so.shipping_phone_2 || "",
+          shipping_email_1: so.shipping_email_1 || "",
+          shipping_email_2: so.shipping_email_2 || "",
+        });
+      } else {
+        setAutofilledSourceJob(null);
+      }
+    }
+  }, [
+    relatedProjectOptions,
+    form.values.shipping?.project_name,
+    form.values.order_type,
+  ]);
 
   const copyClientToShipping = () => {
     if (!selectedClientData) {
@@ -505,9 +685,8 @@ export default function NewSale() {
     if (unitNumber.trim()) {
       payload.shipping = {
         ...payload.shipping,
-        shipping_street: `${unitNumber.trim()} - ${
-          payload.shipping.shipping_street
-        }`,
+        shipping_street: `${unitNumber.trim()} - ${payload.shipping.shipping_street
+          }`,
       };
     }
 
@@ -543,157 +722,229 @@ export default function NewSale() {
       >
         <Stack gap={5}>
           <Paper withBorder p="md" radius="md" shadow="xl">
-            <SimpleGrid cols={3}>
-              <Group align="end">
-                <Switch
-                  offLabel="Quote"
-                  onLabel="Sold"
-                  size="xl"
-                  thumbIcon={<FaCheckCircle />}
-                  styles={{
-                    track: {
-                      cursor: "pointer",
-                      background:
-                        form.values.stage === "SOLD"
-                          ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
-                          : "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
-                      color: "white",
-                      border: "none",
-                      padding: "0 0.2rem",
-                      width: "6rem",
-                    },
-                    thumb: {
-                      background:
-                        form.values.stage === "SOLD" ? "#218838" : "#4a00e0",
-                    },
-                  }}
-                  checked={form.values.stage === "SOLD"}
-                  onChange={(e) =>
-                    form.setFieldValue(
-                      "stage",
-                      e.currentTarget.checked ? "SOLD" : "QUOTE"
-                    )
-                  }
-                />
+            <Grid gutter="xl" align="flex-end" justify="space-between">
+              <Grid.Col span={6}>
+                <Group align="flex-end" wrap="nowrap">
+                  <Select
+                    label="Order Type"
+                    withAsterisk
+                    placeholder="Type"
+                    data={OrderTypeOptions}
+                    {...form.getInputProps(`order_type`)}
+                    style={{ width: 180 }}
+                  />
+                  <Switch
+                    offLabel="Quote"
+                    onLabel="Sold"
+                    size="xl"
+                    thumbIcon={<FaCheckCircle />}
+                    styles={{
+                      track: {
+                        cursor: "pointer",
+                        background:
+                          form.values.stage === "SOLD"
+                            ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
+                            : "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
+                        color: "white",
+                        border: "none",
+                        padding: "0 0.2rem",
+                        width: "6rem",
+                      },
+                      thumb: {
+                        background:
+                          form.values.stage === "SOLD" ? "#218838" : "#4a00e0",
+                      },
+                    }}
+                    checked={form.values.stage === "SOLD"}
+                    onChange={(e) =>
+                      form.setFieldValue(
+                        "stage",
+                        e.currentTarget.checked ? "SOLD" : "QUOTE"
+                      )
+                    }
+                  />
 
-                <Collapse in={form.values.stage === "SOLD"}>
-                  <Group gap="xs" align="flex-end" style={{ flex: 1 }}>
-                    <TextInput
-                      label="Base Job #"
-                      placeholder="40000..."
-                      {...form.getInputProps("manual_job_base")}
-                      style={{ width: 120 }}
-                      withAsterisk
-                    />
-                    <TextInput
-                      label="Variant"
-                      placeholder="A, B..."
-                      {...form.getInputProps("manual_job_suffix")}
-                      style={{ width: 80 }}
-                      maxLength={5}
-                    />
-                  </Group>
-                </Collapse>
-              </Group>
-
-              <Select
-                label="Client"
-                placeholder="Search clients..."
-                clearable
-                comboboxProps={{
-                  position: "bottom",
-                  middlewares: { flip: false, shift: false },
-                  offset: 0,
-                }}
-                data={clientOptions}
-                searchable
-                searchValue={clientSearch}
-                onSearchChange={setClientSearch}
-                nothingFoundMessage={
-                  clientsLoading ? (
-                    "Searching..."
-                  ) : (
-                    <Stack align="center" p="xs" gap="xs">
-                      <Text size="sm" c="dimmed">
-                        No matching clients found.
-                      </Text>
-                      <Button
-                        variant="filled"
-                        size="xs"
-                        onClick={() => setIsAddClientModalOpen(true)}
-                        leftSection={<FaPlus size={12} />}
-                        style={{
-                          background:
-                            "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
-                          color: "white",
-                          border: "none",
+                  <Collapse in={form.values.stage === "SOLD"}>
+                    <Group gap="xs" align="flex-end" style={{ flex: 1 }}>
+                      <TextInput
+                        label="Job Number"
+                        placeholder="40000..."
+                        onChange={(e) => {
+                          setJobNum(e.currentTarget.value);
+                          form.setFieldValue("manual_job_base", e.currentTarget.value);
                         }}
-                      >
-                        Add New Client
-                      </Button>
-                    </Stack>
-                  )
-                }
-                rightSection={clientsLoading ? <Loader size={16} /> : null}
-                style={{ flex: 1 }}
-                {...form.getInputProps("client_id")}
-                value={String(form.values.client_id)}
-                onChange={(val) => {
-                  form.setFieldValue("client_id", Number(val));
-                  const fullObj = clientOptions.find(
-                    (c: any) => c.value === val
-                  )?.original;
-                  setSelectedClientData(fullObj as Tables<"client">);
-                  form.setFieldValue(`shipping`, {
-                    shipping_client_name: "",
-                    project_name: "",
-                    shipping_street: "",
-                    shipping_city: "",
-                    shipping_province: "",
-                    shipping_zip: "",
-                    shipping_phone_1: "",
-                    shipping_phone_2: "",
-                    shipping_email_1: "",
-                    shipping_email_2: "",
-                  });
-                }}
-              />
+                        style={{ width: 120 }}
+                        withAsterisk
+                      />
+                      <TextInput
+                        label="Variant"
+                        placeholder="A, B..."
+                        {...form.getInputProps("manual_job_suffix")}
+                        style={{ width: 80 }}
+                        maxLength={5}
+                        rightSection={
+                          existingJobs && existingJobs.length > 0 ? (
+                            <Popover
+                              width={200}
+                              position="bottom"
+                              withArrow
+                              shadow="md"
+                              opened={popoverOpened}
+                              onChange={setPopoverOpened}
+                            >
+                              <Popover.Target>
+                                <div
+                                  onMouseEnter={() => setPopoverOpened(true)}
+                                  onMouseLeave={() => setPopoverOpened(false)}
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    cursor: "help",
+                                  }}
+                                >
+                                  <ThemeIcon
+                                    size="xs"
+                                    color={isVariantAutofilled ? "orange" : "blue"}
+                                    variant="light"
+                                  >
+                                    <FaInfoCircle size={10} />
+                                  </ThemeIcon>
+                                </div>
+                              </Popover.Target>
+                              <Popover.Dropdown style={{ pointerEvents: "none" }}>
+                                <Text size="xs" fw={700} mb={5}>
+                                  Existing Variants
+                                </Text>
+                                <List size="xs" spacing={2}>
+                                  {existingJobs.map((j) => (
+                                    <List.Item key={j.id}>
+                                      {j.job_base_number}-{j.job_suffix}
+                                    </List.Item>
+                                  ))}
+                                </List>
+                              </Popover.Dropdown>
+                            </Popover>
+                          ) : null
+                        }
+                        onChange={(event) => {
+                          const value = event.currentTarget.value;
+                          form.setFieldValue("manual_job_suffix", value);
+                          form.setFieldValue(
+                            "is_memo",
+                            value.toLowerCase().includes("x")
+                          );
 
-              <Switch
-                onLabel="Memo"
-                offLabel="Memo"
-                size="xl"
-                thumbIcon={isMemoChecked ? <FaCheckCircle /> : <FaCircle />}
-                checked={!!isMemoChecked}
-                onChange={(e) => {
-                  form.setFieldValue(
-                    "is_memo",
-                    e.currentTarget.checked ? true : false
-                  );
-                }}
-                disabled
-                styles={{
-                  track: {
-                    cursor: "not-allowed",
-                    background: isMemoChecked
-                      ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
-                      : "linear-gradient(135deg, #ddddddff 0%, #dadadaff 100%)",
-                    color: isMemoChecked ? "white" : "black",
-                    border: "none",
-                    padding: "0 0.2rem",
-                    width: "6rem",
-                  },
-                  thumb: {
-                    background: isMemoChecked ? "#218838" : "#ffffffff",
-                  },
-                  root: {
-                    display: "flex",
-                    alignItems: "flex-end",
-                    justifyContent: "flex-end",
-                  },
-                }}
-              />
-            </SimpleGrid>
+                          setIsVariantAutofilled(false);
+                        }}
+                      />
+                    </Group>
+                  </Collapse>
+                </Group>
+              </Grid.Col>
+
+              <Grid.Col span={5}>
+                <Group align="flex-end" w="100%">
+                  <Select
+                    label="Client"
+                    placeholder="Search clients..."
+                    clearable
+                    comboboxProps={{
+                      position: "bottom",
+                      middlewares: { flip: false, shift: false },
+                      offset: 0,
+                    }}
+                    data={clientOptions}
+                    searchable
+                    searchValue={clientSearch}
+                    onSearchChange={setClientSearch}
+                    nothingFoundMessage={
+                      clientsLoading ? (
+                        "Searching..."
+                      ) : (
+                        <Stack align="center" p="xs" gap="xs">
+                          <Text size="sm" c="dimmed">
+                            No matching clients found.
+                          </Text>
+                          <Button
+                            variant="filled"
+                            size="xs"
+                            onClick={() => setIsAddClientModalOpen(true)}
+                            leftSection={<FaPlus size={12} />}
+                            style={{
+                              background:
+                                "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
+                              color: "white",
+                              border: "none",
+                            }}
+                          >
+                            Add New Client
+                          </Button>
+                        </Stack>
+                      )
+                    }
+                    rightSection={clientsLoading ? <Loader size={16} /> : null}
+                    style={{ flex: 1 }}
+                    {...form.getInputProps("client_id")}
+                    value={String(form.values.client_id)}
+                    onChange={(val) => {
+                      form.setFieldValue("client_id", Number(val));
+                      const fullObj = clientOptions.find(
+                        (c: any) => c.value === val
+                      )?.original;
+                      setSelectedClientData(fullObj as Tables<"client">);
+
+                      form.setFieldValue(`shipping`, {
+                        shipping_client_name: fullObj?.lastName,
+                        project_name: "",
+                        shipping_street: "",
+                        shipping_city: "",
+                        shipping_province: "",
+                        shipping_zip: "",
+                        shipping_phone_1: "",
+                        shipping_phone_2: "",
+                        shipping_email_1: "",
+                        shipping_email_2: "",
+                      });
+                    }}
+                  />
+
+                  <Switch
+                    onLabel="Memo"
+                    offLabel="Memo"
+                    size="xl"
+                    thumbIcon={isMemoChecked ? <FaCheckCircle /> : <FaCircle />}
+                    checked={!!isMemoChecked}
+                    onChange={(e) => {
+                      form.setFieldValue(
+                        "is_memo",
+                        e.currentTarget.checked ? true : false
+                      );
+                    }}
+                    disabled
+                    styles={{
+                      track: {
+                        cursor: "not-allowed",
+                        background: isMemoChecked
+                          ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
+                          : "linear-gradient(135deg, #ddddddff 0%, #dadadaff 100%)",
+                        color: isMemoChecked ? "white" : "black",
+                        border: "none",
+                        padding: "0 0.2rem",
+                        width: "6rem",
+                      },
+                      thumb: {
+                        background: isMemoChecked ? "#218838" : "#ffffffff",
+                      },
+                      root: {
+                        display: "flex",
+                        alignItems: "flex-end",
+                        justifyContent: "flex-end",
+                      },
+                    }}
+                  />
+                </Group>
+              </Grid.Col>
+            </Grid>
           </Paper>
 
           {selectedClientData ? (
@@ -755,11 +1006,9 @@ export default function NewSale() {
                       Billing Address
                     </Text>
                     <Text fw={500} size="sm" mt={-5}>
-                      {`${selectedClientData.street || "—"}, ${
-                        selectedClientData.city || "—"
-                      }, ${selectedClientData.province || "—"} ${
-                        selectedClientData.zip || "—"
-                      }`}
+                      {`${selectedClientData.street || "—"}, ${selectedClientData.city || "—"
+                        }, ${selectedClientData.province || "—"} ${selectedClientData.zip || "—"
+                        }`}
                     </Text>
                   </Stack>
                 </Stack>
@@ -782,6 +1031,11 @@ export default function NewSale() {
                     >
                       Copy from Billing
                     </Button>
+                    {autofilledSourceJob && (
+                      <Text size="xs" c="dimmed" fs="italic">
+                        * Autofilled from {autofilledSourceJob}
+                      </Text>
+                    )}
                   </Group>
                   <SimpleGrid cols={2} spacing="sm">
                     <TextInput
@@ -789,9 +1043,10 @@ export default function NewSale() {
                       placeholder="Builder/Client Name...."
                       {...form.getInputProps(`shipping.shipping_client_name`)}
                     />
-                    <TextInput
+                    <Autocomplete
                       label="Project Name"
                       placeholder="Project Name for Multi-fams..."
+                      data={relatedProjectOptions.map((so) => so.project_name)}
                       {...form.getInputProps(`shipping.project_name`)}
                     />
                   </SimpleGrid>
@@ -873,13 +1128,6 @@ export default function NewSale() {
                   bg={"white"}
                 >
                   <SimpleGrid cols={2} mt="sm">
-                    <Autocomplete
-                      label="Order Type"
-                      withAsterisk
-                      placeholder="Single Fam, Multi Fam, Reno..."
-                      data={OrderTypeOptions}
-                      {...form.getInputProps(`order_type`)}
-                    />
                     <Select
                       label="Delivery Type"
                       withAsterisk
@@ -890,6 +1138,26 @@ export default function NewSale() {
                       nothingFoundMessage="No delivery type found"
                       {...form.getInputProps(`delivery_type`)}
                     />
+                    <Radio.Group
+                      label="Installation Required"
+                      withAsterisk
+                      value={
+                        form.values.install === true
+                          ? "true"
+                          : form.values.install === false
+                            ? "false"
+                            : ""
+                      }
+                      onChange={(val) =>
+                        form.setFieldValue("install", val === "true")
+                      }
+                      error={form.errors.install}
+                    >
+                      <Group mt="xs">
+                        <Radio value="true" label="Yes" color="#4a00e0" />
+                        <Radio value="false" label="No" color="#4a00e0" />
+                      </Group>
+                    </Radio.Group>
                   </SimpleGrid>
                 </Fieldset>
                 <Fieldset
@@ -1145,27 +1413,7 @@ export default function NewSale() {
                     {...form.getInputProps(`comments`)}
                   />
 
-                  <Radio.Group
-                    label="Installation Required"
-                    withAsterisk
-                    mt="md"
-                    value={
-                      form.values.install === true
-                        ? "true"
-                        : form.values.install === false
-                        ? "false"
-                        : ""
-                    }
-                    onChange={(val) =>
-                      form.setFieldValue("install", val === "true")
-                    }
-                    error={form.errors.install}
-                  >
-                    <Group mt="xs">
-                      <Radio value="true" label="Yes" color="#4a00e0" />
-                      <Radio value="false" label="No" color="#4a00e0" />
-                    </Group>
-                  </Radio.Group>
+
                 </Fieldset>
                 <Fieldset legend="Financials" variant="filled" bg={"white"}>
                   <Grid align="flex-end">

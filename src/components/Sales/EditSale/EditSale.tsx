@@ -44,7 +44,6 @@ import { Tables } from "@/types/db";
 import {
   DeliveryTypeOptions,
   DrawerBoxOptions,
-  DrawerHardwareOptions,
   HARDWARE_MAPPING,
   flooringClearanceOptions,
   flooringTypeOptions,
@@ -648,223 +647,237 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
       >
         <Stack gap={5}>
           <Paper p="md" radius="md" shadow="xl" withBorder>
-            <SimpleGrid cols={3}>
-              <Group align="end">
-                <Switch
-                  offLabel="Quote"
-                  onLabel="Sold"
-                  size="xl"
-                  thumbIcon={<FaCheckCircle />}
-                  styles={{
-                    track: {
-                      cursor: "pointer",
-                      background:
-                        form.values.stage === "SOLD"
-                          ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
-                          : "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
-                      color: "white",
-                      border: "none",
-                      padding: "0 0.2rem",
-                      width: "6rem",
-                    },
-                    thumb: {
-                      background:
-                        form.values.stage === "SOLD" ? "#218838" : "#4a00e0",
-                    },
-                  }}
-                  checked={form.values.stage === "SOLD"}
-                  onChange={(e) =>
-                    form.setFieldValue(
-                      "stage",
-                      e.currentTarget.checked ? "SOLD" : "QUOTE"
-                    )
-                  }
-                />
-
-                <Collapse in={form.values.stage === "SOLD"}>
-                  <Group gap="xs" align="flex-end" style={{ flex: 1 }}>
-                    <TextInput
-                      label="Job #"
-                      placeholder="40000..."
-                      {...form.getInputProps("manual_job_base")}
-                      style={{ width: 120 }}
-                      withAsterisk
-                    />
-                    <TextInput
-                      label="Variant"
-                      placeholder="A, B..."
-                      {...form.getInputProps("manual_job_suffix")}
-                      onChange={(event) => {
-                        const value = event.currentTarget.value;
-                        form.setFieldValue("manual_job_suffix", value);
-                        form.setFieldValue(
-                          "is_memo",
-                          value.toLowerCase().includes("x")
-                        );
-                      }}
-                      style={{ width: 80 }}
-                      maxLength={10}
-                    />
-                  </Group>
-                </Collapse>
-              </Group>
-
-              <Select
-                label="Switch Client"
-                placeholder="Search clients..."
-                clearable
-                comboboxProps={{
-                  position: "bottom",
-                  middlewares: { flip: false, shift: false },
-                  offset: 0,
-                }}
-                data={clientOptions}
-                searchable
-                searchValue={clientSearch}
-                onSearchChange={setClientSearch}
-                nothingFoundMessage={
-                  clientsLoading ? (
-                    "Searching..."
-                  ) : (
-                    <Stack align="center" p="xs" gap="xs">
-                      <Text size="sm" c="dimmed">
-                        No matching clients found.
-                      </Text>
-                      <Button
-                        variant="filled"
-                        size="xs"
-                        onClick={() => setIsAddClientModalOpen(true)}
-                        leftSection={<FaPlus size={12} />}
-                        style={{
-                          background:
-                            "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
-                          color: "white",
-                          border: "none",
-                        }}
-                      >
-                        Add New Client
-                      </Button>
-                    </Stack>
-                  )
-                }
-                disabled={clientsLoading}
-                style={{ flex: 1 }}
-                styles={{
-                  dropdown: {
-                    boxShadow: "var(--mantine-shadow-xl)",
-                    borderColor: "var(--mantine-color-gray-4)",
-                    borderWidth: "1px",
-                    borderStyle: "solid",
-                  },
-                  root: { width: "100%" },
-                }}
-                {...form.getInputProps("client_id")}
-                value={String(form.values.client_id)}
-                onChange={(val) => {
-                  form.setFieldValue("client_id", Number(val));
-                  const fullObj = clientOptions.find(
-                    (c: any) => c.value === val
-                  )?.original;
-                  setSelectedClientData(fullObj as Tables<"client">);
-                  form.setFieldValue("shipping", {
-                    shipping_client_name: "",
-                    project_name: "",
-                    shipping_street: "",
-                    shipping_city: "",
-                    shipping_province: "",
-                    shipping_zip: "",
-                    shipping_phone_1: "",
-                    shipping_phone_2: "",
-                    shipping_email_1: "",
-                    shipping_email_2: "",
-                  });
-                }}
-              />
-              <Stack
-                style={{
-                  display: "flex",
-                  alignItems: "flex-end",
-                  justifyContent: "flex-end",
-                }}
-              >
-                <Group>
-                  {salesOrderData?.date_sold && (
-                    <Text size="xs" c="dimmed">
-                      Date Sold:{" "}
-                      {dayjs
-                        .utc(salesOrderData?.date_sold)
-                        .format("DD-MM-YYYY")}
-                    </Text>
-                  )}
-
-                  <Text size="xs" c="dimmed">
-                    Created By: {salesOrderData?.designer}
-                  </Text>
-                </Group>
-                <Group>
+            <Grid gutter="xl" align="flex-end" justify="space-between">
+              <Grid.Col span={6}>
+                <Group align="flex-end" wrap="nowrap">
+                  <Select
+                    label="Order Type"
+                    withAsterisk
+                    placeholder="Type"
+                    data={OrderTypeOptions}
+                    {...form.getInputProps(`order_type`)}
+                    style={{ width: 180 }}
+                  />
                   <Switch
-                    onLabel="Memo"
-                    offLabel="Memo"
+                    offLabel="Quote"
+                    onLabel="Sold"
                     size="xl"
-                    thumbIcon={isMemoChecked ? <FaCheckCircle /> : <FaCircle />}
-                    checked={!!isMemoChecked}
-                    onChange={(e) =>
-                      form.setFieldValue(
-                        "is_memo",
-                        e.currentTarget.checked ? true : false
-                      )
-                    }
-                    disabled
+                    thumbIcon={<FaCheckCircle />}
                     styles={{
                       track: {
-                        cursor: "not-allowed",
-                        background: isMemoChecked
-                          ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
-                          : "linear-gradient(135deg, #ddddddff 0%, #dadadaff 100%)",
-                        color: isMemoChecked ? "white" : "black",
+                        cursor: "pointer",
+                        background:
+                          form.values.stage === "SOLD"
+                            ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
+                            : "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
+                        color: "white",
                         border: "none",
                         padding: "0 0.2rem",
                         width: "6rem",
                       },
                       thumb: {
-                        background: isMemoChecked ? "#218838" : "#ffffffff",
+                        background:
+                          form.values.stage === "SOLD" ? "#218838" : "#4a00e0",
                       },
                     }}
+                    checked={form.values.stage === "SOLD"}
+                    onChange={(e) =>
+                      form.setFieldValue(
+                        "stage",
+                        e.currentTarget.checked ? "SOLD" : "QUOTE"
+                      )
+                    }
                   />
-                  {form.values.stage === "SOLD" && (
-                    <Switch
-                      onLabel="Active"
-                      offLabel="Dead"
-                      size="xl"
-                      thumbIcon={
-                        form.values.is_active ? <FaCheckCircle /> : <FaCircle />
-                      }
-                      checked={form.values.is_active}
-                      onChange={(e) =>
-                        form.setFieldValue("is_active", e.currentTarget.checked)
-                      }
-                      styles={{
-                        track: {
-                          cursor: "pointer",
-                          background: form.values.is_active
-                            ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
-                            : "linear-gradient(135deg, #ff0000ff 0%, #ff6363ff 100%)",
-                          color: form.values.is_active ? "white" : "white",
-                          border: "none",
-                          padding: "0 0.2rem",
-                          width: "6rem",
-                        },
-                        thumb: {
-                          background: form.values.is_active
-                            ? "#218838"
-                            : "#cf0000ff",
-                        },
-                      }}
-                    />
-                  )}
+
+                  <Collapse in={form.values.stage === "SOLD"}>
+                    <Group gap="xs" align="flex-end" style={{ flex: 1 }}>
+                      <TextInput
+                        label="Job Number"
+                        placeholder="40000..."
+                        {...form.getInputProps("manual_job_base")}
+                        style={{ width: 120 }}
+                        withAsterisk
+                      />
+                      <TextInput
+                        label="Variant"
+                        placeholder="A, B..."
+                        {...form.getInputProps("manual_job_suffix")}
+                        onChange={(event) => {
+                          const value = event.currentTarget.value;
+                          form.setFieldValue("manual_job_suffix", value);
+                          form.setFieldValue(
+                            "is_memo",
+                            value.toLowerCase().includes("x")
+                          );
+                        }}
+                        style={{ width: 80 }}
+                        maxLength={10}
+                      />
+                    </Group>
+                  </Collapse>
                 </Group>
-              </Stack>
-            </SimpleGrid>
+              </Grid.Col>
+
+              <Grid.Col span={5}>
+                <Group align="flex-end" w="100%">
+                  <Select
+                    label="Switch Client"
+                    placeholder="Search clients..."
+                    clearable
+                    comboboxProps={{
+                      position: "bottom",
+                      middlewares: { flip: false, shift: false },
+                      offset: 0,
+                    }}
+                    data={clientOptions}
+                    searchable
+                    searchValue={clientSearch}
+                    onSearchChange={setClientSearch}
+                    nothingFoundMessage={
+                      clientsLoading ? (
+                        "Searching..."
+                      ) : (
+                        <Stack align="center" p="xs" gap="xs">
+                          <Text size="sm" c="dimmed">
+                            No matching clients found.
+                          </Text>
+                          <Button
+                            variant="filled"
+                            size="xs"
+                            onClick={() => setIsAddClientModalOpen(true)}
+                            leftSection={<FaPlus size={12} />}
+                            style={{
+                              background:
+                                "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
+                              color: "white",
+                              border: "none",
+                            }}
+                          >
+                            Add New Client
+                          </Button>
+                        </Stack>
+                      )
+                    }
+                    disabled={clientsLoading}
+                    style={{ flex: 1 }}
+                    styles={{
+                      dropdown: {
+                        boxShadow: "var(--mantine-shadow-xl)",
+                        borderColor: "var(--mantine-color-gray-4)",
+                        borderWidth: "1px",
+                        borderStyle: "solid",
+                      },
+                      root: { width: "100%" },
+                    }}
+                    {...form.getInputProps("client_id")}
+                    value={String(form.values.client_id)}
+                    onChange={(val) => {
+                      form.setFieldValue("client_id", Number(val));
+                      const fullObj = clientOptions.find(
+                        (c: any) => c.value === val
+                      )?.original;
+                      setSelectedClientData(fullObj as Tables<"client">);
+                      form.setFieldValue("shipping", {
+                        shipping_client_name: "",
+                        project_name: "",
+                        shipping_street: "",
+                        shipping_city: "",
+                        shipping_province: "",
+                        shipping_zip: "",
+                        shipping_phone_1: "",
+                        shipping_phone_2: "",
+                        shipping_email_1: "",
+                        shipping_email_2: "",
+                      });
+                    }}
+                  />
+                  <Stack
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-end",
+                      justifyContent: "flex-end",
+                    }}
+                  >
+                    <Group>
+                      {salesOrderData?.date_sold && (
+                        <Text size="xs" c="dimmed">
+                          Date Sold:{" "}
+                          {dayjs
+                            .utc(salesOrderData?.date_sold)
+                            .format("DD-MM-YYYY")}
+                        </Text>
+                      )}
+
+                      <Text size="xs" c="dimmed">
+                        Created By: {salesOrderData?.designer}
+                      </Text>
+                    </Group>
+                    <Group>
+                      <Switch
+                        onLabel="Memo"
+                        offLabel="Memo"
+                        size="xl"
+                        thumbIcon={isMemoChecked ? <FaCheckCircle /> : <FaCircle />}
+                        checked={!!isMemoChecked}
+                        onChange={(e) =>
+                          form.setFieldValue(
+                            "is_memo",
+                            e.currentTarget.checked ? true : false
+                          )
+                        }
+                        disabled
+                        styles={{
+                          track: {
+                            cursor: "not-allowed",
+                            background: isMemoChecked
+                              ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
+                              : "linear-gradient(135deg, #ddddddff 0%, #dadadaff 100%)",
+                            color: isMemoChecked ? "white" : "black",
+                            border: "none",
+                            padding: "0 0.2rem",
+                            width: "6rem",
+                          },
+                          thumb: {
+                            background: isMemoChecked ? "#218838" : "#ffffffff",
+                          },
+                        }}
+                      />
+                      {form.values.stage === "SOLD" && (
+                        <Switch
+                          onLabel="Active"
+                          offLabel="Dead"
+                          size="xl"
+                          thumbIcon={
+                            form.values.is_active ? <FaCheckCircle /> : <FaCircle />
+                          }
+                          checked={form.values.is_active}
+                          onChange={(e) =>
+                            form.setFieldValue("is_active", e.currentTarget.checked)
+                          }
+                          styles={{
+                            track: {
+                              cursor: "pointer",
+                              background: form.values.is_active
+                                ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
+                                : "linear-gradient(135deg, #ff0000ff 0%, #ff6363ff 100%)",
+                              color: form.values.is_active ? "white" : "white",
+                              border: "none",
+                              padding: "0 0.2rem",
+                              width: "6rem",
+                            },
+                            thumb: {
+                              background: form.values.is_active
+                                ? "#218838"
+                                : "#cf0000ff",
+                            },
+                          }}
+                        />
+                      )}
+                    </Group>
+                  </Stack>
+                </Group>
+              </Grid.Col>
+            </Grid>
           </Paper>
 
           {selectedClientData ? (
@@ -1043,13 +1056,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                   bg={"white"}
                 >
                   <SimpleGrid cols={2} mt="sm">
-                    <Autocomplete
-                      label="Order Type"
-                      withAsterisk
-                      placeholder="Single Fam, Multi Fam, Reno..."
-                      data={OrderTypeOptions}
-                      {...form.getInputProps("order_type")}
-                    />
                     <Select
                       label="Delivery Type"
                       withAsterisk
@@ -1060,6 +1066,26 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       nothingFoundMessage="No delivery type found"
                       {...form.getInputProps("delivery_type")}
                     />
+                    <Radio.Group
+                      label="Installation Required"
+                      withAsterisk
+                      value={
+                        form.values.install === true
+                          ? "true"
+                          : form.values.install === false
+                            ? "false"
+                            : ""
+                      }
+                      onChange={(val) =>
+                        form.setFieldValue("install", val === "true")
+                      }
+                      error={form.errors.install}
+                    >
+                      <Group mt="xs">
+                        <Radio value="true" label="Yes" color="#4a00e0" />
+                        <Radio value="false" label="No" color="#4a00e0" />
+                      </Group>
+                    </Radio.Group>
                   </SimpleGrid>
                 </Fieldset>
 
@@ -1328,28 +1354,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                     styles={{ input: { minHeight: "200px" } }}
                     {...form.getInputProps("comments")}
                   />
-
-                  <Radio.Group
-                    label="Installation Required"
-                    withAsterisk
-                    mt="md"
-                    value={
-                      form.values.install === true
-                        ? "true"
-                        : form.values.install === false
-                          ? "false"
-                          : ""
-                    }
-                    onChange={(val) =>
-                      form.setFieldValue("install", val === "true")
-                    }
-                    error={form.errors.install}
-                  >
-                    <Group mt="xs">
-                      <Radio value="true" label="Yes" color="#4a00e0" />
-                      <Radio value="false" label="No" color="#4a00e0" />
-                    </Group>
-                  </Radio.Group>
                 </Fieldset>
 
                 <Fieldset legend="Financials" variant="filled" bg={"white"}>

@@ -27,19 +27,13 @@ export const DrawerBoxOptions = [
   "Dovetail",
   "Custom",
 ];
-export const DrawerHardwareOptions = [
-  "Soft Close",
-  "White Metal",
-  "Grey Metal",
-  "Std",
-  "Custom",
-];
+
 export const HARDWARE_MAPPING: Record<string, string[]> = {
-  "Std Melamine": ["Soft Close", "Std", "Custom"],
+  "Std Melamine": ["Soft Close","Soft Close - Blum", "Std", "Custom"],
   "White Metal": ["White Metal"],
   "Grey Metal": ["Grey Metal"],
-  "Dovetail": ["Soft Close", "Custom"],
-  "Custom": ["Soft Close", "White Metal", "Grey Metal", "Std", "Custom"],
+  "Dovetail": ["Soft Close","Soft Close - Blum", "Custom"],
+  "Custom": ["Soft Close","Soft Close - Blum", "White Metal", "Grey Metal", "Std", "Custom"],
 };
 
 
