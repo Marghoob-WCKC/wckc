@@ -28,12 +28,18 @@ export function useJobAttachments(jobId: number) {
     mutationFn: async ({
       file,
       category,
+      silent = false, // Add silent flag, default to false
     }: {
       file: File;
       category: string;
+      silent?: boolean;
     }) => {
+      // Fix: Add a random string and the original name to ensure uniqueness
       const fileExt = file.name.split(".").pop();
-      const fileName = `${jobId}/${category}/${Date.now()}.${fileExt}`;
+      const uniqueSuffix = Math.random().toString(36).substring(2, 10);
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+
+      const fileName = `${jobId}/${category}/${Date.now()}_${uniqueSuffix}_${sanitizedName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("job_files")
@@ -48,20 +54,25 @@ export function useJobAttachments(jobId: number) {
         file_type: file.type,
         file_size: file.size,
         uploaded_by: user?.username || "Staff",
-        category: category, 
+        category: category,
       });
 
       if (dbError) throw dbError;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["job_attachments", jobId] });
-      notifications.show({
-        title: "Success",
-        message: "File uploaded successfully",
-        color: "green",
-      });
+      
+      // Only show notification if NOT silent
+      if (!variables.silent) {
+        notifications.show({
+          title: "Success",
+          message: "File uploaded successfully",
+          color: "green",
+        });
+      }
     },
     onError: (error: any) => {
+      // We generally want to know about errors, even in bulk
       notifications.show({
         title: "Upload Failed",
         message: error.message,
@@ -79,6 +90,7 @@ export function useJobAttachments(jobId: number) {
     attachments,
     isLoading,
     uploadFile: uploadMutation.mutate,
+    uploadFileAsync: uploadMutation.mutateAsync, // Expose async version for Promise.all
     isUploading: uploadMutation.isPending,
     getPublicUrl,
   };

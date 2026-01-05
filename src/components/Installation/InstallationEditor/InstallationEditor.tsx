@@ -615,7 +615,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         }}
       >
         <Grid gutter="xs">
-          <Grid.Col span={10}>
+          <Grid.Col span={10.2}>
             <Stack>
               <Paper p="md" radius="md" shadow="sm" mb="md" bg={"gray.1"}>
                 <Paper
@@ -806,7 +806,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           {...form.getInputProps("inspection_date")}
                         />
                       </SimpleGrid>
-                      <Box mt={rem(20)}>
+                      {jobData.sales_orders?.comments && <Box mt={rem(20)}>
                         <Group mb={8} style={{ color: "#4A00E0" }}>
                           <FaClipboardList size={18} />
                           <Text fw={600}>Designer Notes</Text>
@@ -818,7 +818,8 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           value={jobData.sales_orders?.comments || "No sales notes available."}
                           styles={{ input: { color: "dimmed" } }}
                         />
-                      </Box>
+                      </Box>}
+
 
                       <Box mt={rem(20)}>
                         <Group mb={8} style={{ color: "#4A00E0" }}>
@@ -1080,7 +1081,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             {jobId && <RelatedServiceOrders jobId={jobId} />}
           </Grid.Col>
 
-          <Grid.Col span={2} style={{ borderLeft: "1px solid #ccc" }}>
+          <Grid.Col span={1.8} style={{ borderLeft: "1px solid #ccc" }}>
             <Box pt="md" style={{ justifyItems: "center" }}>
               <Text
                 fw={600}
