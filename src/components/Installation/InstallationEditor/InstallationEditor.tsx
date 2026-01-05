@@ -831,6 +831,17 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                             styles={{ input: { minHeight: "150px" } }}
                             placeholder="Document site conditions, issues, or specific instructions here."
                             {...form.getInputProps("installation_notes")}
+                            onKeyDown={(e) => {
+                              if (e.shiftKey && e.key.toLowerCase() === "d") {
+                                e.preventDefault();
+                                const dateString = dayjs().format("~DD/MM/YYYY :\t");
+                                const currentValue = form.values.installation_notes || "";
+                                const newValue = currentValue
+                                  ? `${currentValue}\n${dateString}`
+                                  : dateString;
+                                form.setFieldValue("installation_notes", newValue);
+                              }
+                            }}
                           />
                         </Stack>
                       </Box>

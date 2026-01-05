@@ -71,8 +71,8 @@ export default function InstallationTable() {
     pageSize: 16,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
-  const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
+  const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([{ id: "has_shipped", value: "true" }]);
+  const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([{ id: "has_shipped", value: "true" }]);
   const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
@@ -200,34 +200,34 @@ export default function InstallationTable() {
   const columns = [
     ...(permissions.isInstaller || permissions.isAdmin
       ? [
-          {
-            id: "select",
-            enableSorting: false,
-            header: ({ table }: any) => (
+        {
+          id: "select",
+          enableSorting: false,
+          header: ({ table }: any) => (
+            <Checkbox
+              color="violet"
+              styles={{ input: { cursor: "pointer" } }}
+              checked={table.getIsAllPageRowsSelected()}
+              indeterminate={table.getIsSomePageRowsSelected()}
+              onChange={table.getToggleAllPageRowsSelectedHandler()}
+              aria-label="Select all"
+            />
+          ),
+          cell: ({ row }: any) => (
+            <Center style={{ width: "100%", height: "100%" }}>
               <Checkbox
                 color="violet"
                 styles={{ input: { cursor: "pointer" } }}
-                checked={table.getIsAllPageRowsSelected()}
-                indeterminate={table.getIsSomePageRowsSelected()}
-                onChange={table.getToggleAllPageRowsSelectedHandler()}
-                aria-label="Select all"
+                checked={row.getIsSelected()}
+                disabled={!row.getCanSelect()}
+                onChange={row.getToggleSelectedHandler()}
+                aria-label="Select row"
               />
-            ),
-            cell: ({ row }: any) => (
-              <Center style={{ width: "100%", height: "100%" }}>
-                <Checkbox
-                  color="violet"
-                  styles={{ input: { cursor: "pointer" } }}
-                  checked={row.getIsSelected()}
-                  disabled={!row.getCanSelect()}
-                  onChange={row.getToggleSelectedHandler()}
-                  aria-label="Select row"
-                />
-              </Center>
-            ),
-            size: 40,
-          },
-        ]
+            </Center>
+          ),
+          size: 40,
+        },
+      ]
       : []),
     columnHelper.accessor("job_number", {
       header: "Job No.",
@@ -763,12 +763,24 @@ export default function InstallationTable() {
                     },
                   }}
                   checked={getInputFilterValue("has_shipped") === "true"}
-                  onChange={(e) =>
+
+                  onChange={(e) => {
+                    const val = e.currentTarget.checked
+
                     setInputFilterValue(
                       "has_shipped",
-                      e.target.checked ? "true" : undefined
+                      val ? "true" : undefined
                     )
-                  }
+                    const otherFilters = inputFilters.filter(
+                      (f) => f.id !== "has_shipped"
+                    );
+                    const newActiveFilters = val
+                      ? [...otherFilters, { id: "has_shipped", value: val }]
+                      : otherFilters;
+
+                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                    setActiveFilters(newActiveFilters);
+                  }}
                 />
                 <Switch
                   label="Rush"
@@ -792,12 +804,24 @@ export default function InstallationTable() {
                     },
                   }}
                   checked={getInputFilterValue("rush") === "true"}
-                  onChange={(e) =>
+
+                  onChange={(e) => {
+                    const val = e.currentTarget.checked
+
                     setInputFilterValue(
                       "rush",
                       e.target.checked ? "true" : undefined
                     )
-                  }
+                    const otherFilters = inputFilters.filter(
+                      (f) => f.id !== "rush"
+                    );
+                    const newActiveFilters = val
+                      ? [...otherFilters, { id: "rush", value: val }]
+                      : otherFilters;
+
+                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                    setActiveFilters(newActiveFilters);
+                  }}
                 />
               </Group>
             </SimpleGrid>
@@ -961,8 +985,8 @@ export default function InstallationTable() {
               table.getRowModel().rows.map((row) => {
                 const bgColor =
                   row.original.wrap_date !== null ||
-                  row.original.ship_schedule !== null ||
-                  row.original.has_shipped == true
+                    row.original.ship_schedule !== null ||
+                    row.original.has_shipped == true
                     ? undefined
                     : "#ffefefff";
                 return (
@@ -1071,8 +1095,8 @@ export default function InstallationTable() {
                 }
               }}
               onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor =
-                  "var(--mantine-color-gray-1)")
+              (e.currentTarget.style.backgroundColor =
+                "var(--mantine-color-gray-1)")
               }
               onMouseLeave={(e) =>
                 (e.currentTarget.style.backgroundColor = "transparent")
