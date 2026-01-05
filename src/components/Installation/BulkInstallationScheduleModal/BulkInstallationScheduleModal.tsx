@@ -13,18 +13,26 @@ import {
   ThemeIcon,
   Badge,
   ScrollArea,
+  TextInput,
+  Textarea,
+  Collapse,
+  Grid,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useQuery } from "@tanstack/react-query";
 import { useSupabase } from "@/hooks/useSupabase";
 import {
-  FaBoxOpen,
-  FaCalendarCheck,
   FaCheckCircle,
   FaShippingFast,
   FaTools,
   FaTruckLoading,
+  FaClipboardList,
+  FaExclamationTriangle,
+  FaBoxOpen,
+  FaCalendarCheck,
 } from "react-icons/fa";
+import { colors, gradients } from "@/theme";
+import AddBackorderModal from "@/components/Installation/AddBOModal/AddBOModal";
 import dayjs from "dayjs";
 import {
   useBulkSchedule,
@@ -56,6 +64,9 @@ export default function BulkScheduleModal({
   const [targetCompletionField, setTargetCompletionField] = useState<
     "installation_completed" | null
   >(null);
+
+  const [isBackorderPromptOpen, setIsBackorderPromptOpen] = useState(false);
+  const [isAddBackorderModalOpen, setIsAddBackorderModalOpen] = useState(false);
 
   const { data: installers } = useQuery({
     queryKey: ["installers-list"],
@@ -126,6 +137,10 @@ export default function BulkScheduleModal({
     return selectedRows.map((row) => row.original.job_number).filter(Boolean);
   }, [selectedRows]);
 
+  const selectedJobIds = useMemo(() => {
+    return selectedRows.map((row) => row.original.id).filter((id) => typeof id === 'number');
+  }, [selectedRows]);
+
   return (
     <>
       <Modal
@@ -139,7 +154,7 @@ export default function BulkScheduleModal({
             <Text fw={600}>Bulk Schedule ({selectedRows.length} Jobs)</Text>
           </Group>
         }
-        size="lg"
+        size="80%"
       >
         <Stack gap="lg">
           <Box>
@@ -161,156 +176,276 @@ export default function BulkScheduleModal({
             Adjust fields below. Leave empty to keep existing values.
           </Text>
 
-          <Box>
-            <Group mb="xs" c="violet.9">
-              <FaTools />{" "}
-              <Text fw={600} size="sm">
-                Assignment & Dates
-              </Text>
-            </Group>
-            <SimpleGrid cols={2}>
-              <Select
-                label="Assigned Installer"
-                placeholder="No Change"
-                data={installerOptions}
-                searchable
-                clearable
-                onChange={(val) =>
-                  handleUpdate("installer_id", val ? Number(val) : null)
-                }
-              />
-              <DateInput
-                label="Scheduled Installation"
-                placeholder="No Change"
-                clearable
-                valueFormat="YYYY-MM-DD"
-                onChange={(val) => handleUpdate("installation_date", val)}
-              />
-              <DateInput
-                label="Scheduled Inspection"
-                placeholder="No Change"
-                clearable
-                valueFormat="YYYY-MM-DD"
-                onChange={(val) => handleUpdate("inspection_date", val)}
-              />
-            </SimpleGrid>
-          </Box>
+          <Grid gutter="xl">
+            <Grid.Col span={8}>
+              <Stack gap="xl">
+                <Box>
+                  <Group mb="sm" c="violet.9" align="center">
+                    <ThemeIcon color="violet" variant="light" size="md">
+                      <FaTools size={14} />
+                    </ThemeIcon>
+                    <Text fw={700} size="md">
+                      Assignment & Installation
+                    </Text>
+                  </Group>
+                  <SimpleGrid cols={2} spacing="lg">
+                    <Select
+                      label="Assigned Installer"
+                      placeholder="No Change"
+                      data={installerOptions}
+                      searchable
+                      clearable
+                      onChange={(val) =>
+                        handleUpdate("installer_id", val ? Number(val) : null)
+                      }
+                    />
+                    <DateInput
+                      label="Scheduled Installation"
+                      placeholder="No Change"
+                      clearable
+                      valueFormat="YYYY-MM-DD"
+                      onChange={(val) => handleUpdate("installation_date", val)}
+                    />
+                    <DateInput
+                      label="Scheduled Inspection"
+                      placeholder="No Change"
+                      clearable
+                      valueFormat="YYYY-MM-DD"
+                      onChange={(val) => handleUpdate("inspection_date", val)}
+                    />
+                  </SimpleGrid>
+                </Box>
 
-          <Divider />
+                <Divider variant="dashed" />
 
-          <Box>
-            <Group mb="xs" c="green.9">
-              <FaTruckLoading />{" "}
-              <Text fw={600} size="sm">
-                Shipping & Wrap
-              </Text>
-            </Group>
-            <SimpleGrid cols={2}>
-              <DateInput
-                label="Wrap Date"
-                placeholder="No Change"
-                clearable
-                valueFormat="YYYY-MM-DD"
-                onChange={(val) => handleUpdate("wrap_date", val)}
-              />
-              <DateInput
-                label="Shipping Date"
-                placeholder="No Change"
-                clearable
-                valueFormat="YYYY-MM-DD"
-                onChange={(val) => handleUpdate("ship_schedule", val)}
-              />
-              <Select
-                label="Shipping Date Status"
-                placeholder="No Change"
-                data={["unprocessed", "tentative", "confirmed"]}
-                onChange={(val) => handleUpdate("ship_status", val)}
-              />
-            </SimpleGrid>
-            <Group mt="md" grow>
-              <Box>
+                <Box>
+                  <Group mb="sm" c="green.9" align="center">
+                    <ThemeIcon color="green" variant="light" size="md">
+                      <FaTruckLoading size={14} />
+                    </ThemeIcon>
+                    <Text fw={700} size="md">
+                      Shipping & Wrap
+                    </Text>
+                  </Group>
+                  <SimpleGrid cols={3} spacing="lg">
+                    <DateInput
+                      label="Wrap Date"
+                      placeholder="No Change"
+                      clearable
+                      valueFormat="YYYY-MM-DD"
+                      onChange={(val) => handleUpdate("wrap_date", val)}
+                    />
+                    <DateInput
+                      label="Shipping Date"
+                      placeholder="No Change"
+                      clearable
+                      valueFormat="YYYY-MM-DD"
+                      onChange={(val) => handleUpdate("ship_schedule", val)}
+                    />
+                    <Select
+                      label="Shipping Date Status"
+                      placeholder="No Change"
+                      data={["unprocessed", "tentative", "confirmed"]}
+                      onChange={(val) => handleUpdate("ship_status", val)}
+                    />
+                  </SimpleGrid>
+                </Box>
+
+                <Box>
+                  {updates.site_changes && (
+                    <Textarea
+                      label="Site Changes Detail"
+                      placeholder="Enter details..."
+                      minRows={3}
+                      onChange={(e) =>
+                        handleUpdate("site_changes_detail", e.currentTarget.value)
+                      }
+                    />
+                  )}
+                </Box>
+              </Stack>
+            </Grid.Col>
+
+            <Grid.Col span={4} style={{ borderLeft: "1px solid #eee" }}>
+              <Stack gap="md">
+                <Text size="sm" fw={700} c="dimmed" mb={-8}>
+                  Status Updates
+                </Text>
+
+                <Group justify="space-between">
+                  <Switch
+                    size="md"
+                    color="violet"
+                    label="Wrapped"
+                    checked={
+                      updates.wrap_completed !== undefined &&
+                      updates.wrap_completed !== null
+                    }
+                    onChange={(e) =>
+                      handleUpdate(
+                        "wrap_completed",
+                        e.currentTarget.checked ? new Date().toISOString() : null
+                      )
+                    }
+                    styles={{ label: { fontWeight: 500 } }}
+                  />
+                </Group>
+
+                <Divider variant="dashed" />
+
                 <Switch
                   size="md"
-                  label="Mark as Wrapped"
-                  thumbIcon={<FaBoxOpen size={10} />}
-                  checked={
-                    updates.wrap_completed !== undefined &&
-                    updates.wrap_completed !== null
-                  }
-                  onChange={(e) =>
-                    handleUpdate(
-                      "wrap_completed",
-                      e.currentTarget.checked ? new Date().toISOString() : null
-                    )
-                  }
-                  styles={{ track: { cursor: "pointer" } }}
+                  color={updates.partially_shipped ? "orange" : "violet"}
+                  label={updates.partially_shipped ? "Shipped (Partial)" : "Shipped"}
+                  checked={updates.has_shipped === true || updates.partially_shipped === true}
+                  onChange={(e) => {
+                    const isChecked = e.currentTarget.checked;
+                    if (isChecked) {
+                      setIsBackorderPromptOpen(true);
+                    } else {
+                      handleUpdate("has_shipped", false);
+                      handleUpdate("partially_shipped", false);
+                    }
+                  }}
+                  styles={{
+                    label: {
+                      fontWeight: 500,
+                      color: updates.partially_shipped ? "orange" : undefined,
+                    },
+                  }}
                 />
-                <Text size="xs" c="dimmed">
-                  {updates.wrap_completed
-                    ? "Set to 'Wrapped'"
-                    : updates.wrap_completed === null
-                    ? "Set to 'Not Wrapped'"
-                    : "No Change"}
-                </Text>
-              </Box>
 
-              <Box>
-                <Switch
-                  size="md"
-                  label="Mark as Shipped"
-                  thumbIcon={<FaShippingFast size={10} />}
-                  checked={updates.has_shipped === true}
-                  onChange={(e) =>
-                    handleUpdate("has_shipped", e.currentTarget.checked)
-                  }
-                  styles={{ track: { cursor: "pointer" } }}
-                />
-                <Text size="xs" c="dimmed">
-                  {updates.has_shipped === true
-                    ? "Set to 'Shipped'"
-                    : updates.has_shipped === false
-                    ? "Set to 'Not Shipped'"
-                    : "No Change"}
-                </Text>
-              </Box>
-            </Group>
-          </Box>
+                <Divider variant="dashed" />
 
-          <Divider />
+                <Group justify="space-between">
+                  <Switch
+                    size="md"
+                    color="violet"
+                    label="Installation Completed"
+                    checked={updates.installation_completed !== undefined && updates.installation_completed !== null}
+                    onChange={() => openCompletionModal("installation_completed")}
+                    styles={{ label: { fontWeight: 500 } }}
+                  />
+                  {updates.installation_completed && (
+                    <Button
+                      variant="subtle"
+                      color="red"
+                      size="compact-xs"
+                      onClick={() => handleUpdate("installation_completed", undefined)}
+                    >
+                      Reset
+                    </Button>
+                  )}
+                </Group>
 
-          <Box>
-            <Group mb="xs" c="blue.9">
-              <FaCheckCircle />{" "}
-              <Text fw={600} size="sm">
-                Completion Sign-off
-              </Text>
-            </Group>
-            <Group grow>
-              <Button
-                variant={updates.installation_completed ? "light" : "default"}
-                color={updates.installation_completed ? "green" : "gray"}
-                onClick={() => openCompletionModal("installation_completed")}
-              >
-                {updates.installation_completed
-                  ? `Inst. Completed: ${dayjs(
-                      updates.installation_completed
-                    ).format("YYYY-MM-DD")}`
-                  : "Set Installation Completion"}
-              </Button>
-            </Group>
-            {updates.installation_completed && (
-              <Button
-                variant="subtle"
-                color="red"
-                size="compact-xs"
-                onClick={() => {
-                  handleUpdate("installation_completed", undefined);
-                }}
-              >
-                Reset Completion Changes
-              </Button>
-            )}
-          </Box>
+                <Divider variant="dashed" />
+
+                <Group justify="space-between">
+                  <Switch
+                    size="md"
+                    color="violet"
+                    label="Report Received"
+                    checked={
+                      updates.installation_report_received !== undefined &&
+                      updates.installation_report_received !== null
+                    }
+                    onChange={(e) =>
+                      handleUpdate(
+                        "installation_report_received",
+                        e.currentTarget.checked ? new Date().toISOString() : null
+                      )
+                    }
+                    styles={{ label: { fontWeight: 500 } }}
+                  />
+                </Group>
+
+                <Divider variant="dashed" />
+
+                <Group justify="space-between">
+                  <Switch
+                    size="md"
+                    color="violet"
+                    label="In Warehouse"
+                    checked={
+                      updates.in_warehouse !== undefined &&
+                      updates.in_warehouse !== null
+                    }
+                    onChange={(e) =>
+                      handleUpdate(
+                        "in_warehouse",
+                        e.currentTarget.checked ? new Date().toISOString() : null
+                      )
+                    }
+                    styles={{ label: { fontWeight: 500 } }}
+                  />
+                </Group>
+
+                <Divider variant="dashed" />
+
+                <Group justify="space-between">
+                  <Switch
+                    size="md"
+                    color="violet"
+                    label="Trade (30 Days)"
+                    checked={
+                      updates.trade_30days !== undefined &&
+                      updates.trade_30days !== null
+                    }
+                    onChange={(e) =>
+                      handleUpdate(
+                        "trade_30days",
+                        e.currentTarget.checked ? new Date().toISOString() : null
+                      )
+                    }
+                    styles={{ label: { fontWeight: 500 } }}
+                  />
+                </Group>
+
+                <Divider variant="dashed" />
+
+                <Group justify="space-between">
+                  <Switch
+                    size="md"
+                    color="violet"
+                    label="Trade (6 Months)"
+                    checked={
+                      updates.trade_6months !== undefined &&
+                      updates.trade_6months !== null
+                    }
+                    onChange={(e) =>
+                      handleUpdate(
+                        "trade_6months",
+                        e.currentTarget.checked ? new Date().toISOString() : null
+                      )
+                    }
+                    styles={{ label: { fontWeight: 500 } }}
+                  />
+                </Group>
+
+                <Divider variant="dashed" />
+
+                <Group justify="space-between">
+                  <Switch
+                    size="md"
+                    color="violet"
+                    label="Site Changes"
+                    checked={
+                      updates.site_changes !== undefined &&
+                      updates.site_changes !== null
+                    }
+                    onChange={(e) =>
+                      handleUpdate(
+                        "site_changes",
+                        e.currentTarget.checked ? new Date().toISOString() : null
+                      )
+                    }
+                    styles={{ label: { fontWeight: 500 } }}
+                  />
+                </Group>
+
+              </Stack>
+            </Grid.Col>
+          </Grid>
 
           <Group justify="flex-end" mt="md">
             <Button variant="default" onClick={handleClose}>
@@ -360,6 +495,124 @@ export default function BulkScheduleModal({
           </Group>
         </Stack>
       </Modal>
+
+      <Modal
+        opened={isBackorderPromptOpen}
+        onClose={() => {
+          setIsBackorderPromptOpen(false);
+          handleUpdate("has_shipped", false);
+        }}
+        withCloseButton={false}
+        centered
+        radius="lg"
+        padding="lg"
+        overlayProps={{ blur: 4, opacity: 0.55 }}
+        transitionProps={{ transition: "pop", duration: 200 }}
+      >
+        <Stack align="center" gap="md">
+          <ThemeIcon
+            size={80}
+            radius="100%"
+            variant="gradient"
+            gradient={gradients.primary}
+            style={{ boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}
+          >
+            <FaTruckLoading size={36} color="white" />
+          </ThemeIcon>
+          <Stack gap={4} align="center">
+            <Text size="lg" fw={700} ta="center">
+              Confirm Shipment Status
+            </Text>
+            <Text size="sm" c="dimmed" ta="center" style={{ maxWidth: 300 }}>
+              Is this a complete shipment, or are items missing?
+            </Text>
+          </Stack>
+          <Stack w="100%" gap="sm" mt="md">
+            <Button
+              fullWidth
+              variant="gradient"
+              gradient={gradients.success}
+              size="md"
+              radius="md"
+              leftSection={<FaCheckCircle />}
+              onClick={() => {
+                setIsBackorderPromptOpen(false);
+                handleUpdate("has_shipped", true);
+                handleUpdate("partially_shipped", false);
+              }}
+              styles={{ root: { transition: "transform 0.2s" } }}
+            >
+              Complete Shipment
+            </Button>
+            <SimpleGrid cols={2}>
+              <Button
+                variant="outline"
+                color={colors.orange.primary}
+                size="sm"
+                radius="md"
+                leftSection={<FaClipboardList />}
+                style={{
+                  borderColor: colors.orange.primary,
+                  color: colors.orange.primary,
+                  fontSize: "12px",
+                }}
+                onClick={() => {
+                  setIsBackorderPromptOpen(false);
+                  handleUpdate("has_shipped", false);
+                  handleUpdate("partially_shipped", true);
+                  setIsAddBackorderModalOpen(true);
+                }}
+              >
+                Partial (Log Backorder)
+              </Button>
+              <Button
+                variant="subtle"
+                color="gray"
+                size="sm"
+                radius="md"
+                leftSection={<FaExclamationTriangle />}
+                style={{
+                  borderColor: colors.gray.title,
+                  color: colors.gray.title,
+                  fontSize: "12px",
+                }}
+                onClick={() => {
+                  setIsBackorderPromptOpen(false);
+                  handleUpdate("has_shipped", false);
+                  handleUpdate("partially_shipped", true);
+                }}
+              >
+                Partial (Mark Only)
+              </Button>
+            </SimpleGrid>
+          </Stack>
+          <Text
+            size="xs"
+            c="dimmed"
+            style={{ cursor: "pointer", textDecoration: "underline" }}
+            onClick={() => {
+              setIsBackorderPromptOpen(false);
+              handleUpdate("has_shipped", false);
+              handleUpdate("partially_shipped", false);
+            }}
+          >
+            Cancel
+          </Text>
+        </Stack>
+      </Modal>
+
+      <AddBackorderModal
+        opened={isAddBackorderModalOpen}
+        onClose={() => setIsAddBackorderModalOpen(false)}
+        jobId="" // Not supported in bulk
+        jobNumber=""
+        isBulk={true}
+        jobIds={selectedJobIds}
+        onSuccess={() => {
+          handleUpdate("partially_shipped", true);
+          handleUpdate("has_shipped", false);
+        }}
+      />
     </>
   );
 }

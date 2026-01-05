@@ -10,10 +10,19 @@ export interface BulkSchedulePayload {
   inspection_date?: Date | null;
   installation_notes?: string;
   wrap_date?: Date | null;
-  wrap_completed?: string | null; 
+  wrap_completed?: string | null;
   has_shipped?: boolean;
-  installation_completed?: string | null; 
-  inspection_completed?: string | null; 
+  partially_shipped?: boolean;
+  installation_completed?: string | null;
+  inspection_completed?: string | null;
+  legacy_ref?: string;
+
+  in_warehouse?: string | null;
+  installation_report_received?: string | null;
+  trade_30days?: string | null;
+  trade_6months?: string | null;
+  site_changes?: string | null;
+  site_changes_detail?: string;
 
   ship_schedule?: Date | null;
   ship_status?: "unprocessed" | "tentative" | "confirmed";
@@ -48,10 +57,28 @@ export function useBulkSchedule() {
         installUpdates.wrap_completed = updates.wrap_completed;
       if (updates.has_shipped !== undefined)
         installUpdates.has_shipped = updates.has_shipped;
+      if (updates.partially_shipped !== undefined)
+        installUpdates.partially_shipped = updates.partially_shipped;
       if (updates.installation_completed !== undefined)
         installUpdates.installation_completed = updates.installation_completed;
       if (updates.inspection_completed !== undefined)
         installUpdates.inspection_completed = updates.inspection_completed;
+      if (updates.legacy_ref !== undefined)
+        installUpdates.legacy_ref = updates.legacy_ref;
+
+      if (updates.in_warehouse !== undefined)
+        installUpdates.in_warehouse = updates.in_warehouse;
+      if (updates.installation_report_received !== undefined)
+        installUpdates.installation_report_received =
+          updates.installation_report_received;
+      if (updates.trade_30days !== undefined)
+        installUpdates.trade_30days = updates.trade_30days;
+      if (updates.trade_6months !== undefined)
+        installUpdates.trade_6months = updates.trade_6months;
+      if (updates.site_changes !== undefined)
+        installUpdates.site_changes = updates.site_changes;
+      if (updates.site_changes_detail !== undefined)
+        installUpdates.site_changes_detail = updates.site_changes_detail;
 
       if (updates.ship_schedule !== undefined)
         prodUpdates.ship_schedule = updates.ship_schedule

@@ -19,6 +19,8 @@ interface AddBackorderModalProps {
   onSuccess?: () => void;
   onSaveDraft?: (values: BackorderFormValues) => void;
   initialData?: BackorderFormValues | null;
+  jobIds?: number[]; // For bulk operations
+  isBulk?: boolean;
 }
 
 export default function AddBackorderModal({
@@ -29,6 +31,8 @@ export default function AddBackorderModal({
   onSuccess,
   onSaveDraft,
   initialData,
+  jobIds,
+  isBulk,
 }: AddBackorderModalProps) {
   const { supabase } = useSupabase();
   const queryClient = useQueryClient();
@@ -56,29 +60,45 @@ export default function AddBackorderModal({
 
   const createMutation = useMutation({
     mutationFn: async (values: BackorderFormValues) => {
-      const payload = {
-        job_id: values.job_id,
-        due_date: values.due_date
-          ? dayjs(values.due_date).format("YYYY-MM-DD")
-          : null,
-        comments: values.comments || null,
-      };
+      if (isBulk && jobIds && jobIds.length > 0) {
+        // Bulk insertion
+        const payloads = jobIds.map((id) => ({
+          job_id: id,
+          due_date: values.due_date
+            ? dayjs(values.due_date).format("YYYY-MM-DD")
+            : null,
+          comments: values.comments || null,
+        }));
 
-      const { error } = await supabase.from("backorders").insert(payload);
+        const { error } = await supabase.from("backorders").insert(payloads);
+        if (error) throw error;
+      } else {
+        // Single insertion
+        const payload = {
+          job_id: values.job_id,
+          due_date: values.due_date
+            ? dayjs(values.due_date).format("YYYY-MM-DD")
+            : null,
+          comments: values.comments || null,
+        };
 
-      if (error) throw error;
+        const { error } = await supabase.from("backorders").insert(payload);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       notifications.show({
         title: "Success",
-        message: `Backorder for Job #${jobNumber} logged successfully.`,
+        message: isBulk
+          ? `Backorders logged for ${jobIds?.length} jobs.`
+          : `Backorder for Job #${jobNumber} logged successfully.`,
         color: "orange",
       });
       queryClient.invalidateQueries({
-        queryKey: ["related-backorders", jobId],
+        queryKey: ["related-backorders"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["installation-editor", jobId],
+        queryKey: ["installation-editor"],
       });
       if (onSuccess) onSuccess();
       onClose();

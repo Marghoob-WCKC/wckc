@@ -79,6 +79,17 @@ export function useBulkProductionSchedule() {
           ? dayjs(updates.assembly_schedule).format("YYYY-MM-DD")
           : null;
 
+      if (updates.rush !== undefined) prodUpdates.rush = updates.rush;
+
+      if (updates.production_comments !== undefined)
+        prodUpdates.production_comments = updates.production_comments;
+
+      if (updates.in_plant_actual !== undefined)
+        prodUpdates.in_plant_actual = updates.in_plant_actual;
+
+      if (updates.in_plant_cabinets_actual !== undefined)
+        prodUpdates.in_plant_cabinets_actual = updates.in_plant_cabinets_actual;
+
       const promises = [];
 
       if (Object.keys(prodUpdates).length > 0) {

@@ -368,7 +368,7 @@ export default function NewSale() {
           : "",
       };
 
-      const effectiveIsMemo = is_memo === true;
+      const effectiveIsMemo = values.is_memo === true;
 
       const transactionPayload = {
         date_sold: stage === "SOLD" ? dayjs.utc().format() : null,

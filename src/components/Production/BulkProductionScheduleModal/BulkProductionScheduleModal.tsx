@@ -12,15 +12,19 @@ import {
   Badge,
   ScrollArea,
   Divider,
+  Switch,
+  Textarea,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import {
   FaCalendarCheck,
   FaShippingFast,
-  FaDoorOpen,
   FaCut,
   FaPaintBrush,
   FaCogs,
+  FaFire,
+  FaIndustry,
+  FaDoorOpen,
 } from "react-icons/fa";
 import dayjs from "dayjs";
 import {
@@ -82,9 +86,9 @@ export default function BulkProductionScheduleModal({
 
   const handleDateChange =
     (key: keyof BulkProductionSchedulePayload) =>
-    (val: Date | string | null) => {
-      handleUpdate(key, val ? dayjs(val).format("YYYY-MM-DD") : null);
-    };
+      (val: Date | string | null) => {
+        handleUpdate(key, val ? dayjs(val).format("YYYY-MM-DD") : null);
+      };
 
   return (
     <Modal
@@ -121,6 +125,54 @@ export default function BulkProductionScheduleModal({
         <Text size="sm" c="dimmed" mb={-10}>
           Adjust fields below. Leave empty to keep existing values.
         </Text>
+
+        <Box mb="md">
+          <Group>
+            <Switch
+              size="md"
+              color="red"
+              label="Rush"
+              checked={updates.rush === true}
+              onChange={(e) => handleUpdate("rush", e.currentTarget.checked)}
+              styles={{ label: { fontWeight: 600 } }}
+              thumbIcon={updates.rush ? <FaFire size={12} /> : undefined}
+            />
+            <Switch
+              size="md"
+              color="violet"
+              label="In Plant (Doors)"
+              checked={!!updates.in_plant_actual}
+              onChange={(e) =>
+                handleUpdate(
+                  "in_plant_actual",
+                  e.currentTarget.checked ? new Date().toISOString() : null
+                )
+              }
+              styles={{ label: { fontWeight: 600 } }}
+              thumbIcon={
+                updates.in_plant_actual ? <FaIndustry size={12} /> : undefined
+              }
+            />
+            <Switch
+              size="md"
+              color="violet"
+              label="In Plant (Cabinets)"
+              checked={!!updates.in_plant_cabinets_actual}
+              onChange={(e) =>
+                handleUpdate(
+                  "in_plant_cabinets_actual",
+                  e.currentTarget.checked ? new Date().toISOString() : null
+                )
+              }
+              styles={{ label: { fontWeight: 600 } }}
+              thumbIcon={
+                updates.in_plant_cabinets_actual ? (
+                  <FaIndustry size={12} />
+                ) : undefined
+              }
+            />
+          </Group>
+        </Box>
 
         <Box>
           <Group mb="xs" c="violet.9">
@@ -281,6 +333,17 @@ export default function BulkProductionScheduleModal({
             value={getDateValue(updates.assembly_schedule)}
             onChange={handleDateChange("assembly_schedule")}
             style={{ maxWidth: "50%" }}
+          />
+        </Box>
+
+        <Box>
+          <Textarea
+            label="Production Comments"
+            placeholder="Enter comments..."
+            minRows={3}
+            onChange={(e) =>
+              handleUpdate("production_comments", e.currentTarget.value)
+            }
           />
         </Box>
 
