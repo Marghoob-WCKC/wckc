@@ -91,6 +91,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
   const [selectedClientData, setSelectedClientData] =
     useState<Tables<"client"> | null>(null);
   const [unitNumber, setUnitNumber] = useState("");
+  const [initialUnitNumber, setInitialUnitNumber] = useState("");
   const [newItemValue, setNewItemValue] = useState("");
 
   const [newDoorStyle, setNewDoorStyle] = useState<NewDoorStyleState>({
@@ -367,9 +368,11 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
       const unitMatch = loadedStreet.match(/^([a-zA-Z0-9]+)\s*-\s*(.*)$/);
       if (unitMatch) {
         setUnitNumber(unitMatch[1]);
+        setInitialUnitNumber(unitMatch[1]);
         loadedStreet = unitMatch[2];
       } else {
         setUnitNumber("");
+        setInitialUnitNumber("");
       }
 
       form.initialize({
@@ -477,8 +480,8 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         salesOrderData.date_sold === null && values.stage === "SOLD"
           ? dayjs.utc().format()
           : salesOrderData.stage === "SOLD"
-          ? salesOrderData.date_sold
-          : null;
+            ? salesOrderData.date_sold
+            : null;
       const { error: soError } = await supabase
         .from("sales_orders")
         .update({
@@ -607,9 +610,8 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
     if (unitNumber.trim()) {
       payload.shipping = {
         ...payload.shipping,
-        shipping_street: `${unitNumber.trim()}-${
-          payload.shipping.shipping_street
-        }`,
+        shipping_street: `${unitNumber.trim()}-${payload.shipping.shipping_street
+          }`,
       };
     }
 
@@ -924,11 +926,9 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       Billing Address
                     </Text>
                     <Text fw={500} size="sm" mt={-5}>
-                      {`${selectedClientData.street || "—"}, ${
-                        selectedClientData.city || "—"
-                      }, ${selectedClientData.province || "—"} ${
-                        selectedClientData.zip || "—"
-                      }`}
+                      {`${selectedClientData.street || "—"}, ${selectedClientData.city || "—"
+                        }, ${selectedClientData.province || "—"} ${selectedClientData.zip || "—"
+                        }`}
                     </Text>
                   </Stack>
                 </Stack>
@@ -1237,7 +1237,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       data={getSafeOptions(
                         form.values.cabinet.drawer_box
                           ? HARDWARE_MAPPING[form.values.cabinet.drawer_box] ||
-                              []
+                          []
                           : [],
                         form.values.cabinet.drawer_hardware
                       )}
@@ -1337,8 +1337,8 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       form.values.install === true
                         ? "true"
                         : form.values.install === false
-                        ? "false"
-                        : ""
+                          ? "false"
+                          : ""
                     }
                     onChange={(val) =>
                       form.setFieldValue("install", val === "true")
@@ -1454,11 +1454,15 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                 size="md"
                 color="blue"
                 loading={updateMutation.isPending}
-                disabled={!form.isDirty() || updateMutation.isPending}
+                disabled={
+                  (!form.isDirty() && unitNumber === initialUnitNumber) ||
+                  updateMutation.isPending
+                }
                 style={{
-                  background: !form.isDirty()
-                    ? "linear-gradient(135deg, #c6c6c6 0%, #9e9e9e 100%)"
-                    : "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
+                  background:
+                    !form.isDirty() && unitNumber === initialUnitNumber
+                      ? "linear-gradient(135deg, #c6c6c6 0%, #9e9e9e 100%)"
+                      : "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
                   color: "white",
                   border: "none",
                 }}
