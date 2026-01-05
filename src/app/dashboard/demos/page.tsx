@@ -119,7 +119,7 @@ export default function SmartAutofillGuide() {
         {
             id: 1,
             title: "Select Order Type",
-            description: "Select 'Multi Fam' from the dropdown to enable advanced autofill features.",
+            description: "Select 'Multi Fam' from the dropdown",
             action: () => setOrderType('Multi Fam'),
             targetId: 'order-type-select',
             position: 'top-left'
