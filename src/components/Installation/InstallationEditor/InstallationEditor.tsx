@@ -384,7 +384,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         ship_schedule: ship_schedule
           ? dayjs(ship_schedule).format("YYYY-MM-DD")
           : null,
-        ship_status: ship_status,
+        ship_status: (ship_schedule && ship_status != "confirmed") ? "tentative" : ship_status,
       };
 
       if (installValues.has_shipped && !installValues.partially_shipped) {
