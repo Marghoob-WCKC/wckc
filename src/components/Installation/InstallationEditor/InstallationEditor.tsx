@@ -1178,9 +1178,9 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
               border: "none",
             }}
             size="md"
-            onClick={() => router.back()}
+            onClick={() => window.close()}
           >
-            Cancel
+            Close Window
           </Button>
           <Button
             type="submit"

@@ -1449,9 +1449,9 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                   border: "none",
                 }}
                 size="md"
-                onClick={() => router.back()}
+                onClick={() => window.close()}
               >
-                Cancel
+                Close Window
               </Button>
               <Button
                 type="submit"

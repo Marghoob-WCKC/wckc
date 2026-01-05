@@ -66,10 +66,35 @@ export default function NavigationGuardProvider({
     [isDirty, open]
   );
 
+
   const navigateBack = useCallback(
-    () => executeOrConfirm(() => router.back()),
+    () =>
+      executeOrConfirm(() => {
+        if (typeof window !== "undefined") {
+
+          const nav = (window as any).navigation;
+          if (nav && "canGoBack" in nav) {
+            if (nav.canGoBack) {
+              router.back();
+            } else {
+              window.close();
+            }
+            return;
+          }
+
+
+          if (window.history.length > 1) {
+            router.back();
+          } else {
+            window.close();
+          }
+        } else {
+          router.back();
+        }
+      }),
     [executeOrConfirm, router]
   );
+
   const navigateForward = useCallback(
     () => executeOrConfirm(() => router.forward()),
     [executeOrConfirm, router]
