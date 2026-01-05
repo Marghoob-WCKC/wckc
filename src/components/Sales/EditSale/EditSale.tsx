@@ -443,10 +443,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
   const updateMutation = useMutation({
     mutationFn: async (values: ExtendedMasterOrderInput) => {
       if (!user) throw new Error("User not authenticated");
-      const effectiveIsMemo =
-        values.is_memo === true ||
-        values.manual_job_suffix?.toLowerCase().includes("x") ||
-        false;
+      const effectiveIsMemo = values.is_memo === true;
       const cabinetPayload = {
         species_id: values.cabinet.species
           ? Number(values.cabinet.species)
@@ -617,10 +614,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
     updateMutation.mutate(payload);
   };
 
-  const isMemoChecked =
-    form.values.stage === "SOLD" &&
-    (form.values.is_memo === true ||
-      form.values.manual_job_suffix?.toLowerCase().includes("x"));
+
 
   return (
     <Container
@@ -705,10 +699,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                         onChange={(event) => {
                           const value = event.currentTarget.value;
                           form.setFieldValue("manual_job_suffix", value);
-                          form.setFieldValue(
-                            "is_memo",
-                            value.toLowerCase().includes("x")
-                          );
                         }}
                         style={{ width: 80 }}
                         maxLength={10}
@@ -817,28 +807,28 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                         onLabel="Memo"
                         offLabel="Memo"
                         size="xl"
-                        thumbIcon={isMemoChecked ? <FaCheckCircle /> : <FaCircle />}
-                        checked={!!isMemoChecked}
-                        onChange={(e) =>
-                          form.setFieldValue(
-                            "is_memo",
-                            e.currentTarget.checked ? true : false
-                          )
+                        thumbIcon={
+                          form.values.is_memo ? <FaCheckCircle /> : <FaCircle />
                         }
-                        disabled
+                        checked={form.values.is_memo}
+                        onChange={(e) =>
+                          form.setFieldValue("is_memo", e.currentTarget.checked)
+                        }
                         styles={{
                           track: {
-                            cursor: "not-allowed",
-                            background: isMemoChecked
+                            cursor: "pointer",
+                            background: form.values.is_memo
                               ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
                               : "linear-gradient(135deg, #ddddddff 0%, #dadadaff 100%)",
-                            color: isMemoChecked ? "white" : "black",
+                            color: form.values.is_memo ? "white" : "black",
                             border: "none",
                             padding: "0 0.2rem",
                             width: "6rem",
                           },
                           thumb: {
-                            background: isMemoChecked ? "#218838" : "#ffffffff",
+                            background: form.values.is_memo
+                              ? "#218838"
+                              : "#ffffffff",
                           },
                         }}
                       />

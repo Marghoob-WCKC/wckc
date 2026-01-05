@@ -368,13 +368,7 @@ export default function NewSale() {
           : "",
       };
 
-      // --- CALCULATE MEMO STATUS FOR SUBMISSION ---
-      // Checks matches for M-Base OR X-Suffix OR Manual Toggle
-      const isPatternMemo =
-        /^M\d+$/i.test(manual_job_base || "") ||
-        (manual_job_suffix?.toLowerCase() || "").includes("x");
-
-      const effectiveIsMemo = is_memo === true || isPatternMemo;
+      const effectiveIsMemo = is_memo === true;
 
       const transactionPayload = {
         date_sold: stage === "SOLD" ? dayjs.utc().format() : null,
@@ -677,15 +671,7 @@ export default function NewSale() {
     submitMutation.mutate(payload);
   };
 
-  // --- DERIVE MEMO STATUS FOR UI ---
-  // Calculates if the text inputs force a memo status
-  const isPatternMemo =
-    form.values.stage === "SOLD" &&
-    (/^M\d+$/i.test(form.values.manual_job_base || "") ||
-      (form.values.manual_job_suffix?.toLowerCase() || "").includes("x"));
 
-  // The actual check status: Manual Toggle OR Pattern Match
-  const isMemoChecked = form.values.is_memo === true || isPatternMemo;
 
   return (
     <Container
@@ -904,34 +890,25 @@ export default function NewSale() {
                     offLabel="Memo"
                     size="xl"
                     thumbIcon={
-                      isMemoChecked ? <FaCheckCircle /> : <FaCircle />
+                      form.values.is_memo ? <FaCheckCircle /> : <FaCircle />
                     }
-                    checked={!!isMemoChecked}
-                    onChange={(e) => {
-                      // If it is forced by pattern, we don't allow toggling off here
-                      // But if it is NOT forced by pattern, we update the manual 'is_memo'
-                      if (!isPatternMemo) {
-                        form.setFieldValue(
-                          "is_memo",
-                          e.currentTarget.checked ? true : false
-                        );
-                      }
-                    }}
-                    // Disable manual toggle only if the Pattern forces it to be TRUE
-                    disabled={!!isPatternMemo}
+                    checked={form.values.is_memo}
+                    onChange={(e) =>
+                      form.setFieldValue("is_memo", e.currentTarget.checked)
+                    }
                     styles={{
                       track: {
-                        cursor: isPatternMemo ? "not-allowed" : "pointer",
-                        background: isMemoChecked
+                        cursor: "pointer",
+                        background: form.values.is_memo
                           ? "linear-gradient(135deg, #28a745 0%, #218838 100%)"
                           : "linear-gradient(135deg, #ddddddff 0%, #dadadaff 100%)",
-                        color: isMemoChecked ? "white" : "black",
+                        color: form.values.is_memo ? "white" : "black",
                         border: "none",
                         padding: "0 0.2rem",
                         width: "6rem",
                       },
                       thumb: {
-                        background: isMemoChecked ? "#218838" : "#ffffffff",
+                        background: form.values.is_memo ? "#218838" : "#ffffffff",
                       },
                       root: {
                         display: "flex",
