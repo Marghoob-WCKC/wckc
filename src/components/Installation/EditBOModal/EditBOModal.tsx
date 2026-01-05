@@ -25,6 +25,7 @@ import { BackorderFormValues, BackorderSchema } from "@/zod/backorders.schema";
 import { Tables } from "@/types/db";
 import { FaBoxOpen, FaCheck, FaSave, FaTimes } from "react-icons/fa";
 import { bg } from "zod/v4/locales";
+import { read } from "fs";
 
 type Backorder = Tables<"backorders">;
 
@@ -135,6 +136,11 @@ export default function EditBackorderModal({
             placeholder="Select date"
             clearable
             style={{ pointerEvents: readOnly ? 'none' : 'auto' }}
+            styles={{
+              section: {
+                display: readOnly ? "none" : "flex"
+              }
+            }}
 
             valueFormat="YYYY-MM-DD"
             {...form.getInputProps("due_date")}
@@ -185,6 +191,7 @@ export default function EditBackorderModal({
             <Button
               type="submit"
               leftSection={<FaSave size={16} />}
+              disabled={readOnly}
               loading={updateMutation.isPending}
               style={{
                 background: "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
