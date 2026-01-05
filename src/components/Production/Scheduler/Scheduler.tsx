@@ -203,52 +203,52 @@ export default function EditProductionSchedulePage({
       label: string;
       icon: React.ReactNode;
     }[] = [
-      {
-        key: "in_plant_actual",
-        label: "In Plant (Doors)",
-        icon: <FaIndustry size={12} />,
-      },
-      {
-        key: "in_plant_cabinets_actual",
-        label: "In Plant (Cabinets)",
-        icon: <FaIndustry size={12} />,
-      },
-      {
-        key: "doors_completed_actual",
-        label: "Doors",
-        icon: <FaDoorOpen size={12} />,
-      },
-      {
-        key: "cut_finish_completed_actual",
-        label: "Cut Finishing",
-        icon: <FaCut size={12} />,
-      },
-      {
-        key: "custom_finish_completed_actual",
-        label: "Custom Finish",
-        icon: <FaCut size={12} />,
-      },
-      {
-        key: "drawer_completed_actual",
-        label: "Drawers",
-        icon: <FaDoorOpen size={12} />,
-      },
-      {
-        key: "cut_melamine_completed_actual",
-        label: "Melamine Cut",
-        icon: <FaCut size={12} />,
-      },
-      {
-        key: "paint_completed_actual",
-        label: "Paint",
-        icon: <FaPaintBrush size={12} />,
-      },
-      {
-        key: "assembly_completed_actual",
-        label: "Assembly",
-        icon: <FaCogs size={12} />,
-      },
-    ];
+        {
+          key: "in_plant_actual",
+          label: "In Plant (Doors)",
+          icon: <FaIndustry size={12} />,
+        },
+        {
+          key: "in_plant_cabinets_actual",
+          label: "In Plant (Cabinets)",
+          icon: <FaIndustry size={12} />,
+        },
+        {
+          key: "doors_completed_actual",
+          label: "Doors",
+          icon: <FaDoorOpen size={12} />,
+        },
+        {
+          key: "cut_finish_completed_actual",
+          label: "Cut Finishing",
+          icon: <FaCut size={12} />,
+        },
+        {
+          key: "custom_finish_completed_actual",
+          label: "Custom Finish",
+          icon: <FaCut size={12} />,
+        },
+        {
+          key: "drawer_completed_actual",
+          label: "Drawers",
+          icon: <FaDoorOpen size={12} />,
+        },
+        {
+          key: "cut_melamine_completed_actual",
+          label: "Melamine Cut",
+          icon: <FaCut size={12} />,
+        },
+        {
+          key: "paint_completed_actual",
+          label: "Paint",
+          icon: <FaPaintBrush size={12} />,
+        },
+        {
+          key: "assembly_completed_actual",
+          label: "Assembly",
+          icon: <FaCogs size={12} />,
+        },
+      ];
 
     return stepsData.map((step) => ({
       ...step,
@@ -327,24 +327,24 @@ export default function EditProductionSchedulePage({
   const cabinet = data.sales_orders?.cabinet;
   const shipping = data.sales_orders
     ? {
-        project_name: data.sales_orders.project_name,
-        shipping_client_name: data.sales_orders.shipping_client_name,
-        shipping_phone_1: data.sales_orders.shipping_phone_1,
-        shipping_phone_2: data.sales_orders.shipping_phone_2,
-        shipping_email_1: data.sales_orders.shipping_email_1,
-        shipping_email_2: data.sales_orders.shipping_email_2,
-        shipping_street: data.sales_orders.shipping_street,
-        shipping_city: data.sales_orders.shipping_city,
-        shipping_province: data.sales_orders.shipping_province,
-        shipping_zip: data.sales_orders.shipping_zip,
-      }
+      project_name: data.sales_orders.project_name,
+      shipping_client_name: data.sales_orders.shipping_client_name,
+      shipping_phone_1: data.sales_orders.shipping_phone_1,
+      shipping_phone_2: data.sales_orders.shipping_phone_2,
+      shipping_email_1: data.sales_orders.shipping_email_1,
+      shipping_email_2: data.sales_orders.shipping_email_2,
+      shipping_street: data.sales_orders.shipping_street,
+      shipping_city: data.sales_orders.shipping_city,
+      shipping_province: data.sales_orders.shipping_province,
+      shipping_zip: data.sales_orders.shipping_zip,
+    }
     : null;
   const orderDetails = data?.sales_orders
     ? {
-        order_type: data.sales_orders.order_type,
-        delivery_type: data.sales_orders.delivery_type,
-        install: data.sales_orders.install,
-      }
+      order_type: data.sales_orders.order_type,
+      delivery_type: data.sales_orders.delivery_type,
+      install: data.sales_orders.install,
+    }
     : null;
 
   const handleSubmit = (values: SchedulingFormValues) =>
@@ -431,7 +431,7 @@ export default function EditProductionSchedulePage({
               <Paper p="md" radius="md" shadow="xl" pb={30} bg="gray.1">
                 <Paper p="md" radius="md" shadow="xl" bg="white">
                   <Stack>
-                    {}
+                    { }
                     <Box mb="md">
                       <Group gap="xl" align="center">
                         <Switch
