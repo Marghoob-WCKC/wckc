@@ -24,6 +24,7 @@ import { zodResolver } from "@/utils/zodResolver/zodResolver";
 import { BackorderFormValues, BackorderSchema } from "@/zod/backorders.schema";
 import { Tables } from "@/types/db";
 import { FaBoxOpen, FaCheck, FaSave, FaTimes } from "react-icons/fa";
+import { bg } from "zod/v4/locales";
 
 type Backorder = Tables<"backorders">;
 
@@ -133,7 +134,8 @@ export default function EditBackorderModal({
             label="Expected Due Date"
             placeholder="Select date"
             clearable
-            disabled={readOnly}
+            style={{ pointerEvents: readOnly ? 'none' : 'auto' }}
+
             valueFormat="YYYY-MM-DD"
             {...form.getInputProps("due_date")}
           />
@@ -143,7 +145,7 @@ export default function EditBackorderModal({
             minRows={5}
             autosize
             placeholder="Describe missing or damaged items..."
-            disabled={readOnly}
+            style={{ pointerEvents: readOnly ? 'none' : 'auto' }}
             {...form.getInputProps("comments")}
           />
 
@@ -169,7 +171,7 @@ export default function EditBackorderModal({
                 offLabel={<FaTimes size={12} />}
                 {...form.getInputProps("complete", { type: "checkbox" })}
                 checked={form.values.complete}
-                disabled={readOnly}
+                style={{ pointerEvents: readOnly ? 'none' : 'auto' }}
               />
             </Group>
           </Paper>
