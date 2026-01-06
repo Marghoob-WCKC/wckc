@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const ServiceOrderPartSchema = z.object({
+  id: z.number().optional(),
+  _deleted: z.boolean().optional(),
   qty: z.number().min(1, "Quantity must be at least 1"),
   part: z.string().min(1, "Part name is required"),
   description: z.string().optional(),

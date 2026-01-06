@@ -28,7 +28,6 @@ import {
   Switch,
   Divider,
   Modal,
-  Collapse,
   rem,
   Tooltip,
 } from "@mantine/core";
@@ -48,6 +47,7 @@ import {
   FaDoorClosed,
   FaMapMarkerAlt,
   FaQuestionCircle,
+  FaUndo,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import {
@@ -62,7 +62,7 @@ import CustomRichTextEditor from "@/components/RichTextEditor/RichTextEditor";
 import PdfPreview from "../PdfPreview/PdfPreview";
 import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
 import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
-import { Tables } from "@/types/db";
+import { Enums, Tables } from "@/types/db";
 import AddInstaller from "@/components/Installers/AddInstaller/AddInstaller";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
@@ -72,6 +72,7 @@ import {
   serviceorderStatusOptions,
 } from "@/dropdowns/dropdownOptions";
 import { IoIosWarning } from "react-icons/io";
+import { gradients, linearGradients } from "@/theme";
 
 dayjs.extend(utc);
 interface EditServiceOrderProps {
@@ -264,11 +265,13 @@ export default function EditServiceOrder({
           ? new Date(serviceOrderData.completed_at)
           : null,
         parts: serviceOrderData.service_order_parts.map((p: any) => ({
+          id: p.id,
           qty: p.qty,
           part: p.part,
           description: p.description || "",
           location: p.location || "",
           status: p.status || "",
+          _deleted: false,
         })),
         homeowner_name: hoInfo?.homeowner_name || "",
         homeowner_phone: hoInfo?.homeowner_phone || "",
@@ -328,30 +331,43 @@ export default function EditServiceOrder({
         if (hoError) throw hoError;
       }
 
-      const { error: deleteError } = await supabase
-        .from("service_order_parts")
-        .delete()
-        .eq("service_order_id", serviceOrderId);
+      if (values.parts) {
+        const partsToDelete = values.parts
+          .filter((p) => p.id && p._deleted)
+          .map((p) => p.id as number);
 
-      if (deleteError)
-        throw new Error(`Delete Parts Error: ${deleteError.message}`);
+        if (partsToDelete.length > 0) {
+          const { error: deleteError } = await supabase
+            .from("service_order_parts")
+            .delete()
+            .in("id", partsToDelete);
 
-      if (values.parts && values.parts.length > 0) {
-        const partsPayload = values.parts.map((p) => ({
-          service_order_id: Number(serviceOrderId),
-          qty: p.qty,
-          part: p.part,
-          description: p.description || "",
-          location: p.location || "Unknown",
-          status: p.status || "pending",
-        }));
+          if (deleteError)
+            throw new Error(`Delete Parts Error: ${deleteError.message}`);
+        }
 
-        const { error: partsError } = await supabase
-          .from("service_order_parts")
-          .insert(partsPayload);
+        const partsToUpsert = values.parts
+          .filter((p) => !p._deleted)
+          .map((p) => ({
+            id: p.id,
+            service_order_id: Number(serviceOrderId),
+            qty: p.qty,
+            part: p.part,
+            description: p.description || "",
+            location: p.location || "Unknown",
+            status: p.status || "pending",
+          }));
 
-        if (partsError)
-          throw new Error(`Create Parts Error: ${partsError.message}`);
+        if (partsToUpsert.length > 0) {
+          const { error: upsertError } = await supabase
+            .from("service_order_parts")
+            .upsert(partsToUpsert);
+
+          if (upsertError)
+            throw new Error(
+              `Update/Create Parts Error: ${upsertError.message}`
+            );
+        }
       }
     },
     onSuccess: () => {
@@ -389,7 +405,27 @@ export default function EditServiceOrder({
       description: "",
       location: "",
       status: "pending",
+      _deleted: false,
     });
+  };
+  const markAllPartsCompleted = () => {
+    const updatedParts = form.values.parts.map((part) => ({
+      ...part,
+      status: "completed" as Enums<"so_part_status">,
+    }));
+
+    form.setFieldValue("parts", updatedParts);
+  };
+
+  const handlePartDelete = (index: number) => {
+    const part = form.values.parts?.[index];
+    if (!part) return;
+
+    if (part.id) {
+      form.setFieldValue(`parts.${index}._deleted`, !part._deleted);
+    } else {
+      form.removeListItem("parts", index);
+    }
   };
 
   if (soLoading) {
@@ -758,16 +794,28 @@ export default function EditServiceOrder({
           <Paper p="md" radius="md" shadow="xl">
             <Group justify="space-between" mb="md">
               <Text fw={600}>Required Parts</Text>
-              <Button
-                variant="light"
-                size="xs"
-                leftSection={<FaPlus />}
-                onClick={addPart}
-                color="white"
-                bg="linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%"
-              >
-                Add Part
-              </Button>
+              <Group>
+                <Button
+                  variant="light"
+                  size="xs"
+                  leftSection={<FaCheckCircle />}
+                  onClick={markAllPartsCompleted}
+                  color="white"
+                  bg={linearGradients.success}
+                >
+                  Mark All as Completed
+                </Button>
+                <Button
+                  variant="light"
+                  size="xs"
+                  leftSection={<FaPlus />}
+                  onClick={addPart}
+                  color="white"
+                  bg="linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%"
+                >
+                  Add Part
+                </Button>
+              </Group>
             </Group>
 
             {form.values.parts && form.values.parts.length > 0 ? (
@@ -783,78 +831,99 @@ export default function EditServiceOrder({
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {form.values.parts.map((_, index) => (
-                    <Table.Tr key={index}>
-                      <Table.Td>
-                        <NumberInput
-                          min={1}
-                          hideControls
-                          {...form.getInputProps(`parts.${index}.qty`)}
-                        />
-                      </Table.Td>
-                      <Table.Td>
-                        <TextInput
-                          placeholder="Part Name"
-                          {...form.getInputProps(`parts.${index}.part`)}
-                        />
-                      </Table.Td>
-                      <Table.Td>
-                        <TextInput
-                          placeholder="Details..."
-                          {...form.getInputProps(`parts.${index}.description`)}
-                        />
-                      </Table.Td>
-                      <Table.Td>
-                        <Select
-                          placeholder="Location..."
-                          data={serviceorderLocationOptions}
-                          {...form.getInputProps(`parts.${index}.location`)}
-                          leftSection={getLocationIcon(
-                            form.values.parts[index].location
-                          )}
-                          renderOption={({ option }) => (
-                            <Group gap="sm">
-                              {getLocationIcon(option.value)}
-                              <Text size="sm">{option.label}</Text>
-                            </Group>
-                          )}
-                          comboboxProps={{
-                            position: "top",
-                            middlewares: { flip: false, shift: false },
-                          }}
-                          allowDeselect={false}
-                        />
-                      </Table.Td>
-                      <Table.Td>
-                        <Select
-                          placeholder="Status..."
-                          data={serviceorderStatusOptions}
-                          {...form.getInputProps(`parts.${index}.status`)}
-                          comboboxProps={{
-                            position: "top",
-                            middlewares: { flip: false, shift: false },
-                          }}
-                          rightSection={
-                            form.values.parts[index].status === "completed" ? (
-                              <FaCheckCircle size={12} color="green" />
+                  {form.values.parts.map((part, index) => {
+                    const isDeleted = part._deleted;
+                    return (
+                      <Table.Tr
+                        key={index}
+                        bg={isDeleted ? "gray.0" : undefined}
+                        style={{
+                          textDecoration: isDeleted ? "line-through" : "none",
+                        }}
+                      >
+                        <Table.Td>
+                          <NumberInput
+                            min={1}
+                            hideControls
+                            disabled={isDeleted}
+                            {...form.getInputProps(`parts.${index}.qty`)}
+                          />
+                        </Table.Td>
+                        <Table.Td>
+                          <TextInput
+                            placeholder="Part Name"
+                            disabled={isDeleted}
+                            {...form.getInputProps(`parts.${index}.part`)}
+                          />
+                        </Table.Td>
+                        <Table.Td>
+                          <TextInput
+                            placeholder="Details..."
+                            disabled={isDeleted}
+                            {...form.getInputProps(
+                              `parts.${index}.description`
+                            )}
+                          />
+                        </Table.Td>
+                        <Table.Td>
+                          <Select
+                            placeholder="Location..."
+                            disabled={isDeleted}
+                            data={serviceorderLocationOptions}
+                            {...form.getInputProps(`parts.${index}.location`)}
+                            leftSection={getLocationIcon(
+                              form.values.parts[index].location
+                            )}
+                            renderOption={({ option }) => (
+                              <Group gap="sm">
+                                {getLocationIcon(option.value)}
+                                <Text size="sm">{option.label}</Text>
+                              </Group>
+                            )}
+                            comboboxProps={{
+                              position: "top",
+                              middlewares: { flip: false, shift: false },
+                            }}
+                            allowDeselect={false}
+                          />
+                        </Table.Td>
+                        <Table.Td>
+                          <Select
+                            placeholder="Status..."
+                            disabled={isDeleted}
+                            data={serviceorderStatusOptions}
+                            {...form.getInputProps(`parts.${index}.status`)}
+                            comboboxProps={{
+                              position: "top",
+                              middlewares: { flip: false, shift: false },
+                            }}
+                            rightSection={
+                              form.values.parts[index].status ===
+                              "completed" ? (
+                                <FaCheckCircle size={12} color="green" />
+                              ) : (
+                                <IoIosWarning size={14} color="orange" />
+                              )
+                            }
+                            allowDeselect={false}
+                          />
+                        </Table.Td>
+                        <Table.Td>
+                          <ActionIcon
+                            color={isDeleted ? "gray" : "red"}
+                            variant="subtle"
+                            onClick={() => handlePartDelete(index)}
+                          >
+                            {isDeleted ? (
+                              <FaUndo size={14} />
                             ) : (
-                              <IoIosWarning size={14} color="orange" />
-                            )
-                          }
-                          allowDeselect={false}
-                        />
-                      </Table.Td>
-                      <Table.Td>
-                        <ActionIcon
-                          color="red"
-                          variant="subtle"
-                          onClick={() => form.removeListItem("parts", index)}
-                        >
-                          <FaTrash size={14} />
-                        </ActionIcon>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
+                              <FaTrash size={14} />
+                            )}
+                          </ActionIcon>
+                        </Table.Td>
+                      </Table.Tr>
+                    );
+                  })}
                 </Table.Tbody>
               </Table>
             ) : (

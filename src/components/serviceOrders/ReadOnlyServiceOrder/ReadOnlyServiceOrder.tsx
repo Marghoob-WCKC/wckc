@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Container,
@@ -17,7 +16,6 @@ import {
   Grid,
   Title,
   Divider,
-  Avatar,
   Card,
   rem,
   Typography,
@@ -29,14 +27,19 @@ import {
   FaUser,
   FaTools,
   FaCalendarAlt,
-  FaArrowLeft,
   FaCheck,
   FaTimes,
   FaHammer,
   FaBoxOpen,
   FaMapMarkerAlt,
   FaEye,
+  FaDesktop,
+  FaBuilding,
+  FaDoorClosed,
+  FaQuestionCircle,
+  FaCheckCircle,
 } from "react-icons/fa";
+import { IoIosWarning } from "react-icons/io";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
 import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
@@ -125,6 +128,26 @@ export default function ReadOnlyServiceOrder({
   const { supabase, isAuthenticated } = useSupabase();
   const [previewOpened, { open: openPreview, close: closePreview }] =
     useDisclosure(false);
+
+  const getLocationIcon = (value: string | null) => {
+    switch (value) {
+      case "In Bin":
+        return <FaBoxOpen size={14} />;
+      case "At Wall":
+        return <FaMapMarkerAlt size={14} />;
+      case "On Desk":
+        return <FaDesktop size={14} />;
+      case "In Office":
+        return <FaBuilding size={14} />;
+      case "In Closet":
+        return <FaDoorClosed size={14} />;
+      case "Unknown":
+        return <FaQuestionCircle size={14} />;
+      default:
+        return null;
+    }
+  };
+
   const { data: so, isLoading } = useQuery({
     queryKey: ["service_order_readonly", serviceOrderId],
     queryFn: async () => {
@@ -496,6 +519,8 @@ export default function ReadOnlyServiceOrder({
                               Qty
                             </Table.Th>
                             <Table.Th>Part Details</Table.Th>
+                            <Table.Th>Location</Table.Th>
+                            <Table.Th>Status</Table.Th>
                           </Table.Tr>
                         </Table.Thead>
                         <Table.Tbody>
@@ -523,6 +548,33 @@ export default function ReadOnlyServiceOrder({
                                   >
                                     {part.description}
                                   </Text>
+                                )}
+                              </Table.Td>
+                              <Table.Td>
+                                <Group gap="xs">
+                                  {getLocationIcon(part.location)}
+                                  <Text size="sm">
+                                    {part.location || "Unknown"}
+                                  </Text>
+                                </Group>
+                              </Table.Td>
+                              <Table.Td>
+                                {part.status === "completed" ? (
+                                  <Badge
+                                    color="green"
+                                    variant="light"
+                                    leftSection={<FaCheckCircle size={12} />}
+                                  >
+                                    Completed
+                                  </Badge>
+                                ) : (
+                                  <Badge
+                                    color="orange"
+                                    variant="light"
+                                    leftSection={<IoIosWarning size={12} />}
+                                  >
+                                    {part.status || "Pending"}
+                                  </Badge>
                                 )}
                               </Table.Td>
                             </Table.Tr>

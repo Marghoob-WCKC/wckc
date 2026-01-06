@@ -726,8 +726,8 @@ function ServiceOrderFormContent({
                     <Table.Th w={80}>Qty</Table.Th>
                     <Table.Th w={200}>Part Name</Table.Th>
                     <Table.Th>Description</Table.Th>
-                    <Table.Th>Location</Table.Th>
-                    <Table.Th>Status</Table.Th>
+                    <Table.Th w={200}>Location</Table.Th>
+                    <Table.Th w={200}>Status</Table.Th>
                     <Table.Th w={50} />
                   </Table.Tr>
                 </Table.Thead>
