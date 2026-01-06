@@ -49,6 +49,7 @@ import { usePlantServiceOrders } from "@/hooks/usePlantServiceOrders";
 import { Database } from "@/types/supabase";
 import { serviceorderLocationOptions } from "@/dropdowns/dropdownOptions";
 import { linearGradients } from "@/theme";
+import ServiceOrderPdfPreviewModal from "./ServiceOrderPdfPreviewModal";
 
 type PlantServiceOrderView =
   Database["public"]["Views"]["plant_service_orders_view"]["Row"];
@@ -80,7 +81,9 @@ export default function PlantServiceOrdersTable() {
   ]);
 
   const [openDates, setOpenDates] = useState<string[]>([]);
+
   const [openOrders, setOpenOrders] = useState<string[]>([]);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
 
   const { data, isLoading, isError, error } = usePlantServiceOrders({
     pagination,
@@ -267,6 +270,14 @@ export default function PlantServiceOrdersTable() {
             </Text>
           </Stack>
         </Group>
+        <Button
+          leftSection={<FaClipboardList size={20} />}
+          variant="light"
+          color="violet"
+          onClick={() => setPdfModalOpen(true)}
+        >
+          Print Preview
+        </Button>
       </Group>
 
       {}
@@ -602,6 +613,12 @@ export default function PlantServiceOrdersTable() {
           radius="md"
         />
       </Box>
+      <ServiceOrderPdfPreviewModal
+        opened={pdfModalOpen}
+        onClose={() => setPdfModalOpen(false)}
+        data={tableData}
+        dateRange={dateRange}
+      />
     </Box>
   );
 }
