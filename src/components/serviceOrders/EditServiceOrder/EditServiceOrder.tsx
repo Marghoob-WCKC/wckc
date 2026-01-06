@@ -72,7 +72,7 @@ import {
   serviceorderStatusOptions,
 } from "@/dropdowns/dropdownOptions";
 import { IoIosWarning } from "react-icons/io";
-import { gradients, linearGradients } from "@/theme";
+import { linearGradients } from "@/theme";
 
 dayjs.extend(utc);
 interface EditServiceOrderProps {
@@ -346,8 +346,8 @@ export default function EditServiceOrder({
             throw new Error(`Delete Parts Error: ${deleteError.message}`);
         }
 
-        const partsToUpsert = values.parts
-          .filter((p) => !p._deleted)
+        const partsToUpdate = values.parts
+          .filter((p) => p.id && !p._deleted)
           .map((p) => ({
             id: p.id,
             service_order_id: Number(serviceOrderId),
@@ -358,15 +358,33 @@ export default function EditServiceOrder({
             status: p.status || "pending",
           }));
 
-        if (partsToUpsert.length > 0) {
-          const { error: upsertError } = await supabase
+        if (partsToUpdate.length > 0) {
+          const { error: updateError } = await supabase
             .from("service_order_parts")
-            .upsert(partsToUpsert);
+            .upsert(partsToUpdate);
 
-          if (upsertError)
-            throw new Error(
-              `Update/Create Parts Error: ${upsertError.message}`
-            );
+          if (updateError)
+            throw new Error(`Update Parts Error: ${updateError.message}`);
+        }
+
+        const partsToInsert = values.parts
+          .filter((p) => !p.id && !p._deleted)
+          .map((p) => ({
+            service_order_id: Number(serviceOrderId),
+            qty: p.qty,
+            part: p.part,
+            description: p.description || "",
+            location: p.location || "Unknown",
+            status: p.status || "pending",
+          }));
+
+        if (partsToInsert.length > 0) {
+          const { error: insertError } = await supabase
+            .from("service_order_parts")
+            .insert(partsToInsert);
+
+          if (insertError)
+            throw new Error(`Create Parts Error: ${insertError.message}`);
         }
       }
     },
@@ -408,12 +426,12 @@ export default function EditServiceOrder({
       _deleted: false,
     });
   };
+
   const markAllPartsCompleted = () => {
     const updatedParts = form.values.parts.map((part) => ({
       ...part,
       status: "completed" as Enums<"so_part_status">,
     }));
-
     form.setFieldValue("parts", updatedParts);
   };
 
@@ -518,7 +536,7 @@ export default function EditServiceOrder({
             dayjs.utc(form.values.completed_at).year() !== 1999 && (
               <Text size="sm" c="dimmed">
                 Completed on:{" "}
-                {dayjs(form.values.completed_at).format("YYYY-MM-DD")}
+                {dayjs.utc(form.values.completed_at).format("YYYY-MM-DD HH:mm")}
               </Text>
             )}
         </Box>
