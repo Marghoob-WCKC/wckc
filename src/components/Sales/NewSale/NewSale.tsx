@@ -39,7 +39,13 @@ import {
   List,
   ThemeIcon,
 } from "@mantine/core";
-import { FaCopy, FaPlus, FaCheckCircle, FaCircle, FaInfoCircle } from "react-icons/fa";
+import {
+  FaCopy,
+  FaPlus,
+  FaCheckCircle,
+  FaCircle,
+  FaInfoCircle,
+} from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import {
   MasterOrderInput,
@@ -67,7 +73,10 @@ import dayjs from "dayjs";
 import { handleTabSelect } from "@/utils/handleTabSelect";
 dayjs.extend(utc);
 
-function getNextVariant(existingSuffixes: (string | null)[]): string {
+function getNextVariant(existingSuffixes: (string | null)[]): string | null {
+  if (existingSuffixes.length === 1 && existingSuffixes[0] === null) {
+    return null;
+  }
   const clean = existingSuffixes
     .filter((s): s is string => !!s && s.trim() !== "")
     .map((s) => s.trim().toUpperCase())
@@ -498,13 +507,12 @@ export default function NewSale() {
   }, [jobNum]);
 
   useEffect(() => {
-    if (form.values.order_type !== "Multi Fam") return;
-
     if (existingJobs && existingJobs.length > 0) {
       const suffixes = existingJobs.map((j) => j.job_suffix);
       const next = getNextVariant(suffixes);
+      console.log("next", next);
 
-      if (!form.values.manual_job_suffix) {
+      if (!form.values.manual_job_suffix && next) {
         form.setFieldValue("manual_job_suffix", next);
         setIsVariantAutofilled(true);
       }
@@ -551,8 +559,6 @@ export default function NewSale() {
 
   useEffect(() => {
     const currentProjectName = form.values.shipping.project_name;
-
-    if (form.values.order_type !== "Multi Fam") return;
 
     if (
       relatedProjectOptions &&
@@ -663,15 +669,14 @@ export default function NewSale() {
     if (unitNumber.trim()) {
       payload.shipping = {
         ...payload.shipping,
-        shipping_street: `${unitNumber.trim()} - ${payload.shipping.shipping_street
-          }`,
+        shipping_street: `${unitNumber.trim()} - ${
+          payload.shipping.shipping_street
+        }`,
       };
     }
 
     submitMutation.mutate(payload);
   };
-
-
 
   return (
     <Container
@@ -800,7 +805,9 @@ export default function NewSale() {
                                 <List size="xs" spacing={2}>
                                   {existingJobs.map((j) => (
                                     <List.Item key={j.id}>
-                                      {j.job_base_number}-{j.job_suffix}
+                                      {j.job_base_number && j.job_suffix
+                                        ? `${j.job_base_number}-${j.job_suffix}`
+                                        : `${j.job_base_number}`}
                                     </List.Item>
                                   ))}
                                 </List>
@@ -908,7 +915,9 @@ export default function NewSale() {
                         width: "6rem",
                       },
                       thumb: {
-                        background: form.values.is_memo ? "#218838" : "#ffffffff",
+                        background: form.values.is_memo
+                          ? "#218838"
+                          : "#ffffffff",
                       },
                       root: {
                         display: "flex",
@@ -981,9 +990,11 @@ export default function NewSale() {
                       Billing Address
                     </Text>
                     <Text fw={500} size="sm" mt={-5}>
-                      {`${selectedClientData.street || "—"}, ${selectedClientData.city || "—"
-                        }, ${selectedClientData.province || "—"} ${selectedClientData.zip || "—"
-                        }`}
+                      {`${selectedClientData.street || "—"}, ${
+                        selectedClientData.city || "—"
+                      }, ${selectedClientData.province || "—"} ${
+                        selectedClientData.zip || "—"
+                      }`}
                     </Text>
                   </Stack>
                 </Stack>
@@ -1120,8 +1131,8 @@ export default function NewSale() {
                         form.values.install === true
                           ? "true"
                           : form.values.install === false
-                            ? "false"
-                            : ""
+                          ? "false"
+                          : ""
                       }
                       onChange={(val) =>
                         form.setFieldValue("install", val === "true")
