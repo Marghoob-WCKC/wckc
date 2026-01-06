@@ -42,6 +42,12 @@ import {
   FaSave,
   FaCheck,
   FaCheckCircle,
+  FaBoxOpen,
+  FaBuilding,
+  FaDesktop,
+  FaDoorClosed,
+  FaMapMarkerAlt,
+  FaQuestionCircle,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import {
@@ -58,6 +64,11 @@ import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 import HomeOwnersInfo from "../HomeOwnersInfo/HomeOwnersInfo";
+import {
+  serviceorderLocationOptions,
+  serviceorderStatusOptions,
+} from "@/dropdowns/dropdownOptions";
+import { IoIosWarning } from "react-icons/io";
 
 interface NewServiceOrderProps {
   preselectedJobId?: string;
@@ -95,7 +106,24 @@ function ServiceOrderFormContent({
   ] = useDisclosure(false);
 
   const [newID, setNewID] = useState<number | null>(null);
-
+  const getLocationIcon = (value: string | null) => {
+    switch (value) {
+      case "In Bin":
+        return <FaBoxOpen size={14} />;
+      case "At Wall":
+        return <FaMapMarkerAlt size={14} />;
+      case "On Desk":
+        return <FaDesktop size={14} />;
+      case "In Office":
+        return <FaBuilding size={14} />;
+      case "In Closet":
+        return <FaDoorClosed size={14} />;
+      case "Unknown":
+        return <FaQuestionCircle size={14} />;
+      default:
+        return null;
+    }
+  };
   const form = useForm<ServiceOrderFormValues>({
     initialValues: {
       job_id: preselectedJobId || "",
@@ -331,6 +359,8 @@ function ServiceOrderFormContent({
           qty: p.qty,
           part: p.part,
           description: p.description || "",
+          location: p.location || "Unknown",
+          status: p.status || "pending",
         }));
 
         const { error: partsError } = await supabase
@@ -391,7 +421,13 @@ function ServiceOrderFormContent({
   };
 
   const addPart = () => {
-    form.insertListItem("parts", { qty: 1, part: "", description: "" });
+    form.insertListItem("parts", {
+      qty: 1,
+      part: "",
+      description: "",
+      location: "",
+      status: "pending",
+    });
   };
 
   if (jobsLoading || installersLoading) {
@@ -690,6 +726,8 @@ function ServiceOrderFormContent({
                     <Table.Th w={80}>Qty</Table.Th>
                     <Table.Th w={200}>Part Name</Table.Th>
                     <Table.Th>Description</Table.Th>
+                    <Table.Th>Location</Table.Th>
+                    <Table.Th>Status</Table.Th>
                     <Table.Th w={50} />
                   </Table.Tr>
                 </Table.Thead>
@@ -713,6 +751,46 @@ function ServiceOrderFormContent({
                         <TextInput
                           placeholder="Details..."
                           {...form.getInputProps(`parts.${index}.description`)}
+                        />
+                      </Table.Td>
+                      <Table.Td>
+                        <Select
+                          placeholder="Location..."
+                          data={serviceorderLocationOptions}
+                          {...form.getInputProps(`parts.${index}.location`)}
+                          leftSection={getLocationIcon(
+                            form.values.parts[index].location
+                          )}
+                          renderOption={({ option }) => (
+                            <Group gap="sm">
+                              {getLocationIcon(option.value)}
+                              <Text size="sm">{option.label}</Text>
+                            </Group>
+                          )}
+                          comboboxProps={{
+                            position: "top",
+                            middlewares: { flip: false, shift: false },
+                          }}
+                          allowDeselect={false}
+                        />
+                      </Table.Td>
+                      <Table.Td>
+                        <Select
+                          placeholder="Status..."
+                          data={serviceorderStatusOptions}
+                          {...form.getInputProps(`parts.${index}.status`)}
+                          comboboxProps={{
+                            position: "top",
+                            middlewares: { flip: false, shift: false },
+                          }}
+                          rightSection={
+                            form.values.parts[index].status === "completed" ? (
+                              <FaCheckCircle size={12} color="green" />
+                            ) : (
+                              <IoIosWarning size={14} color="orange" />
+                            )
+                          }
+                          allowDeselect={false}
                         />
                       </Table.Td>
                       <Table.Td>

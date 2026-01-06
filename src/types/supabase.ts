@@ -1216,23 +1216,29 @@ export type Database = {
         Row: {
           description: string | null
           id: number
+          location: string | null
           part: string
           qty: number
           service_order_id: number
+          status: Database["public"]["Enums"]["so_part_status"] | null
         }
         Insert: {
           description?: string | null
           id?: number
+          location?: string | null
           part: string
           qty?: number
           service_order_id: number
+          status?: Database["public"]["Enums"]["so_part_status"] | null
         }
         Update: {
           description?: string | null
           id?: number
+          location?: string | null
           part?: string
           qty?: number
           service_order_id?: number
+          status?: Database["public"]["Enums"]["so_part_status"] | null
         }
         Relationships: [
           {
@@ -1931,6 +1937,7 @@ export type Database = {
     Enums: {
       SalesStage: "QUOTE" | "SOLD"
       ShippingStatus: "unprocessed" | "tentative" | "confirmed"
+      so_part_status: "pending" | "completed" | "unknown"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2060,6 +2067,7 @@ export const Constants = {
     Enums: {
       SalesStage: ["QUOTE", "SOLD"],
       ShippingStatus: ["unprocessed", "tentative", "confirmed"],
+      so_part_status: ["pending", "completed", "unknown"],
     },
   },
 } as const

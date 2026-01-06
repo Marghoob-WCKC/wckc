@@ -97,11 +97,11 @@ type JobData = Tables<"jobs"> & {
   installation: InstallationType | null;
   production_schedule: Tables<"production_schedule"> | null;
   sales_orders:
-  | (Tables<"sales_orders"> & {
-    client: Tables<"client"> | null;
-    cabinet: JoinedCabinet | null;
-  })
-  | null;
+    | (Tables<"sales_orders"> & {
+        client: Tables<"client"> | null;
+        cabinet: JoinedCabinet | null;
+      })
+    | null;
 };
 export default function InstallationEditor({ jobId }: { jobId: number }) {
   const router = useRouter();
@@ -283,52 +283,52 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
       label: string;
       icon: React.ReactNode;
     }[] = [
-        {
-          key: "in_plant_actual",
-          label: "In Plant (Doors)",
-          icon: <FaIndustry size={12} />,
-        },
-        {
-          key: "in_plant_cabinets_actual",
-          label: "In Plant (Cabinets)",
-          icon: <FaIndustry size={12} />,
-        },
-        {
-          key: "doors_completed_actual",
-          label: "Doors",
-          icon: <FaDoorOpen size={12} />,
-        },
-        {
-          key: "cut_finish_completed_actual",
-          label: "Cut Finishing",
-          icon: <FaCut size={12} />,
-        },
-        {
-          key: "custom_finish_completed_actual",
-          label: "Custom Finish",
-          icon: <FaCut size={12} />,
-        },
-        {
-          key: "drawer_completed_actual",
-          label: "Drawers",
-          icon: <FaDoorOpen size={12} />,
-        },
-        {
-          key: "cut_melamine_completed_actual",
-          label: "Melamine Cut",
-          icon: <FaCut size={12} />,
-        },
-        {
-          key: "paint_completed_actual",
-          label: "Paint",
-          icon: <FaPaintBrush size={12} />,
-        },
-        {
-          key: "assembly_completed_actual",
-          label: "Assembly",
-          icon: <FaCogs size={12} />,
-        },
-      ];
+      {
+        key: "in_plant_actual",
+        label: "In Plant (Doors)",
+        icon: <FaIndustry size={12} />,
+      },
+      {
+        key: "in_plant_cabinets_actual",
+        label: "In Plant (Cabinets)",
+        icon: <FaIndustry size={12} />,
+      },
+      {
+        key: "doors_completed_actual",
+        label: "Doors",
+        icon: <FaDoorOpen size={12} />,
+      },
+      {
+        key: "cut_finish_completed_actual",
+        label: "Cut Finishing",
+        icon: <FaCut size={12} />,
+      },
+      {
+        key: "custom_finish_completed_actual",
+        label: "Custom Finish",
+        icon: <FaCut size={12} />,
+      },
+      {
+        key: "drawer_completed_actual",
+        label: "Drawers",
+        icon: <FaDoorOpen size={12} />,
+      },
+      {
+        key: "cut_melamine_completed_actual",
+        label: "Melamine Cut",
+        icon: <FaCut size={12} />,
+      },
+      {
+        key: "paint_completed_actual",
+        label: "Paint",
+        icon: <FaPaintBrush size={12} />,
+      },
+      {
+        key: "assembly_completed_actual",
+        label: "Assembly",
+        icon: <FaCogs size={12} />,
+      },
+    ];
 
     return stepsData.map((step) => ({
       ...step,
@@ -384,7 +384,10 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         ship_schedule: ship_schedule
           ? dayjs(ship_schedule).format("YYYY-MM-DD")
           : null,
-        ship_status: (ship_schedule && ship_status != "confirmed") ? "tentative" : ship_status,
+        ship_status:
+          ship_schedule && ship_status != "confirmed"
+            ? "tentative"
+            : ship_status,
       };
 
       if (installValues.has_shipped && !installValues.partially_shipped) {
@@ -453,24 +456,24 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
   const cabinet = jobData.sales_orders?.cabinet;
   const shipping = jobData.sales_orders
     ? {
-      shipping_client_name: jobData.sales_orders.shipping_client_name,
-      project_name: jobData.sales_orders.project_name,
-      shipping_phone_1: jobData.sales_orders.shipping_phone_1,
-      shipping_phone_2: jobData.sales_orders.shipping_phone_2,
-      shipping_email_1: jobData.sales_orders.shipping_email_1,
-      shipping_email_2: jobData.sales_orders.shipping_email_2,
-      shipping_street: jobData.sales_orders.shipping_street,
-      shipping_city: jobData.sales_orders.shipping_city,
-      shipping_province: jobData.sales_orders.shipping_province,
-      shipping_zip: jobData.sales_orders.shipping_zip,
-    }
+        shipping_client_name: jobData.sales_orders.shipping_client_name,
+        project_name: jobData.sales_orders.project_name,
+        shipping_phone_1: jobData.sales_orders.shipping_phone_1,
+        shipping_phone_2: jobData.sales_orders.shipping_phone_2,
+        shipping_email_1: jobData.sales_orders.shipping_email_1,
+        shipping_email_2: jobData.sales_orders.shipping_email_2,
+        shipping_street: jobData.sales_orders.shipping_street,
+        shipping_city: jobData.sales_orders.shipping_city,
+        shipping_province: jobData.sales_orders.shipping_province,
+        shipping_zip: jobData.sales_orders.shipping_zip,
+      }
     : null;
   const orderDetails = jobData?.sales_orders
     ? {
-      order_type: jobData.sales_orders.order_type,
-      delivery_type: jobData.sales_orders.delivery_type,
-      install: jobData.sales_orders.install,
-    }
+        order_type: jobData.sales_orders.order_type,
+        delivery_type: jobData.sales_orders.delivery_type,
+        install: jobData.sales_orders.install,
+      }
     : null;
   const prodSchedule = jobData.production_schedule;
   const installRecordId = jobData.installation?.installation_id;
@@ -554,43 +557,43 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     label: string;
     icon: React.ReactNode;
   }[] = [
-      {
-        key: "placement_date",
-        label: "Placement Date",
-        icon: <FaIndustry size={12} />,
-      },
-      {
-        key: "doors_in_schedule",
-        label: "Doors In",
-        icon: <FaDoorOpen size={12} />,
-      },
-      {
-        key: "doors_out_schedule",
-        label: "Doors Out",
-        icon: <FaDoorOpen size={12} />,
-      },
-      {
-        key: "cut_finish_schedule",
-        label: "Cut Finish",
-        icon: <FaCut size={12} />,
-      },
-      {
-        key: "cut_melamine_schedule",
-        label: "Cut Melamine",
-        icon: <FaCut size={12} />,
-      },
-      {
-        key: "paint_in_schedule",
-        label: "Paint In",
-        icon: <FaPaintBrush size={12} />,
-      },
-      {
-        key: "paint_out_schedule",
-        label: "Paint Out",
-        icon: <FaPaintBrush size={12} />,
-      },
-      { key: "assembly_schedule", label: "Assembly", icon: <FaCogs size={12} /> },
-    ];
+    {
+      key: "placement_date",
+      label: "Placement Date",
+      icon: <FaIndustry size={12} />,
+    },
+    {
+      key: "doors_in_schedule",
+      label: "Doors In",
+      icon: <FaDoorOpen size={12} />,
+    },
+    {
+      key: "doors_out_schedule",
+      label: "Doors Out",
+      icon: <FaDoorOpen size={12} />,
+    },
+    {
+      key: "cut_finish_schedule",
+      label: "Cut Finish",
+      icon: <FaCut size={12} />,
+    },
+    {
+      key: "cut_melamine_schedule",
+      label: "Cut Melamine",
+      icon: <FaCut size={12} />,
+    },
+    {
+      key: "paint_in_schedule",
+      label: "Paint In",
+      icon: <FaPaintBrush size={12} />,
+    },
+    {
+      key: "paint_out_schedule",
+      label: "Paint Out",
+      icon: <FaPaintBrush size={12} />,
+    },
+    { key: "assembly_schedule", label: "Assembly", icon: <FaCogs size={12} /> },
+  ];
 
   return (
     <Container
@@ -695,8 +698,8 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                               >
                                 {prodSchedule[step.key]
                                   ? dayjs(
-                                    prodSchedule[step.key] as string
-                                  ).format("YYYY-MM-DD")
+                                      prodSchedule[step.key] as string
+                                    ).format("YYYY-MM-DD")
                                   : "—"}
                               </Text>
                             </Group>
@@ -806,20 +809,24 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           {...form.getInputProps("inspection_date")}
                         />
                       </SimpleGrid>
-                      {jobData.sales_orders?.comments && <Box mt={rem(20)}>
-                        <Group mb={8} style={{ color: "#4A00E0" }}>
-                          <FaClipboardList size={18} />
-                          <Text fw={600}>Designer Notes</Text>
-                        </Group>
-                        <Textarea
-                          minRows={3}
-                          readOnly
-                          variant="filled"
-                          value={jobData.sales_orders?.comments || "No sales notes available."}
-                          styles={{ input: { color: "dimmed" } }}
-                        />
-                      </Box>}
-
+                      {jobData.sales_orders?.comments && (
+                        <Box mt={rem(20)}>
+                          <Group mb={8} style={{ color: "#4A00E0" }}>
+                            <FaClipboardList size={18} />
+                            <Text fw={600}>Designer Notes</Text>
+                          </Group>
+                          <Textarea
+                            minRows={3}
+                            readOnly
+                            variant="filled"
+                            value={
+                              jobData.sales_orders?.comments ||
+                              "No sales notes available."
+                            }
+                            styles={{ input: { color: "dimmed" } }}
+                          />
+                        </Box>
+                      )}
 
                       <Box mt={rem(20)}>
                         <Group mb={8} style={{ color: "#4A00E0" }}>
@@ -835,12 +842,17 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                             onKeyDown={(e) => {
                               if (e.shiftKey && e.key.toLowerCase() === "d") {
                                 e.preventDefault();
-                                const dateString = dayjs().format("~DD/MM/YYYY :\t");
-                                const currentValue = form.values.installation_notes || "";
+                                const dateString =
+                                  dayjs().format("~DD/MM/YYYY :\t");
+                                const currentValue =
+                                  form.values.installation_notes || "";
                                 const newValue = currentValue
                                   ? `${currentValue}\n${dateString}`
                                   : dateString;
-                                form.setFieldValue("installation_notes", newValue);
+                                form.setFieldValue(
+                                  "installation_notes",
+                                  newValue
+                                );
                               }
                             }}
                           />
@@ -922,11 +934,11 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           {form.values.installation_completed && (
                             <Text c="dimmed" size="xs">
                               {form.values.installation_completed ===
-                                "1999-09-19T00:00:00+00:00"
+                              "1999-09-19T00:00:00+00:00"
                                 ? "Marked Complete"
                                 : dayjs
-                                  .utc(form.values.installation_completed)
-                                  .format("YYYY-MM-DD")}
+                                    .utc(form.values.installation_completed)
+                                    .format("YYYY-MM-DD")}
                             </Text>
                           )}
                         </Group>
@@ -1179,9 +1191,19 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
               border: "none",
             }}
             size="md"
-            onClick={() => window.close()}
+            onClick={() => {
+              const nav = (window as any).navigation;
+              if (nav && "canGoBack" in nav) {
+                if (nav.canGoBack) {
+                  router.back();
+                } else {
+                  window.close();
+                }
+                return;
+              }
+            }}
           >
-            Close Window
+            Back
           </Button>
           <Button
             type="submit"

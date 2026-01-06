@@ -4,6 +4,8 @@ export const ServiceOrderPartSchema = z.object({
   qty: z.number().min(1, "Quantity must be at least 1"),
   part: z.string().min(1, "Part name is required"),
   description: z.string().optional(),
+  location: z.string().default("Unknown"),
+  status: z.enum(["pending", "completed", "unknown"]).default("pending"),
 });
 
 export const ServiceOrderSchema = z.object({

@@ -476,8 +476,8 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         salesOrderData.date_sold === null && values.stage === "SOLD"
           ? dayjs.utc().format()
           : salesOrderData.stage === "SOLD"
-            ? salesOrderData.date_sold
-            : null;
+          ? salesOrderData.date_sold
+          : null;
       const { error: soError } = await supabase
         .from("sales_orders")
         .update({
@@ -606,15 +606,14 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
     if (unitNumber.trim()) {
       payload.shipping = {
         ...payload.shipping,
-        shipping_street: `${unitNumber.trim()}-${payload.shipping.shipping_street
-          }`,
+        shipping_street: `${unitNumber.trim()}-${
+          payload.shipping.shipping_street
+        }`,
       };
     }
 
     updateMutation.mutate(payload);
   };
-
-
 
   return (
     <Container
@@ -838,11 +837,18 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                           offLabel="Dead"
                           size="xl"
                           thumbIcon={
-                            form.values.is_active ? <FaCheckCircle /> : <FaCircle />
+                            form.values.is_active ? (
+                              <FaCheckCircle />
+                            ) : (
+                              <FaCircle />
+                            )
                           }
                           checked={form.values.is_active}
                           onChange={(e) =>
-                            form.setFieldValue("is_active", e.currentTarget.checked)
+                            form.setFieldValue(
+                              "is_active",
+                              e.currentTarget.checked
+                            )
                           }
                           styles={{
                             track: {
@@ -929,9 +935,11 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       Billing Address
                     </Text>
                     <Text fw={500} size="sm" mt={-5}>
-                      {`${selectedClientData.street || "—"}, ${selectedClientData.city || "—"
-                        }, ${selectedClientData.province || "—"} ${selectedClientData.zip || "—"
-                        }`}
+                      {`${selectedClientData.street || "—"}, ${
+                        selectedClientData.city || "—"
+                      }, ${selectedClientData.province || "—"} ${
+                        selectedClientData.zip || "—"
+                      }`}
                     </Text>
                   </Stack>
                 </Stack>
@@ -1063,8 +1071,8 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                         form.values.install === true
                           ? "true"
                           : form.values.install === false
-                            ? "false"
-                            : ""
+                          ? "false"
+                          : ""
                       }
                       onChange={(val) =>
                         form.setFieldValue("install", val === "true")
@@ -1253,7 +1261,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       data={getSafeOptions(
                         form.values.cabinet.drawer_box
                           ? HARDWARE_MAPPING[form.values.cabinet.drawer_box] ||
-                          []
+                              []
                           : [],
                         form.values.cabinet.drawer_hardware
                       )}
@@ -1451,7 +1459,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                   }
                 }}
               >
-                Close Window
+                Back
               </Button>
               <Button
                 type="submit"

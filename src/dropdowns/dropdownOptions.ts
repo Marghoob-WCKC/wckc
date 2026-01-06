@@ -29,14 +29,19 @@ export const DrawerBoxOptions = [
 ];
 
 export const HARDWARE_MAPPING: Record<string, string[]> = {
-  "Std Melamine": ["Soft Close","Soft Close - Blum", "Std", "Custom"],
+  "Std Melamine": ["Soft Close", "Soft Close - Blum", "Std", "Custom"],
   "White Metal": ["White Metal"],
   "Grey Metal": ["Grey Metal"],
-  "Dovetail": ["Soft Close","Soft Close - Blum", "Custom"],
-  "Custom": ["Soft Close","Soft Close - Blum", "White Metal", "Grey Metal", "Std", "Custom"],
+  Dovetail: ["Soft Close", "Soft Close - Blum", "Custom"],
+  Custom: [
+    "Soft Close",
+    "Soft Close - Blum",
+    "White Metal",
+    "Grey Metal",
+    "Std",
+    "Custom",
+  ],
 };
-
-
 
 export const DeliveryTypeOptions = ["Pickup", "Delivery"];
 export const flooringTypeOptions = [
@@ -79,4 +84,16 @@ export const glassTypeOptions = [
   "CLEAR GLASS",
   "ACID ETCH",
   "WATER GLASS",
+];
+export const serviceorderLocationOptions = [
+  "In Bin",
+  "At Wall",
+  "On Desk",
+  "In Office",
+  "In Closet",
+  "Unknown",
+];
+export const serviceorderStatusOptions = [
+  { value: "pending", label: "Pending" },
+  { value: "completed", label: "Completed" },
 ];

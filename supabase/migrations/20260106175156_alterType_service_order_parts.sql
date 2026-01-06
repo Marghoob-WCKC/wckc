@@ -1,0 +1,1 @@
+ALTER TYPE "public"."so_part_status" ADD VALUE IF NOT EXISTS 'unknown';

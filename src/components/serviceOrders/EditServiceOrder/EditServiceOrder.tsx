@@ -41,6 +41,13 @@ import {
   FaSave,
   FaEye,
   FaCheck,
+  FaCheckCircle,
+  FaBoxOpen,
+  FaBuilding,
+  FaDesktop,
+  FaDoorClosed,
+  FaMapMarkerAlt,
+  FaQuestionCircle,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import {
@@ -60,6 +67,11 @@ import AddInstaller from "@/components/Installers/AddInstaller/AddInstaller";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 import HomeOwnersInfo from "../HomeOwnersInfo/HomeOwnersInfo";
+import {
+  serviceorderLocationOptions,
+  serviceorderStatusOptions,
+} from "@/dropdowns/dropdownOptions";
+import { IoIosWarning } from "react-icons/io";
 
 dayjs.extend(utc);
 interface EditServiceOrderProps {
@@ -76,13 +88,13 @@ type ServiceOrderData = Tables<"service_orders"> & {
   service_order_parts: Tables<"service_order_parts">[];
   installers: Tables<"installers"> | null;
   jobs:
-  | (Tables<"jobs"> & {
-    sales_orders: Tables<"sales_orders"> & {
-      cabinet: JoinedCabinet | null;
-    };
-    homeowners_info: Tables<"homeowners_info">;
-  })
-  | null;
+    | (Tables<"jobs"> & {
+        sales_orders: Tables<"sales_orders"> & {
+          cabinet: JoinedCabinet | null;
+        };
+        homeowners_info: Tables<"homeowners_info">;
+      })
+    | null;
 };
 
 export default function EditServiceOrder({
@@ -95,12 +107,28 @@ export default function EditServiceOrder({
 
   const [previewOpened, { open: openPreview, close: closePreview }] =
     useDisclosure(false);
-
   const [
     addInstallerOpened,
     { open: openAddInstaller, close: closeAddInstaller },
   ] = useDisclosure(false);
-
+  const getLocationIcon = (value: string | null) => {
+    switch (value) {
+      case "In Bin":
+        return <FaBoxOpen size={14} />;
+      case "At Wall":
+        return <FaMapMarkerAlt size={14} />;
+      case "On Desk":
+        return <FaDesktop size={14} />;
+      case "In Office":
+        return <FaBuilding size={14} />;
+      case "In Closet":
+        return <FaDoorClosed size={14} />;
+      case "Unknown":
+        return <FaQuestionCircle size={14} />;
+      default:
+        return null;
+    }
+  };
   const form = useForm<ServiceOrderFormValues>({
     initialValues: {
       job_id: "",
@@ -239,6 +267,8 @@ export default function EditServiceOrder({
           qty: p.qty,
           part: p.part,
           description: p.description || "",
+          location: p.location || "",
+          status: p.status || "",
         })),
         homeowner_name: hoInfo?.homeowner_name || "",
         homeowner_phone: hoInfo?.homeowner_phone || "",
@@ -312,6 +342,8 @@ export default function EditServiceOrder({
           qty: p.qty,
           part: p.part,
           description: p.description || "",
+          location: p.location || "Unknown",
+          status: p.status || "pending",
         }));
 
         const { error: partsError } = await supabase
@@ -351,7 +383,13 @@ export default function EditServiceOrder({
   };
 
   const addPart = () => {
-    form.insertListItem("parts", { qty: 1, part: "", description: "" });
+    form.insertListItem("parts", {
+      qty: 1,
+      part: "",
+      description: "",
+      location: "",
+      status: "pending",
+    });
   };
 
   if (soLoading) {
@@ -365,25 +403,25 @@ export default function EditServiceOrder({
   const cabinet = serviceOrderData?.jobs?.sales_orders?.cabinet;
   const shipping = serviceOrderData?.jobs?.sales_orders
     ? {
-      shipping_client_name:
-        serviceOrderData.jobs.sales_orders.shipping_client_name,
-      project_name: serviceOrderData.jobs.sales_orders.project_name,
-      shipping_phone_1: serviceOrderData.jobs.sales_orders.shipping_phone_1,
-      shipping_phone_2: serviceOrderData.jobs.sales_orders.shipping_phone_2,
-      shipping_email_1: serviceOrderData.jobs.sales_orders.shipping_email_1,
-      shipping_email_2: serviceOrderData.jobs.sales_orders.shipping_email_2,
-      shipping_street: serviceOrderData.jobs.sales_orders.shipping_street,
-      shipping_city: serviceOrderData.jobs.sales_orders.shipping_city,
-      shipping_province: serviceOrderData.jobs.sales_orders.shipping_province,
-      shipping_zip: serviceOrderData.jobs.sales_orders.shipping_zip,
-    }
+        shipping_client_name:
+          serviceOrderData.jobs.sales_orders.shipping_client_name,
+        project_name: serviceOrderData.jobs.sales_orders.project_name,
+        shipping_phone_1: serviceOrderData.jobs.sales_orders.shipping_phone_1,
+        shipping_phone_2: serviceOrderData.jobs.sales_orders.shipping_phone_2,
+        shipping_email_1: serviceOrderData.jobs.sales_orders.shipping_email_1,
+        shipping_email_2: serviceOrderData.jobs.sales_orders.shipping_email_2,
+        shipping_street: serviceOrderData.jobs.sales_orders.shipping_street,
+        shipping_city: serviceOrderData.jobs.sales_orders.shipping_city,
+        shipping_province: serviceOrderData.jobs.sales_orders.shipping_province,
+        shipping_zip: serviceOrderData.jobs.sales_orders.shipping_zip,
+      }
     : null;
   const orderDetails = serviceOrderData?.jobs?.sales_orders
     ? {
-      order_type: serviceOrderData.jobs.sales_orders.order_type,
-      delivery_type: serviceOrderData.jobs.sales_orders.delivery_type,
-      install: serviceOrderData.jobs.sales_orders.install,
-    }
+        order_type: serviceOrderData.jobs.sales_orders.order_type,
+        delivery_type: serviceOrderData.jobs.sales_orders.delivery_type,
+        install: serviceOrderData.jobs.sales_orders.install,
+      }
     : null;
 
   const switchControls = (
@@ -739,6 +777,8 @@ export default function EditServiceOrder({
                     <Table.Th w={80}>Qty</Table.Th>
                     <Table.Th w={200}>Part</Table.Th>
                     <Table.Th>Description</Table.Th>
+                    <Table.Th w={200}>Location</Table.Th>
+                    <Table.Th w={200}>Status</Table.Th>
                     <Table.Th w={50} />
                   </Table.Tr>
                 </Table.Thead>
@@ -762,6 +802,46 @@ export default function EditServiceOrder({
                         <TextInput
                           placeholder="Details..."
                           {...form.getInputProps(`parts.${index}.description`)}
+                        />
+                      </Table.Td>
+                      <Table.Td>
+                        <Select
+                          placeholder="Location..."
+                          data={serviceorderLocationOptions}
+                          {...form.getInputProps(`parts.${index}.location`)}
+                          leftSection={getLocationIcon(
+                            form.values.parts[index].location
+                          )}
+                          renderOption={({ option }) => (
+                            <Group gap="sm">
+                              {getLocationIcon(option.value)}
+                              <Text size="sm">{option.label}</Text>
+                            </Group>
+                          )}
+                          comboboxProps={{
+                            position: "top",
+                            middlewares: { flip: false, shift: false },
+                          }}
+                          allowDeselect={false}
+                        />
+                      </Table.Td>
+                      <Table.Td>
+                        <Select
+                          placeholder="Status..."
+                          data={serviceorderStatusOptions}
+                          {...form.getInputProps(`parts.${index}.status`)}
+                          comboboxProps={{
+                            position: "top",
+                            middlewares: { flip: false, shift: false },
+                          }}
+                          rightSection={
+                            form.values.parts[index].status === "completed" ? (
+                              <FaCheckCircle size={12} color="green" />
+                            ) : (
+                              <IoIosWarning size={14} color="orange" />
+                            )
+                          }
+                          allowDeselect={false}
                         />
                       </Table.Td>
                       <Table.Td>
@@ -808,7 +888,7 @@ export default function EditServiceOrder({
               }}
               onClick={() => window.close()}
             >
-              Close Window
+              Back
             </Button>
             <Button
               type="submit"

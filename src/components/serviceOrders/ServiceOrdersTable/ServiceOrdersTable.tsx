@@ -69,7 +69,7 @@ export default function ServiceOrdersTable() {
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 16,
+    pageSize: 15,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
@@ -645,7 +645,6 @@ export default function ServiceOrdersTable() {
         style={{
           flex: 1,
           minHeight: 0,
-          padding: rem(10),
         }}
         styles={{
           thumb: {
@@ -800,8 +799,8 @@ export default function ServiceOrdersTable() {
                 }
               }}
               onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor =
-                  "var(--mantine-color-gray-1)")
+              (e.currentTarget.style.backgroundColor =
+                "var(--mantine-color-gray-1)")
               }
               onMouseLeave={(e) =>
                 (e.currentTarget.style.backgroundColor = "transparent")
