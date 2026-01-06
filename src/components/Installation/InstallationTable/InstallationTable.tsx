@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   createColumnHelper,
   getCoreRowModel,
@@ -68,7 +68,7 @@ export default function InstallationTable() {
   const permissions = usePermissions();
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 16,
+    pageSize: 19,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([{ id: "has_shipped", value: "true" }]);
@@ -190,6 +190,7 @@ export default function InstallationTable() {
         display: "flex",
         alignItems: "center",
         cursor: "pointer",
+
       }}
       onContextMenu={onContextMenu}
     >
@@ -206,6 +207,7 @@ export default function InstallationTable() {
           header: ({ table }: any) => (
             <Checkbox
               color="violet"
+              size="xs"
               styles={{ input: { cursor: "pointer" } }}
               checked={table.getIsAllPageRowsSelected()}
               indeterminate={table.getIsSomePageRowsSelected()}
@@ -217,6 +219,7 @@ export default function InstallationTable() {
             <Center style={{ width: "100%", height: "100%" }}>
               <Checkbox
                 color="violet"
+                size="xs"
                 styles={{ input: { cursor: "pointer" } }}
                 checked={row.getIsSelected()}
                 disabled={!row.getCanSelect()}
@@ -226,17 +229,18 @@ export default function InstallationTable() {
             </Center>
           ),
           size: 40,
+          minSize: 40,
         },
       ]
       : []),
     columnHelper.accessor("job_number", {
       header: "Job No.",
-      size: 130,
-      minSize: 130,
+      size: 90,
+      minSize: 80,
       cell: (info) => (
         <Anchor
           component="button"
-          size="sm"
+          size="xs"
           fw={600}
           w="100%"
           c="#6f00ffff"
@@ -247,7 +251,7 @@ export default function InstallationTable() {
           }}
         >
           <Group gap={4}>
-            <Text fw={600} size="sm">
+            <Text fw={600} size="xs">
               {info.getValue()}
             </Text>
             {info.row.original.rush && (
@@ -263,39 +267,51 @@ export default function InstallationTable() {
     columnHelper.accessor("shipping_client_name", {
       id: "client",
       header: "Client",
-      size: 150,
-      minSize: 120,
-      cell: (info) => (
-        <CellWrapper
-          onContextMenu={(e) =>
-            handleContextMenu(e, "client", info.getValue() as string)
-          }
-        >
-          <Text size="sm" fw={500}>
-            {info.row.original.project_name && (
-              <>
-                <Text span fs="italic" fw={600}>
-                  {info.row.original.project_name}
-                </Text>
-                {" - "}
-              </>
-            )}
-            {info.getValue() || "—"}
-          </Text>
-        </CellWrapper>
-      ),
+      size: 130,
+      minSize: 100,
+      cell: (info) => {
+        const projectName = info.row.original.project_name;
+        const clientName = info.getValue() || "—";
+        const fullLabel = projectName
+          ? `${projectName} - ${clientName}`
+          : clientName;
+
+        return (
+          <CellWrapper
+            onContextMenu={(e) =>
+              handleContextMenu(e, "client", info.getValue() as string)
+            }
+          >
+            <Tooltip label={fullLabel} openDelay={400} withArrow>
+              <Text size="xs" fw={500} truncate="end" w="100%">
+                {projectName && (
+                  <>
+                    <Text span fs="italic" fw={600} size="xs">
+                      {projectName}
+                    </Text>
+                    {" - "}
+                  </>
+                )}
+                {clientName}
+              </Text>
+            </Tooltip>
+          </CellWrapper>
+        );
+      },
     }),
     columnHelper.accessor("site_address", {
       header: "Site Address",
-      size: 300,
-      minSize: 300,
+      size: 180,
+      minSize: 150,
       cell: (info) => (
         <CellWrapper
           onContextMenu={(e) =>
             handleContextMenu(e, "site_address", info.getValue() as string)
           }
         >
-          <Text size="sm">{info.getValue() ?? "—"}</Text>
+          <Tooltip label={info.getValue()} openDelay={400}>
+            <Text size="xs" truncate="end" w="100%">{info.getValue() ?? "—"}</Text>
+          </Tooltip>
         </CellWrapper>
       ),
     }),
@@ -303,8 +319,8 @@ export default function InstallationTable() {
     columnHelper.accessor("installer_company", {
       id: "installer",
       header: "Installer",
-      size: 150,
-      minSize: 150,
+      size: 110,
+      minSize: 100,
       cell: (info) => {
         const row = info.row.original;
 
@@ -317,7 +333,7 @@ export default function InstallationTable() {
         const displayText = fullName || company;
 
         if (!displayText) {
-          return <Text c="orange">TBD</Text>;
+          return <Text c="orange" size="xs">TBD</Text>;
         }
 
         return (
@@ -328,10 +344,10 @@ export default function InstallationTable() {
           >
             {fullName && company ? (
               <Tooltip label={company}>
-                <Text size="sm">{displayText}</Text>
+                <Text size="xs" truncate="end" w="100%">{displayText}</Text>
               </Tooltip>
             ) : (
-              <Text size="sm">{displayText}</Text>
+              <Text size="xs" truncate="end" w="100%">{displayText}</Text>
             )}
           </CellWrapper>
         );
@@ -340,11 +356,11 @@ export default function InstallationTable() {
 
     columnHelper.accessor("wrap_date", {
       header: "Wrap Date",
-      size: 120,
-      minSize: 120,
+      size: 100,
+      minSize: 90,
       cell: (info) => {
         const date = info.getValue();
-        if (!date) return <Text c="orange">TBD</Text>;
+        if (!date) return <Text c="orange" size="xs">TBD</Text>;
         return (
           <CellWrapper
             onContextMenu={(e) =>
@@ -361,9 +377,9 @@ export default function InstallationTable() {
       },
     }),
     columnHelper.accessor("ship_schedule", {
-      header: "Shipping Date",
-      size: 150,
-      minSize: 120,
+      header: "Ship Date",
+      size: 110,
+      minSize: 100,
       cell: (info) => {
         const date = info.getValue();
         const row = info.row.original;
@@ -371,7 +387,7 @@ export default function InstallationTable() {
         if (!date)
           return (
             <Center>
-              <Text c="orange">TBD</Text>
+              <Text c="orange" size="xs">TBD</Text>
             </Center>
           );
 
@@ -386,17 +402,17 @@ export default function InstallationTable() {
             style={{ justifyContent: "center" }}
           >
             <Group gap={6} wrap="nowrap" justify="center">
-              {dayjs(date).format("YYYY-MM-DD")}
+              <Text size="xs">{dayjs(date).format("YYYY-MM-DD")}</Text>
 
               {status === "confirmed" && (
                 <Tooltip label="Confirmed">
-                  <FaCheckCircle size={16} color="green" />
+                  <FaCheckCircle size={14} color="green" />
                 </Tooltip>
               )}
 
               {status === "tentative" && (
                 <Tooltip label="Tentative">
-                  <IoIosWarning size={16} color="orange" />
+                  <IoIosWarning size={14} color="orange" />
                 </Tooltip>
               )}
             </Group>
@@ -425,6 +441,7 @@ export default function InstallationTable() {
           >
             <Badge
               variant="gradient"
+              size="xs"
               style={{ cursor: "pointer" }}
               gradient={
                 shipped
@@ -440,11 +457,11 @@ export default function InstallationTable() {
     }),
     columnHelper.accessor("installation_date", {
       header: "Installation Date",
-      size: 150,
-      minSize: 120,
+      size: 100,
+      minSize: 90,
       cell: (info) => {
         const date = info.getValue();
-        if (!date) return <Text c="orange">TBD</Text>;
+        if (!date) return <Text c="orange" size="xs">TBD</Text>;
 
         const dateObj = dayjs(date).toDate();
 
@@ -461,11 +478,11 @@ export default function InstallationTable() {
     }),
     columnHelper.accessor("inspection_date", {
       header: "Inspection Date",
-      size: 150,
-      minSize: 120,
+      size: 100,
+      minSize: 90,
       cell: (info) => {
         const date = info.getValue();
-        if (!date) return <Text c="orange">TBD</Text>;
+        if (!date) return <Text c="orange" size="xs">TBD</Text>;
         return (
           <CellWrapper
             onContextMenu={(e) =>
@@ -482,9 +499,9 @@ export default function InstallationTable() {
       },
     }),
     columnHelper.accessor("installation_completed", {
-      header: "Installation",
-      size: 120,
-      minSize: 120,
+      header: "Install Done",
+      size: 100,
+      minSize: 100,
       cell: (info) => {
         const date = info.getValue();
         return (
@@ -502,22 +519,22 @@ export default function InstallationTable() {
             }}
           >
             {date ? (
-              <Group gap={6}>
-                <FaCheckCircle color="var(--mantine-color-green-6)" size={14} />
+              <Group gap={4}>
+                <FaCheckCircle color="var(--mantine-color-green-6)" size={12} />
                 {date === "1999-09-19T00:00:00+00:00" ? (
-                  <Text size="sm" c="green.8" fw={600}>
-                    Completed
+                  <Text size="xs" c="green.8" fw={600}>
+                    Done
                   </Text>
                 ) : (
-                  <Text size="sm" c="green.8" fw={600}>
+                  <Text size="xs" c="green.8" fw={600}>
                     {dayjs(date).format("YYYY-MM-DD")}
                   </Text>
                 )}
               </Group>
             ) : (
-              <Group gap={6}>
-                <FaRegCircle color="gray" size={14} />
-                <Text size="sm" c="dimmed">
+              <Group gap={4}>
+                <FaRegCircle color="gray" size={12} />
+                <Text size="xs" c="dimmed">
                   Pending
                 </Text>
               </Group>
@@ -527,9 +544,9 @@ export default function InstallationTable() {
       },
     }),
     columnHelper.accessor("inspection_completed", {
-      header: "Inspection",
-      size: 120,
-      minSize: 120,
+      header: "Inspection Done",
+      size: 100,
+      minSize: 100,
       cell: (info) => {
         const date = info.getValue();
         return (
@@ -547,19 +564,19 @@ export default function InstallationTable() {
             }}
           >
             {date ? (
-              <Group gap={6}>
+              <Group gap={4}>
                 <FaCalendarCheck
                   color="var(--mantine-color-blue-6)"
-                  size={14}
+                  size={12}
                 />
-                <Text size="sm" c="blue.8" fw={600}>
+                <Text size="xs" c="blue.8" fw={600}>
                   {dayjs(date).format("YYYY-MM-DD")}
                 </Text>
               </Group>
             ) : (
-              <Group gap={6}>
-                <FaRegCircle color="gray" size={14} />
-                <Text size="sm" c="dimmed">
+              <Group gap={4}>
+                <FaRegCircle color="gray" size={12} />
+                <Text size="xs" c="dimmed">
                   Pending
                 </Text>
               </Group>
@@ -616,6 +633,8 @@ export default function InstallationTable() {
         height: "calc(100vh - 45px)",
         position: "relative",
       }}
+      fz={"xs"}
+
     >
       <Group mb="md">
         <ThemeIcon
@@ -926,7 +945,8 @@ export default function InstallationTable() {
           highlightOnHover
           stickyHeader
           withColumnBorders
-          style={{ minWidth: "1000px" }}
+          style={{ minWidth: "1000px", fontSize: "var(--mantine-font-size-xs)" }}
+
         >
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -972,10 +992,10 @@ export default function InstallationTable() {
               </Table.Tr>
             ))}
           </Table.Thead>
-          <Table.Tbody>
+          <Table.Tbody >
             {table.getRowModel().rows.length === 0 ? (
-              <Table.Tr>
-                <Table.Td colSpan={columns.length}>
+              <Table.Tr >
+                <Table.Td colSpan={columns.length} >
                   <Center>
                     <Text c="dimmed">No installation jobs found.</Text>
                   </Center>
@@ -1009,6 +1029,7 @@ export default function InstallationTable() {
                           whiteSpace: "nowrap",
                           padding:
                             cell.column.id === "select" ? "0" : undefined,
+
                         }}
                         onClick={(e) => {
                           if (cell.column.id === "select") {
