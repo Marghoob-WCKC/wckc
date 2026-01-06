@@ -1439,7 +1439,17 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                   border: "none",
                 }}
                 size="md"
-                onClick={() => window.close()}
+                onClick={() => {
+                  const nav = (window as any).navigation;
+                  if (nav && "canGoBack" in nav) {
+                    if (nav.canGoBack) {
+                      router.back();
+                    } else {
+                      window.close();
+                    }
+                    return;
+                  }
+                }}
               >
                 Close Window
               </Button>

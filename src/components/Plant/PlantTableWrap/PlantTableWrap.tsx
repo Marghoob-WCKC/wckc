@@ -606,18 +606,21 @@ export default function PlantTableWrap() {
                 onChange={(e) =>
                   setInputFilterValue("job_number", e.target.value)
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
                 label="Client Name"
                 placeholder="Search..."
                 value={getInputFilterValue("client")}
                 onChange={(e) => setInputFilterValue("client", e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
                 label="Address"
                 placeholder="Street, City..."
                 value={getInputFilterValue("address")}
                 onChange={(e) => setInputFilterValue("address", e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <DatePickerInput
                 type="range"
@@ -630,6 +633,7 @@ export default function PlantTableWrap() {
                 }
                 clearable
                 leftSection={<FaCalendarAlt size={14} />}
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
             </SimpleGrid>
             <Group justify="flex-end" mt="md">

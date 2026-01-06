@@ -391,12 +391,14 @@ export default function PlantShippingTable() {
       header: "Location",
       size: 180,
       cell: (info) => {
+        const street = info.row.original.shipping_street;
         const city = info.row.original.shipping_city;
         const prov = info.row.original.shipping_province;
+        const zip = info.row.original.shipping_zip;
         return (
           <Tooltip label={info.row.original.shipping_street}>
             <Text size="sm" truncate>
-              {[city, prov].filter(Boolean).join(", ")}
+              {[street, zip, city, prov].filter(Boolean).join(", ")}
             </Text>
           </Tooltip>
         );
@@ -670,18 +672,21 @@ export default function PlantShippingTable() {
                 onChange={(e) =>
                   setInputFilterValue("job_number", e.target.value)
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
                 label="Client Name"
                 placeholder="Search..."
                 value={getInputFilterValue("client")}
                 onChange={(e) => setInputFilterValue("client", e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
                 label="Address"
                 placeholder="Street, City..."
                 value={getInputFilterValue("address")}
                 onChange={(e) => setInputFilterValue("address", e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <DatePickerInput
                 type="range"
@@ -694,6 +699,7 @@ export default function PlantShippingTable() {
                 }
                 clearable
                 leftSection={<FaCalendarCheck size={14} />}
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
             </SimpleGrid>
             <Group justify="flex-end" mt="md">

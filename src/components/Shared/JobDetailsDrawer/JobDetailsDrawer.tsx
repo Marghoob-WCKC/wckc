@@ -51,6 +51,7 @@ import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/Relat
 import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 import JobAttachments from "../JobAttachments/JobAttachments";
 import { usePermissions } from "@/hooks/usePermissions";
+import { IoIosWarning } from "react-icons/io";
 
 type JoinedCabinet = Tables<"cabinets"> & {
   door_styles: { name: string } | null;
@@ -60,17 +61,17 @@ type JoinedCabinet = Tables<"cabinets"> & {
 
 type FullJobData = Tables<"jobs"> & {
   sales_orders:
-    | (Tables<"sales_orders"> & {
-        client: Tables<"client"> | null;
-        cabinet: JoinedCabinet | null;
-      })
-    | null;
+  | (Tables<"sales_orders"> & {
+    client: Tables<"client"> | null;
+    cabinet: JoinedCabinet | null;
+  })
+  | null;
   production_schedule: Tables<"production_schedule"> | null;
   installation:
-    | (Tables<"installation"> & {
-        installer: Tables<"installers"> | null;
-      })
-    | null;
+  | (Tables<"installation"> & {
+    installer: Tables<"installers"> | null;
+  })
+  | null;
 };
 
 interface JobDetailsDrawerProps {
@@ -370,11 +371,25 @@ export default function JobDetailsDrawer({
           <SimpleGrid cols={4} spacing="xs">
             <CompactDateBlock label="Placement" date={prod?.placement_date} />
             <CompactDateBlock label="Wrap Date" date={install?.wrap_date} />
-            <CompactDateBlock
-              label="Ship Date"
-              date={prod?.ship_schedule}
-              color="blue"
-            />
+            <Group>
+              <CompactDateBlock
+                label="Ship Date"
+                date={prod?.ship_schedule}
+                color="blue"
+              />
+
+              {prod?.ship_status === "confirmed" && (
+                <Tooltip label="Confirmed">
+                  <FaCheckCircle size={16} color="green" />
+                </Tooltip>
+              )}
+
+              {prod?.ship_status === "tentative" && (
+                <Tooltip label="Tentative">
+                  <IoIosWarning size={16} color="orange" />
+                </Tooltip>
+              )}
+            </Group>
 
             <Stack align="center" justify="center">
               <Text size="10px" c="dimmed" fw={700} tt="uppercase">

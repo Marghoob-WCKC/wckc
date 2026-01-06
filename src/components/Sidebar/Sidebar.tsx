@@ -90,16 +90,16 @@ function MainLink({
 
   const isChildActive = hasLinks
     ? item.links?.some(
-        (link) => pathname === link.path || pathname.startsWith(link.path + "/")
-      ) ?? false
+      (link) => pathname === link.path || pathname.startsWith(link.path + "/")
+    ) ?? false
     : false;
 
   const isActive = item.path
     ? pathname === item.path ||
-      (!hasLinks &&
-        item.path !== "/dashboard" &&
-        pathname.startsWith(item.path) &&
-        pathname === item.path)
+    (!hasLinks &&
+      item.path !== "/dashboard" &&
+      pathname.startsWith(item.path) &&
+      pathname === item.path)
     : false;
 
   const [opened, setOpened] = useState(isChildActive);

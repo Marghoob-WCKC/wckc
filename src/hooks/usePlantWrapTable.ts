@@ -20,6 +20,40 @@ export function usePlantWrapTable({
 }: UsePlantTableParams) {
   const { supabase, isAuthenticated } = useSupabase();
 
+  const applyFilters = (query: any) => {
+    columnFilters.forEach((filter) => {
+      const { id, value } = filter;
+
+      if (id === "wrap_date_range" && Array.isArray(value)) {
+        const [start, end] = value;
+        if (start && end) {
+          query = query
+            .gte("wrap_date", dayjs(start).format("YYYY-MM-DD"))
+            .lte("wrap_date", dayjs(end).format("YYYY-MM-DD"));
+        }
+        return;
+      }
+
+      const valStr = String(value);
+      if (!valStr) return;
+
+      switch (id) {
+        case "job_number":
+          query = query.ilike("job_number", `%${valStr}%`);
+          break;
+        case "client":
+          query = query.ilike("client_name", `%${valStr}%`);
+          break;
+        case "address":
+          query = query.or(
+            `shipping_street.ilike.%${valStr}%,shipping_city.ilike.%${valStr}%`
+          );
+          break;
+      }
+    });
+    return query;
+  };
+
   return useQuery({
     queryKey: ["plant_wrap_table", pagination, columnFilters, sorting],
     queryFn: async () => {
@@ -29,36 +63,7 @@ export function usePlantWrapTable({
         .not("has_shipped", "is", true)
         .not("wrap_date", "is", null);
 
-      columnFilters.forEach((filter) => {
-        const { id, value } = filter;
-
-        if (id === "wrap_date_range" && Array.isArray(value)) {
-          const [start, end] = value;
-          if (start && end) {
-            dateQuery = dateQuery
-              .gte("wrap_date", dayjs(start).format("YYYY-MM-DD"))
-              .lte("wrap_date", dayjs(end).format("YYYY-MM-DD"));
-          }
-          return;
-        }
-
-        const valStr = String(value);
-        if (!valStr) return;
-
-        switch (id) {
-          case "job_number":
-            dateQuery = dateQuery.ilike("job_number", `%${valStr}%`);
-            break;
-          case "client":
-            dateQuery = dateQuery.ilike("client_name", `%${valStr}%`);
-            break;
-          case "address":
-            dateQuery = dateQuery.or(
-              `shipping_street.ilike.%${valStr}%,shipping_city.ilike.%${valStr}%`
-            );
-            break;
-        }
-      });
+      dateQuery = applyFilters(dateQuery);
 
       const { data: dateRows, error: dateError } = await dateQuery;
       if (dateError) throw new Error(dateError.message);
@@ -81,6 +86,8 @@ export function usePlantWrapTable({
         .not("has_shipped", "is", true)
         .not("wrap_date", "is", null)
         .in("wrap_date", targetDates);
+
+      jobQuery = applyFilters(jobQuery);
 
       if (sorting.length > 0) {
         const { id, desc } = sorting[0];
