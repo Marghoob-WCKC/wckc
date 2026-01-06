@@ -1245,6 +1245,13 @@ export type Database = {
             foreignKeyName: "service_order_parts_service_order_id_fkey"
             columns: ["service_order_id"]
             isOneToOne: false
+            referencedRelation: "plant_service_orders_view"
+            referencedColumns: ["service_order_id"]
+          },
+          {
+            foreignKeyName: "service_order_parts_service_order_id_fkey"
+            columns: ["service_order_id"]
+            isOneToOne: false
             referencedRelation: "service_orders"
             referencedColumns: ["service_order_id"]
           },
@@ -1657,6 +1664,81 @@ export type Database = {
           record_type: string | null
         }
         Relationships: []
+      }
+      plant_service_orders_view: {
+        Row: {
+          client_name: string | null
+          due_date: string | null
+          job_id: number | null
+          job_number: string | null
+          pending_parts: Json | null
+          pending_parts_count: number | null
+          project_name: string | null
+          service_order_id: number | null
+          service_order_number: string | null
+          shipping_city: string | null
+          shipping_province: string | null
+          shipping_street: string | null
+          shipping_zip: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "inspection_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "installation_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "prod_table_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "sales_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "shipped_not_invoiced_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plant_table_view: {
         Row: {

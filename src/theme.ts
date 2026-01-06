@@ -1,4 +1,3 @@
-
 export const colors = {
   violet: {
     primary: "#4A00E0",
@@ -28,13 +27,11 @@ export const colors = {
     borderLight: "#e9ecef",
     background: "#f8f9fa",
     backgroundAlt: "#f1f3f5",
+    service: "#d8d8d8ff",
     title: "#343a40",
     rowAlt: "#e0e0e0",
   },
 } as const;
-
-
-
 
 export const gradients = {
   primary: {
@@ -63,9 +60,6 @@ export const gradients = {
   inactive: { from: colors.gray.borderLight, to: colors.gray.border, deg: 135 },
 } as const;
 
-
-
-
 export const linearGradients = {
   primary: `linear-gradient(135deg, ${colors.violet.secondary} 0%, ${colors.violet.primary} 100%)`,
   primaryVertical: `linear-gradient(0deg, ${colors.violet.lighter} 20%, ${colors.violet.primary} 80%)`,
@@ -74,12 +68,10 @@ export const linearGradients = {
   danger: `linear-gradient(135deg, ${colors.red.secondary} 0%, ${colors.red.primary} 100%)`,
   backorder: `linear-gradient(135deg, ${colors.orange.secondary} 0%, ${colors.orange.primary} 100%)`,
   inactive: `linear-gradient(135deg, ${colors.gray.borderLight} 0%, ${colors.gray.border} 100%)`,
+  serviceparts: `linear-gradient(135deg, ${colors.gray.service} 0%,  ${colors.gray.borderLight} 100%)`,
   lightViolet: `linear-gradient(135deg, #f0edff 0%, #e4dbff 100%)`,
   pageBackground: `linear-gradient(135deg, #DDE6F5 0%, #E7D9F0 100%)`,
 } as const;
-
-
-
 
 export const serviceStatusGradients = {
   ALL: `linear-gradient(135deg, ${colors.violet.light} 0%, ${colors.violet.primary} 100%)`,
