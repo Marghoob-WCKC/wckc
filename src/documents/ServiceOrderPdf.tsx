@@ -101,9 +101,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginBottom: 5,
   },
-  colQty: { width: "10%" },
-  colPart: { width: "30%" },
-  colDescription: { width: "60%" },
+  colQty: { width: "8%" },
+  colPart: { width: "20%" },
+  colDescription: { width: "50%" },
+  colLocation: { width: "11%" },
+  colStatus: { width: "11%" },
 });
 
 const htmlStyles = {
@@ -331,8 +333,14 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
             <View style={styles.colPart}>
               <Text style={styles.tableHeaderLabel}>Part</Text>
             </View>
-            <View style={styles.colPart}>
+            <View style={styles.colDescription}>
               <Text style={styles.tableHeaderLabel}>Description</Text>
+            </View>
+            <View style={styles.colLocation}>
+              <Text style={styles.tableHeaderLabel}>Location</Text>
+            </View>
+            <View style={styles.colStatus}>
+              <Text style={styles.tableHeaderLabel}>Status</Text>
             </View>
           </View>
 
@@ -340,16 +348,26 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
             data.service_order_parts.map((part: any, i: number) => (
               <View style={styles.tableRow} key={i}>
                 <View style={styles.colQty}>
-                  <Text style={{ fontSize: 10 }}>{part.qty}</Text>
+                  <Text style={{ fontSize: 8 }}>{part.qty}</Text>
                 </View>
                 <View style={styles.colPart}>
-                  <Text style={{ fontSize: 10, textTransform: "uppercase" }}>
+                  <Text style={{ fontSize: 8, textTransform: "uppercase" }}>
                     {part.part}
                   </Text>
                 </View>
                 <View style={styles.colDescription}>
-                  <Text style={{ fontSize: 10, textTransform: "uppercase" }}>
+                  <Text style={{ fontSize: 8, textTransform: "uppercase" }}>
                     {part.description}
+                  </Text>
+                </View>
+                <View style={styles.colLocation}>
+                  <Text style={{ fontSize: 8, textTransform: "uppercase" }}>
+                    {part.location || "—"}
+                  </Text>
+                </View>
+                <View style={styles.colStatus}>
+                  <Text style={{ fontSize: 8, textTransform: "uppercase" }}>
+                    {part.status || "—"}
                   </Text>
                 </View>
               </View>
