@@ -14,10 +14,11 @@ export default function InstallationEditorPage() {
 
   if (canEditInstallation) {
     return (
-      <div>
-        <InstallationEditor jobId={jobId} />
-        <OutlookScannerWrapper jobId={jobId} />
-      </div>
+      // <div>
+      //   <InstallationEditor jobId={jobId} />
+      //   <OutlookScannerWrapper jobId={jobId} />
+      // </div>
+      <InstallationEditor jobId={jobId} />
     );
   }
 

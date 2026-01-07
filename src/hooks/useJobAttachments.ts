@@ -28,13 +28,12 @@ export function useJobAttachments(jobId: number) {
     mutationFn: async ({
       file,
       category,
-      silent = false, // Add silent flag, default to false
+      silent = false,
     }: {
       file: File;
       category: string;
       silent?: boolean;
     }) => {
-      // Fix: Add a random string and the original name to ensure uniqueness
       const fileExt = file.name.split(".").pop();
       const uniqueSuffix = Math.random().toString(36).substring(2, 10);
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
@@ -61,8 +60,7 @@ export function useJobAttachments(jobId: number) {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["job_attachments", jobId] });
-      
-      // Only show notification if NOT silent
+
       if (!variables.silent) {
         notifications.show({
           title: "Success",
@@ -72,9 +70,40 @@ export function useJobAttachments(jobId: number) {
       }
     },
     onError: (error: any) => {
-      // We generally want to know about errors, even in bulk
       notifications.show({
         title: "Upload Failed",
+        message: error.message,
+        color: "red",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (file: Tables<"job_attachments">) => {
+      const { error: storageError } = await supabase.storage
+        .from("job_files")
+        .remove([file.file_path]);
+
+      if (storageError) throw storageError;
+
+      const { error: dbError } = await supabase
+        .from("job_attachments")
+        .delete()
+        .eq("id", file.id);
+
+      if (dbError) throw dbError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["job_attachments", jobId] });
+      notifications.show({
+        title: "Success",
+        message: "File deleted successfully",
+        color: "green",
+      });
+    },
+    onError: (error: any) => {
+      notifications.show({
+        title: "Delete Failed",
         message: error.message,
         color: "red",
       });
@@ -90,7 +119,9 @@ export function useJobAttachments(jobId: number) {
     attachments,
     isLoading,
     uploadFile: uploadMutation.mutate,
-    uploadFileAsync: uploadMutation.mutateAsync, // Expose async version for Promise.all
+    uploadFileAsync: uploadMutation.mutateAsync,
+    deleteFile: deleteMutation.mutate,
+    isDeleting: deleteMutation.isPending,
     isUploading: uploadMutation.isPending,
     getPublicUrl,
   };

@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Allow ALL RLS o59enp_3" ON storage.objects;

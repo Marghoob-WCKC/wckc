@@ -73,16 +73,28 @@ export default function JobAttachments({
   jobId: number;
   full?: boolean;
 }) {
-  const { attachments, isLoading, uploadFileAsync, isUploading, getPublicUrl } =
-    useJobAttachments(jobId);
+  const {
+    attachments,
+    isLoading,
+    uploadFileAsync,
+    isUploading,
+    getPublicUrl,
+    deleteFile,
+  } = useJobAttachments(jobId);
 
-  const [mainOpened, { toggle: toggleMain, open: openMain }] = useDisclosure(false);
-  const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
+  const [mainOpened, { toggle: toggleMain, open: openMain }] =
+    useDisclosure(false);
+  const [modalOpened, { open: openModal, close: closeModal }] =
+    useDisclosure(false);
 
-  const [categoryOpenStates, setCategoryOpenStates] = useState<Record<string, boolean>>({});
+  const [categoryOpenStates, setCategoryOpenStates] = useState<
+    Record<string, boolean>
+  >({});
   const [category, setCategory] = useState<string | null>(null);
 
-  const [pendingFiles, setPendingFiles] = useState<{ file: File; category: string }[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<
+    { file: File; category: string }[]
+  >([]);
 
   useEffect(() => {
     if (isUploading) openMain();
@@ -123,7 +135,11 @@ export default function JobAttachments({
     try {
       await Promise.all(
         pendingFiles.map((item) =>
-          uploadFileAsync({ file: item.file, category: item.category, silent: true })
+          uploadFileAsync({
+            file: item.file,
+            category: item.category,
+            silent: true,
+          })
         )
       );
 
@@ -159,7 +175,14 @@ export default function JobAttachments({
     }
   };
 
-  // UNIFIED THUMBNAIL GRID RENDERER FOR ALL CATEGORIES
+  const handleDelete = (file: any) => {
+    if (
+      window.confirm(`Are you sure you want to delete "${file.file_name}"?`)
+    ) {
+      deleteFile(file);
+    }
+  };
+
   const renderThumbnailGrid = (files: typeof attachments) => {
     if (!files) return null;
     return (
@@ -179,7 +202,7 @@ export default function JobAttachments({
                 position: "relative",
                 aspectRatio: "1 / 1",
                 overflow: "hidden",
-                transition: 'box-shadow 0.2s ease',
+                transition: "box-shadow 0.2s ease",
               }}
             >
               <Box
@@ -191,7 +214,9 @@ export default function JobAttachments({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: isImg ? 'black' : 'var(--mantine-color-gray-0)',
+                  backgroundColor: isImg
+                    ? "black"
+                    : "var(--mantine-color-gray-0)",
                 }}
               >
                 {isImg ? (
@@ -213,7 +238,6 @@ export default function JobAttachments({
                 )}
               </Box>
 
-              {/* Actions Overlay - Top Right */}
               <Group
                 gap={4}
                 style={{
@@ -232,7 +256,7 @@ export default function JobAttachments({
                       e.stopPropagation();
                       window.open(url, "_blank");
                     }}
-                    style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                    style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
                   >
                     <FaEye size={10} color="var(--mantine-color-blue-6)" />
                   </ActionIcon>
@@ -246,14 +270,30 @@ export default function JobAttachments({
                       e.stopPropagation();
                       handleDownload(url, file.file_name);
                     }}
-                    style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                    style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
                   >
-                    <FaDownload size={10} color="var(--mantine-color-green-6)" />
+                    <FaDownload
+                      size={10}
+                      color="var(--mantine-color-green-6)"
+                    />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label="Delete" position="top" withArrow fz="xs">
+                  <ActionIcon
+                    size="sm"
+                    variant="default"
+                    radius="xl"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(file);
+                    }}
+                    style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
+                  >
+                    <FaTrash size={10} color="var(--mantine-color-red-6)" />
                   </ActionIcon>
                 </Tooltip>
               </Group>
 
-              {/* Filename Bar - Bottom */}
               <Box
                 style={{
                   position: "absolute",
@@ -263,10 +303,17 @@ export default function JobAttachments({
                   padding: "4px 6px",
                   background: "rgba(255, 255, 255, 0.95)",
                   borderTop: "1px solid #eee",
-                  zIndex: 5
+                  zIndex: 5,
                 }}
               >
-                <Text size="10px" truncate fw={600} c="dark" lh={1.1} ta="center">
+                <Text
+                  size="10px"
+                  truncate
+                  fw={600}
+                  c="dark"
+                  lh={1.1}
+                  ta="center"
+                >
                   {file.file_name}
                 </Text>
                 <Text size="9px" c="dimmed" truncate ta="center">
@@ -321,7 +368,7 @@ export default function JobAttachments({
                           variant="light"
                           color={CATEGORY_COLORS[cat] || "gray"}
                           radius="sm"
-                          style={{ textTransform: "none", cursor: 'pointer' }}
+                          style={{ textTransform: "none", cursor: "pointer" }}
                         >
                           {cat}
                         </Badge>
@@ -332,7 +379,6 @@ export default function JobAttachments({
                     </UnstyledButton>
 
                     <Collapse in={isOpen}>
-                      {/* Always use Grid View for all categories */}
                       {renderThumbnailGrid(files)}
                     </Collapse>
                   </Box>
@@ -369,7 +415,7 @@ export default function JobAttachments({
                           variant="light"
                           color="gray"
                           radius="sm"
-                          style={{ textTransform: "none", cursor: 'pointer' }}
+                          style={{ textTransform: "none", cursor: "pointer" }}
                         >
                           {cat}
                         </Badge>
@@ -420,11 +466,13 @@ export default function JobAttachments({
             allowDeselect={false}
             comboboxProps={{ withinPortal: false }}
             styles={{
-              root: { flex: 1, maxWidth: full ? '200px' : '140px' },
+              root: { flex: 1, maxWidth: full ? "200px" : "140px" },
               input: {
                 fontWeight: 600,
                 color: category ? "#4A00E0" : undefined,
-                borderColor: !category ? "var(--mantine-color-red-3)" : undefined
+                borderColor: !category
+                  ? "var(--mantine-color-red-3)"
+                  : undefined,
               },
             }}
           />
@@ -458,25 +506,40 @@ export default function JobAttachments({
           >
             <Group justify="center" gap={6} style={{ pointerEvents: "none" }}>
               {!category ? (
-                <FaExclamationCircle size={12} color="var(--mantine-color-dimmed)" />
+                <FaExclamationCircle
+                  size={12}
+                  color="var(--mantine-color-dimmed)"
+                />
               ) : (
                 <Dropzone.Idle>
-                  <FaCloudUploadAlt size={12} color="var(--mantine-color-dimmed)" />
+                  <FaCloudUploadAlt
+                    size={12}
+                    color="var(--mantine-color-dimmed)"
+                  />
                 </Dropzone.Idle>
               )}
               <Dropzone.Accept>
-                <FaCloudUploadAlt size={12} color="var(--mantine-color-blue-6)" />
+                <FaCloudUploadAlt
+                  size={12}
+                  color="var(--mantine-color-blue-6)"
+                />
               </Dropzone.Accept>
               <Dropzone.Reject>
                 <FaTimesCircle size={12} color="var(--mantine-color-red-6)" />
               </Dropzone.Reject>
 
-              {!full && <Text size="xs" c="dimmed" fw={600}>
-                {!category ? "Select Category" : `Queue`}
-              </Text>}
-              {full && <Text size="xs" c="dimmed" fw={600}>
-                {!category ? "Select category first" : `Queue ${category} files`}
-              </Text>}
+              {!full && (
+                <Text size="xs" c="dimmed" fw={600}>
+                  {!category ? "Select Category" : `Queue`}
+                </Text>
+              )}
+              {full && (
+                <Text size="xs" c="dimmed" fw={600}>
+                  {!category
+                    ? "Select category first"
+                    : `Queue ${category} files`}
+                </Text>
+              )}
             </Group>
           </Dropzone>
         </Group>
@@ -485,56 +548,88 @@ export default function JobAttachments({
       <Modal
         opened={modalOpened}
         onClose={closeModal}
-        title={<Text fw={700} c="violet.9">Review Upload Queue</Text>}
+        title={
+          <Text fw={700} c="violet.9">
+            Review Upload Queue
+          </Text>
+        }
         size="lg"
         centered
         overlayProps={{ opacity: 0.5, blur: 3 }}
       >
         <Stack gap="md">
           <Text size="sm" c="dimmed">
-            The following files are ready to be uploaded. Please review them before confirming.
+            The following files are ready to be uploaded. Please review them
+            before confirming.
           </Text>
 
           <ScrollArea.Autosize mah={300} type="always" offsetScrollbars>
             <Stack gap="xs">
               {pendingFiles.map((item, idx) => {
                 const isImg = isImageFile(item.file.name);
-                const previewUrl = isImg ? URL.createObjectURL(item.file) : null;
+                const previewUrl = isImg
+                  ? URL.createObjectURL(item.file)
+                  : null;
 
                 return (
-                  <Group key={idx} justify="space-between" bg="gray.0" p="xs" style={{ borderRadius: 8, border: '1px solid #eee' }}>
+                  <Group
+                    key={idx}
+                    justify="space-between"
+                    bg="gray.0"
+                    p="xs"
+                    style={{ borderRadius: 8, border: "1px solid #eee" }}
+                  >
                     <Group gap="sm" style={{ overflow: "hidden", flex: 1 }}>
                       <Box
                         w={40}
                         h={40}
                         style={{
                           borderRadius: 6,
-                          overflow: 'hidden',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: 'white',
-                          border: '1px solid #dee2e6'
+                          overflow: "hidden",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor: "white",
+                          border: "1px solid #dee2e6",
                         }}
                       >
                         {isImg && previewUrl ? (
-                          <Image src={previewUrl} w="100%" h="100%" fit="cover" alt="prev" onLoad={() => URL.revokeObjectURL(previewUrl)} />
+                          <Image
+                            src={previewUrl}
+                            w="100%"
+                            h="100%"
+                            fit="cover"
+                            alt="prev"
+                            onLoad={() => URL.revokeObjectURL(previewUrl)}
+                          />
                         ) : (
                           <FaFilePdf size={20} color="gray" />
                         )}
                       </Box>
 
-                      <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <div style={{ flex: 1, overflow: "hidden" }}>
                         <Group gap="xs" mb={2}>
-                          <Badge size="sm" color={CATEGORY_COLORS[item.category] || 'gray'} variant="filled">
+                          <Badge
+                            size="sm"
+                            color={CATEGORY_COLORS[item.category] || "gray"}
+                            variant="filled"
+                          >
                             {item.category}
                           </Badge>
-                          <Text size="xs" c="dimmed">{(item.file.size / 1024).toFixed(0)} KB</Text>
+                          <Text size="xs" c="dimmed">
+                            {(item.file.size / 1024).toFixed(0)} KB
+                          </Text>
                         </Group>
-                        <Text size="sm" truncate fw={600} c="dark">{item.file.name}</Text>
+                        <Text size="sm" truncate fw={600} c="dark">
+                          {item.file.name}
+                        </Text>
                       </div>
                     </Group>
-                    <ActionIcon color="red" variant="light" onClick={() => removePendingFile(idx)}>
+                    <ActionIcon
+                      color="red"
+                      variant="light"
+                      onClick={() => removePendingFile(idx)}
+                    >
                       <FaTrash size={14} />
                     </ActionIcon>
                   </Group>
@@ -561,13 +656,15 @@ export default function JobAttachments({
           </Group>
         </Stack>
       </Modal>
-
     </Stack>
   );
 
   return (
     <Paper p="sm" radius="md" withBorder shadow="sm" bg="white">
-      <UnstyledButton onClick={toggleMain} style={{ width: "100%", display: "block" }}>
+      <UnstyledButton
+        onClick={toggleMain}
+        style={{ width: "100%", display: "block" }}
+      >
         <Group justify="space-between" align="center">
           <Group gap="xs">
             <FaChevronRight
@@ -578,7 +675,14 @@ export default function JobAttachments({
                 color: "var(--mantine-color-dimmed)",
               }}
             />
-            <FaPaperclip size={full ? 14 : 12} style={{ color: full ? "var(--mantine-color-violet-6)" : "var(--mantine-color-dimmed)" }} />
+            <FaPaperclip
+              size={full ? 14 : 12}
+              style={{
+                color: full
+                  ? "var(--mantine-color-violet-6)"
+                  : "var(--mantine-color-dimmed)",
+              }}
+            />
             <Text fw={full ? 700 : 600} size="sm" c="dark">
               Attachments
             </Text>
