@@ -33,6 +33,7 @@ import {
   Collapse,
   Fieldset,
   rem,
+  Table,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { DateInput } from "@mantine/dates";
@@ -66,6 +67,7 @@ import { zodResolver } from "@/utils/zodResolver/zodResolver";
 import { installationSchema } from "@/zod/install.schema";
 import { colors, gradients } from "@/theme";
 import JobAttachments from "@/components/Shared/JobAttachments/JobAttachments";
+import SiteVisitModal from "@/components/Sitevisits/SiteVisitModal/SiteVisitModal";
 
 dayjs.extend(utc);
 type InstallationType = Tables<"installation">;
@@ -96,6 +98,7 @@ type JoinedCabinet = Tables<"cabinets"> & {
 type JobData = Tables<"jobs"> & {
   installation: InstallationType | null;
   production_schedule: Tables<"production_schedule"> | null;
+  site_visits: Tables<"site_visits">[] | null;
   sales_orders:
     | (Tables<"sales_orders"> & {
         client: Tables<"client"> | null;
@@ -116,6 +119,12 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     { open: openAddInstaller, close: closeAddInstaller },
   ] = useDisclosure(false);
 
+  const [
+    siteVisitModalOpen,
+    { open: openSiteVisitModal, close: closeSiteVisitModal },
+  ] = useDisclosure(false);
+  const [selectedVisit, setSelectedVisit] = useState<any>(null);
+
   const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [targetCompletionField, setTargetCompletionField] = useState<
     "installation_completed" | "inspection_completed" | null
@@ -134,6 +143,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           job_number,
           installation:installation_id (*),
           production_schedule:production_schedule (*),
+          site_visits (*),
           sales_orders:sales_orders (
             shipping_street, shipping_city, shipping_province, shipping_zip,
             shipping_client_name,
@@ -1078,6 +1088,22 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           />
                         </Box>
                       </Collapse>
+                      <Group mb="md">
+                        <Switch
+                          size="md"
+                          color="violet"
+                          label="Log Site Visit"
+                          checked={siteVisitModalOpen}
+                          onChange={(event) => {
+                            if (event.currentTarget.checked) {
+                              openSiteVisitModal();
+                            } else {
+                              closeSiteVisitModal();
+                            }
+                          }}
+                          styles={{ label: { fontWeight: 500 } }}
+                        />
+                      </Group>
                       <JobAttachments jobId={jobId as number} full />
                     </Stack>
                   </Grid>
@@ -1090,7 +1116,64 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                 onAddBackorder={() => setIsAddBackorderModalOpen(true)}
               />
             )}
+
             {jobId && <RelatedServiceOrders jobId={jobId} />}
+
+            {jobData.site_visits && jobData.site_visits.length > 0 && (
+              <Paper
+                p="md"
+                radius="md"
+                shadow="sm"
+                withBorder
+                bg={"gray.1"}
+                mb="md"
+                mt="md"
+              >
+                <Paper p="md" radius="md" bg={"white"}>
+                  <Group mb="md">
+                    <FaClipboardList size={18} color={colors.violet.primary} />
+                    <Text fw={600} size="lg">
+                      Existing Site Visits
+                    </Text>
+                  </Group>
+                  <Table striped highlightOnHover withTableBorder bg="white">
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>Date</Table.Th>
+                        <Table.Th>By</Table.Th>
+                        <Table.Th>Notes</Table.Th>
+                      </Table.Tr>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {jobData.site_visits.map((visit) => (
+                        <Table.Tr
+                          key={visit.id}
+                          onClick={() => {
+                            setSelectedVisit(visit);
+                            openSiteVisitModal();
+                          }}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <Table.Td width={150}>
+                            {visit.visit_date
+                              ? dayjs(visit.visit_date).format("MMM D, YYYY")
+                              : "No Date"}
+                          </Table.Td>
+                          <Table.Td width={150}>
+                            {visit.created_by || "Unknown"}
+                          </Table.Td>
+                          <Table.Td>
+                            <Text size="sm" lineClamp={1} c="dimmed">
+                              {visit.notes || "No notes"}
+                            </Text>
+                          </Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                </Paper>
+              </Paper>
+            )}
           </Grid.Col>
 
           <Grid.Col span={1.8} style={{ borderLeft: "1px solid #ccc" }}>
@@ -1382,6 +1465,19 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           closeAddInstaller();
           queryClient.invalidateQueries({ queryKey: ["installers-list"] });
         }}
+      />
+
+      <SiteVisitModal
+        opened={siteVisitModalOpen}
+        onClose={() => {
+          closeSiteVisitModal();
+          setSelectedVisit(null);
+          queryClient.invalidateQueries({
+            queryKey: ["installation-editor", jobId],
+          });
+        }}
+        visit={selectedVisit}
+        defaultJobId={String(jobId)}
       />
     </Container>
   );

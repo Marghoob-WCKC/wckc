@@ -1,17 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PublicClientApplication, EventType } from "@azure/msal-browser";
+import {
+  PublicClientApplication,
+  EventType,
+  AuthenticationResult,
+} from "@azure/msal-browser";
 import { MsalProvider, useMsal, useIsAuthenticated } from "@azure/msal-react";
 import { Client } from "@microsoft/microsoft-graph-client";
 import { useSupabase } from "@/hooks/useSupabase";
 
-// --- Configuration ---
 const msalConfig = {
   auth: {
-    clientId: "", // <--- PASTE YOUR ID HERE
+    clientId: "3ea61d91-6068-4812-aadf-d4735e9992e0",
     authority: "https://login.microsoftonline.com/common",
-    redirectUri: "http://localhost:3000", // Ensure this matches Azure Portal
+    redirectUri: "http://localhost:3000",
   },
   cache: {
     cacheLocation: "sessionStorage",
@@ -29,12 +32,11 @@ if (
 
 msalInstance.addEventCallback((event) => {
   if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
-    // @ts-ignore
-    msalInstance.setActiveAccount(event.payload.account);
+    const payload = event.payload as AuthenticationResult;
+    msalInstance.setActiveAccount(payload.account);
   }
 });
 
-// --- Main Component ---
 export default function OutlookScannerWrapper({ jobId }: { jobId?: number }) {
   return (
     <MsalProvider instance={msalInstance}>
@@ -46,7 +48,7 @@ export default function OutlookScannerWrapper({ jobId }: { jobId?: number }) {
 function OutlookScannerContent({ jobId }: { jobId?: number }) {
   const { instance, accounts } = useMsal();
   const isAuthenticated = useIsAuthenticated();
-  const { supabase } = useSupabase(); // Using your existing hook
+  const { supabase } = useSupabase();
 
   const [emails, setEmails] = useState<any[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<any>(null);
@@ -54,7 +56,6 @@ function OutlookScannerContent({ jobId }: { jobId?: number }) {
   const [loading, setLoading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string>("");
 
-  // 1. Sign In to Outlook
   const handleLogin = () => {
     instance
       .loginPopup({
@@ -63,7 +64,6 @@ function OutlookScannerContent({ jobId }: { jobId?: number }) {
       .catch((e) => console.error(e));
   };
 
-  // 2. Fetch Emails
   const fetchEmails = async () => {
     setLoading(true);
     const request = {
@@ -77,11 +77,10 @@ function OutlookScannerContent({ jobId }: { jobId?: number }) {
         authProvider: (done) => done(null, response.accessToken),
       });
 
-      // Get last 15 emails with attachments
       const result = await graphClient
         .api("/me/messages")
         .select("id,subject,from,receivedDateTime,hasAttachments,bodyPreview")
-        .filter("hasAttachments eq true") // Only want emails with files
+        .filter("hasAttachments eq true")
         .top(15)
         .get();
 
@@ -93,7 +92,6 @@ function OutlookScannerContent({ jobId }: { jobId?: number }) {
     }
   };
 
-  // 3. Fetch Attachments (Fixing the iPhone Inline Issue)
   const fetchAttachments = async (messageId: string) => {
     setLoading(true);
     setAttachments([]);
@@ -109,12 +107,10 @@ function OutlookScannerContent({ jobId }: { jobId?: number }) {
         authProvider: (done) => done(null, response.accessToken),
       });
 
-      // Fetch all attachments for this message
       const result = await graphClient
         .api(`/me/messages/${messageId}/attachments`)
         .get();
 
-      // Filter specifically for images
       const images = result.value.filter(
         (att: any) => att.contentType && att.contentType.startsWith("image/")
       );
@@ -128,7 +124,6 @@ function OutlookScannerContent({ jobId }: { jobId?: number }) {
     }
   };
 
-  // 4. Upload to Supabase (The "One Click" Solution)
   const uploadImageToJob = async (attachment: any) => {
     if (!jobId) {
       alert("Please select a Job ID first (pass it as a prop or select in UI)");
@@ -138,7 +133,6 @@ function OutlookScannerContent({ jobId }: { jobId?: number }) {
     setUploadStatus(`Uploading ${attachment.name}...`);
 
     try {
-      // Decode Base64
       const byteCharacters = atob(attachment.contentBytes);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -147,18 +141,15 @@ function OutlookScannerContent({ jobId }: { jobId?: number }) {
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: attachment.contentType });
 
-      // Generate Path: e.g. job_123/outlook_image_8823.jpg
       const fileName = `outlook_${Date.now()}_${attachment.name}`;
       const filePath = `job_${jobId}/${fileName}`;
 
-      // A. Upload to Storage
       const { error: uploadError } = await supabase.storage
-        .from("job_photos") // Ensure this bucket exists
+        .from("job_photos")
         .upload(filePath, blob);
 
       if (uploadError) throw uploadError;
 
-      // B. Insert into DB (matching your schema)
       const { error: dbError } = await supabase.from("job_attachments").insert({
         job_id: jobId,
         file_name: attachment.name,
@@ -172,14 +163,12 @@ function OutlookScannerContent({ jobId }: { jobId?: number }) {
       if (dbError) throw dbError;
 
       setUploadStatus("Success!");
-      // Remove from list or mark as done visually
     } catch (error) {
       console.error("Upload failed", error);
       setUploadStatus("Error uploading.");
     }
   };
 
-  // --- UI Render ---
   return (
     <div className="p-4 border rounded shadow bg-white">
       <h2 className="text-xl font-bold mb-4">Outlook Inbox Scanner</h2>
@@ -193,7 +182,7 @@ function OutlookScannerContent({ jobId }: { jobId?: number }) {
         </button>
       ) : (
         <div className="flex gap-4">
-          {/* Left Panel: Email List */}
+          {}
           <div className="w-1/3 border-r pr-4 h-96 overflow-y-auto">
             <button
               onClick={fetchEmails}
@@ -223,7 +212,7 @@ function OutlookScannerContent({ jobId }: { jobId?: number }) {
             ))}
           </div>
 
-          {/* Right Panel: Images */}
+          {}
           <div className="w-2/3 pl-4 h-96 overflow-y-auto">
             {!selectedEmail && (
               <p className="text-gray-500">Select an email to view images</p>
@@ -234,7 +223,7 @@ function OutlookScannerContent({ jobId }: { jobId?: number }) {
             <div className="grid grid-cols-2 gap-4">
               {attachments.map((att) => (
                 <div key={att.id} className="border p-2 rounded">
-                  {/* Preview Image directly from Base64 */}
+                  {}
                   <img
                     src={`data:${att.contentType};base64,${att.contentBytes}`}
                     alt={att.name}

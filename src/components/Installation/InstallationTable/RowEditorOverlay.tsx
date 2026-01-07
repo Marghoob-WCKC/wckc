@@ -544,7 +544,6 @@ export function RowEditorOverlay({
                                 <DatePickerInput
                                   size="xs"
                                   w="100%"
-                                  clearable
                                   placeholder="Pending"
                                   value={getDateValue(
                                     formData.installation_completed
@@ -567,7 +566,6 @@ export function RowEditorOverlay({
                                 <DatePickerInput
                                   size="xs"
                                   w="100%"
-                                  clearable
                                   placeholder="Pending"
                                   value={getDateValue(
                                     formData.inspection_completed

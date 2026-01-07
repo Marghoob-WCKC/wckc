@@ -20,13 +20,15 @@ import { linearGradients } from "@/theme";
 interface SiteVisitModalProps {
   opened: boolean;
   onClose: () => void;
-  visit?: any; 
+  visit?: any;
+  defaultJobId?: string;
 }
 
 export default function SiteVisitModal({
   opened,
   onClose,
   visit,
+  defaultJobId,
 }: SiteVisitModalProps) {
   const { supabase } = useSupabase();
   const queryClient = useQueryClient();
@@ -62,9 +64,12 @@ export default function SiteVisitModal({
       });
     } else {
       form.reset();
-      setJobSearch(""); 
+      if (defaultJobId) {
+        form.setFieldValue("job_id", defaultJobId);
+      }
+      setJobSearch("");
     }
-  }, [visit, opened]);
+  }, [visit, opened, defaultJobId]);
 
   const handleSubmit = async (values: typeof form.values) => {
     try {
