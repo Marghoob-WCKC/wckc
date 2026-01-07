@@ -333,6 +333,7 @@ export function RowEditorOverlay({
                                 <DatePickerInput
                                   size="xs"
                                   w="100%"
+                                  allowDeselect
                                   value={getDateValue(formData.wrap_date)}
                                   onChange={(d) =>
                                     handleDateChange("wrap_date", d)
@@ -349,6 +350,7 @@ export function RowEditorOverlay({
                                 <DatePickerInput
                                   size="xs"
                                   w="100%"
+                                  allowDeselect
                                   value={getDateValue(formData.ship_schedule)}
                                   onChange={(d) =>
                                     handleDateChange("ship_schedule", d)
@@ -483,7 +485,7 @@ export function RowEditorOverlay({
                                   searchable
                                   searchValue={installerSearch}
                                   onSearchChange={setInstallerSearch}
-                                  clearable
+                                  allowDeselect
                                   nothingFoundMessage={
                                     loadingInstallers
                                       ? "Loading..."
@@ -510,6 +512,7 @@ export function RowEditorOverlay({
                                 <DatePickerInput
                                   size="xs"
                                   w="100%"
+                                  allowDeselect
                                   value={getDateValue(
                                     formData.installation_date
                                   )}
@@ -528,6 +531,7 @@ export function RowEditorOverlay({
                                 <DatePickerInput
                                   size="xs"
                                   w="100%"
+                                  allowDeselect
                                   value={getDateValue(formData.inspection_date)}
                                   onChange={(d) =>
                                     handleDateChange("inspection_date", d)
@@ -544,6 +548,7 @@ export function RowEditorOverlay({
                                 <DatePickerInput
                                   size="xs"
                                   w="100%"
+                                  allowDeselect
                                   placeholder="Pending"
                                   value={getDateValue(
                                     formData.installation_completed
@@ -566,6 +571,7 @@ export function RowEditorOverlay({
                                 <DatePickerInput
                                   size="xs"
                                   w="100%"
+                                  allowDeselect
                                   placeholder="Pending"
                                   value={getDateValue(
                                     formData.inspection_completed

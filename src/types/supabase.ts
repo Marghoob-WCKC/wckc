@@ -1621,6 +1621,7 @@ export type Database = {
           job_id: number | null
           job_number: string | null
           partially_shipped: boolean | null
+          prod_id: number | null
           project_name: string | null
           rush: boolean | null
           sales_order_id: number | null
@@ -1651,6 +1652,20 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "sales_table_view"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_prod_id_fkey"
+            columns: ["prod_id"]
+            isOneToOne: false
+            referencedRelation: "prod_table_view"
+            referencedColumns: ["prod_id"]
+          },
+          {
+            foreignKeyName: "jobs_prod_id_fkey"
+            columns: ["prod_id"]
+            isOneToOne: false
+            referencedRelation: "production_schedule"
+            referencedColumns: ["prod_id"]
           },
         ]
       }
