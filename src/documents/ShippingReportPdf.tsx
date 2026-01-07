@@ -14,6 +14,7 @@ export type ShippingReportJob = Tables<"jobs"> & {
     cabinet: JoinedCabinet | null;
   };
   production_schedule: Tables<"production_schedule">;
+  installation: { notes: string | null } | null;
 };
 
 const ITEMS_PER_PAGE = 45;
@@ -93,6 +94,7 @@ const styles = StyleSheet.create({
   colSpec: { width: "6%" },
   colColor: { width: "10%" },
   colCheck: { width: "4%", alignItems: "center" },
+  colNotes: { width: "20%", paddingRight: 4 },
 
   headerText: { fontSize: 8, fontWeight: "bold", textAlign: "center" },
   cellText: { fontSize: 8 },
@@ -170,22 +172,10 @@ const ColumnHeaders = () => (
     <View style={[styles.headerCellBase, styles.colColor]}>
       <Text style={styles.headerText}>Color</Text>
     </View>
-    <View style={[styles.headerCellBase, styles.colCheck]}>
-      <Text style={styles.headerText}>D</Text>
-    </View>
-    <View style={[styles.headerCellBase, styles.colCheck]}>
-      <Text style={styles.headerText}>P</Text>
-    </View>
-    <View style={[styles.headerCellBase, styles.colCheck]}>
-      <Text style={styles.headerText}>F/C</Text>
-    </View>
-    <View style={[styles.headerCellBase, styles.colCheck]}>
-      <Text style={styles.headerText}>P/S</Text>
-    </View>
     <View
-      style={[styles.headerCellBase, styles.colCheck, { borderRightWidth: 0 }]}
+      style={[styles.headerCellBase, styles.colNotes, { borderRightWidth: 0 }]}
     >
-      <Text style={styles.headerText}>A</Text>
+      <Text style={styles.headerText}>Installation Notes</Text>
     </View>
   </View>
 );
@@ -305,22 +295,12 @@ export const ShippingReportPdf = ({
             <Text style={styles.cellTextSmall}>{color}</Text>
           </View>
 
-          <View style={[styles.cellBase, styles.colCheck]}>
-            <Checkbox checked={Boolean(ps?.doors_completed_actual)} />
-          </View>
-          <View style={[styles.cellBase, styles.colCheck]}>
-            <Checkbox checked={Boolean(ps?.cut_finish_completed_actual)} />
-          </View>
-          <View style={[styles.cellBase, styles.colCheck]}>
-            <Checkbox checked={Boolean(ps?.custom_finish_completed_actual)} />
-          </View>
-          <View style={[styles.cellBase, styles.colCheck]}>
-            <Checkbox checked={Boolean(ps?.paint_completed_actual)} />
-          </View>
           <View
-            style={[styles.cellBase, styles.colCheck, { borderRightWidth: 0 }]}
+            style={[styles.cellBase, styles.colNotes, { borderRightWidth: 0 }]}
           >
-            <Checkbox checked={Boolean(ps?.assembly_completed_actual)} />
+            <Text style={styles.cellTextSmall}>
+              {job.installation?.notes || "—"}
+            </Text>
           </View>
         </View>
       );
