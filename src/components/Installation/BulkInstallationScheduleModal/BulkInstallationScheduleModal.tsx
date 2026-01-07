@@ -604,7 +604,7 @@ export default function BulkScheduleModal({
       <AddBackorderModal
         opened={isAddBackorderModalOpen}
         onClose={() => setIsAddBackorderModalOpen(false)}
-        jobId="" // Not supported in bulk
+        jobId="" 
         jobNumber=""
         isBulk={true}
         jobIds={selectedJobIds}

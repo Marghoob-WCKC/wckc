@@ -19,7 +19,7 @@ interface AddBackorderModalProps {
   onSuccess?: () => void;
   onSaveDraft?: (values: BackorderFormValues) => void;
   initialData?: BackorderFormValues | null;
-  jobIds?: number[]; // For bulk operations
+  jobIds?: number[]; 
   isBulk?: boolean;
 }
 
@@ -61,7 +61,6 @@ export default function AddBackorderModal({
   const createMutation = useMutation({
     mutationFn: async (values: BackorderFormValues) => {
       if (isBulk && jobIds && jobIds.length > 0) {
-        // Bulk insertion
         const payloads = jobIds.map((id) => ({
           job_id: id,
           due_date: values.due_date
@@ -73,7 +72,6 @@ export default function AddBackorderModal({
         const { error } = await supabase.from("backorders").insert(payloads);
         if (error) throw error;
       } else {
-        // Single insertion
         const payload = {
           job_id: values.job_id,
           due_date: values.due_date

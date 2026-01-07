@@ -40,7 +40,6 @@ import {
 } from "react-icons/fa";
 import { useInterval } from '@mantine/hooks';
 
-// --- Types & Mock Data ---
 
 type StepPosition = 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
@@ -76,7 +75,6 @@ const MOCK_PROJECT_DATA: Record<string, any> = {
 };
 
 export default function SmartAutofillGuide() {
-    // --- Demo State ---
     const [orderType, setOrderType] = useState<string | null>(null);
     const [stage, setStage] = useState('QUOTE');
     const [jobBase, setJobBase] = useState('');
@@ -94,7 +92,6 @@ export default function SmartAutofillGuide() {
     });
     const [unitNumber, setUnitNumber] = useState('');
 
-    // --- Guide Logic State ---
     const [currentStep, setCurrentStep] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
 
@@ -242,7 +239,7 @@ export default function SmartAutofillGuide() {
     return (
         <div className="relative h-screen flex flex-col overflow-hidden font-sans bg-gray-50">
 
-            {/* --- Header with Centered Controls --- */}
+            {}
             <Paper
                 radius={0}
                 p="sm"
@@ -251,7 +248,7 @@ export default function SmartAutofillGuide() {
             >
                 <div className="flex items-center justify-between h-full px-2 relative">
 
-                    {/* Left: Branding */}
+                    {}
                     <Group gap="sm">
                         <ThemeIcon size="lg" radius="md" variant="gradient" gradient={{ from: 'blue', to: 'cyan' }}>
                             <FaLightbulb size={18} />
@@ -262,7 +259,7 @@ export default function SmartAutofillGuide() {
                         </Box>
                     </Group>
 
-                    {/* Center: Controls (Absolutely Centered) */}
+                    {}
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                         <Group gap={6} bg="gray.0" p={4} className="rounded-lg border border-gray-200 shadow-sm">
                             <Tooltip label="Previous" withArrow>
@@ -307,7 +304,7 @@ export default function SmartAutofillGuide() {
                         </Group>
                     </div>
 
-                    {/* Right: Reset Action */}
+                    {}
                     <Tooltip label="Restart Demo" withArrow>
                         <ActionIcon
                             variant="light"
@@ -321,7 +318,7 @@ export default function SmartAutofillGuide() {
                     </Tooltip>
                 </div>
 
-                {/* Progress Bar attached to bottom of header */}
+                {}
                 <Progress
                     value={((currentStep + 1) / steps.length) * 100}
                     size={3}
@@ -332,7 +329,7 @@ export default function SmartAutofillGuide() {
                 />
             </Paper>
 
-            {/* --- Simple Transparent Blur Modal --- */}
+            {}
             <Transition mounted={true} transition="pop" duration={400} timingFunction="ease-out">
                 {(styles) => (
                     <Paper
@@ -363,7 +360,7 @@ export default function SmartAutofillGuide() {
                 )}
             </Transition>
 
-            {/* --- Main App UI --- */}
+            {}
             <Container
                 size="100%"
                 pl={10}
@@ -388,7 +385,7 @@ export default function SmartAutofillGuide() {
                 >
                     <Stack gap={5} p="md">
 
-                        {/* Top Bar Paper */}
+                        {}
                         <Paper withBorder p="md" radius="md" shadow="xl">
                             <Grid gutter="xl" align="flex-end" justify="space-between">
                                 <GridCol span={6}>
@@ -511,7 +508,7 @@ export default function SmartAutofillGuide() {
                             </Grid>
                         </Paper>
 
-                        {/* Client Data Section */}
+                        {}
                         {client ? (
                             <SimpleGrid
                                 cols={{ base: 1, lg: 2 }}
@@ -626,7 +623,7 @@ export default function SmartAutofillGuide() {
                             </Center>
                         )}
 
-                        {/* Basic Info Placeholders (Visual Only for context) */}
+                        {}
                         <Paper withBorder p="md" bg={"gray.1"} opacity={0.5} style={{ pointerEvents: 'none' }}>
                             <Center h={100}><Text c="dimmed">Additional Form Fields (Cabinet Specs, Financials, etc.)</Text></Center>
                         </Paper>
@@ -634,7 +631,7 @@ export default function SmartAutofillGuide() {
                     </Stack>
                 </div>
 
-                {/* Sticky Bottom Bar */}
+                {}
                 <Paper
                     withBorder
                     p="md"

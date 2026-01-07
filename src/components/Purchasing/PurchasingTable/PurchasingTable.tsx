@@ -63,38 +63,31 @@ import { OrderPartsModal } from "./subComponents/OrderPartsModal";
 import { IncompletePartsModal } from "./subComponents/IncompletePartsModal";
 import { StatusCell } from "./subComponents/StatusCell";
 
-// --- Helper to parse the log string into structured data ---
 const parseCommentHistory = (rawText: string | null) => {
   if (!rawText) return [];
   const lines = rawText.split("\n");
   const history: { message: string; date: string | null }[] = [];
   let currentMessage: string[] = [];
 
-  // Regex to find timestamp at the end of a line: [YYYY-MM-DD HH:mm]
   const timestampRegex = /\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\]$/;
 
   lines.forEach((line) => {
     const match = line.match(timestampRegex);
     if (match) {
-      // This line ends a log entry
       const date = match[1];
       const text = line.replace(timestampRegex, "").trim();
-      // Combine with previous buffer
       const fullMessage = [...currentMessage, text].join("\n").trim();
       history.push({ message: fullMessage, date });
-      currentMessage = []; // Reset buffer
+      currentMessage = [];
     } else {
-      // Just a text line, add to buffer
       currentMessage.push(line);
     }
   });
 
-  // If there's leftover text that didn't end with a timestamp
   if (currentMessage.length > 0) {
     history.push({ message: currentMessage.join("\n").trim(), date: null });
   }
 
-  // Return reversed so newest is at the top for the timeline
   return history.reverse();
 };
 
@@ -118,7 +111,6 @@ export default function PurchasingTable() {
     { open: openCommentModal, close: closeCommentModal },
   ] = useDisclosure(false);
 
-  // State for the comment modal
   const [editingComment, setEditingComment] = useState<{
     id: number;
     text: string;
@@ -653,11 +645,9 @@ export default function PurchasingTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  // --- Modal Content Rendering ---
   const renderCommentModalContent = () => {
     if (!editingComment) return null;
 
-    // Parse the current text for the Timeline view
     const history = parseCommentHistory(editingComment.text);
 
     return (
@@ -729,11 +719,10 @@ export default function PurchasingTable() {
                 if (!newNote.trim()) return;
                 updateStatusMutation.mutate({
                   id: editingComment.id,
-                  updates: {}, // No direct field updates, just appending comment
+                  updates: {},
                   logMessage: newNote,
                   initialComment: editingComment.text,
                 });
-                // Optimistically update local state for better UX
                 setEditingComment((prev) =>
                   prev
                     ? {

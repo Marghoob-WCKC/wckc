@@ -76,7 +76,6 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
   },
 
-  // Columns
   colQty: { width: "5%", textAlign: "center" },
   colName: { width: "20%" },
   colDesc: { width: "45%" },
@@ -157,11 +156,8 @@ export const ServiceOrdersPdf = ({
                 const clientName = so.client_name || "Unknown";
                 const jobNum = so.job_number || "Unknown";
 
-                // pending_parts is Json, need to cast
                 const parts =
                   (so.pending_parts as unknown as ServiceOrderPart[]) || [];
-                // Filter? The view usually returns what we need, but based on naming it's 'pending_parts', so assume they are pending.
-                // However, we can double check status if it's in the json.
 
                 return (
                   <View

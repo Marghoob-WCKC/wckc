@@ -100,20 +100,15 @@ export default function SalesTable() {
     return inputFilters.find((f) => f.id === id)?.value;
   };
 
-  // 1. Create a stable filter list for stats (Excluding 'stage')
-  // This ensures the queryKey doesn't change when you just click 'Quotes' vs 'Jobs'
   const filtersForStats = useMemo(() => {
     return activeFilters.filter((f) => f.id !== "stage");
   }, [activeFilters]);
 
   const { data: stats, isLoading: statsLoading } = useQuery({
-    // 2. Use filtersForStats in the Key.
-    // React Query will only refetch if these specific filters change.
     queryKey: ["sales_stats_aggregated", filtersForStats],
     queryFn: async () => {
       let query = supabase.from("sales_table_view").select("stage");
 
-      // Use the memoized filters directly
       filtersForStats.forEach((filter) => {
         const { id, value } = filter;
         if (!value) return;
@@ -191,7 +186,7 @@ export default function SalesTable() {
       return counts;
     },
     enabled: isAuthenticated,
-    staleTime: 1000 * 60 * 5, // Increased cache time since it's now stable
+    staleTime: 1000 * 60 * 5, 
   });
 
   const { data, isLoading, isError, error } = useSalesTable({
