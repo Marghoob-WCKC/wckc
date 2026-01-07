@@ -235,7 +235,7 @@ export function RowEditorOverlay({
 
       <Transition
         mounted={animate}
-        transition="pop"
+        transition="fade"
         duration={300}
         timingFunction="ease-out"
       >
@@ -581,7 +581,6 @@ export function RowEditorOverlay({
                                 />
                               );
 
-                            // STATIC COLUMNS
                             default:
                               return (
                                 <Box

@@ -754,7 +754,6 @@ export default function InstallationTable() {
         </Stack>
       </Group>
 
-      {}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -1195,19 +1194,22 @@ export default function InstallationTable() {
         />
       </Box>
 
-      {}
       {editingRow && editingRowMeta && currentRow && (
         <RowEditorOverlay
           data={editingRow}
           rowMeta={editingRowMeta}
           table={table}
-          onCancel={() => setEditingRow(null)}
+          onCancel={() => {
+            setEditingRow(null);
+            setEditingRowMeta(null);
+          }}
           row={currentRow}
-          onSuccess={refetch}
+          onSuccess={() => {
+            refetch();
+          }}
         />
       )}
 
-      {}
       <Transition
         mounted={contextMenu.visible}
         transition="pop"
@@ -1274,23 +1276,6 @@ export default function InstallationTable() {
         selectedRows={table.getSelectedRowModel().rows}
         clearSelection={() => setRowSelection({})}
       />
-      {editingRow && editingRowMeta && currentRow && (
-        <RowEditorOverlay
-          data={currentRow.original}
-          rowMeta={editingRowMeta}
-          table={table}
-          onCancel={() => {
-            setEditingRow(null);
-            setEditingRowMeta(null);
-          }}
-          row={currentRow}
-          onSuccess={() => {
-            refetch();
-            setEditingRow(null);
-            setEditingRowMeta(null);
-          }}
-        />
-      )}
     </Box>
   );
 }
