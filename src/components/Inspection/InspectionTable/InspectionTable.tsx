@@ -31,6 +31,7 @@ import {
   Button,
   Anchor,
   Modal,
+  Switch,
 } from "@mantine/core";
 import {
   FaSearch,
@@ -45,7 +46,7 @@ import {
 } from "react-icons/fa";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { DateInput } from "@mantine/dates";
+import { DateInput, DatePickerInput } from "@mantine/dates";
 import { useSupabase } from "@/hooks/useSupabase";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
@@ -89,8 +90,17 @@ export default function InspectionTable() {
     pageSize: 16,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
-  const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
+
+  // Default installation filter: 1 month ago to no limit (null)
+  const defaultStartDate = dayjs().subtract(1, "month").format("YYYY-MM-DD");
+  const defaultFilters: ColumnFiltersState = [
+    { id: "installation_date", value: [defaultStartDate, null] },
+  ];
+
+  const [inputFilters, setInputFilters] =
+    useState<ColumnFiltersState>(defaultFilters);
+  const [activeFilters, setActiveFilters] =
+    useState<ColumnFiltersState>(defaultFilters);
 
   const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
@@ -199,6 +209,7 @@ export default function InspectionTable() {
   };
 
   const handleClearFilters = () => {
+    // Reset to empty filters
     setInputFilters([]);
     setActiveFilters([]);
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
@@ -291,6 +302,12 @@ export default function InspectionTable() {
       header: "Client",
       size: 150,
       minSize: 120,
+      cell: (info) => info.getValue() ?? "—",
+    }),
+    columnHelper.accessor("site_address", {
+      header: "Site Address",
+      size: 200,
+      minSize: 150,
       cell: (info) => info.getValue() ?? "—",
     }),
     columnHelper.accessor("installer_company", {
@@ -498,35 +515,114 @@ export default function InspectionTable() {
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
+                label="Site Address"
+                placeholder="Search Address..."
+                value={getInputFilterValue("site_address") as string}
+                onChange={(e) =>
+                  setInputFilterValue("site_address", e.target.value)
+                }
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+              />
+              <TextInput
                 label="Installer"
                 placeholder="Company or Name"
-                value={getInputFilterValue("installer_company")}
+                value={getInputFilterValue("installer_company") as string}
                 onChange={(e) =>
                   setInputFilterValue("installer_company", e.target.value)
                 }
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
-              <DateInput
-                label="Inspection Date"
-                placeholder="Filter by Date"
+              <DatePickerInput
+                type="range"
+                allowSingleDateInRange
+                label="Installation Date"
+                placeholder="Filter Range"
                 clearable
                 value={
-                  getInputFilterValue("inspection_date")
-                    ? parseIsoToLocalDate(
-                        getInputFilterValue("inspection_date")
-                      )
-                    : null
+                  (inputFilters.find((f) => f.id === "installation_date")
+                    ?.value as [Date | null, Date | null]) || [null, null]
                 }
-                onChange={(val: any) => {
-                  const date = val ? dayjs(val).toDate() : null;
-                  const formattedDate = date
-                    ? dayjs(date).format("YYYY-MM-DD")
-                    : undefined;
-                  setInputFilterValue("inspection_date", formattedDate);
+                onChange={(val) => {
+                  // Ensure dates are formatted as YYYY-MM-DD strings for consistency with hook expected format
+                  // actually hook expects strings or dates? Hook logic:
+                  // `if (start) query = query.gte("installation_date", start);`
+                  // supabase expects YYYY-MM-DD usually.
+                  // Let's format them.
+                  const formatted = val.map((d) =>
+                    d ? dayjs(d).format("YYYY-MM-DD") : null
+                  );
+                  setInputFilterValue("installation_date", formatted as any);
                 }}
                 valueFormat="YYYY-MM-DD"
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
+              <DatePickerInput
+                type="range"
+                allowSingleDateInRange
+                label="Inspection Date"
+                placeholder="Filter Range"
+                clearable
+                value={
+                  (inputFilters.find((f) => f.id === "inspection_date")
+                    ?.value as [Date | null, Date | null]) || [null, null]
+                }
+                onChange={(val) => {
+                  const formatted = val.map((d) =>
+                    d ? dayjs(d).format("YYYY-MM-DD") : null
+                  );
+                  setInputFilterValue("inspection_date", formatted as any);
+                }}
+                valueFormat="YYYY-MM-DD"
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+              />
+              <Group style={{ alignItems: "flex-end", paddingBottom: 6 }}>
+                <Switch
+                  label="Unscheduled"
+                  size="md"
+                  checked={inputFilters.some(
+                    (f) => f.id === "unscheduled" && f.value === true
+                  )}
+                  onChange={(event) => {
+                    const checked = event.currentTarget.checked;
+                    const val = checked ? true : undefined;
+
+                    setInputFilterValue("unscheduled", val as any);
+
+                    // Auto-apply logic
+                    const otherFilters = inputFilters.filter(
+                      (f) => f.id !== "unscheduled"
+                    );
+                    const newActiveFilters = checked
+                      ? [...otherFilters, { id: "unscheduled", value: true }]
+                      : otherFilters;
+
+                    // We also need to update activeFilters immediately for auto-apply effect
+                    setActiveFilters(newActiveFilters);
+                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+                  thumbIcon={<FaCheckCircle />}
+                  styles={{
+                    track: {
+                      cursor: "pointer",
+                      background: inputFilters.some(
+                        (f) => f.id === "unscheduled" && f.value === true
+                      )
+                        ? "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)"
+                        : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
+                      color: "white",
+                      border: "none",
+                    },
+                    thumb: {
+                      background: inputFilters.some(
+                        (f) => f.id === "unscheduled" && f.value === true
+                      )
+                        ? "#6e54ffff"
+                        : "#d1d1d1ff",
+                    },
+                  }}
+                />
+              </Group>
             </SimpleGrid>
 
             <Group justify="flex-end" mt="md">

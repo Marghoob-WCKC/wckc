@@ -28,23 +28,48 @@ export function useInspectionTable({
 
       columnFilters.forEach((filter) => {
         const { id, value } = filter;
-        const valStr = String(value);
-        if (!valStr) return;
+
+        if (value === undefined || value === null || value === "") return;
 
         switch (id) {
           case "job_number":
-            query = query.ilike("job_number", `%${valStr}%`);
+            query = query.ilike("job_number", `%${String(value)}%`);
             break;
           case "shipping_client_name":
-            query = query.ilike("shipping_client_name", `%${valStr}%`);
+            query = query.ilike("shipping_client_name", `%${String(value)}%`);
+            break;
+          case "site_address":
+            query = query.ilike("site_address", `%${String(value)}%`);
             break;
           case "installer_company":
             query = query.or(
-              `installer_company.ilike.%${valStr}%,installer_first_name.ilike.%${valStr}%,installer_last_name.ilike.%${valStr}%`
+              `installer_company.ilike.%${String(
+                value
+              )}%,installer_first_name.ilike.%${String(
+                value
+              )}%,installer_last_name.ilike.%${String(value)}%`
             );
             break;
           case "inspection_date":
-            query = query.eq("inspection_date", valStr);
+            if (Array.isArray(value)) {
+              const [start, end] = value;
+              if (start) query = query.gte("inspection_date", start);
+              if (end) query = query.lte("inspection_date", end);
+            } else {
+              query = query.eq("inspection_date", String(value));
+            }
+            break;
+          case "installation_date":
+            if (Array.isArray(value)) {
+              const [start, end] = value;
+              if (start) query = query.gte("installation_date", start);
+              if (end) query = query.lte("installation_date", end);
+            }
+            break;
+          case "unscheduled":
+            if (value === true) {
+              query = query.is("inspection_date", null);
+            }
             break;
           default:
             break;
@@ -55,7 +80,7 @@ export function useInspectionTable({
         const { id, desc } = sorting[0];
         query = query.order(id, { ascending: !desc });
       } else {
-        query = query.order("inspection_date", { ascending: false });
+        query = query.order("installation_date", { ascending: true });
       }
 
       const from = pagination.pageIndex * pagination.pageSize;
