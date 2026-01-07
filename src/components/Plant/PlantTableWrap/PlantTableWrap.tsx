@@ -87,7 +87,7 @@ export default function PlantTableWrap() {
   const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
-  const [openItem, setOpenItem] = useState<string | null>(null);
+  const [openItems, setOpenItems] = useState<string[]>([]);
 
   const handleJobClick = (id: number) => {
     setDrawerJobId(id);
@@ -334,52 +334,58 @@ export default function PlantTableWrap() {
         </Center>
       ),
     }),
-    columnHelper.accessor((row) => (row as PlantTableData).drawer_completed_actual, {
-      id: "drawer_completed_actual",
-      header: "Drawer",
-      size: 50,
-      cell: (info) => (
-        <Center onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={!!info.getValue()}
-            color="green"
-            size="xs"
-            onChange={() =>
-              info.row.original.job_id &&
-              updateProductionMutation.mutate({
-                jobId: info.row.original.job_id,
-                prodId: info.row.original.prod_id,
-                field: "drawer_completed_actual",
-                currentValue: info.getValue(),
-              })
-            }
-          />
-        </Center>
-      ),
-    }),
-    columnHelper.accessor((row) => (row as PlantTableData).cut_melamine_completed_actual, {
-      id: "cut_melamine_completed_actual",
-      header: "CutMel",
-      size: 50,
-      cell: (info) => (
-        <Center onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={!!info.getValue()}
-            color="green"
-            size="xs"
-            onChange={() =>
-              info.row.original.job_id &&
-              updateProductionMutation.mutate({
-                jobId: info.row.original.job_id,
-                prodId: info.row.original.prod_id,
-                field: "cut_melamine_completed_actual",
-                currentValue: info.getValue(),
-              })
-            }
-          />
-        </Center>
-      ),
-    }),
+    columnHelper.accessor(
+      (row) => (row as PlantTableData).drawer_completed_actual,
+      {
+        id: "drawer_completed_actual",
+        header: "Drawer",
+        size: 50,
+        cell: (info) => (
+          <Center onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={!!info.getValue()}
+              color="green"
+              size="xs"
+              onChange={() =>
+                info.row.original.job_id &&
+                updateProductionMutation.mutate({
+                  jobId: info.row.original.job_id,
+                  prodId: info.row.original.prod_id,
+                  field: "drawer_completed_actual",
+                  currentValue: info.getValue(),
+                })
+              }
+            />
+          </Center>
+        ),
+      }
+    ),
+    columnHelper.accessor(
+      (row) => (row as PlantTableData).cut_melamine_completed_actual,
+      {
+        id: "cut_melamine_completed_actual",
+        header: "CutMel",
+        size: 50,
+        cell: (info) => (
+          <Center onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={!!info.getValue()}
+              color="green"
+              size="xs"
+              onChange={() =>
+                info.row.original.job_id &&
+                updateProductionMutation.mutate({
+                  jobId: info.row.original.job_id,
+                  prodId: info.row.original.prod_id,
+                  field: "cut_melamine_completed_actual",
+                  currentValue: info.getValue(),
+                })
+              }
+            />
+          </Center>
+        ),
+      }
+    ),
     columnHelper.accessor("cut_finish_completed_actual", {
       header: "CutFin",
       size: 50,
@@ -666,8 +672,9 @@ export default function PlantTableWrap() {
           <Box style={{ width: "max-content", minWidth: "100%" }}>
             <Accordion
               variant="contained"
-              value={openItem}
-              onChange={setOpenItem}
+              multiple
+              value={openItems}
+              onChange={setOpenItems}
               style={{ minWidth: "1600px" }}
               styles={{
                 item: { marginBottom: 10, border: "1px solid #e0e0e0" },
@@ -677,7 +684,7 @@ export default function PlantTableWrap() {
             >
               {sortedGroupKeys.map((wrapDate) => {
                 const jobsInGroup = groupedRows[wrapDate];
-                const isOpen = openItem === wrapDate;
+                const isOpen = openItems.includes(wrapDate);
                 const isPastDue = dayjs(wrapDate).isBefore(dayjs(), "day");
                 const uniqueJobCount = new Set(
                   jobsInGroup.map((r) => {
@@ -697,7 +704,9 @@ export default function PlantTableWrap() {
                         <FaCalendarAlt size={16} />
                         <Text fw={700} size="md">
                           Wrap Date:{" "}
-                          <span style={{ color: isPastDue ? "red" : "#4A00E0" }}>
+                          <span
+                            style={{ color: isPastDue ? "red" : "#4A00E0" }}
+                          >
                             {wrapDate}
                           </span>
                         </Text>
@@ -717,7 +726,12 @@ export default function PlantTableWrap() {
                     </Accordion.Control>
                     <Accordion.Panel>
                       {isOpen ? (
-                        <Table striped highlightOnHover withColumnBorders style={{ minWidth: "1600px" }}>
+                        <Table
+                          striped
+                          highlightOnHover
+                          withColumnBorders
+                          style={{ minWidth: "1600px" }}
+                        >
                           <Table.Thead>
                             <Table.Tr>
                               {table

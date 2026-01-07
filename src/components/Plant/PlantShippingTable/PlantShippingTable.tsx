@@ -102,7 +102,7 @@ export default function PlantShippingTable() {
     openDrawer();
   };
   const [pdfOpened, { open: openPdf, close: closePdf }] = useDisclosure(false);
-  const [openItem, setOpenItem] = useState<string | null>(null);
+  const [openItems, setOpenItems] = useState<string[]>([]);
 
   const [backorderModalState, setBackorderModalState] = useState<{
     opened: boolean;
@@ -122,7 +122,6 @@ export default function PlantShippingTable() {
   const tableData = (data?.data as PlantTableData[]) || [];
   const totalCount = data?.count || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
-
 
   const updateInstallationMutation = useMutation({
     mutationFn: async ({
@@ -178,7 +177,6 @@ export default function PlantShippingTable() {
         updates.partially_shipped = false;
         updates.wrap_completed = timestamp;
 
-
         if (prodId) {
           const autoCompleteFields = [
             "doors_completed_actual",
@@ -189,16 +187,14 @@ export default function PlantShippingTable() {
             "paint_completed_actual",
             "assembly_completed_actual",
           ];
-          autoCompleteFields.forEach(f => prodUpdates[f] = timestamp);
+          autoCompleteFields.forEach((f) => (prodUpdates[f] = timestamp));
         }
-
       } else if (type === "partial") {
         updates.has_shipped = false;
         updates.partially_shipped = true;
       } else {
         updates.has_shipped = false;
         updates.partially_shipped = false;
-
       }
 
       const { error: installError } = await supabase
@@ -224,14 +220,15 @@ export default function PlantShippingTable() {
         color: "green",
       });
 
-      if (variables.type === 'partial') {
-
-        const job = (data?.data as PlantTableData[])?.find(j => j.job_id === variables.jobId);
+      if (variables.type === "partial") {
+        const job = (data?.data as PlantTableData[])?.find(
+          (j) => j.job_id === variables.jobId
+        );
         if (job) {
           setBackorderModalState({
             opened: true,
             jobId: String(variables.jobId),
-            jobNumber: job.job_number || ""
+            jobNumber: job.job_number || "",
           });
         }
       }
@@ -244,8 +241,6 @@ export default function PlantShippingTable() {
       });
     },
   });
-
-
 
   const setInputFilterValue = (id: string, value: any) => {
     setInputFilters((prev) => {
@@ -344,39 +339,36 @@ export default function PlantShippingTable() {
         );
       },
     }),
-    columnHelper.accessor(
-      (row) => (row as PlantTableData).ship_status,
-      {
-        id: "ship_status",
-        header: "Date Status",
-        size: 90,
-        cell: (info) => {
-          const status = info.getValue() || "unprocessed";
-          const colors: Record<string, string> = {
-            unprocessed: "gray",
-            tentative: "orange",
-            confirmed: "green",
-          };
+    columnHelper.accessor((row) => (row as PlantTableData).ship_status, {
+      id: "ship_status",
+      header: "Date Status",
+      size: 90,
+      cell: (info) => {
+        const status = info.getValue() || "unprocessed";
+        const colors: Record<string, string> = {
+          unprocessed: "gray",
+          tentative: "orange",
+          confirmed: "green",
+        };
 
-          const shortText: Record<string, string> = {
-            unprocessed: "Unproc.",
-            tentative: "Tent.",
-            confirmed: "Conf."
-          };
+        const shortText: Record<string, string> = {
+          unprocessed: "Unproc.",
+          tentative: "Tent.",
+          confirmed: "Conf.",
+        };
 
-          return (
-            <Badge
-              color={colors[status]}
-              variant={status === "unprocessed" ? "light" : "filled"}
-              size="xs"
-              w="100%"
-            >
-              {shortText[status] || status}
-            </Badge>
-          );
-        },
-      }
-    ),
+        return (
+          <Badge
+            color={colors[status]}
+            variant={status === "unprocessed" ? "light" : "filled"}
+            size="xs"
+            w="100%"
+          >
+            {shortText[status] || status}
+          </Badge>
+        );
+      },
+    }),
     columnHelper.accessor("client_name", {
       header: "Client",
       size: 160,
@@ -424,14 +416,14 @@ export default function PlantShippingTable() {
                 {dayjs(completed).format("MMM D, YYYY")}
               </Badge>
             </Center>
-          )
+          );
         }
         return (
           <Center>
             <FaTimes size={14} color="red" />
           </Center>
-        )
-      }
+        );
+      },
     }),
     columnHelper.accessor("has_shipped", {
       header: "Shipped",
@@ -441,22 +433,39 @@ export default function PlantShippingTable() {
         const partially = info.row.original.partially_shipped;
         const job = info.row.original;
 
-
         let trigger = (
-          <Button size="xs" variant="light" color="blue" fullWidth rightSection={<FaTruck size={12} />}>
+          <Button
+            size="xs"
+            variant="light"
+            color="blue"
+            fullWidth
+            rightSection={<FaTruck size={12} />}
+          >
             Mark Shipped
           </Button>
         );
 
         if (isShipped) {
           trigger = (
-            <Badge color="green" variant="light" fullWidth leftSection={<FaCheck size={10} />} style={{ cursor: 'pointer' }}>
+            <Badge
+              color="green"
+              variant="light"
+              fullWidth
+              leftSection={<FaCheck size={10} />}
+              style={{ cursor: "pointer" }}
+            >
               Shipped
             </Badge>
           );
         } else if (partially) {
           trigger = (
-            <Badge color="orange" variant="light" fullWidth leftSection={<FaTruck size={10} />} style={{ cursor: 'pointer' }}>
+            <Badge
+              color="orange"
+              variant="light"
+              fullWidth
+              leftSection={<FaTruck size={10} />}
+              style={{ cursor: "pointer" }}
+            >
               Partial
             </Badge>
           );
@@ -465,31 +474,37 @@ export default function PlantShippingTable() {
         return (
           <Center onClick={(e) => e.stopPropagation()}>
             <Menu shadow="md" width={150} position="bottom-end">
-              <Menu.Target>
-                {trigger}
-              </Menu.Target>
+              <Menu.Target>{trigger}</Menu.Target>
 
               <Menu.Dropdown>
                 <Menu.Label>Update Status</Menu.Label>
                 <Menu.Item
                   leftSection={<FaCheck size={14} />}
-                  onClick={() => job.job_id && job.installation_id && updateShippingMutation.mutate({
-                    jobId: job.job_id,
-                    installId: job.installation_id,
-                    prodId: job.prod_id,
-                    type: 'full'
-                  })}
+                  onClick={() =>
+                    job.job_id &&
+                    job.installation_id &&
+                    updateShippingMutation.mutate({
+                      jobId: job.job_id,
+                      installId: job.installation_id,
+                      prodId: job.prod_id,
+                      type: "full",
+                    })
+                  }
                 >
                   Full Shipment
                 </Menu.Item>
                 <Menu.Item
                   leftSection={<FaTruck size={14} />}
-                  onClick={() => job.job_id && job.installation_id && updateShippingMutation.mutate({
-                    jobId: job.job_id,
-                    installId: job.installation_id,
-                    prodId: job.prod_id,
-                    type: 'partial'
-                  })}
+                  onClick={() =>
+                    job.job_id &&
+                    job.installation_id &&
+                    updateShippingMutation.mutate({
+                      jobId: job.job_id,
+                      installId: job.installation_id,
+                      prodId: job.prod_id,
+                      type: "partial",
+                    })
+                  }
                 >
                   Partial Shipment
                 </Menu.Item>
@@ -499,12 +514,16 @@ export default function PlantShippingTable() {
                     <Menu.Item
                       leftSection={<FaTimes size={14} />}
                       color="red"
-                      onClick={() => job.job_id && job.installation_id && updateShippingMutation.mutate({
-                        jobId: job.job_id,
-                        installId: job.installation_id,
-                        prodId: job.prod_id,
-                        type: 'none'
-                      })}
+                      onClick={() =>
+                        job.job_id &&
+                        job.installation_id &&
+                        updateShippingMutation.mutate({
+                          jobId: job.job_id,
+                          installId: job.installation_id,
+                          prodId: job.prod_id,
+                          type: "none",
+                        })
+                      }
                     >
                       Clear Status
                     </Menu.Item>
@@ -529,36 +548,41 @@ export default function PlantShippingTable() {
         </Center>
       ),
     }),
-    columnHelper.accessor(
-      (row) => (row as PlantTableData).in_warehouse,
-      {
-        id: "in_warehouse",
-        header: "Warehouse",
-        size: 90,
-        cell: (info) => {
-          const value = info.getValue();
-          return (
-            <Tooltip label={value ? dayjs(value).format("MMM D, YYYY h:mm A") : "Not in warehouse"}>
-              <Center onClick={(e) => e.stopPropagation()}>
-                <Checkbox
-                  checked={!!value}
-                  color="violet"
-                  size="xs"
-                  onChange={(e) =>
-                    info.row.original.installation_id &&
-                    updateInstallationMutation.mutate({
-                      installationId: info.row.original.installation_id,
-                      field: "in_warehouse",
-                      value: e.currentTarget.checked ? new Date().toISOString() : null,
-                    })
-                  }
-                />
-              </Center>
-            </Tooltip>
-          );
-        },
-      }
-    ),
+    columnHelper.accessor((row) => (row as PlantTableData).in_warehouse, {
+      id: "in_warehouse",
+      header: "Warehouse",
+      size: 90,
+      cell: (info) => {
+        const value = info.getValue();
+        return (
+          <Tooltip
+            label={
+              value
+                ? dayjs(value).format("MMM D, YYYY h:mm A")
+                : "Not in warehouse"
+            }
+          >
+            <Center onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                checked={!!value}
+                color="violet"
+                size="xs"
+                onChange={(e) =>
+                  info.row.original.installation_id &&
+                  updateInstallationMutation.mutate({
+                    installationId: info.row.original.installation_id,
+                    field: "in_warehouse",
+                    value: e.currentTarget.checked
+                      ? new Date().toISOString()
+                      : null,
+                  })
+                }
+              />
+            </Center>
+          </Tooltip>
+        );
+      },
+    }),
     columnHelper.accessor("installation_notes", {
       header: "Notes",
       size: 150,
@@ -737,8 +761,9 @@ export default function PlantShippingTable() {
           <Box style={{ width: "max-content", minWidth: "100%" }}>
             <Accordion
               variant="contained"
-              value={openItem}
-              onChange={setOpenItem}
+              multiple
+              value={openItems}
+              onChange={setOpenItems}
               style={{ minWidth: "1600px" }}
               styles={{
                 item: { marginBottom: 10, border: "1px solid #e0e0e0" },
@@ -748,7 +773,7 @@ export default function PlantShippingTable() {
             >
               {sortedGroupKeys.map((shipDate) => {
                 const jobsInGroup = groupedRows[shipDate];
-                const isOpen = openItem === shipDate;
+                const isOpen = openItems.includes(shipDate);
                 const isPastDue =
                   shipDate !== "Unscheduled" &&
                   dayjs(shipDate).isBefore(dayjs(), "day");
@@ -772,7 +797,9 @@ export default function PlantShippingTable() {
                         <FaTruckLoading size={16} />
                         <Text fw={700} size="md">
                           Ship Date:{" "}
-                          <span style={{ color: isPastDue ? "red" : "#4A00E0" }}>
+                          <span
+                            style={{ color: isPastDue ? "red" : "#4A00E0" }}
+                          >
                             {shipDate}
                           </span>
                         </Text>
@@ -889,18 +916,18 @@ export default function PlantShippingTable() {
       />
       <AddBackorderModal
         opened={backorderModalState.opened}
-        onClose={() => setBackorderModalState((prev) => ({ ...prev, opened: false }))}
+        onClose={() =>
+          setBackorderModalState((prev) => ({ ...prev, opened: false }))
+        }
         jobId={backorderModalState.jobId}
         jobNumber={backorderModalState.jobNumber}
-        onSuccess={() => {
-
-        }}
+        onSuccess={() => {}}
       />
       <JobDetailsDrawer
         jobId={drawerJobId}
         opened={drawerOpened}
         onClose={closeDrawer}
       />
-    </Box >
+    </Box>
   );
 }

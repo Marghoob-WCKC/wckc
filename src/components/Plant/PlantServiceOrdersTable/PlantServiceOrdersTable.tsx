@@ -289,7 +289,7 @@ export default function PlantServiceOrdersTable() {
           <Accordion.Panel>
             <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
               <TextInput
-                label="SO #"
+                label="Service Order Number"
                 placeholder="Search..."
                 value={getInputFilterValue("service_order_number")}
                 onChange={(e) =>
@@ -298,7 +298,7 @@ export default function PlantServiceOrdersTable() {
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
-                label="Job #"
+                label="Job Number"
                 placeholder="Search..."
                 value={getInputFilterValue("job_number")}
                 onChange={(e) =>
@@ -307,7 +307,7 @@ export default function PlantServiceOrdersTable() {
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
               <TextInput
-                label="Client / Location"
+                label="Address"
                 placeholder="Search..."
                 value={getInputFilterValue("address")}
                 onChange={(e) => setInputFilterValue("address", e.target.value)}
