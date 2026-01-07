@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   createColumnHelper,
   getCoreRowModel,
@@ -11,6 +11,8 @@ import {
   ColumnFiltersState,
   SortingState,
   RowSelectionState,
+  Table as ReactTableInstance,
+  Row,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -38,6 +40,7 @@ import {
   Transition,
   Checkbox,
   Select,
+  ActionIcon,
 } from "@mantine/core";
 import {
   FaSearch,
@@ -50,6 +53,7 @@ import {
   FaFire,
   FaShippingFast,
   FaFilter,
+  FaExternalLinkAlt,
 } from "react-icons/fa";
 import { IoIosWarning } from "react-icons/io";
 import dayjs from "dayjs";
@@ -61,7 +65,11 @@ import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDra
 import BulkScheduleModal from "../BulkInstallationScheduleModal/BulkInstallationScheduleModal";
 import { usePermissions } from "@/hooks/usePermissions";
 
-type InstallationJobView = Views<"installation_table_view">;
+import { RowEditorOverlay } from "./RowEditorOverlay";
+type InstallationJobView = Views<"installation_table_view"> & {
+  partially_shipped?: boolean;
+  installer_id?: number | null;
+};
 
 export default function InstallationTable() {
   const router = useRouter();
@@ -84,6 +92,17 @@ export default function InstallationTable() {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkModalOpen, { open: openBulkModal, close: closeBulkModal }] =
     useDisclosure(false);
+
+  const [editingRow, setEditingRow] = useState<InstallationJobView | null>(
+    null
+  );
+  const [editingRowMeta, setEditingRowMeta] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+    cellWidths: number[];
+  } | null>(null);
 
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
@@ -165,15 +184,14 @@ export default function InstallationTable() {
     });
   };
 
-  const { data, isLoading, isError, error } = useInstallationTable({
+  const { data, isLoading, isError, error, refetch } = useInstallationTable({
     pagination,
     columnFilters: activeFilters,
     sorting,
   });
 
   const tableData = data?.data || [];
-  const totalCount = data?.count || 0;
-  const pageCount = Math.ceil(totalCount / pagination.pageSize);
+  const pageCount = Math.ceil((data?.count || 0) / pagination.pageSize);
 
   const columnHelper = createColumnHelper<InstallationJobView>();
 
@@ -236,6 +254,30 @@ export default function InstallationTable() {
           },
         ]
       : []),
+    {
+      id: "actions",
+      header: "Action",
+      size: 60,
+      minSize: 60,
+      cell: ({ row }: any) => (
+        <Center>
+          <ActionIcon
+            variant="subtle"
+            color="violet"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(
+                `/dashboard/installation/${row.original.job_id}`,
+                "_blank"
+              );
+            }}
+          >
+            <FaExternalLinkAlt size={12} />
+          </ActionIcon>
+        </Center>
+      ),
+    },
     columnHelper.accessor("job_number", {
       header: "Job No.",
       size: 90,
@@ -397,10 +439,12 @@ export default function InstallationTable() {
 
     columnHelper.accessor("has_shipped", {
       header: "Shipped",
-      size: 80,
-      minSize: 80,
+      size: 90,
+      minSize: 90,
       cell: (info) => {
-        const shipped = info.getValue();
+        const hasShipped = info.getValue();
+        const partiallyShipped = info.row.original.partially_shipped;
+
         return (
           <Center
             style={{
@@ -409,22 +453,41 @@ export default function InstallationTable() {
               cursor: "context-menu",
             }}
             onContextMenu={(e) => {
-              const filterVal = shipped ? "false" : "true";
-              handleContextMenu(e, "has_shipped", filterVal);
+              handleContextMenu(
+                e,
+                "has_shipped",
+                hasShipped ? "true" : "false"
+              );
             }}
           >
-            <Badge
-              variant="gradient"
-              size="xs"
-              style={{ cursor: "pointer" }}
-              gradient={
-                shipped
-                  ? { from: "lime", to: "green", deg: 90 }
-                  : { from: "red", to: "#ff2c2cff", deg: 90 }
-              }
-            >
-              {shipped ? "YES" : "NO"}
-            </Badge>
+            {partiallyShipped ? (
+              <Badge
+                variant="gradient"
+                size="xs"
+                style={{ cursor: "pointer" }}
+                gradient={{ from: "orange", to: "yellow", deg: 90 }}
+              >
+                PARTIAL
+              </Badge>
+            ) : hasShipped ? (
+              <Badge
+                variant="gradient"
+                size="xs"
+                style={{ cursor: "pointer" }}
+                gradient={{ from: "lime", to: "green", deg: 90 }}
+              >
+                YES
+              </Badge>
+            ) : (
+              <Badge
+                variant="gradient"
+                size="xs"
+                style={{ cursor: "pointer" }}
+                gradient={{ from: "red", to: "#ff2c2cff", deg: 90 }}
+              >
+                NO
+              </Badge>
+            )}
           </Center>
         );
       },
@@ -653,6 +716,14 @@ export default function InstallationTable() {
     );
   }
 
+  const currentRow = editingRow
+    ? table
+        .getRowModel()
+        .rows.find(
+          (r) => r.original.installation_id === editingRow.installation_id
+        )
+    : null;
+
   return (
     <Box
       style={{
@@ -683,6 +754,7 @@ export default function InstallationTable() {
         </Stack>
       </Group>
 
+      {}
       <Accordion variant="contained" radius="md" mb="md">
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
@@ -1037,17 +1109,38 @@ export default function InstallationTable() {
                   row.original.has_shipped == true
                     ? undefined
                     : "#ffefefff";
+
+                const isEditing =
+                  editingRow?.installation_id === row.original.installation_id;
+
                 return (
                   <Table.Tr
                     key={row.id}
-                    onClick={() =>
-                      window.open(
-                        `/dashboard/installation/${row.original.job_id}`,
-                        "_blank"
-                      )
-                    }
+                    onDoubleClick={(e) => {
+                      const cells = Array.from(
+                        e.currentTarget.children
+                      ) as HTMLElement[];
+                      const widths = cells.map(
+                        (c) => c.getBoundingClientRect().width
+                      );
+                      const rect = e.currentTarget.getBoundingClientRect();
+
+                      setEditingRowMeta({
+                        top: rect.top,
+                        left: rect.left,
+                        width: rect.width,
+                        height: rect.height,
+                        cellWidths: widths,
+                      });
+                      setEditingRow(row.original);
+                    }}
                     onContextMenu={(e) => e.preventDefault()}
-                    style={{ cursor: "pointer", backgroundColor: bgColor }}
+                    style={{
+                      cursor: "pointer",
+                      backgroundColor: bgColor,
+                      opacity: isEditing ? 0 : 1,
+                      userSelect: "none",
+                    }}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <Table.Td
@@ -1102,6 +1195,19 @@ export default function InstallationTable() {
         />
       </Box>
 
+      {}
+      {editingRow && editingRowMeta && currentRow && (
+        <RowEditorOverlay
+          data={editingRow}
+          rowMeta={editingRowMeta}
+          table={table}
+          onCancel={() => setEditingRow(null)}
+          row={currentRow}
+          onSuccess={refetch}
+        />
+      )}
+
+      {}
       <Transition
         mounted={contextMenu.visible}
         transition="pop"
@@ -1168,6 +1274,23 @@ export default function InstallationTable() {
         selectedRows={table.getSelectedRowModel().rows}
         clearSelection={() => setRowSelection({})}
       />
+      {editingRow && editingRowMeta && currentRow && (
+        <RowEditorOverlay
+          data={currentRow.original}
+          rowMeta={editingRowMeta}
+          table={table}
+          onCancel={() => {
+            setEditingRow(null);
+            setEditingRowMeta(null);
+          }}
+          row={currentRow}
+          onSuccess={() => {
+            refetch();
+            setEditingRow(null);
+            setEditingRowMeta(null);
+          }}
+        />
+      )}
     </Box>
   );
 }

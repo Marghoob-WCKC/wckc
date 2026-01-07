@@ -1620,6 +1620,7 @@ export type Database = {
           installer_last_name: string | null
           job_id: number | null
           job_number: string | null
+          partially_shipped: boolean | null
           project_name: string | null
           rush: boolean | null
           sales_order_id: number | null

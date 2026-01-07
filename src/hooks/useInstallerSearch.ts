@@ -8,6 +8,16 @@ export function useInstallerSearch(selectedId?: string | null) {
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebouncedValue(search, 300);
 
+  const formatLabel = (i: {
+    first_name?: string | null;
+    last_name?: string | null;
+    company_name?: string | null;
+  }) => {
+    const namePart = `${i.first_name || ""} ${i.last_name || ""}`.trim();
+    const companyPart = i.company_name || "";
+    return [namePart, companyPart].filter(Boolean).join(" - ");
+  };
+
   const { data: searchResults, isLoading: searchLoading } = useQuery({
     queryKey: ["installer-search", debouncedSearch],
     queryFn: async () => {
@@ -30,7 +40,7 @@ export function useInstallerSearch(selectedId?: string | null) {
 
       return data.map((i) => ({
         value: String(i.installer_id),
-        label: i.company_name || `${i.first_name} ${i.last_name}`,
+        label: formatLabel(i),
       }));
     },
     placeholderData: (previousData: any) => previousData,
@@ -50,7 +60,7 @@ export function useInstallerSearch(selectedId?: string | null) {
       if (error || !data) return null;
       return {
         value: String(data.installer_id),
-        label: data.company_name || `${data.first_name} ${data.last_name}`,
+        label: formatLabel(data),
       };
     },
     enabled: !!selectedId,
