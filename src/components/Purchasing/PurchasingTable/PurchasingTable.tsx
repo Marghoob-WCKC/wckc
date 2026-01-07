@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   useReactTable,
@@ -32,6 +32,11 @@ import {
   Accordion,
   SimpleGrid,
   Anchor,
+  Tabs,
+  Timeline,
+  Divider,
+  ActionIcon,
+  Badge,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
@@ -42,6 +47,10 @@ import {
   FaSortDown,
   FaPencilAlt,
   FaShoppingBag,
+  FaHistory,
+  FaList,
+  FaEdit,
+  FaPlus,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import { usePurchasingTable } from "@/hooks/usePurchasingTable";
@@ -53,6 +62,41 @@ import { PurchasingTableView, PurchaseOrderItemState } from "./types";
 import { OrderPartsModal } from "./subComponents/OrderPartsModal";
 import { IncompletePartsModal } from "./subComponents/IncompletePartsModal";
 import { StatusCell } from "./subComponents/StatusCell";
+
+// --- Helper to parse the log string into structured data ---
+const parseCommentHistory = (rawText: string | null) => {
+  if (!rawText) return [];
+  const lines = rawText.split("\n");
+  const history: { message: string; date: string | null }[] = [];
+  let currentMessage: string[] = [];
+
+  // Regex to find timestamp at the end of a line: [YYYY-MM-DD HH:mm]
+  const timestampRegex = /\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\]$/;
+
+  lines.forEach((line) => {
+    const match = line.match(timestampRegex);
+    if (match) {
+      // This line ends a log entry
+      const date = match[1];
+      const text = line.replace(timestampRegex, "").trim();
+      // Combine with previous buffer
+      const fullMessage = [...currentMessage, text].join("\n").trim();
+      history.push({ message: fullMessage, date });
+      currentMessage = []; // Reset buffer
+    } else {
+      // Just a text line, add to buffer
+      currentMessage.push(line);
+    }
+  });
+
+  // If there's leftover text that didn't end with a timestamp
+  if (currentMessage.length > 0) {
+    history.push({ message: currentMessage.join("\n").trim(), date: null });
+  }
+
+  // Return reversed so newest is at the top for the timeline
+  return history.reverse();
+};
 
 export default function PurchasingTable() {
   const { supabase } = useSupabase();
@@ -73,10 +117,13 @@ export default function PurchasingTable() {
     commentModalOpened,
     { open: openCommentModal, close: closeCommentModal },
   ] = useDisclosure(false);
+
+  // State for the comment modal
   const [editingComment, setEditingComment] = useState<{
     id: number;
     text: string;
   } | null>(null);
+  const [newNote, setNewNote] = useState("");
 
   const [orderModalOpened, { open: openOrderModal, close: closeOrderModal }] =
     useDisclosure(false);
@@ -161,9 +208,10 @@ export default function PurchasingTable() {
       queryClient.invalidateQueries({ queryKey: ["purchasing_table_view"] });
       notifications.show({
         title: "Updated",
-        message: "Order status updated successfully",
+        message: "Order updated successfully",
         color: "green",
       });
+      setNewNote("");
     },
   });
 
@@ -526,38 +574,69 @@ export default function PurchasingTable() {
     columnHelper.accessor("purchasing_comments", {
       header: "History",
       size: 250,
-      cell: (info) => (
-        <Box
-          onClick={() => {
-            if (info.row.original.purchase_check_id === null) return;
-            setEditingComment({
-              id: info.row.original.purchase_check_id,
-              text: info.getValue() || "",
-            });
-            openCommentModal();
-          }}
-          style={{
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            maxWidth: "100%",
-          }}
-        >
-          <Tooltip
-            label={info.getValue()}
-            multiline
-            w={300}
-            withinPortal
-            disabled={!info.getValue()}
+      cell: (info) => {
+        const fullComment = info.getValue();
+        const parsed = useMemo(
+          () => parseCommentHistory(fullComment),
+          [fullComment]
+        );
+        const latest = parsed[0];
+
+        return (
+          <Box
+            onClick={() => {
+              if (info.row.original.purchase_check_id === null) return;
+              setEditingComment({
+                id: info.row.original.purchase_check_id,
+                text: fullComment || "",
+              });
+              setNewNote("");
+              openCommentModal();
+            }}
+            style={{
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              width: "100%",
+              height: "100%",
+            }}
           >
-            <Text size="xs" truncate c="dimmed" style={{ flex: 1 }}>
-              {info.getValue() || "—"}
-            </Text>
-          </Tooltip>
-          <FaPencilAlt size={10} color="#adb5bd" />
-        </Box>
-      ),
+            <ActionIcon
+              size="sm"
+              variant="light"
+              color={latest ? "violet" : "gray"}
+            >
+              <FaHistory size={12} />
+            </ActionIcon>
+            <Box style={{ flex: 1, minWidth: 0 }}>
+              {latest ? (
+                <Stack gap={0}>
+                  <Group gap="xs">
+                    <Text size="xs" fw={700} c="violet.9">
+                      {latest.date
+                        ? dayjs(latest.date).format("MMM D")
+                        : "Note"}
+                    </Text>
+                    <Text size="xs" c="dimmed" truncate>
+                      {latest.message.split("\n")[0]}
+                    </Text>
+                  </Group>
+                  {parsed.length > 1 && (
+                    <Text size="10px" c="dimmed">
+                      +{parsed.length - 1} more entries
+                    </Text>
+                  )}
+                </Stack>
+              ) : (
+                <Text size="xs" c="dimmed" fs="italic">
+                  No history
+                </Text>
+              )}
+            </Box>
+          </Box>
+        );
+      },
     }),
   ];
 
@@ -573,6 +652,149 @@ export default function PurchasingTable() {
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
   });
+
+  // --- Modal Content Rendering ---
+  const renderCommentModalContent = () => {
+    if (!editingComment) return null;
+
+    // Parse the current text for the Timeline view
+    const history = parseCommentHistory(editingComment.text);
+
+    return (
+      <Tabs defaultValue="timeline" color="violet">
+        <Tabs.List mb="sm">
+          <Tabs.Tab value="timeline" leftSection={<FaList size={14} />}>
+            Timeline
+          </Tabs.Tab>
+          <Tabs.Tab value="raw" leftSection={<FaEdit size={14} />}>
+            Raw Editor
+          </Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="timeline">
+          <ScrollArea h={400} type="auto" offsetScrollbars>
+            {history.length > 0 ? (
+              <Timeline
+                active={-1}
+                bulletSize={24}
+                lineWidth={2}
+                color="violet"
+                p="sm"
+              >
+                {history.map((item, index) => (
+                  <Timeline.Item
+                    key={index}
+                    bullet={<FaHistory size={10} />}
+                    title={
+                      <Text size="sm" fw={600} c="dark">
+                        {item.date
+                          ? dayjs(item.date).format("MMM D, YYYY · h:mm A")
+                          : "Manual Note"}
+                      </Text>
+                    }
+                  >
+                    <Text
+                      size="sm"
+                      c="dimmed"
+                      style={{ whiteSpace: "pre-wrap" }}
+                    >
+                      {item.message}
+                    </Text>
+                  </Timeline.Item>
+                ))}
+              </Timeline>
+            ) : (
+              <Center h={100}>
+                <Text c="dimmed" fs="italic">
+                  No history found.
+                </Text>
+              </Center>
+            )}
+          </ScrollArea>
+
+          <Divider my="md" label="Add New Note" labelPosition="center" />
+
+          <Stack gap="xs">
+            <Textarea
+              placeholder="Type a new note here..."
+              minRows={2}
+              value={newNote}
+              onChange={(e) => setNewNote(e.currentTarget.value)}
+            />
+            <Button
+              fullWidth
+              leftSection={<FaPlus size={12} />}
+              color="violet"
+              onClick={() => {
+                if (!newNote.trim()) return;
+                updateStatusMutation.mutate({
+                  id: editingComment.id,
+                  updates: {}, // No direct field updates, just appending comment
+                  logMessage: newNote,
+                  initialComment: editingComment.text,
+                });
+                // Optimistically update local state for better UX
+                setEditingComment((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        text: prev.text
+                          ? `${prev.text}\n${newNote} [${dayjs().format(
+                              "YYYY-MM-DD HH:mm"
+                            )}]`
+                          : `${newNote} [${dayjs().format(
+                              "YYYY-MM-DD HH:mm"
+                            )}]`,
+                      }
+                    : null
+                );
+              }}
+            >
+              Add Note
+            </Button>
+          </Stack>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="raw">
+          <Stack>
+            <Text size="xs" c="dimmed">
+              Warning: Editing raw text may break the timeline parsing if
+              timestamps are modified.
+            </Text>
+            <Textarea
+              minRows={20}
+              styles={{ input: { minHeight: "250px" } }}
+              placeholder="Enter raw comments..."
+              value={editingComment.text}
+              onChange={(e) => {
+                const newVal = e.currentTarget.value;
+                setEditingComment((prev) =>
+                  prev ? { ...prev, text: newVal } : null
+                );
+              }}
+            />
+            <Group justify="flex-end">
+              <Button variant="default" onClick={closeCommentModal}>
+                Cancel
+              </Button>
+              <Button
+                color="violet"
+                onClick={() => {
+                  updateStatusMutation.mutate({
+                    id: editingComment.id,
+                    updates: { purchasing_comments: editingComment.text },
+                  });
+                  closeCommentModal();
+                }}
+              >
+                Save Changes
+              </Button>
+            </Group>
+          </Stack>
+        </Tabs.Panel>
+      </Tabs>
+    );
+  };
 
   if (isLoading)
     return (
@@ -773,44 +995,11 @@ export default function PurchasingTable() {
       <Modal
         opened={commentModalOpened}
         onClose={closeCommentModal}
-        title="Edit Purchasing Comments"
+        title="Purchasing History"
         centered
+        size="lg"
       >
-        <Stack>
-          <Text size="sm" c="dimmed">
-            Edit full comment history manually.
-          </Text>
-          <Textarea
-            minRows={12}
-            placeholder="Enter comments..."
-            styles={{ input: { minHeight: "200px" } }}
-            value={editingComment?.text || ""}
-            onChange={(e) => {
-              const newVal = e.currentTarget.value;
-              setEditingComment((prev) =>
-                prev ? { ...prev, text: newVal } : null
-              );
-            }}
-          />
-          <Group justify="flex-end">
-            <Button variant="default" onClick={closeCommentModal}>
-              Cancel
-            </Button>
-            <Button
-              color="violet"
-              onClick={() => {
-                if (editingComment)
-                  updateStatusMutation.mutate({
-                    id: editingComment.id,
-                    updates: { purchasing_comments: editingComment.text },
-                  });
-                closeCommentModal();
-              }}
-            >
-              Save Comment
-            </Button>
-          </Group>
-        </Stack>
+        {renderCommentModalContent()}
       </Modal>
 
       <OrderPartsModal
