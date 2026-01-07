@@ -22,8 +22,6 @@ import {
   Text,
   Box,
   Accordion,
-  Tooltip,
-  ActionIcon,
   Button,
   Badge,
   rem,
@@ -41,7 +39,6 @@ import {
   FaSort,
   FaSortDown,
   FaSortUp,
-  FaEye,
   FaHome,
   FaCheckCircle,
 } from "react-icons/fa";
@@ -103,31 +100,98 @@ export default function SalesTable() {
     return inputFilters.find((f) => f.id === id)?.value;
   };
 
-  const { data: stats } = useQuery({
-    queryKey: ["sales_stats_global"],
-    queryFn: async () => {
-      const [allRes, quoteRes, soldRes] = await Promise.all([
-        supabase
-          .from("sales_orders")
-          .select("*", { count: "exact", head: true }),
-        supabase
-          .from("sales_orders")
-          .select("*", { count: "exact", head: true })
-          .eq("stage", "QUOTE"),
-        supabase
-          .from("sales_orders")
-          .select("*", { count: "exact", head: true })
-          .eq("stage", "SOLD"),
-      ]);
+  // 1. Create a stable filter list for stats (Excluding 'stage')
+  // This ensures the queryKey doesn't change when you just click 'Quotes' vs 'Jobs'
+  const filtersForStats = useMemo(() => {
+    return activeFilters.filter((f) => f.id !== "stage");
+  }, [activeFilters]);
 
-      return {
-        ALL: allRes.count || 0,
-        QUOTE: quoteRes.count || 0,
-        SOLD: soldRes.count || 0,
-      };
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    // 2. Use filtersForStats in the Key.
+    // React Query will only refetch if these specific filters change.
+    queryKey: ["sales_stats_aggregated", filtersForStats],
+    queryFn: async () => {
+      let query = supabase.from("sales_table_view").select("stage");
+
+      // Use the memoized filters directly
+      filtersForStats.forEach((filter) => {
+        const { id, value } = filter;
+        if (!value) return;
+
+        switch (id) {
+          case "job_number":
+            query = query.ilike("job_number", `%${value}%`);
+            break;
+          case "clientlastName":
+            query = query.ilike("shipping_client_name", `%${value}%`);
+            break;
+          case "projectName":
+            query = query.ilike("project_name", `%${value}%`);
+            break;
+          case "designerName":
+            query = query.ilike("designer", `%${value}%`);
+            break;
+          case "my_jobs":
+            query = query.eq("designer", value);
+            break;
+          case "site_address":
+            query = query.or(
+              `shipping_street.ilike.%${value}%,shipping_city.ilike.%${value}%,shipping_province.ilike.%${value}%,shipping_zip.ilike.%${value}%`
+            );
+            break;
+          case "ship_schedule":
+            const [startShip, endShip] = value as [Date | null, Date | null];
+            if (startShip)
+              query = query.gte(
+                "ship_schedule",
+                dayjs(startShip).startOf("day").toISOString()
+              );
+            if (endShip)
+              query = query.lte(
+                "ship_schedule",
+                dayjs(endShip).endOf("day").toISOString()
+              );
+            break;
+          case "created_at":
+            const [startCreate, endCreate] = value as [
+              Date | null,
+              Date | null
+            ];
+            if (startCreate)
+              query = query.gte(
+                "created_at",
+                dayjs(startCreate).startOf("day").toISOString()
+              );
+            if (endCreate)
+              query = query.lte(
+                "created_at",
+                dayjs(endCreate).endOf("day").toISOString()
+              );
+            break;
+        }
+      });
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching stats:", error);
+        return { ALL: 0, QUOTE: 0, SOLD: 0 };
+      }
+
+      const counts = { ALL: 0, QUOTE: 0, SOLD: 0 };
+
+      if (data) {
+        counts.ALL = data.length;
+        for (const row of data) {
+          if (row.stage === "QUOTE") counts.QUOTE++;
+          else if (row.stage === "SOLD") counts.SOLD++;
+        }
+      }
+
+      return counts;
     },
     enabled: isAuthenticated,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // Increased cache time since it's now stable
   });
 
   const { data, isLoading, isError, error } = useSalesTable({
@@ -568,7 +632,18 @@ export default function SalesTable() {
                       color: "black",
                     }}
                   >
-                    {item.count}
+                    <Box
+                      style={{
+                        display: "inline-block",
+                        minWidth: "3ch",
+                        textAlign: "center",
+                        opacity: statsLoading ? 0 : 1,
+                        transform: statsLoading ? "scale(0.9)" : "scale(1)",
+                        transition: "opacity 0.3s ease, transform 0.3s ease",
+                      }}
+                    >
+                      {statsLoading ? "-" : item.count}
+                    </Box>
                   </Badge>
                 </Group>
               </Button>
