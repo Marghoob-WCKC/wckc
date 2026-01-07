@@ -69,6 +69,8 @@ import { useClientSearch } from "@/hooks/useClientSearch";
 import { useSpeciesSearch } from "@/hooks/useSpeciesSearch";
 import { useColorSearch } from "@/hooks/useColorSearch";
 import { useDoorStyleSearch } from "@/hooks/useDoorStyleSearch";
+import { useClientProjects } from "@/hooks/useClientProjects";
+import { useProjectDetails } from "@/hooks/useProjectDetails";
 import dayjs from "dayjs";
 import { handleTabSelect } from "@/utils/handleTabSelect";
 dayjs.extend(utc);
@@ -117,6 +119,11 @@ export default function NewSale() {
   const [jobNum, setJobNum] = useState("");
   const [debouncedJobNum] = useDebouncedValue(jobNum, 300);
   const [isVariantAutofilled, setIsVariantAutofilled] = useState(false);
+
+  const [targetProjectName, setTargetProjectName] = useState<string | null>(
+    null
+  );
+
   const [autofilledSourceJob, setAutofilledSourceJob] = useState<string | null>(
     null
   );
@@ -207,17 +214,53 @@ export default function NewSale() {
     validate: zodResolver(MasterOrderSchema),
   });
 
-  const [debouncedProjectName] = useDebouncedValue(
-    form.values.shipping.project_name,
-    500
-  );
-
   const {
     options: clientOptions,
     isLoading: clientsLoading,
     setSearch: setClientSearch,
     search: clientSearch,
   } = useClientSearch(form.values.client_id || null);
+
+  const { data: projectOptions, isLoading: projectsLoading } =
+    useClientProjects(form.values.client_id || null);
+
+  const { data: projectDetails, isLoading: isLoadingProjectDetails } =
+    useProjectDetails(form.values.client_id || null, targetProjectName);
+
+  useEffect(() => {
+    if (projectDetails) {
+      const job = Array.isArray(projectDetails.jobs)
+        ? projectDetails.jobs[0]
+        : projectDetails.jobs;
+      setAutofilledSourceJob(`Job: ${job.job_number}`);
+
+      const rawStreet = projectDetails.shipping_street || "";
+      const match = rawStreet.match(/^\d+\s*-\s*(.*)/);
+      const streetWithoutUnit = match ? match[1] : rawStreet;
+
+      form.setFieldValue("shipping", {
+        ...form.values.shipping,
+        shipping_client_name:
+          projectDetails.shipping_client_name ||
+          form.values.shipping.shipping_client_name,
+        shipping_street: streetWithoutUnit,
+        shipping_city: projectDetails.shipping_city || "",
+        shipping_province: projectDetails.shipping_province || "",
+        shipping_zip: projectDetails.shipping_zip || "",
+        shipping_phone_1: projectDetails.shipping_phone_1 || "",
+        shipping_phone_2: projectDetails.shipping_phone_2 || "",
+        shipping_email_1: projectDetails.shipping_email_1 || "",
+        shipping_email_2: projectDetails.shipping_email_2 || "",
+      });
+
+      notifications.show({
+        title: "Data Autofilled",
+        message: `Shipping details loaded for ${targetProjectName}`,
+        color: "blue",
+        icon: <FaInfoCircle />,
+      });
+    }
+  }, [projectDetails, targetProjectName]);
 
   const {
     options: speciesOptions,
@@ -510,7 +553,6 @@ export default function NewSale() {
     if (existingJobs && existingJobs.length > 0) {
       const suffixes = existingJobs.map((j) => j.job_suffix);
       const next = getNextVariant(suffixes);
-      console.log("next", next);
 
       if (!form.values.manual_job_suffix && next) {
         form.setFieldValue("manual_job_suffix", next);
@@ -536,70 +578,6 @@ export default function NewSale() {
       setIsVariantAutofilled(false);
     }
   }, [existingJobs, form.values.order_type]);
-
-  const relatedProjectOptions = useMemo(() => {
-    if (!existingJobs) return [];
-    const options: any[] = [];
-    const seen = new Set();
-
-    existingJobs.forEach((job) => {
-      const so: any = Array.isArray(job.sales_orders)
-        ? job.sales_orders[0]
-        : job.sales_orders;
-      if (so && so.project_name && !seen.has(so.project_name)) {
-        seen.add(so.project_name);
-        options.push({
-          ...so,
-          _source_job_number: `${job.job_base_number}-${job.job_suffix}`,
-        });
-      }
-    });
-    return options;
-  }, [existingJobs]);
-
-  useEffect(() => {
-    const currentProjectName = form.values.shipping.project_name;
-
-    if (
-      relatedProjectOptions &&
-      relatedProjectOptions.length > 0 &&
-      currentProjectName
-    ) {
-      const exactMatch = relatedProjectOptions.find(
-        (p) =>
-          p.project_name?.toLowerCase().trim() ===
-          currentProjectName.toLowerCase().trim()
-      );
-
-      if (exactMatch) {
-        const so = exactMatch;
-        setAutofilledSourceJob(`Job #${so._source_job_number}`);
-
-        form.setFieldValue("shipping", {
-          shipping_client_name: so.shipping_client_name || "",
-          project_name: so.project_name || "",
-          shipping_street: (() => {
-            const rawStreet = so.shipping_street || "";
-            const match = rawStreet.match(/^\d+\s*-\s*(.*)/);
-            return match ? match[1] : rawStreet;
-          })(),
-          shipping_city: so.shipping_city || "",
-          shipping_province: so.shipping_province || "",
-          shipping_zip: so.shipping_zip || "",
-          shipping_phone_1: so.shipping_phone_1 || "",
-          shipping_phone_2: so.shipping_phone_2 || "",
-          shipping_email_1: so.shipping_email_1 || "",
-          shipping_email_2: so.shipping_email_2 || "",
-        });
-      } else {
-        setAutofilledSourceJob(null);
-      }
-    }
-  }, [
-    relatedProjectOptions,
-    form.values.shipping?.project_name,
-    form.values.order_type,
-  ]);
 
   const copyClientToShipping = () => {
     if (!selectedClientData) {
@@ -889,6 +867,8 @@ export default function NewSale() {
                         shipping_email_1: "",
                         shipping_email_2: "",
                       });
+                      setTargetProjectName(null);
+                      setAutofilledSourceJob(null);
                     }}
                   />
 
@@ -1032,8 +1012,16 @@ export default function NewSale() {
                     <Autocomplete
                       label="Project Name"
                       placeholder="Project Name for Multi-fams..."
-                      data={relatedProjectOptions.map((so) => so.project_name)}
+                      data={projectOptions || []}
+                      rightSection={
+                        projectsLoading || isLoadingProjectDetails ? (
+                          <Loader size={12} />
+                        ) : null
+                      }
                       {...form.getInputProps(`shipping.project_name`)}
+                      onOptionSubmit={(val) => {
+                        setTargetProjectName(val);
+                      }}
                     />
                   </SimpleGrid>
                   <Grid>

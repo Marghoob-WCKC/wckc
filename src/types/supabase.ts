@@ -2015,6 +2015,12 @@ export type Database = {
         Args: { p_stage: Database["public"]["Enums"]["SalesStage"] }
         Returns: string
       }
+      get_client_project_names: {
+        Args: { input_client_id: number }
+        Returns: {
+          project_name: string
+        }[]
+      }
     }
     Enums: {
       SalesStage: "QUOTE" | "SOLD"
