@@ -134,6 +134,7 @@ export default function NewSale() {
   } | null>(null);
 
   const [newItemValue, setNewItemValue] = useState("");
+  const [highlightedFields, setHighlightedFields] = useState<string[]>([]);
 
   const [newDoorStyle, setNewDoorStyle] = useState<NewDoorStyleState>({
     name: "",
@@ -214,6 +215,16 @@ export default function NewSale() {
     validate: zodResolver(MasterOrderSchema),
   });
 
+  const getAutofillStyles = (fieldName: string) => {
+    const isHighlighted = highlightedFields.includes(fieldName);
+    return {
+      input: {
+        transition: "background-color 0.8s ease",
+        backgroundColor: isHighlighted ? "#e9ffebff" : undefined,
+      },
+    };
+  };
+
   const {
     options: clientOptions,
     isLoading: clientsLoading,
@@ -253,14 +264,55 @@ export default function NewSale() {
         shipping_email_2: projectDetails.shipping_email_2 || "",
       });
 
-      notifications.show({
-        title: "Data Autofilled",
-        message: `Shipping details loaded for ${targetProjectName}`,
-        color: "blue",
-        icon: <FaInfoCircle />,
-      });
+      setHighlightedFields([
+        "shipping.shipping_client_name",
+        "shipping.shipping_street",
+        "shipping.shipping_city",
+        "shipping.shipping_province",
+        "shipping.shipping_zip",
+        "shipping.shipping_phone_1",
+        "shipping.shipping_phone_2",
+        "shipping.shipping_email_1",
+        "shipping.shipping_email_2",
+      ]);
+    } else if ((form.values.shipping?.project_name || "").trim() === "") {
+      setAutofilledSourceJob(null);
+      setHighlightedFields([]);
+
+      if (selectedClientData) {
+        form.setFieldValue("shipping", {
+          project_name: "",
+          shipping_client_name: selectedClientData.lastName || "",
+          shipping_street: "",
+          shipping_city: "",
+          shipping_province: "",
+          shipping_zip: "",
+          shipping_phone_1: "",
+          shipping_phone_2: "",
+          shipping_email_1: "",
+          shipping_email_2: "",
+        });
+      } else {
+        form.setFieldValue("shipping", {
+          project_name: "",
+          shipping_client_name: "",
+          shipping_street: "",
+          shipping_city: "",
+          shipping_province: "",
+          shipping_zip: "",
+          shipping_phone_1: "",
+          shipping_phone_2: "",
+          shipping_email_1: "",
+          shipping_email_2: "",
+        });
+      }
     }
-  }, [projectDetails, targetProjectName]);
+  }, [
+    projectDetails,
+    targetProjectName,
+    selectedClientData,
+    form.values.shipping?.project_name,
+  ]);
 
   const {
     options: speciesOptions,
@@ -1008,17 +1060,27 @@ export default function NewSale() {
                       label="Client Name"
                       placeholder="Builder/Client Name...."
                       {...form.getInputProps(`shipping.shipping_client_name`)}
+                      styles={getAutofillStyles(
+                        "shipping.shipping_client_name"
+                      )}
                     />
                     <Autocomplete
                       label="Project Name"
                       placeholder="Project Name for Multi-fams..."
                       data={projectOptions || []}
-                      rightSection={
+                      clearable={true}
+                      leftSection={
                         projectsLoading || isLoadingProjectDetails ? (
                           <Loader size={12} />
                         ) : null
                       }
-                      {...form.getInputProps(`shipping.project_name`)}
+                      value={form.values.shipping.project_name}
+                      onChange={(val) => {
+                        form.setFieldValue("shipping.project_name", val);
+                        if (val === "") {
+                          setTargetProjectName(null);
+                        }
+                      }}
                       onOptionSubmit={(val) => {
                         setTargetProjectName(val);
                       }}
@@ -1038,6 +1100,7 @@ export default function NewSale() {
                         label="Street Address"
                         placeholder="123 Main St..."
                         {...form.getInputProps(`shipping.shipping_street`)}
+                        styles={getAutofillStyles("shipping.shipping_street")}
                       />
                     </GridCol>
                     <GridCol span={2}>
@@ -1045,6 +1108,7 @@ export default function NewSale() {
                         label="City"
                         placeholder="Calgary..."
                         {...form.getInputProps(`shipping.shipping_city`)}
+                        styles={getAutofillStyles("shipping.shipping_city")}
                       />
                     </GridCol>
                     <GridCol span={2}>
@@ -1052,6 +1116,7 @@ export default function NewSale() {
                         label="Province"
                         placeholder="AB..."
                         {...form.getInputProps(`shipping.shipping_province`)}
+                        styles={getAutofillStyles("shipping.shipping_province")}
                       />
                     </GridCol>
                     <GridCol span={2}>
@@ -1059,6 +1124,7 @@ export default function NewSale() {
                         label="Zip"
                         placeholder="A1B 2C3..."
                         {...form.getInputProps(`shipping.shipping_zip`)}
+                        styles={getAutofillStyles("shipping.shipping_zip")}
                       />
                     </GridCol>
                   </Grid>
@@ -1066,20 +1132,24 @@ export default function NewSale() {
                     <TextInput
                       label="Phone 1"
                       {...form.getInputProps(`shipping.shipping_phone_1`)}
+                      styles={getAutofillStyles("shipping.shipping_phone_1")}
                     />
                     <TextInput
                       label="Phone 2"
                       {...form.getInputProps(`shipping.shipping_phone_2`)}
+                      styles={getAutofillStyles("shipping.shipping_phone_2")}
                     />
                   </SimpleGrid>
                   <SimpleGrid cols={2} spacing="sm">
                     <TextInput
                       label="Email 1"
                       {...form.getInputProps(`shipping.shipping_email_1`)}
+                      styles={getAutofillStyles("shipping.shipping_email_1")}
                     />
                     <TextInput
                       label="Email 2"
                       {...form.getInputProps(`shipping.shipping_email_2`)}
+                      styles={getAutofillStyles("shipping.shipping_email_2")}
                     />
                   </SimpleGrid>
                 </Stack>
