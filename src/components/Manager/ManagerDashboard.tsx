@@ -946,7 +946,7 @@ export default function ManagerDashboardClient() {
             </Grid.Col>
             <Grid.Col span={{ base: 12, sm: 4 }}>
               <StatCard
-                title="Completed (Year)"
+                title="Completed (Fiscal Year)"
                 value={metrics.completedInstallsYear || 0}
                 icon={FaHardHat}
                 color="teal"
