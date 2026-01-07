@@ -226,9 +226,9 @@ export function RowEditorOverlay({
     <Portal>
       <Overlay
         color="#000"
-        opacity={animate ? 0.6 : 0}
+        opacity={animate ? 0.3 : 0}
         zIndex={200}
-        blur={15}
+        blur={5}
         onClick={handleClose}
         style={{ transition: "opacity 0.3s ease" }}
       />
