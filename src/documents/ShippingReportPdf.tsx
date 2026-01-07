@@ -97,6 +97,7 @@ const styles = StyleSheet.create({
   colNotes: { width: "20%", paddingRight: 4 },
 
   headerText: { fontSize: 8, fontWeight: "bold", textAlign: "center" },
+  headerTextLeft: { fontSize: 8, fontWeight: "bold", textAlign: "left" },
   cellText: { fontSize: 8 },
   cellTextSmall: { fontSize: 7 },
 
@@ -173,9 +174,13 @@ const ColumnHeaders = () => (
       <Text style={styles.headerText}>Color</Text>
     </View>
     <View
-      style={[styles.headerCellBase, styles.colNotes, { borderRightWidth: 0 }]}
+      style={[
+        styles.headerCellBase,
+        styles.colNotes,
+        { borderRightWidth: 0, justifyContent: "flex-start", paddingLeft: 4 },
+      ]}
     >
-      <Text style={styles.headerText}>Installation Notes</Text>
+      <Text style={styles.headerTextLeft}>Installation Notes</Text>
     </View>
   </View>
 );
@@ -296,7 +301,15 @@ export const ShippingReportPdf = ({
           </View>
 
           <View
-            style={[styles.cellBase, styles.colNotes, { borderRightWidth: 0 }]}
+            style={[
+              styles.cellBase,
+              styles.colNotes,
+              {
+                borderRightWidth: 0,
+                justifyContent: "flex-start",
+                paddingLeft: 4,
+              },
+            ]}
           >
             <Text style={styles.cellTextSmall}>
               {job.installation?.notes || "—"}
@@ -337,25 +350,55 @@ export const ShippingReportPdf = ({
         <Page key={index} size="A4" orientation="landscape" style={styles.page}>
           <View style={styles.headerContainer} fixed>
             <Text style={styles.reportTitle}>Upcoming Shipments</Text>
-            <View>
-              <Text style={styles.metaInfo}>
-                Printed: {dayjs().format("DD-MMM-YY")}
-              </Text>
-              <Text style={styles.metaInfo}>
-                Page {index + 1} of {pages.length}
-              </Text>
-              <Text style={styles.metaInfo}>
-                Range: {startDate ? dayjs(startDate).format("DD-MMM") : "?"} -{" "}
-                {endDate ? dayjs(endDate).format("DD-MMM") : "?"}
-              </Text>
-            </View>
           </View>
+          <Text
+            style={{
+              fontSize: 8,
+              textAlign: "right",
+              position: "absolute",
+              top: 30,
+              right: 30,
+            }}
+            fixed
+          >
+            Printed: {dayjs().format("DD-MMM-YY")}
+          </Text>
+          <Text
+            style={{
+              fontSize: 8,
+              textAlign: "right",
+              position: "absolute",
+              top: 52,
+              right: 30,
+            }}
+            fixed
+          >
+            Range: {startDate ? dayjs(startDate).format("DD-MMM") : "?"} -{" "}
+            {endDate ? dayjs(endDate).format("DD-MMM") : "?"}
+          </Text>
+          <Text
+            style={{
+              fontSize: 8,
+              textAlign: "right",
+              position: "absolute",
+              top: 41,
+              right: 30,
+            }}
+            render={({ pageNumber, totalPages }) =>
+              `Page ${pageNumber} of ${totalPages}`
+            }
+            fixed
+          />
 
           <View>{pageContent}</View>
 
-          <Text style={styles.footer} fixed>
-            Page {index + 1} of {pages.length}
-          </Text>
+          <Text
+            style={styles.footer}
+            render={({ pageNumber, totalPages }) =>
+              `Page ${pageNumber} of ${totalPages}`
+            }
+            fixed
+          />
         </Page>
       ))}
     </Document>

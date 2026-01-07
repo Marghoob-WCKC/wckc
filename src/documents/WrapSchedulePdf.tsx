@@ -358,25 +358,55 @@ export const WrapSchedulePdf = ({
         <Page key={index} size="A4" orientation="landscape" style={styles.page}>
           <View style={styles.headerContainer} fixed>
             <Text style={styles.reportTitle}>Wrap Schedule</Text>
-            <View>
-              <Text style={styles.metaInfo}>
-                Printed: {dayjs().format("DD-MMM-YY")}
-              </Text>
-              <Text style={styles.metaInfo}>
-                Page {index + 1} of {pages.length}
-              </Text>
-              <Text style={styles.metaInfo}>
-                Range: {startDate ? dayjs(startDate).format("DD-MMM") : "?"} -{" "}
-                {endDate ? dayjs(endDate).format("DD-MMM") : "?"}
-              </Text>
-            </View>
           </View>
+          <Text
+            style={{
+              fontSize: 8,
+              textAlign: "right",
+              position: "absolute",
+              top: 30,
+              right: 30,
+            }}
+            fixed
+          >
+            Printed: {dayjs().format("DD-MMM-YY")}
+          </Text>
+          <Text
+            style={{
+              fontSize: 8,
+              textAlign: "right",
+              position: "absolute",
+              top: 52,
+              right: 30,
+            }}
+            fixed
+          >
+            Range: {startDate ? dayjs(startDate).format("DD-MMM") : "?"} -{" "}
+            {endDate ? dayjs(endDate).format("DD-MMM") : "?"}
+          </Text>
+          <Text
+            style={{
+              fontSize: 8,
+              textAlign: "right",
+              position: "absolute",
+              top: 41,
+              right: 30,
+            }}
+            render={({ pageNumber, totalPages }) =>
+              `Page ${pageNumber} of ${totalPages}`
+            }
+            fixed
+          />
 
           <View>{pageContent}</View>
 
-          <Text style={styles.footer} fixed>
-            Page {index + 1} of {pages.length}
-          </Text>
+          <Text
+            style={styles.footer}
+            render={({ pageNumber, totalPages }) =>
+              `Page ${pageNumber} of ${totalPages}`
+            }
+            fixed
+          />
         </Page>
       ))}
     </Document>
