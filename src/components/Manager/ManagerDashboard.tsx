@@ -265,7 +265,7 @@ export default function ManagerDashboardClient() {
                 if (relItem[nestedKey])
                   uniqueValues.add(String(relItem[nestedKey]));
               });
-              return; 
+              return;
             } else {
               val = relation[nestedKey];
             }
@@ -312,7 +312,7 @@ export default function ManagerDashboardClient() {
           const uniqueKey = baseNumber || `no-job-${s.created_at}`;
 
           if (baseNumber && seenJobBaseNumbers.has(baseNumber)) {
-            return; 
+            return;
           }
           if (baseNumber) seenJobBaseNumbers.add(baseNumber);
 
@@ -524,11 +524,11 @@ export default function ManagerDashboardClient() {
         const [pending, completedYear, active] = await Promise.all([
           supabase
             .from("installation")
-            .select("id, jobs!inner(job_base_number)")
+            .select("installation_id, jobs!inner(job_base_number)")
             .is("installation_date", null),
           supabase
             .from("installation")
-            .select("id, jobs!inner(job_base_number)")
+            .select("installation_id, jobs!inner(job_base_number)")
             .not("installation_completed", "is", null)
             .gte("installation_date", fiscalStartISO),
           supabase
