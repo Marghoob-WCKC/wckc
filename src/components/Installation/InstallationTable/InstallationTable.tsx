@@ -71,8 +71,12 @@ export default function InstallationTable() {
     pageSize: 19,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([{ id: "has_shipped", value: "true" }]);
-  const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([{ id: "has_shipped", value: "true" }]);
+  const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([
+    { id: "has_shipped", value: "true" },
+  ]);
+  const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([
+    { id: "has_shipped", value: "true" },
+  ]);
   const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
@@ -190,7 +194,6 @@ export default function InstallationTable() {
         display: "flex",
         alignItems: "center",
         cursor: "pointer",
-
       }}
       onContextMenu={onContextMenu}
     >
@@ -201,37 +204,37 @@ export default function InstallationTable() {
   const columns = [
     ...(permissions.isInstaller || permissions.isAdmin
       ? [
-        {
-          id: "select",
-          enableSorting: false,
-          header: ({ table }: any) => (
-            <Checkbox
-              color="violet"
-              size="xs"
-              styles={{ input: { cursor: "pointer" } }}
-              checked={table.getIsAllPageRowsSelected()}
-              indeterminate={table.getIsSomePageRowsSelected()}
-              onChange={table.getToggleAllPageRowsSelectedHandler()}
-              aria-label="Select all"
-            />
-          ),
-          cell: ({ row }: any) => (
-            <Center style={{ width: "100%", height: "100%" }}>
+          {
+            id: "select",
+            enableSorting: false,
+            header: ({ table }: any) => (
               <Checkbox
                 color="violet"
                 size="xs"
                 styles={{ input: { cursor: "pointer" } }}
-                checked={row.getIsSelected()}
-                disabled={!row.getCanSelect()}
-                onChange={row.getToggleSelectedHandler()}
-                aria-label="Select row"
+                checked={table.getIsAllPageRowsSelected()}
+                indeterminate={table.getIsSomePageRowsSelected()}
+                onChange={table.getToggleAllPageRowsSelectedHandler()}
+                aria-label="Select all"
               />
-            </Center>
-          ),
-          size: 40,
-          minSize: 40,
-        },
-      ]
+            ),
+            cell: ({ row }: any) => (
+              <Center style={{ width: "100%", height: "100%" }}>
+                <Checkbox
+                  color="violet"
+                  size="xs"
+                  styles={{ input: { cursor: "pointer" } }}
+                  checked={row.getIsSelected()}
+                  disabled={!row.getCanSelect()}
+                  onChange={row.getToggleSelectedHandler()}
+                  aria-label="Select row"
+                />
+              </Center>
+            ),
+            size: 40,
+            minSize: 40,
+          },
+        ]
       : []),
     columnHelper.accessor("job_number", {
       header: "Job No.",
@@ -310,48 +313,12 @@ export default function InstallationTable() {
           }
         >
           <Tooltip label={info.getValue()} openDelay={400}>
-            <Text size="xs" truncate="end" w="100%">{info.getValue() ?? "—"}</Text>
+            <Text size="xs" truncate="end" w="100%">
+              {info.getValue() ?? "—"}
+            </Text>
           </Tooltip>
         </CellWrapper>
       ),
-    }),
-
-    columnHelper.accessor("installer_company", {
-      id: "installer",
-      header: "Installer",
-      size: 110,
-      minSize: 100,
-      cell: (info) => {
-        const row = info.row.original;
-
-        const firstName = row.installer_first_name || "";
-        const lastName = row.installer_last_name || "";
-        const company = row.installer_company || "";
-
-        const fullName = `${firstName} ${lastName}`.trim();
-
-        const displayText = fullName || company;
-
-        if (!displayText) {
-          return <Text c="orange" size="xs">TBD</Text>;
-        }
-
-        return (
-          <CellWrapper
-            onContextMenu={(e) =>
-              handleContextMenu(e, "installer", displayText)
-            }
-          >
-            {fullName && company ? (
-              <Tooltip label={company}>
-                <Text size="xs" truncate="end" w="100%">{displayText}</Text>
-              </Tooltip>
-            ) : (
-              <Text size="xs" truncate="end" w="100%">{displayText}</Text>
-            )}
-          </CellWrapper>
-        );
-      },
     }),
 
     columnHelper.accessor("wrap_date", {
@@ -360,7 +327,12 @@ export default function InstallationTable() {
       minSize: 90,
       cell: (info) => {
         const date = info.getValue();
-        if (!date) return <Text c="orange" size="xs">TBD</Text>;
+        if (!date)
+          return (
+            <Text c="orange" size="xs">
+              TBD
+            </Text>
+          );
         return (
           <CellWrapper
             onContextMenu={(e) =>
@@ -387,7 +359,9 @@ export default function InstallationTable() {
         if (!date)
           return (
             <Center>
-              <Text c="orange" size="xs">TBD</Text>
+              <Text c="orange" size="xs">
+                TBD
+              </Text>
             </Center>
           );
 
@@ -455,13 +429,63 @@ export default function InstallationTable() {
         );
       },
     }),
+    columnHelper.accessor("installer_company", {
+      id: "installer",
+      header: "Installer",
+      size: 110,
+      minSize: 100,
+      cell: (info) => {
+        const row = info.row.original;
+
+        const firstName = row.installer_first_name || "";
+        const lastName = row.installer_last_name || "";
+        const company = row.installer_company || "";
+
+        const fullName = `${firstName} ${lastName}`.trim();
+
+        const displayText = fullName || company;
+
+        if (!displayText) {
+          return (
+            <Text c="orange" size="xs">
+              TBD
+            </Text>
+          );
+        }
+
+        return (
+          <CellWrapper
+            onContextMenu={(e) =>
+              handleContextMenu(e, "installer", displayText)
+            }
+          >
+            {fullName && company ? (
+              <Tooltip label={company}>
+                <Text size="xs" truncate="end" w="100%">
+                  {displayText}
+                </Text>
+              </Tooltip>
+            ) : (
+              <Text size="xs" truncate="end" w="100%">
+                {displayText}
+              </Text>
+            )}
+          </CellWrapper>
+        );
+      },
+    }),
     columnHelper.accessor("installation_date", {
       header: "Installation Date",
       size: 100,
       minSize: 90,
       cell: (info) => {
         const date = info.getValue();
-        if (!date) return <Text c="orange" size="xs">TBD</Text>;
+        if (!date)
+          return (
+            <Text c="orange" size="xs">
+              TBD
+            </Text>
+          );
 
         const dateObj = dayjs(date).toDate();
 
@@ -482,7 +506,12 @@ export default function InstallationTable() {
       minSize: 90,
       cell: (info) => {
         const date = info.getValue();
-        if (!date) return <Text c="orange" size="xs">TBD</Text>;
+        if (!date)
+          return (
+            <Text c="orange" size="xs">
+              TBD
+            </Text>
+          );
         return (
           <CellWrapper
             onContextMenu={(e) =>
@@ -634,7 +663,6 @@ export default function InstallationTable() {
         position: "relative",
       }}
       fz={"xs"}
-
     >
       <Group mb="md">
         <ThemeIcon
@@ -782,14 +810,13 @@ export default function InstallationTable() {
                     },
                   }}
                   checked={getInputFilterValue("has_shipped") === "true"}
-
                   onChange={(e) => {
-                    const val = e.currentTarget.checked
+                    const val = e.currentTarget.checked;
 
                     setInputFilterValue(
                       "has_shipped",
                       val ? "true" : undefined
-                    )
+                    );
                     const otherFilters = inputFilters.filter(
                       (f) => f.id !== "has_shipped"
                     );
@@ -823,14 +850,13 @@ export default function InstallationTable() {
                     },
                   }}
                   checked={getInputFilterValue("rush") === "true"}
-
                   onChange={(e) => {
-                    const val = e.currentTarget.checked
+                    const val = e.currentTarget.checked;
 
                     setInputFilterValue(
                       "rush",
                       e.target.checked ? "true" : undefined
-                    )
+                    );
                     const otherFilters = inputFilters.filter(
                       (f) => f.id !== "rush"
                     );
@@ -945,8 +971,10 @@ export default function InstallationTable() {
           highlightOnHover
           stickyHeader
           withColumnBorders
-          style={{ minWidth: "1000px", fontSize: "var(--mantine-font-size-xs)" }}
-
+          style={{
+            minWidth: "1000px",
+            fontSize: "var(--mantine-font-size-xs)",
+          }}
         >
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -992,10 +1020,10 @@ export default function InstallationTable() {
               </Table.Tr>
             ))}
           </Table.Thead>
-          <Table.Tbody >
+          <Table.Tbody>
             {table.getRowModel().rows.length === 0 ? (
-              <Table.Tr >
-                <Table.Td colSpan={columns.length} >
+              <Table.Tr>
+                <Table.Td colSpan={columns.length}>
                   <Center>
                     <Text c="dimmed">No installation jobs found.</Text>
                   </Center>
@@ -1005,8 +1033,8 @@ export default function InstallationTable() {
               table.getRowModel().rows.map((row) => {
                 const bgColor =
                   row.original.wrap_date !== null ||
-                    row.original.ship_schedule !== null ||
-                    row.original.has_shipped == true
+                  row.original.ship_schedule !== null ||
+                  row.original.has_shipped == true
                     ? undefined
                     : "#ffefefff";
                 return (
@@ -1029,7 +1057,6 @@ export default function InstallationTable() {
                           whiteSpace: "nowrap",
                           padding:
                             cell.column.id === "select" ? "0" : undefined,
-
                         }}
                         onClick={(e) => {
                           if (cell.column.id === "select") {
@@ -1116,8 +1143,8 @@ export default function InstallationTable() {
                 }
               }}
               onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor =
-                "var(--mantine-color-gray-1)")
+                (e.currentTarget.style.backgroundColor =
+                  "var(--mantine-color-gray-1)")
               }
               onMouseLeave={(e) =>
                 (e.currentTarget.style.backgroundColor = "transparent")
