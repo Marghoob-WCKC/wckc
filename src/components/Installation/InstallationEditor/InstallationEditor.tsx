@@ -853,7 +853,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                               if (e.shiftKey && e.key.toLowerCase() === "d") {
                                 e.preventDefault();
                                 const dateString =
-                                  dayjs().format("~DD/MM/YYYY :\t");
+                                  dayjs().format("~YYYY-MM-DD :\t");
                                 const currentValue =
                                   form.values.installation_notes || "";
                                 const newValue = currentValue

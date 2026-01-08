@@ -261,20 +261,22 @@ export default function InstallationTable() {
       minSize: 60,
       cell: ({ row }: any) => (
         <Center>
-          <ActionIcon
-            variant="subtle"
-            color="violet"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              window.open(
-                `/dashboard/installation/${row.original.job_id}`,
-                "_blank"
-              );
-            }}
-          >
-            <FaExternalLinkAlt size={12} />
-          </ActionIcon>
+          <Tooltip label="Open Full Editor">
+            <ActionIcon
+              variant="subtle"
+              color="violet"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(
+                  `/dashboard/installation/${row.original.job_id}`,
+                  "_blank"
+                );
+              }}
+            >
+              <FaExternalLinkAlt size={12} />
+            </ActionIcon>
+          </Tooltip>
         </Center>
       ),
     },
