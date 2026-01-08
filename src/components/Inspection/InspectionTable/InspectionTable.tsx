@@ -91,7 +91,6 @@ export default function InspectionTable() {
   });
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  // Default installation filter: 1 month ago to no limit (null)
   const defaultStartDate = dayjs().subtract(1, "month").format("YYYY-MM-DD");
   const defaultFilters: ColumnFiltersState = [
     { id: "installation_date", value: [defaultStartDate, null] },
@@ -209,7 +208,6 @@ export default function InspectionTable() {
   };
 
   const handleClearFilters = () => {
-    // Reset to empty filters
     setInputFilters([]);
     setActiveFilters([]);
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
@@ -543,11 +541,6 @@ export default function InspectionTable() {
                     ?.value as [Date | null, Date | null]) || [null, null]
                 }
                 onChange={(val) => {
-                  // Ensure dates are formatted as YYYY-MM-DD strings for consistency with hook expected format
-                  // actually hook expects strings or dates? Hook logic:
-                  // `if (start) query = query.gte("installation_date", start);`
-                  // supabase expects YYYY-MM-DD usually.
-                  // Let's format them.
                   const formatted = val.map((d) =>
                     d ? dayjs(d).format("YYYY-MM-DD") : null
                   );
@@ -588,7 +581,6 @@ export default function InspectionTable() {
 
                     setInputFilterValue("unscheduled", val as any);
 
-                    // Auto-apply logic
                     const otherFilters = inputFilters.filter(
                       (f) => f.id !== "unscheduled"
                     );
@@ -596,7 +588,6 @@ export default function InspectionTable() {
                       ? [...otherFilters, { id: "unscheduled", value: true }]
                       : otherFilters;
 
-                    // We also need to update activeFilters immediately for auto-apply effect
                     setActiveFilters(newActiveFilters);
                     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
                   }}

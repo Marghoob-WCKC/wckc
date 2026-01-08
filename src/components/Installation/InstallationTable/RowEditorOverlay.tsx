@@ -270,7 +270,7 @@ export function RowEditorOverlay({
         opened={confirmModalOpened}
         onClose={() => setConfirmModalOpened(false)}
         title="Confirm Shipping Status"
-        zIndex={3000} // Higher than overlay
+        zIndex={3000} 
         centered
         overlayProps={{
           backgroundOpacity: 0.55,

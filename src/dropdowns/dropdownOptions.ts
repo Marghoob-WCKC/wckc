@@ -97,3 +97,12 @@ export const serviceorderStatusOptions = [
   { value: "pending", label: "Pending" },
   { value: "completed", label: "Completed" },
 ];
+
+export const JobAttachmentCategoryOptions = [
+  "General",
+  "Service",
+  "Inspection",
+  "Procurement",
+  "Installation",
+  "Sales",
+];

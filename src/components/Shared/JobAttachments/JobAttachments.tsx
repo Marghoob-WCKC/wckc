@@ -42,15 +42,9 @@ import { useJobAttachments } from "@/hooks/useJobAttachments";
 import { linearGradients } from "@/theme";
 import dayjs from "dayjs";
 import { useEffect, useState, useMemo } from "react";
+import { JobAttachmentCategoryOptions } from "@/dropdowns/dropdownOptions";
 
-const CATEGORIES = [
-  "General",
-  "Service",
-  "Inspection",
-  "Procurement",
-  "Installation",
-  "Sales",
-];
+const CATEGORIES = JobAttachmentCategoryOptions;
 
 const CATEGORY_COLORS: Record<string, string> = {
   General: "gray",
