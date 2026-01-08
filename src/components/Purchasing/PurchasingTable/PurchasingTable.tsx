@@ -217,11 +217,13 @@ export default function PurchasingTable() {
       trackingId: number;
       type: string;
     }) => {
-      await supabase
+      const { error: deleteError } = await supabase
         .from("purchase_order_items")
         .delete()
         .eq("purchase_tracking_id", trackingId)
         .eq("item_type", type);
+
+      if (deleteError) throw deleteError;
 
       if (items.length > 0) {
         const itemsToInsert: TablesInsert<"purchase_order_items">[] = items.map(
@@ -236,10 +238,12 @@ export default function PurchasingTable() {
             qty_received: i.qty_received || 0,
           })
         );
-        const { error } = await supabase
+
+        const { error: insertError } = await supabase
           .from("purchase_order_items")
           .insert(itemsToInsert);
-        if (error) throw error;
+
+        if (insertError) throw insertError;
       }
     },
     onSuccess: () => {

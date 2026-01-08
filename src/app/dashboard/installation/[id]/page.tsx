@@ -4,7 +4,6 @@ import InstallationEditor from "@/components/Installation/InstallationEditor/Ins
 import { useParams } from "next/navigation";
 import ReadOnlyInstallationEditor from "@/components/Installation/ReadOnlyInstallationEditor/ReadOnlyInstallationEditor";
 import { usePermissions } from "@/hooks/usePermissions";
-import OutlookScannerWrapper from "@/components/Outlook/OutlookScanner";
 
 export default function InstallationEditorPage() {
   const params = useParams();
@@ -13,13 +12,7 @@ export default function InstallationEditorPage() {
   const { canEditInstallation } = usePermissions();
 
   if (canEditInstallation) {
-    return (
-      // <div>
-      //   <InstallationEditor jobId={jobId} />
-      //   <OutlookScannerWrapper jobId={jobId} />
-      // </div>
-      <InstallationEditor jobId={jobId} />
-    );
+    return <InstallationEditor jobId={jobId} />;
   }
 
   return <ReadOnlyInstallationEditor jobId={jobId} />;

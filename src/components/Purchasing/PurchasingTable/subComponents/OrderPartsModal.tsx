@@ -35,7 +35,6 @@ export const OrderPartsModal = ({
 }) => {
   const { supabase } = useSupabase();
   const [items, setItems] = useState<PurchaseOrderItemState[]>([]);
-
   const { data: fetchedItems, isLoading } = useQuery({
     queryKey: ["purchase_order_items", purchaseTrackingId, itemType],
     queryFn: async () => {
@@ -50,6 +49,7 @@ export const OrderPartsModal = ({
     },
     enabled: opened && !!purchaseTrackingId,
     staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
