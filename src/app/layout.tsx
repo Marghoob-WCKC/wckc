@@ -36,16 +36,25 @@ const dashboardLinks: SidebarLink[] = [
     iconName: "FaHome",
     label: "Sales",
     path: "/dashboard/sales",
+    allowedRoles: ["designer", "admin", "manager"],
   },
-  { iconName: "FaGears", label: "Production", path: "/dashboard/production" },
+  {
+    iconName: "FaGears",
+    label: "Production",
+    path: "/dashboard/production",
+    allowedRoles: ["admin", "scheduler"],
+  },
   {
     iconName: "FaShoppingBag",
     label: "Purchasing",
     path: "/dashboard/purchasing",
+    allowedRoles: ["admin", "scheduler", "installation", "plant"],
   },
+
   {
     iconName: "FaShippingFast",
     label: "Installation",
+    allowedRoles: ["admin", "installation", "service"],
     links: [
       {
         iconName: "GrSchedules",
@@ -73,20 +82,24 @@ const dashboardLinks: SidebarLink[] = [
     iconName: "FaTools",
     label: "Service Orders",
     path: "/dashboard/serviceorders",
+    allowedRoles: ["admin", "installation", "service"],
   },
   {
     iconName: "MdFeedback",
     label: "Backorders",
     path: "/dashboard/backorders",
+    allowedRoles: ["admin", "scheduler", "service", "installation", "plant"],
   },
   {
     iconName: "FaClipboardCheck",
     label: "Inspections",
     path: "/dashboard/inspections",
+    allowedRoles: ["admin", "installation", "inspection"],
   },
   {
     iconName: "MdFactory",
     label: "Plant",
+    allowedRoles: ["admin", "installation", "plant"],
     links: [
       {
         iconName: "FaCalendarAlt",
@@ -106,7 +119,12 @@ const dashboardLinks: SidebarLink[] = [
     ],
   },
 
-  { iconName: "FaFileInvoice", label: "Invoices", path: "/dashboard/invoices" },
+  {
+    iconName: "FaFileInvoice",
+    label: "Invoices",
+    path: "/dashboard/invoices",
+    allowedRoles: ["admin", "reception"],
+  },
   {
     iconName: "FaClipboardCheck",
     label: "Reports",
@@ -134,8 +152,18 @@ const dashboardLinks: SidebarLink[] = [
     ],
   },
 
-  { iconName: "FaUsers", label: "Clients", path: "/dashboard/clients" },
-  { iconName: "GoTools", label: "Installers", path: "/dashboard/installers" },
+  {
+    iconName: "FaUsers",
+    label: "Clients",
+    path: "/dashboard/clients",
+    allowedRoles: ["designer", "admin", "manager"],
+  },
+  {
+    iconName: "GoTools",
+    label: "Installers",
+    path: "/dashboard/installers",
+    allowedRoles: ["admin", "installation", "service"],
+  },
 ];
 
 export default function RootLayout({
@@ -163,7 +191,19 @@ export default function RootLayout({
                         minHeight: "100vh",
                       }}
                     >
-                      {showSidebar && <Sidebar links={dashboardLinks} />}
+                      {showSidebar && (
+                        <Sidebar
+                          links={dashboardLinks}
+                          autoCollapsePatterns={[
+                            "/dashboard/installation",
+                            "/dashboard/production",
+                            "/dashboard/sales/newsale",
+                            "/dashboard/plant/wrap",
+                            "/dashboard/plant/ship",
+                            "/dashboard/plant/service-orders",
+                          ]}
+                        />
+                      )}
                       <div
                         style={{
                           flex: 1,

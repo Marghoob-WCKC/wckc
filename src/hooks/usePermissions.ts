@@ -61,5 +61,6 @@ export function usePermissions() {
     canEditReports,
     canDelete,
     is: (checkRole: string) => role === checkRole,
+    hasAnyRole: (roles: string[]) => roles.includes(role || ""),
   };
 }

@@ -32,3 +32,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Sidebar Menu Styles */
+.sidebar-submenu-item {
+  color: rgba(255, 255, 255, 0.9) !important;
+  margin-bottom: 2px;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.sidebar-submenu-item:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+  transform: translateX(4px);
+}
+
+.sidebar-submenu-item[data-active="true"] {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}

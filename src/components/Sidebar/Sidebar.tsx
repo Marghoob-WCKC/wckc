@@ -39,11 +39,23 @@ import { MdFactory, MdFeedback, MdSupervisorAccount } from "react-icons/md";
 import { GoTools } from "react-icons/go";
 import { SignedIn, UserButton } from "@clerk/nextjs";
 import { GrSchedules } from "react-icons/gr";
-
+import { IoMenu } from "react-icons/io5";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 import TopNavigationBar from "../Shared/TopNavigationBar/TopNavigationBar";
 import Link from "next/link";
 import { colors, linearGradients } from "@/theme";
+import { usePermissions } from "@/hooks/usePermissions";
+
+export type UserRole =
+  | "admin"
+  | "designer"
+  | "scheduler"
+  | "installation"
+  | "service"
+  | "plant"
+  | "reception"
+  | "manager"
+  | "inspection";
 
 export type SidebarLink = {
   iconName: string;
@@ -51,10 +63,12 @@ export type SidebarLink = {
   path?: string;
   links?: SidebarLink[];
   permission?: boolean;
+  allowedRoles?: UserRole[];
 };
 
 type SidebarProps = {
   links: SidebarLink[];
+  autoCollapsePatterns?: string[];
 };
 
 const iconMap: Record<string, any> = {
@@ -151,10 +165,11 @@ function MainLink({
           </Menu.Target>
           <Menu.Dropdown
             style={{
-              backgroundColor: colors.violet.primary,
+              background: linearGradients.primaryVertical,
               border: `1px solid ${colors.violet.light}`,
               boxShadow: "0 10px 20px rgba(0,0,0,0.2)",
-              zIndex: 1000,
+              padding: "8px",
+              borderRadius: "12px",
             }}
           >
             <Menu.Label
@@ -167,20 +182,14 @@ function MainLink({
               return (
                 <Menu.Item
                   key={link.label}
+                  className="sidebar-submenu-item"
                   leftSection={<SubIcon size={14} />}
                   component={(link.path ? Link : "button") as any}
                   href={link.path || undefined}
                   onClick={(e: React.MouseEvent) =>
                     handleNavigation(e, link.path)
                   }
-                  style={{
-                    color:
-                      pathname === link.path ? "#fff" : "rgba(255,255,255,0.8)",
-                    backgroundColor:
-                      pathname === link.path
-                        ? "rgba(255,255,255,0.1)"
-                        : "transparent",
-                  }}
+                  data-active={pathname === link.path}
                 >
                   {link.label}
                 </Menu.Item>
@@ -192,17 +201,33 @@ function MainLink({
     }
 
     return (
-      <Tooltip label={item.label} position="right" withArrow openDelay={200}>
+      <Tooltip
+        label={item.label}
+        position="right"
+        withArrow
+        openDelay={100}
+        offset={10}
+        transitionProps={{ duration: 150, transition: "slide-left" }}
+        styles={{
+          tooltip: {
+            backgroundColor: colors.violet.primary,
+            color: "white",
+            fontWeight: 600,
+            fontSize: rem(12),
+            padding: "8px 12px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+          },
+        }}
+      >
         <UnstyledButton
           component={(item.path ? Link : "button") as any}
           href={item.path || undefined}
           p="xs"
-          style={navItemStyle}
+          display="flex"
+          style={{ ...navItemStyle, justifyContent: "center" }}
           onClick={(e: React.MouseEvent) => handleNavigation(e, item.path)}
         >
-          <Center style={{ width: "100%" }}>
-            <Icon size={20} />
-          </Center>
+          <Icon size={22} />
         </UnstyledButton>
       </Tooltip>
     );
@@ -267,13 +292,45 @@ function MainLink({
   );
 }
 
-export default function Sidebar({ links }: SidebarProps) {
+export default function Sidebar({
+  links,
+  autoCollapsePatterns = [],
+}: SidebarProps) {
   const isSmallScreen = useMediaQuery("(max-width: 1024px)");
   const [collapsed, setCollapsed] = useState(false);
+  const { hasAnyRole } = usePermissions();
+  const pathname = usePathname();
 
   useEffect(() => {
-    setCollapsed(!!isSmallScreen);
-  }, [isSmallScreen]);
+    if (isSmallScreen) {
+      setCollapsed(true);
+    } else {
+      const shouldAutoCollapse = autoCollapsePatterns.some((pattern) =>
+        pathname.startsWith(pattern)
+      );
+      setCollapsed(shouldAutoCollapse);
+    }
+  }, [isSmallScreen, pathname, autoCollapsePatterns]);
+
+  const filterLinks = (items: SidebarLink[]): SidebarLink[] => {
+    return items
+      .filter((link) => {
+        if (link.permission) return false;
+        if (link.allowedRoles && !hasAnyRole(link.allowedRoles)) return false;
+        return true;
+      })
+      .map((link) => {
+        if (link.links) {
+          const filteredChildren = filterLinks(link.links);
+          if (!link.path && filteredChildren.length === 0) return null;
+          return { ...link, links: filteredChildren };
+        }
+        return link;
+      })
+      .filter((link): link is SidebarLink => link !== null);
+  };
+
+  const visibleLinks = filterLinks(links);
 
   const width = collapsed ? rem(70) : rem(240);
 
@@ -298,8 +355,9 @@ export default function Sidebar({ links }: SidebarProps) {
       <Box p="md" style={{ overflow: "hidden" }}>
         <Group
           justify={collapsed ? "center" : "space-between"}
-          mb="lg"
+          mb={collapsed ? 35 : "lg"}
           wrap="nowrap"
+          style={{ transition: "margin-bottom 200ms ease" }}
         >
           {!collapsed && (
             <Text
@@ -326,11 +384,7 @@ export default function Sidebar({ links }: SidebarProps) {
             size="lg"
             style={{ flexShrink: 0 }}
           >
-            {collapsed ? (
-              <FaBarsStaggered size={18} />
-            ) : (
-              <FaChevronLeft size={14} />
-            )}
+            {collapsed ? <IoMenu size={40} /> : <FaChevronLeft size={14} />}
           </ActionIcon>
         </Group>
 
@@ -377,12 +431,9 @@ export default function Sidebar({ links }: SidebarProps) {
         }}
       >
         <Stack gap={4} px="md">
-          {links.map(
-            (link) =>
-              !link.permission && (
-                <MainLink key={link.label} item={link} collapsed={collapsed} />
-              )
-          )}
+          {visibleLinks.map((link) => (
+            <MainLink key={link.label} item={link} collapsed={collapsed} />
+          ))}
         </Stack>
       </ScrollArea>
 

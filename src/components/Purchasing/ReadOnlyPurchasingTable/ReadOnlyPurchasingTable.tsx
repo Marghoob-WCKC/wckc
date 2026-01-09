@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -30,6 +30,9 @@ import {
   SimpleGrid,
   Anchor,
   Button,
+  Timeline,
+  ActionIcon,
+  Modal,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { GrEmergency } from "react-icons/gr";
@@ -39,6 +42,7 @@ import {
   FaSortUp,
   FaSortDown,
   FaShoppingBag,
+  FaHistory,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import { usePurchasingTable } from "@/hooks/usePurchasingTable";
@@ -52,6 +56,34 @@ type PurchasingTableView = Views<"purchasing_table_view"> & {
   glass_received_incomplete_at: string | null;
   handles_received_incomplete_at: string | null;
   acc_received_incomplete_at: string | null;
+};
+
+const parseCommentHistory = (rawText: string | null) => {
+  if (!rawText) return [];
+  const lines = rawText.split("\n");
+  const history: { message: string; date: string | null }[] = [];
+  let currentMessage: string[] = [];
+
+  const timestampRegex = /\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\]$/;
+
+  lines.forEach((line) => {
+    const match = line.match(timestampRegex);
+    if (match) {
+      const date = match[1];
+      const text = line.replace(timestampRegex, "").trim();
+      const fullMessage = [...currentMessage, text].join("\n").trim();
+      history.push({ message: fullMessage, date });
+      currentMessage = [];
+    } else {
+      currentMessage.push(line);
+    }
+  });
+
+  if (currentMessage.length > 0) {
+    history.push({ message: currentMessage.join("\n").trim(), date: null });
+  }
+
+  return history.reverse();
 };
 
 const StatusBadge = ({
@@ -93,6 +125,14 @@ export default function ReadOnlyPurchasingTable() {
   const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
+  const [
+    commentModalOpened,
+    { open: openCommentModal, close: closeCommentModal },
+  ] = useDisclosure(false);
+  const [viewingComment, setViewingComment] = useState<{
+    text: string;
+  } | null>(null);
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 16,
@@ -226,29 +266,67 @@ export default function ReadOnlyPurchasingTable() {
     columnHelper.accessor("purchasing_comments", {
       header: "History",
       size: 250,
-      cell: (info) => (
-        <Box
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            minHeight: "24px",
-            maxWidth: "100%",
-          }}
-        >
-          <Tooltip
-            label={info.getValue()}
-            multiline
-            w={300}
-            withinPortal
-            disabled={!info.getValue()}
+      cell: (info) => {
+        const fullComment = info.getValue();
+        const parsed = useMemo(
+          () => parseCommentHistory(fullComment),
+          [fullComment]
+        );
+        const latest = parsed[0];
+
+        return (
+          <Box
+            onClick={() => {
+              if (!fullComment) return;
+              setViewingComment({
+                text: fullComment,
+              });
+              openCommentModal();
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              minHeight: "24px",
+              maxWidth: "100%",
+              cursor: fullComment ? "pointer" : "default",
+            }}
           >
-            <Text size="xs" truncate c="dimmed" style={{ flex: 1 }}>
-              {info.getValue() || "—"}
-            </Text>
-          </Tooltip>
-        </Box>
-      ),
+            <ActionIcon
+              size="sm"
+              variant="light"
+              color={latest ? "violet" : "gray"}
+            >
+              <FaHistory size={12} />
+            </ActionIcon>
+            <Box style={{ flex: 1, minWidth: 0 }}>
+              {latest ? (
+                <Stack gap={0}>
+                  <Group gap="xs">
+                    <Text size="xs" fw={700} c="violet.9">
+                      {latest.date
+                        ? dayjs(latest.date).format("MMM D")
+                        : "Note"}
+                    </Text>
+                    <Text size="xs" c="dimmed" truncate>
+                      {latest.message.split("\n")[0]}
+                    </Text>
+                  </Group>
+                  {parsed.length > 1 && (
+                    <Text size="10px" c="dimmed">
+                      +{parsed.length - 1} more entries
+                    </Text>
+                  )}
+                </Stack>
+              ) : (
+                <Text size="xs" c="dimmed" fs="italic">
+                  No history
+                </Text>
+              )}
+            </Box>
+          </Box>
+        );
+      },
     }),
   ];
 
@@ -451,6 +529,50 @@ export default function ReadOnlyPurchasingTable() {
         opened={drawerOpened}
         onClose={closeDrawer}
       />
+      <Modal
+        opened={commentModalOpened}
+        onClose={closeCommentModal}
+        title="Purchase History"
+        centered
+        size="lg"
+      >
+        <ScrollArea h={400} type="auto" offsetScrollbars>
+          {viewingComment &&
+          parseCommentHistory(viewingComment.text).length > 0 ? (
+            <Timeline
+              active={-1}
+              bulletSize={24}
+              lineWidth={2}
+              color="violet"
+              p="sm"
+            >
+              {parseCommentHistory(viewingComment.text).map((item, index) => (
+                <Timeline.Item
+                  key={index}
+                  bullet={<FaHistory size={10} />}
+                  title={
+                    <Text size="sm" fw={600} c="dark">
+                      {item.date
+                        ? dayjs(item.date).format("MMM D, YYYY · h:mm A")
+                        : "Manual Note"}
+                    </Text>
+                  }
+                >
+                  <Text size="sm" c="dimmed" style={{ whiteSpace: "pre-wrap" }}>
+                    {item.message}
+                  </Text>
+                </Timeline.Item>
+              ))}
+            </Timeline>
+          ) : (
+            <Center h={100}>
+              <Text c="dimmed" fs="italic">
+                No history found.
+              </Text>
+            </Center>
+          )}
+        </ScrollArea>
+      </Modal>
     </Box>
   );
 }
