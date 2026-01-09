@@ -99,7 +99,7 @@ const dashboardLinks: SidebarLink[] = [
   {
     iconName: "MdFactory",
     label: "Plant",
-    allowedRoles: ["admin", "installation", "plant"],
+    allowedRoles: ["admin", "plant"],
     links: [
       {
         iconName: "FaCalendarAlt",
@@ -148,6 +148,16 @@ const dashboardLinks: SidebarLink[] = [
         iconName: "FaFileInvoice",
         label: "Job Status",
         path: "/dashboard/reports/jobstatusreport",
+      },
+      {
+        iconName: "FaCalendarAlt",
+        label: "Wrap Schedule",
+        path: "/dashboard/reports/wrapschedulereport",
+      },
+      {
+        iconName: "FaShippingFast",
+        label: "Ship Schedule",
+        path: "/dashboard/reports/shipschedulereport",
       },
     ],
   },

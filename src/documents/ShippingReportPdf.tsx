@@ -349,7 +349,7 @@ export const ShippingReportPdf = ({
       {pages.map((pageContent, index) => (
         <Page key={index} size="A4" orientation="landscape" style={styles.page}>
           <View style={styles.headerContainer} fixed>
-            <Text style={styles.reportTitle}>Upcoming Shipments</Text>
+            <Text style={styles.reportTitle}>Shipping Report</Text>
           </View>
           <Text
             style={{
