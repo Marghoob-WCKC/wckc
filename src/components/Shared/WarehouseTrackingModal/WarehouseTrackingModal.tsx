@@ -127,6 +127,11 @@ export default function WarehouseTrackingModal({
       title="Warehouse Tracking Details"
       centered
       radius="lg"
+      styles={{
+        title: {
+          fontWeight: "bold",
+        },
+      }}
     >
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
