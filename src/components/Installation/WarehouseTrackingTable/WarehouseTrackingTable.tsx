@@ -121,7 +121,7 @@ export default function WarehouseTrackingTable() {
       }),
       columnHelper.display({
         id: "pallets_at_warehouse",
-        header: "Pallets @ Warehouse",
+        header: "Pallets In Warehouse",
         size: 120,
         cell: (info) => {
           const row = info.row.original;
@@ -133,7 +133,7 @@ export default function WarehouseTrackingTable() {
       }),
       columnHelper.display({
         id: "days_at_warehouse",
-        header: "Days @ Warehouse",
+        header: "Days In Warehouse",
         size: 120,
         cell: (info) => {
           const row = info.row.original;

@@ -896,7 +896,12 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                             }
                             styles={{ label: { fontWeight: 500 } }}
                           />
-                          {form.values.wrap_completed && (
+
+                          {form.values.wrap_completed ===
+                            "1999-09-19T00:00:00+00:00" ||
+                          "1899-12-31T00:00:00+00:00" ? (
+                            <></>
+                          ) : (
                             <Text c="dimmed" size="xs">
                               {dayjs
                                 .utc(form.values.wrap_completed)
@@ -946,11 +951,13 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           {form.values.installation_completed && (
                             <Text c="dimmed" size="xs">
                               {form.values.installation_completed ===
-                              "1999-09-19T00:00:00+00:00"
-                                ? "Marked Complete"
-                                : dayjs
-                                    .utc(form.values.installation_completed)
-                                    .format("YYYY-MM-DD")}
+                              "1999-09-19T00:00:00+00:00" ? (
+                                <></>
+                              ) : (
+                                dayjs
+                                  .utc(form.values.installation_completed)
+                                  .format("YYYY-MM-DD")
+                              )}
                             </Text>
                           )}
                         </Group>
