@@ -61,7 +61,7 @@ export function InboxSidebar({
           onChange={(e) => handleSearch(e.target.value)}
           mb="xs"
         />
-        <Text size="xs" c="dimmed" fw={600}>
+        <Text size="xs" c="violet" fw={700}>
           INBOX
         </Text>
       </Box>
@@ -92,10 +92,10 @@ export function InboxSidebar({
                       cursor: "pointer",
                       borderBottom: "1px solid var(--mantine-color-gray-1)",
                       backgroundColor: isSelected
-                        ? "var(--mantine-color-blue-0)"
+                        ? "var(--mantine-color-violet-0)"
                         : "transparent",
                       borderLeft: isSelected
-                        ? "4px solid var(--mantine-color-blue-6)"
+                        ? "4px solid var(--mantine-color-violet-6)"
                         : "4px solid transparent",
                       transition: "background-color 0.2s",
                     }}

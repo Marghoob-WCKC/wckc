@@ -33,6 +33,7 @@ import {
   FaChevronLeft,
   FaClipboardList,
   FaWarehouse,
+  FaInbox,
 } from "react-icons/fa";
 import { FaGears, FaBarsStaggered } from "react-icons/fa6";
 import { MdFactory, MdFeedback, MdSupervisorAccount } from "react-icons/md";
@@ -90,6 +91,7 @@ const iconMap: Record<string, any> = {
   FaBoxOpen,
   MdFeedback,
   FaWarehouse,
+  FaInbox,
 };
 
 function MainLink({

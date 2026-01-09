@@ -33,6 +33,12 @@ const dashboardLinks: SidebarLink[] = [
     path: "/dashboard",
   },
   {
+    iconName: "FaInbox",
+    label: "Inbox",
+    path: "/dashboard/inbox",
+    allowedRoles: ["admin", "installation"],
+  },
+  {
     iconName: "FaHome",
     label: "Sales",
     path: "/dashboard/sales",

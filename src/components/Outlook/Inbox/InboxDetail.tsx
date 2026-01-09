@@ -85,7 +85,7 @@ function ThreadMessage({
   const [processedBody, setProcessedBody] = useState<string>("");
   const [rawBody, setRawBody] = useState<string>("");
   const [attachments, setAttachments] = useState<OutlookAttachment[]>([]);
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
   const [detailsLoaded, setDetailsLoaded] = useState(false);
   const [attachmentsLoaded, setAttachmentsLoaded] = useState(false);
   const [needsAttachments, setNeedsAttachments] = useState(false);
@@ -132,8 +132,7 @@ function ThreadMessage({
 
           try {
             src = decodeURIComponent(src);
-          } catch (e) {
-          }
+          } catch (e) {}
 
           if (src.toLowerCase().startsWith("cid:")) {
             let cid = src.substring(4).trim().toLowerCase();
@@ -145,10 +144,9 @@ function ThreadMessage({
             }
 
             if (img.closest("#Signature") || img.closest("[id='Signature']")) {
-
               if (data) {
               }
-              sigCids.add(cid); 
+              sigCids.add(cid);
               if (cid.includes("@")) sigCids.add(cid.split("@")[0]);
             }
 
@@ -625,11 +623,20 @@ export function InboxDetail({ email, defaultJobId }: InboxDetailProps) {
   return (
     <Box h="100%" display="flex" style={{ flexDirection: "column" }}>
       <ScrollArea flex={1} bg="gray.1">
-        <Container fluid p="sm">
-          <Title order={4} mb="md" style={{ color: "#333" }}>
-            {email.subject}
-          </Title>
-          <Stack gap="xs">
+        <Container fluid p={0}>
+          <Paper
+            p="md"
+            shadow="xs"
+            radius={0}
+            style={{ borderBottom: "1px solid #e0e0e0" }}
+          >
+            <Group justify="space-between" align="center">
+              <Title order={4} style={{ color: "#4A00E0" }}>
+                {email.subject || "(No Subject)"}
+              </Title>
+            </Group>
+          </Paper>
+          <Stack gap="sm" p="sm">
             {conversation.map((msg, index) => (
               <ThreadMessage
                 key={msg.id}
@@ -686,11 +693,13 @@ export function InboxDetail({ email, defaultJobId }: InboxDetailProps) {
                     p="xs"
                     withBorder
                     radius="md"
-                    bg={isSelected ? "var(--mantine-color-blue-0)" : undefined}
+                    bg={
+                      isSelected ? "var(--mantine-color-violet-0)" : undefined
+                    }
                     style={{
                       cursor: "pointer",
                       borderColor: isSelected
-                        ? "var(--mantine-color-blue-5)"
+                        ? "var(--mantine-color-violet-5)"
                         : undefined,
                     }}
                     onClick={() => {
