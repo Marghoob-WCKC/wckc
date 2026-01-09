@@ -64,7 +64,7 @@ export default function ProdTable() {
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 16,
+    pageSize: 19,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -169,7 +169,7 @@ export default function ProdTable() {
           <Text fw={600} size="sm">
             <Anchor
               component="button"
-              size="sm"
+              size="xs"
               fw={600}
               w="100%"
               c="#6f00ffff"
@@ -196,8 +196,13 @@ export default function ProdTable() {
       minSize: 120,
       cell: (info) => {
         const date = info.getValue();
-        if (!date) return <Text c="orange">TBD</Text>;
-        return dayjs(date).format("YYYY-MM-DD");
+        if (!date)
+          return (
+            <Text c="orange" size="xs">
+              TBD
+            </Text>
+          );
+        return <Text size="xs">{dayjs(date).format("YYYY-MM-DD")}</Text>;
       },
     }),
     columnHelper.accessor("placement_date", {
@@ -206,8 +211,13 @@ export default function ProdTable() {
       minSize: 120,
       cell: (info) => {
         const date = info.getValue();
-        if (!date) return <Text c="orange">TBD</Text>;
-        return dayjs(date).format("YYYY-MM-DD");
+        if (!date)
+          return (
+            <Text c="orange" size="xs">
+              TBD
+            </Text>
+          );
+        return <Text size="xs">{dayjs(date).format("YYYY-MM-DD")}</Text>;
       },
     }),
     columnHelper.accessor("ship_schedule", {
@@ -242,6 +252,7 @@ export default function ProdTable() {
             wrap="nowrap"
           >
             <Text
+              size="xs"
               style={{
                 whiteSpace: "nowrap",
                 color: date ? undefined : "orange",
@@ -273,7 +284,7 @@ export default function ProdTable() {
       header: "Client",
       size: 150,
       minSize: 120,
-      cell: (info) => info.getValue() ?? "—",
+      cell: (info) => <Text size="xs">{info.getValue() ?? "—"}</Text>,
     }),
     columnHelper.display({
       id: "production_status",
@@ -390,7 +401,7 @@ export default function ProdTable() {
         ].filter(Boolean);
 
         return (
-          <Text size="sm" c="dimmed" lineClamp={1} tt="capitalize">
+          <Text size="xs" c="dimmed" lineClamp={1} tt="capitalize">
             {parts.length > 0 ? parts.join(" • ") : "—"}
           </Text>
         );
@@ -401,7 +412,7 @@ export default function ProdTable() {
       size: 300,
       minSize: 200,
       cell: (info) => (
-        <Text size="sm" c="dimmed" lineClamp={1}>
+        <Text size="xs" c="dimmed" lineClamp={1}>
           {info.getValue() || "—"}
         </Text>
       ),
@@ -473,7 +484,7 @@ export default function ProdTable() {
         </Stack>
       </Group>
 
-      <Accordion variant="contained" radius="md" mb="md">
+      <Accordion variant="contained" radius="md" mb="xs">
         <Accordion.Item value="search-filters">
           <Accordion.Control icon={<FaSearch size={16} />}>
             Search Filters

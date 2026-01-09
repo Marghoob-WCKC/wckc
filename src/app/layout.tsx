@@ -42,13 +42,13 @@ const dashboardLinks: SidebarLink[] = [
     iconName: "FaGears",
     label: "Production",
     path: "/dashboard/production",
-    allowedRoles: ["admin", "scheduler"],
+    allowedRoles: ["admin", "scheduler", "reception"],
   },
   {
     iconName: "FaShoppingBag",
     label: "Purchasing",
     path: "/dashboard/purchasing",
-    allowedRoles: ["admin", "scheduler", "installation", "plant", "reception"],
+    allowedRoles: ["admin", "scheduler", "installation", "plant"],
   },
 
   {
