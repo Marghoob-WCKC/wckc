@@ -1049,9 +1049,9 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           />
                           {form.values.in_warehouse && (
                             <Text c="dimmed" size="xs">
-                              {dayjs(form.values.in_warehouse).format(
-                                "YYYY-MM-DD"
-                              )}
+                              {dayjs
+                                .utc(form.values.in_warehouse)
+                                .format("YYYY-MM-DD")}
                             </Text>
                           )}
                         </Group>

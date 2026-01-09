@@ -2161,64 +2161,7 @@ export type Database = {
           shipping_address: string | null
           shipping_client_name: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "warehouse_tracking_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: true
-            referencedRelation: "inspection_table_view"
-            referencedColumns: ["job_id"]
-          },
-          {
-            foreignKeyName: "warehouse_tracking_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: true
-            referencedRelation: "installation_table_view"
-            referencedColumns: ["job_id"]
-          },
-          {
-            foreignKeyName: "warehouse_tracking_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: true
-            referencedRelation: "jobs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "warehouse_tracking_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: true
-            referencedRelation: "plant_table_view"
-            referencedColumns: ["job_id"]
-          },
-          {
-            foreignKeyName: "warehouse_tracking_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: true
-            referencedRelation: "prod_table_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "warehouse_tracking_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: true
-            referencedRelation: "sales_table_view"
-            referencedColumns: ["job_id"]
-          },
-          {
-            foreignKeyName: "warehouse_tracking_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: true
-            referencedRelation: "service_orders_table_view"
-            referencedColumns: ["job_id"]
-          },
-          {
-            foreignKeyName: "warehouse_tracking_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: true
-            referencedRelation: "shipped_not_invoiced_view"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
