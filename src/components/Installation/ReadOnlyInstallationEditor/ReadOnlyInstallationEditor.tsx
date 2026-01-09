@@ -44,6 +44,7 @@ import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
 import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/RelatedServiceOrders";
 import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
+import PlantActuals from "@/components/Shared/PlantActuals/PlantActuals";
 
 type JoinedCabinet = Tables<"cabinets"> & {
   door_styles: { name: string } | null;
@@ -258,57 +259,6 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
     },
     { key: "assembly_schedule", label: "Assembly", icon: <FaCogs size={12} /> },
   ];
-  const actualSteps = useMemo(() => {
-    if (!prod) return [];
-    const stepsData = [
-      {
-        key: "in_plant_actual",
-        label: "In Plant",
-        icon: <FaIndustry size={10} />,
-      },
-      {
-        key: "doors_completed_actual",
-        label: "Doors",
-        icon: <FaDoorOpen size={10} />,
-      },
-      {
-        key: "cut_finish_completed_actual",
-        label: "Cut Finish",
-        icon: <FaCut size={10} />,
-      },
-      {
-        key: "custom_finish_completed_actual",
-        label: "Custom Finish",
-        icon: <FaPaintBrush size={10} />,
-      },
-      {
-        key: "drawer_completed_actual",
-        label: "Drawers",
-        icon: <FaDoorOpen size={10} />,
-      },
-      {
-        key: "cut_melamine_completed_actual",
-        label: "Cut Melamine",
-        icon: <FaCut size={10} />,
-      },
-      {
-        key: "paint_completed_actual",
-        label: "Paint",
-        icon: <FaPaintBrush size={10} />,
-      },
-      {
-        key: "assembly_completed_actual",
-        label: "Assembly",
-        icon: <FaCogs size={10} />,
-      },
-    ] as const;
-
-    return stepsData.map((step) => ({
-      ...step,
-      isCompleted: !!prod[step.key],
-      date: prod[step.key] as string | null,
-    }));
-  }, [prod]);
 
   const installSteps = useMemo(() => {
     if (!install) return [];
@@ -597,57 +547,7 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
                 </Timeline>
               </Card>
 
-              <Card shadow="sm" padding="lg" radius="md" withBorder>
-                <SectionTitle
-                  icon={FaCogs}
-                  title="Production History"
-                  color="gray"
-                />
-                <Timeline active={-1} bulletSize={20} lineWidth={2}>
-                  {actualSteps.map((step, idx) => (
-                    <Timeline.Item
-                      key={idx}
-                      bullet={
-                        <Box
-                          style={{
-                            backgroundColor: step.isCompleted
-                              ? "#28a745"
-                              : "#f1f3f5",
-                            borderRadius: "50%",
-                            width: 20,
-                            height: 20,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            aspectRatio: 1,
-                            color: step.isCompleted ? "white" : "#adb5bd",
-                          }}
-                        >
-                          {step.isCompleted ? (
-                            <FaCheckCircle size={10} />
-                          ) : (
-                            step.icon
-                          )}
-                        </Box>
-                      }
-                      title={step.label}
-                      lineVariant={step.isCompleted ? "solid" : "dashed"}
-                    >
-                      {step.date === "1999-09-19T00:00:00+00:00" ? (
-                        <Text size="sm" c="green.8" fw={600}>
-                          Completed
-                        </Text>
-                      ) : (
-                        <Text size="sm" fw={500}>
-                          {step.date
-                            ? dayjs(step.date).format("YYYY-MM-DD HH:mm")
-                            : "—"}
-                        </Text>
-                      )}
-                    </Timeline.Item>
-                  ))}
-                </Timeline>
-              </Card>
+              <PlantActuals schedule={prod} title="Production History" />
             </Stack>
           </Grid.Col>
         </Grid>

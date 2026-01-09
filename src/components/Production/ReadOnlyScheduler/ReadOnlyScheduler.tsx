@@ -40,6 +40,7 @@ import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
 import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
 import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 import RelatedServiceOrders from "@/components/Shared/RelatedServiceOrders/RelatedServiceOrders";
+import PlantActuals from "@/components/Shared/PlantActuals/PlantActuals";
 
 type CabinetSpecsJoined = Tables<"cabinets"> & {
   door_styles: { name: string } | null;
@@ -159,65 +160,6 @@ export default function ReadOnlyScheduler({ jobId }: { jobId: number }) {
     },
     enabled: isAuthenticated && !!jobId,
   });
-
-  const actualSteps = useMemo(() => {
-    const schedule = data?.production_schedule;
-    if (!schedule) return [];
-
-    const stepsData = [
-      {
-        key: "in_plant_actual",
-        label: "In Plant (Doors)",
-        icon: <FaIndustry size={12} />,
-      },
-      {
-        key: "in_plant_cabinets_actual",
-        label: "In Plant (Cabinets)",
-        icon: <FaIndustry size={12} />,
-      },
-      {
-        key: "doors_completed_actual",
-        label: "Doors",
-        icon: <FaDoorOpen size={12} />,
-      },
-      {
-        key: "cut_finish_completed_actual",
-        label: "Cut Finishing",
-        icon: <FaCut size={12} />,
-      },
-      {
-        key: "custom_finish_completed_actual",
-        label: "Custom Finish",
-        icon: <FaCut size={12} />,
-      },
-      {
-        key: "drawer_completed_actual",
-        label: "Drawers",
-        icon: <FaDoorOpen size={12} />,
-      },
-      {
-        key: "cut_melamine_completed_actual",
-        label: "Melamine Cut",
-        icon: <FaCut size={12} />,
-      },
-      {
-        key: "paint_completed_actual",
-        label: "Paint",
-        icon: <FaPaintBrush size={12} />,
-      },
-      {
-        key: "assembly_completed_actual",
-        label: "Assembly",
-        icon: <FaCogs size={12} />,
-      },
-    ] as const;
-
-    return stepsData.map((step) => ({
-      ...step,
-      isCompleted: !!schedule[step.key],
-      date: schedule[step.key] as string | null,
-    }));
-  }, [data]);
 
   if (isLoading || !data) {
     return (
@@ -463,54 +405,7 @@ export default function ReadOnlyScheduler({ jobId }: { jobId: number }) {
           </Grid.Col>
 
           <Grid.Col span={2}>
-            <Card shadow="sm" padding="lg" radius="md" withBorder h="100%">
-              <SectionTitle
-                icon={FaCalendarCheck}
-                title="Plant Progress"
-                color="green"
-              />
-              <Timeline bulletSize={24} lineWidth={2} active={-1} mt="md">
-                {actualSteps.map((step, idx) => (
-                  <Timeline.Item
-                    key={idx}
-                    title={step.label}
-                    bullet={
-                      <Box
-                        style={{
-                          backgroundColor: step.isCompleted
-                            ? "#28a745"
-                            : "#f1f3f5",
-                          borderRadius: "50%",
-                          width: 24,
-                          height: 24,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          aspectRatio: 1,
-                          color: step.isCompleted ? "white" : "#adb5bd",
-                        }}
-                      >
-                        {step.isCompleted ? (
-                          <FaCheckCircle size={12} />
-                        ) : (
-                          <FaRegCircle size={12} />
-                        )}
-                      </Box>
-                    }
-                    lineVariant={step.isCompleted ? "solid" : "dashed"}
-                  >
-                    <Text size="xs" c="dimmed">
-                      {step.isCompleted ? "Completed" : "Pending"}
-                    </Text>
-                    {step.date && (
-                      <Text size="xs" fw={500} c="dark">
-                        {dayjs(step.date).format("MMM D, h:mm A")}
-                      </Text>
-                    )}
-                  </Timeline.Item>
-                ))}
-              </Timeline>
-            </Card>
+            <PlantActuals schedule={data.production_schedule} />
           </Grid.Col>
         </Grid>
       </Box>
