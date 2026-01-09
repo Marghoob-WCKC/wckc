@@ -1,4 +1,4 @@
-import WarehouseTrackingTable from "@/components/Installation/WarehouseTrackingTable/WarehouseTrackingTable";
+import WarehouseTrackingTable from "@/components/WarehouseTracking/WarehouseTracking";
 
 export default function Page() {
   return <WarehouseTrackingTable />;

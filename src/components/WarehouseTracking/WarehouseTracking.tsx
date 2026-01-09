@@ -181,7 +181,7 @@ export default function WarehouseTrackingTable() {
           <Group gap={4} justify="center">
             <ActionIcon
               variant="subtle"
-              color="blue"
+              color="violet"
               onClick={() => {
                 setSelectedRow(info.row.original);
                 setIsModalOpen(true);
