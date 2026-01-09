@@ -18,6 +18,7 @@ export type Database = {
           due_date: string | null
           id: number
           job_id: number
+          updated_at: string
         }
         Insert: {
           comments?: string | null
@@ -27,6 +28,7 @@ export type Database = {
           due_date?: string | null
           id?: number
           job_id: number
+          updated_at?: string
         }
         Update: {
           comments?: string | null
@@ -36,6 +38,7 @@ export type Database = {
           due_date?: string | null
           id?: number
           job_id?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -217,6 +220,7 @@ export type Database = {
           phone2: string | null
           province: string | null
           street: string | null
+          updated_at: string
           updatedAt: string
           zip: string | null
         }
@@ -234,6 +238,7 @@ export type Database = {
           phone2?: string | null
           province?: string | null
           street?: string | null
+          updated_at?: string
           updatedAt?: string
           zip?: string | null
         }
@@ -251,6 +256,7 @@ export type Database = {
           phone2?: string | null
           province?: string | null
           street?: string | null
+          updated_at?: string
           updatedAt?: string
           zip?: string | null
         }
@@ -260,14 +266,17 @@ export type Database = {
         Row: {
           Id: number
           Name: string | null
+          updated_at: string
         }
         Insert: {
           Id?: number
           Name?: string | null
+          updated_at?: string
         }
         Update: {
           Id?: number
           Name?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -278,6 +287,7 @@ export type Database = {
           is_pre_manufactured: boolean
           model: string
           name: string
+          updated_at: string
         }
         Insert: {
           id?: never
@@ -285,6 +295,7 @@ export type Database = {
           is_pre_manufactured?: boolean
           model: string
           name: string
+          updated_at?: string
         }
         Update: {
           id?: never
@@ -292,6 +303,7 @@ export type Database = {
           is_pre_manufactured?: boolean
           model?: string
           name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -304,6 +316,7 @@ export type Database = {
           homeowner_phone: string | null
           id: number
           job_id: number
+          updated_at: string
         }
         Insert: {
           created_at?: string | null
@@ -313,6 +326,7 @@ export type Database = {
           homeowner_phone?: string | null
           id?: never
           job_id: number
+          updated_at?: string
         }
         Update: {
           created_at?: string | null
@@ -322,6 +336,7 @@ export type Database = {
           homeowner_phone?: string | null
           id?: never
           job_id?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -397,10 +412,12 @@ export type Database = {
           installer_id: number | null
           legacy_ref: string | null
           partially_shipped: boolean | null
+          shipped_at: string | null
           site_changes: string | null
           site_changes_detail: string | null
           trade_30days: string | null
           trade_6months: string | null
+          updated_at: string
           wrap_completed: string | null
           wrap_date: string | null
         }
@@ -418,10 +435,12 @@ export type Database = {
           installer_id?: number | null
           legacy_ref?: string | null
           partially_shipped?: boolean | null
+          shipped_at?: string | null
           site_changes?: string | null
           site_changes_detail?: string | null
           trade_30days?: string | null
           trade_6months?: string | null
+          updated_at?: string
           wrap_completed?: string | null
           wrap_date?: string | null
         }
@@ -439,10 +458,12 @@ export type Database = {
           installer_id?: number | null
           legacy_ref?: string | null
           partially_shipped?: boolean | null
+          shipped_at?: string | null
           site_changes?: string | null
           site_changes_detail?: string | null
           trade_30days?: string | null
           trade_6months?: string | null
+          updated_at?: string
           wrap_completed?: string | null
           wrap_date?: string | null
         }
@@ -474,6 +495,7 @@ export type Database = {
           notes: string | null
           phone_number: string | null
           street_address: string | null
+          updated_at: string
           wcb_number: string | null
           zip_code: string | null
         }
@@ -494,6 +516,7 @@ export type Database = {
           notes?: string | null
           phone_number?: string | null
           street_address?: string | null
+          updated_at?: string
           wcb_number?: string | null
           zip_code?: string | null
         }
@@ -514,6 +537,7 @@ export type Database = {
           notes?: string | null
           phone_number?: string | null
           street_address?: string | null
+          updated_at?: string
           wcb_number?: string | null
           zip_code?: string | null
         }
@@ -628,6 +652,7 @@ export type Database = {
           file_type: string
           id: number
           job_id: number
+          updated_at: string
           uploaded_by: string | null
         }
         Insert: {
@@ -639,6 +664,7 @@ export type Database = {
           file_type: string
           id?: never
           job_id: number
+          updated_at?: string
           uploaded_by?: string | null
         }
         Update: {
@@ -650,6 +676,7 @@ export type Database = {
           file_type?: string
           id?: never
           job_id?: number
+          updated_at?: string
           uploaded_by?: string | null
         }
         Relationships: [
@@ -909,6 +936,7 @@ export type Database = {
           purchase_tracking_id: number
           qty_received: number | null
           quantity: number | null
+          updated_at: string
         }
         Insert: {
           company?: string | null
@@ -921,6 +949,7 @@ export type Database = {
           purchase_tracking_id: number
           qty_received?: number | null
           quantity?: number | null
+          updated_at?: string
         }
         Update: {
           company?: string | null
@@ -933,6 +962,7 @@ export type Database = {
           purchase_tracking_id?: number
           qty_received?: number | null
           quantity?: number | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1221,6 +1251,7 @@ export type Database = {
           qty: number
           service_order_id: number
           status: Database["public"]["Enums"]["so_part_status"] | null
+          updated_at: string
         }
         Insert: {
           description?: string | null
@@ -1230,6 +1261,7 @@ export type Database = {
           qty?: number
           service_order_id: number
           status?: Database["public"]["Enums"]["so_part_status"] | null
+          updated_at?: string
         }
         Update: {
           description?: string | null
@@ -1239,6 +1271,7 @@ export type Database = {
           qty?: number
           service_order_id?: number
           status?: Database["public"]["Enums"]["so_part_status"] | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1283,6 +1316,7 @@ export type Database = {
           service_order_number: string
           service_type: string | null
           service_type_detail: string | null
+          updated_at: string
           warranty_order_cost: number | null
         }
         Insert: {
@@ -1303,6 +1337,7 @@ export type Database = {
           service_order_number: string
           service_type?: string | null
           service_type_detail?: string | null
+          updated_at?: string
           warranty_order_cost?: number | null
         }
         Update: {
@@ -1323,6 +1358,7 @@ export type Database = {
           service_order_number?: string
           service_type?: string | null
           service_type_detail?: string | null
+          updated_at?: string
           warranty_order_cost?: number | null
         }
         Relationships: [
@@ -1398,6 +1434,7 @@ export type Database = {
           id: number
           job_id: number | null
           notes: string | null
+          updated_at: string
           visit_date: string
         }
         Insert: {
@@ -1406,6 +1443,7 @@ export type Database = {
           id?: never
           job_id?: number | null
           notes?: string | null
+          updated_at?: string
           visit_date: string
         }
         Update: {
@@ -1414,6 +1452,7 @@ export type Database = {
           id?: never
           job_id?: number | null
           notes?: string | null
+          updated_at?: string
           visit_date?: string
         }
         Relationships: [
@@ -1480,16 +1519,19 @@ export type Database = {
           Id: number
           Prefinished: boolean | null
           Species: string | null
+          updated_at: string
         }
         Insert: {
           Id?: number
           Prefinished?: boolean | null
           Species?: string | null
+          updated_at?: string
         }
         Update: {
           Id?: number
           Prefinished?: boolean | null
           Species?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1502,6 +1544,7 @@ export type Database = {
           notes: string | null
           pallets: number | null
           pickup_date: string | null
+          updated_at: string
         }
         Insert: {
           created_at?: string
@@ -1511,6 +1554,7 @@ export type Database = {
           notes?: string | null
           pallets?: number | null
           pickup_date?: string | null
+          updated_at?: string
         }
         Update: {
           created_at?: string
@@ -1520,6 +1564,7 @@ export type Database = {
           notes?: string | null
           pallets?: number | null
           pickup_date?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
