@@ -51,12 +51,30 @@ type WarehouseTrackingRow =
   Database["public"]["Views"]["warehouse_tracking_view"]["Row"];
 
 import { useQueryClient } from "@tanstack/react-query";
+import { exportToExcel } from "@/utils/exportToExcel";
+import { useWarehouseExport } from "@/hooks/useWarehouseTrackingTable";
+import dynamic from "next/dynamic";
+import { FaFileExcel, FaPrint } from "react-icons/fa";
+import { WarehouseTrackingPdf } from "@/documents/WarehouseTrackingPdf";
+import { Modal } from "@mantine/core";
+
+const PDFViewer = dynamic(
+  () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
+  {
+    ssr: false,
+    loading: () => (
+      <Center h="100%">
+        <Loader color="violet" />
+      </Center>
+    ),
+  }
+);
 
 export default function WarehouseTrackingTable() {
   const queryClient = useQueryClient();
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 13,
+    pageSize: 15,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -66,6 +84,70 @@ export default function WarehouseTrackingTable() {
     null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Export states
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [pdfData, setPdfData] = useState<WarehouseTrackingRow[] | null>(null);
+  const [isPdfOpen, setIsPdfOpen] = useState(false);
+
+  const { fetchAll } = useWarehouseExport();
+
+  const handleExportExcel = async () => {
+    setIsExportingExcel(true);
+    try {
+      const data = await fetchAll(activeFilters, sorting);
+      const excelData = data.map((row) => {
+        const pallets = row.pallets || 0;
+        let costPerPallet = 5;
+        const start = dayjs(row.dropoff_date);
+        const end = row.pickup_date ? dayjs(row.pickup_date) : dayjs();
+        const diff = Math.max(0, end.diff(start, "day"));
+        costPerPallet += diff * 1;
+        if (row.pickup_date) {
+          costPerPallet += 5;
+        }
+        const totalCost = costPerPallet * pallets;
+        const days = row.dropoff_date
+          ? Math.max(0, end.diff(dayjs(row.dropoff_date), "day"))
+          : 0;
+
+        return {
+          "Job #": row.job_number,
+          Client: row.shipping_client_name,
+          Address: row.shipping_address,
+          Boxes: row.box,
+          "Dropoff Date": row.dropoff_date
+            ? dayjs(row.dropoff_date).format("YYYY-MM-DD")
+            : "",
+          "Pickup Date": row.pickup_date
+            ? dayjs(row.pickup_date).format("YYYY-MM-DD")
+            : "",
+          Pallets: pallets,
+          Days: days,
+          Cost: totalCost,
+        };
+      });
+      exportToExcel(excelData, "Warehouse_Tracking_Report");
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
+  const handlePrintPdf = async () => {
+    setIsExportingPdf(true);
+    try {
+      const data = await fetchAll(activeFilters, sorting);
+      setPdfData(data);
+      setIsPdfOpen(true);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
 
   const { data, isLoading } = useWarehouseTrackingTable({
     pagination,
@@ -95,7 +177,7 @@ export default function WarehouseTrackingTable() {
       columnHelper.accessor("shipping_client_name", {
         id: "shipping_client_name",
         header: "Client",
-        size: 150,
+        size: 200,
         cell: (info) => <Text size="sm">{info.getValue() || "—"}</Text>,
       }),
       columnHelper.accessor("shipping_address", {
@@ -154,7 +236,7 @@ export default function WarehouseTrackingTable() {
       columnHelper.display({
         id: "cost",
         header: "Cost",
-        size: 100,
+        size: 50,
         cell: (info) => {
           const row = info.row.original;
           if (!row.dropoff_date) return "—";
@@ -270,6 +352,28 @@ export default function WarehouseTrackingTable() {
             >
               {totalPalletsInWarehouse}
             </Badge>
+          </Group>
+          <Group gap="xs">
+            <Button
+              variant="outline"
+              color="green"
+              size="sm"
+              leftSection={<FaFileExcel size={14} />}
+              loading={isExportingExcel}
+              onClick={handleExportExcel}
+            >
+              Excel
+            </Button>
+            <Button
+              variant="gradient"
+              gradient={gradients.primary}
+              size="sm"
+              leftSection={<FaPrint size={14} />}
+              loading={isExportingPdf}
+              onClick={handlePrintPdf}
+            >
+              PDF
+            </Button>
           </Group>
         </Group>
       </Group>
@@ -494,6 +598,20 @@ export default function WarehouseTrackingTable() {
           });
         }}
       />
+
+      <Modal
+        opened={isPdfOpen}
+        onClose={() => setIsPdfOpen(false)}
+        fullScreen
+        title="Warehouse Tracking Report"
+        styles={{ body: { height: "calc(100vh - 60px)" } }}
+      >
+        {pdfData && (
+          <PDFViewer width="100%" height="100%" style={{ border: "none" }}>
+            <WarehouseTrackingPdf data={pdfData} generatedAt={new Date()} />
+          </PDFViewer>
+        )}
+      </Modal>
     </Box>
   );
 }
