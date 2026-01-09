@@ -85,27 +85,24 @@ function ThreadMessage({
   const [processedBody, setProcessedBody] = useState<string>("");
   const [rawBody, setRawBody] = useState<string>("");
   const [attachments, setAttachments] = useState<OutlookAttachment[]>([]);
-  const [loading, setLoading] = useState(false); // Global loading for the card content?
+  const [loading, setLoading] = useState(false); 
   const [detailsLoaded, setDetailsLoaded] = useState(false);
   const [attachmentsLoaded, setAttachmentsLoaded] = useState(false);
   const [needsAttachments, setNeedsAttachments] = useState(false);
   const [signatureIds, setSignatureIds] = useState<string[]>([]);
   const loadingAttachmentsRef = useRef(false);
 
-  // Helper to process body
   const processBody = useCallback(
     (content: string, atts: OutlookAttachment[]) => {
       try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(content, "text/html");
 
-        // Clean up
         const replyDiv = doc.getElementById("divRplyFwdMsg");
         if (replyDiv) replyDiv.remove();
         const gmailQuote = doc.querySelector(".gmail_quote");
         if (gmailQuote) gmailQuote.remove();
 
-        // Prepare maps
         const cidMap = new Map<string, string>();
         const sigCids = new Set<string>();
 
@@ -128,7 +125,6 @@ function ThreadMessage({
           }
         });
 
-        // Replace images
         const images = doc.querySelectorAll("img");
         images.forEach((img) => {
           let src = img.getAttribute("src");
@@ -137,40 +133,22 @@ function ThreadMessage({
           try {
             src = decodeURIComponent(src);
           } catch (e) {
-            // ignore
           }
 
           if (src.toLowerCase().startsWith("cid:")) {
             let cid = src.substring(4).trim().toLowerCase();
             let data = cidMap.get(cid);
 
-            // Try splitting by '@'
             if (!data && cid.includes("@")) {
               const shortCid = cid.split("@")[0];
               data = cidMap.get(shortCid);
-              // Update cid to short one if that matched?
-              // Or just keep track that this *image* is signature.
             }
 
-            // Check if inside Signature div
-            // The user specified "div with id Signature"
             if (img.closest("#Signature") || img.closest("[id='Signature']")) {
-              // If we found a data match or if it is just a cid reference...
-              // We should track the CID or the attachment associated with it.
-              // We need to know which attachment ID corresponds to this CID.
-              // But here we only have the CID string.
-              // We will return the list of CIDs found in signature.
 
-              // Note: The CID from src might be "foo@bar". The map key might be "foo".
-              // We should add the *key* that matched (or the src cid) to the set.
-              // Usually we want to match strictly.
               if (data) {
-                // It matched something in our map.
-                // We need to know WHICH attachment it was?
-                // But we built the map as CID->Base64. We lost the Attachment ID link in the map.
-                // We can rebuild the map to store {data, id}?
               }
-              sigCids.add(cid); // Add the src CID.
+              sigCids.add(cid); 
               if (cid.includes("@")) sigCids.add(cid.split("@")[0]);
             }
 
@@ -196,7 +174,6 @@ function ThreadMessage({
     []
   );
 
-  // 1. Fetch Email Details
   useEffect(() => {
     let mounted = true;
     const loadDetails = async () => {
@@ -213,7 +190,6 @@ function ThreadMessage({
           const needsAtts = details.hasAttachments || hasInline;
           setNeedsAttachments(needsAtts);
 
-          // Render body initially (without attachments)
           setProcessedBody(processBody(bodyContent, []).html);
           setDetailsLoaded(true);
         }
@@ -239,7 +215,6 @@ function ThreadMessage({
     email.bodyPreview,
   ]);
 
-  // 2. Fetch Attachments (Lazy)
   useEffect(() => {
     let mounted = true;
 
@@ -248,7 +223,6 @@ function ThreadMessage({
       loadingAttachmentsRef.current = true;
 
       try {
-        console.log("Fetching attachments for open email:", email.id);
         const atts = await fetchAttachments(email.id);
         if (mounted) {
           const attsSafe = atts || [];
@@ -257,7 +231,6 @@ function ThreadMessage({
           const { html, sigCids } = processBody(rawBody, attsSafe);
           setProcessedBody(html);
 
-          // Filter signatures
           const sigAttIds = attsSafe
             .filter((a) => {
               const cid = a.contentId

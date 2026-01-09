@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useMsal } from "@azure/msal-react";
 import { Client } from "@microsoft/microsoft-graph-client";
 import { notifications } from "@mantine/notifications";
@@ -42,11 +42,31 @@ export function useOutlook(options?: { manualFetch?: boolean }) {
   const [hasMore, setHasMore] = useState(true);
 
   const [nextPageLinks, setNextPageLinks] = useState<(string | null)[]>([]);
+  const nextPageLinksRef = useRef(nextPageLinks);
+
+  useEffect(() => {
+    nextPageLinksRef.current = nextPageLinks;
+  }, [nextPageLinks]);
+
+  const activeAccount = instance.getActiveAccount();
+  const account = activeAccount || accounts[0];
+
+  const accountRef = useRef(account);
+  useEffect(() => {
+    accountRef.current = account;
+  }, [account]);
+
+  const accountIdentifier = account?.homeAccountId || account?.username || "";
 
   const getGraphClient = useCallback(async () => {
+    const currentAccount = accountRef.current;
+    if (!currentAccount) {
+      throw new Error("No active account");
+    }
+
     const request = {
       scopes: ["Mail.Read"],
-      account: accounts[0],
+      account: currentAccount,
     };
 
     try {
@@ -58,11 +78,11 @@ export function useOutlook(options?: { manualFetch?: boolean }) {
       console.error("Token acquisition failed", e);
       throw e;
     }
-  }, [accounts, instance]);
+  }, [instance, accountIdentifier]);
 
   const loadPage = useCallback(
     async (pageIndex: number) => {
-      if (accounts.length === 0) return;
+      if (!accountRef.current) return;
 
       setLoading(true);
       setError(null);
@@ -82,7 +102,7 @@ export function useOutlook(options?: { manualFetch?: boolean }) {
               .top(pageSize)
               .get();
           } else {
-            const cursorLink = nextPageLinks[pageIndex - 1];
+            const cursorLink = nextPageLinksRef.current[pageIndex - 1];
 
             if (!cursorLink) {
               console.warn("No nextLink available for page", pageIndex);
@@ -130,15 +150,15 @@ export function useOutlook(options?: { manualFetch?: boolean }) {
         setLoading(false);
       }
     },
-    [accounts, getGraphClient, searchQuery, nextPageLinks, pageSize]
+    [accountIdentifier, getGraphClient, searchQuery, pageSize]
   );
 
   useEffect(() => {
-    if (!options?.manualFetch && accounts.length > 0) {
+    if (!options?.manualFetch && accountIdentifier) {
       setNextPageLinks([]);
       loadPage(0);
     }
-  }, [searchQuery, accounts.length, options?.manualFetch]);
+  }, [searchQuery, accountIdentifier, options?.manualFetch, loadPage]);
 
   const fetchAttachments = useCallback(
     async (messageId: string): Promise<OutlookAttachment[]> => {

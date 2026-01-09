@@ -84,7 +84,6 @@ export function useWarehouseTrackingTable({
       const to = from + pagination.pageSize - 1;
       query = query.range(from, to);
 
-      // Summary query for total pallets in warehouse
       let summaryQuery = supabase
         .from("warehouse_tracking_view")
         .select("pallets");

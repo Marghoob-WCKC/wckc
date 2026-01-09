@@ -85,7 +85,6 @@ export default function WarehouseTrackingTable() {
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Export states
   const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [pdfData, setPdfData] = useState<WarehouseTrackingRow[] | null>(null);
@@ -464,7 +463,6 @@ export default function WarehouseTrackingTable() {
                   onChange={(e) => {
                     const val = e.currentTarget.checked;
                     setFilterValue("not_picked", val ? "true" : undefined);
-                    // Optional: if want immediate apply like current request implies
                     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
                     setActiveFilters((prev) => {
                       const existing = prev.filter(

@@ -100,7 +100,6 @@ export const WarehouseTrackingPdf = ({
   generatedAt,
 }: WarehouseTrackingPdfProps) => {
   const totalPallets = data.reduce((sum, row) => {
-    // Current pallets in warehouse logic (only if not picked)
     return row.pickup_date ? sum : sum + (row.pallets || 0);
   }, 0);
 
@@ -125,7 +124,7 @@ export const WarehouseTrackingPdf = ({
         </View>
 
         <View style={styles.table}>
-          {/* Header Row */}
+          {}
           <View style={[styles.tableRow, styles.tableHeader]}>
             <Text style={[styles.tableCol, { width: "8%" }]}>Job #</Text>
             <Text style={[styles.tableCol, { width: "24%" }]}>Client</Text>
@@ -138,7 +137,7 @@ export const WarehouseTrackingPdf = ({
             <Text style={[styles.tableCol, { width: "7%" }]}>Cost</Text>
           </View>
 
-          {/* Data Rows */}
+          {}
           {data.map((row) => {
             const cost = calculateCost(row);
             const days = row.dropoff_date

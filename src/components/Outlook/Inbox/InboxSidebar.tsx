@@ -66,7 +66,6 @@ export function InboxSidebar({
         </Text>
       </Box>
 
-      {}
       <ScrollArea style={{ flex: 1 }}>
         {loading && emails.length === 0 ? (
           <Center h={200}>

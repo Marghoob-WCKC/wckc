@@ -14,11 +14,13 @@ export function OutlookInbox({ defaultJobId }: { defaultJobId?: number }) {
   const { instance } = useMsal();
   const isAuthenticated = useIsAuthenticated();
 
-
   const activeAccount = instance.getActiveAccount();
   const handleLogin = () => {
     instance
-      .loginPopup({ scopes: ["Mail.Read", "User.Read"] })
+      .loginPopup({
+        scopes: ["Mail.Read", "User.Read"],
+        prompt: "select_account",
+      })
       .catch(console.error);
   };
   const handleLogout = () => {
