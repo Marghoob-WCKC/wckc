@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
   Box,
   Text,
@@ -79,78 +79,227 @@ function ThreadMessage({
   isLatest: boolean;
   onUpload: (atts: OutlookAttachment[]) => void;
 }) {
-  const { fetchEmailDetails } = useOutlook({ manualFetch: true });
+  const { fetchEmailDetails, fetchAttachments } = useOutlook({
+    manualFetch: true,
+  });
   const [processedBody, setProcessedBody] = useState<string>("");
+  const [rawBody, setRawBody] = useState<string>("");
   const [attachments, setAttachments] = useState<OutlookAttachment[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
+  const [loading, setLoading] = useState(false); // Global loading for the card content?
+  const [detailsLoaded, setDetailsLoaded] = useState(false);
+  const [attachmentsLoaded, setAttachmentsLoaded] = useState(false);
+  const [needsAttachments, setNeedsAttachments] = useState(false);
+  const [signatureIds, setSignatureIds] = useState<string[]>([]);
+  const loadingAttachmentsRef = useRef(false);
 
+  // Helper to process body
+  const processBody = useCallback(
+    (content: string, atts: OutlookAttachment[]) => {
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, "text/html");
+
+        // Clean up
+        const replyDiv = doc.getElementById("divRplyFwdMsg");
+        if (replyDiv) replyDiv.remove();
+        const gmailQuote = doc.querySelector(".gmail_quote");
+        if (gmailQuote) gmailQuote.remove();
+
+        // Prepare maps
+        const cidMap = new Map<string, string>();
+        const sigCids = new Set<string>();
+
+        atts.forEach((att) => {
+          if (att.contentBytes) {
+            const base64 = `data:${att.contentType};base64,${att.contentBytes}`;
+
+            if (att.contentId) {
+              const clean = att.contentId
+                .replace(/^<|>$/g, "")
+                .trim()
+                .toLowerCase();
+              cidMap.set(clean, base64);
+            }
+
+            if (att.name) {
+              const cleanName = att.name.trim().toLowerCase();
+              cidMap.set(cleanName, base64);
+            }
+          }
+        });
+
+        // Replace images
+        const images = doc.querySelectorAll("img");
+        images.forEach((img) => {
+          let src = img.getAttribute("src");
+          if (!src) return;
+
+          try {
+            src = decodeURIComponent(src);
+          } catch (e) {
+            // ignore
+          }
+
+          if (src.toLowerCase().startsWith("cid:")) {
+            let cid = src.substring(4).trim().toLowerCase();
+            let data = cidMap.get(cid);
+
+            // Try splitting by '@'
+            if (!data && cid.includes("@")) {
+              const shortCid = cid.split("@")[0];
+              data = cidMap.get(shortCid);
+              // Update cid to short one if that matched?
+              // Or just keep track that this *image* is signature.
+            }
+
+            // Check if inside Signature div
+            // The user specified "div with id Signature"
+            if (img.closest("#Signature") || img.closest("[id='Signature']")) {
+              // If we found a data match or if it is just a cid reference...
+              // We should track the CID or the attachment associated with it.
+              // We need to know which attachment ID corresponds to this CID.
+              // But here we only have the CID string.
+              // We will return the list of CIDs found in signature.
+
+              // Note: The CID from src might be "foo@bar". The map key might be "foo".
+              // We should add the *key* that matched (or the src cid) to the set.
+              // Usually we want to match strictly.
+              if (data) {
+                // It matched something in our map.
+                // We need to know WHICH attachment it was?
+                // But we built the map as CID->Base64. We lost the Attachment ID link in the map.
+                // We can rebuild the map to store {data, id}?
+              }
+              sigCids.add(cid); // Add the src CID.
+              if (cid.includes("@")) sigCids.add(cid.split("@")[0]);
+            }
+
+            if (data) {
+              img.setAttribute("src", data);
+              img.classList.remove("loading-cid");
+            } else {
+              img.setAttribute(
+                "src",
+                "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+              );
+              img.classList.add("loading-cid");
+            }
+          }
+        });
+
+        return { html: doc.body.innerHTML, sigCids: Array.from(sigCids) };
+      } catch (e) {
+        console.error("Error parsing email body:", e);
+        return { html: content, sigCids: [] };
+      }
+    },
+    []
+  );
+
+  // 1. Fetch Email Details
   useEffect(() => {
     let mounted = true;
-
-    const load = async () => {
-      if (hasLoaded) return;
-
+    const loadDetails = async () => {
       setLoading(true);
       try {
         const details = await fetchEmailDetails(email.id);
+
         if (mounted && details) {
-          const atts = details.attachments || [];
-          setAttachments(atts);
-          let bodyContent = details.body?.content || email.bodyPreview || "";
-          const inlineAttachments = atts.filter(
-            (a) => a.isInline && a.contentBytes
-          );
+          const bodyContent = details.body?.content || email.bodyPreview || "";
 
-          const foundSigs: string[] = [];
+          setRawBody(bodyContent);
 
-          try {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(bodyContent, "text/html");
+          const hasInline = bodyContent.indexOf("cid:") !== -1;
+          const needsAtts = details.hasAttachments || hasInline;
+          setNeedsAttachments(needsAtts);
 
-            bodyContent = cleanBodyProperties(doc);
-
-            if (inlineAttachments.length > 0) {
-              inlineAttachments.forEach((att) => {
-                const srcData = `data:${att.contentType};base64,${att.contentBytes}`;
-                const escapeRegExp = (string: string) =>
-                  string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-                if (att.contentId) {
-                  const regexCid = new RegExp(
-                    `cid:${escapeRegExp(att.contentId)}`,
-                    "gi"
-                  );
-                  bodyContent = bodyContent.replace(regexCid, srcData);
-                }
-                if (att.name) {
-                  const regexName = new RegExp(
-                    `cid:${escapeRegExp(att.name)}`,
-                    "gi"
-                  );
-                  bodyContent = bodyContent.replace(regexName, srcData);
-                }
-              });
-            }
-          } catch (e) {
-            console.error("Error parsing email body:", e);
-          }
-
-          onAttachmentsLoaded(email.id, atts, []);
-          setProcessedBody(bodyContent);
-          setHasLoaded(true);
+          // Render body initially (without attachments)
+          setProcessedBody(processBody(bodyContent, []).html);
+          setDetailsLoaded(true);
         }
+      } catch (e) {
+        console.error("Error loading email details:", e);
       } finally {
         if (mounted) setLoading(false);
       }
     };
 
-    load();
+    if (!detailsLoaded) {
+      loadDetails();
+    }
 
     return () => {
       mounted = false;
     };
-  }, [email.id, hasLoaded]);
+  }, [
+    email.id,
+    fetchEmailDetails,
+    processBody,
+    detailsLoaded,
+    email.bodyPreview,
+  ]);
+
+  // 2. Fetch Attachments (Lazy)
+  useEffect(() => {
+    let mounted = true;
+
+    const loadAttachments = async () => {
+      if (loadingAttachmentsRef.current) return;
+      loadingAttachmentsRef.current = true;
+
+      try {
+        console.log("Fetching attachments for open email:", email.id);
+        const atts = await fetchAttachments(email.id);
+        if (mounted) {
+          const attsSafe = atts || [];
+          setAttachments(attsSafe);
+
+          const { html, sigCids } = processBody(rawBody, attsSafe);
+          setProcessedBody(html);
+
+          // Filter signatures
+          const sigAttIds = attsSafe
+            .filter((a) => {
+              const cid = a.contentId
+                ? a.contentId.replace(/^<|>$/g, "").trim().toLowerCase()
+                : null;
+              const name = a.name ? a.name.trim().toLowerCase() : null;
+              return (
+                (cid && sigCids.includes(cid)) ||
+                (name && sigCids.includes(name))
+              );
+            })
+            .map((a) => a.id);
+
+          setSignatureIds(sigAttIds);
+          onAttachmentsLoaded(email.id, attsSafe, sigAttIds);
+          setAttachmentsLoaded(true);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        loadingAttachmentsRef.current = false;
+      }
+    };
+
+    if (isOpen && detailsLoaded && needsAttachments && !attachmentsLoaded) {
+      loadAttachments();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [
+    isOpen,
+    detailsLoaded,
+    needsAttachments,
+    attachmentsLoaded,
+    email.id,
+    fetchAttachments,
+    onAttachmentsLoaded,
+    rawBody,
+    processBody,
+  ]);
 
   const displayedAttachments = attachments;
   const handleDownloadAll = () => {
@@ -236,8 +385,16 @@ function ThreadMessage({
               max-width: 100% !important;
               height: auto !important;
             }
+            .loading-cid {
+               display: inline-block;
+               min-width: 50px;
+               min-height: 50px;
+               background: #f8f9fa url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 38 38" stroke="%23228be6"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg transform="translate(1 1)" stroke-width="2"%3E%3Ccircle stroke-opacity=".5" cx="18" cy="18" r="18"/%3E%3Cpath d="M36 18c0-9.94-8.06-18-18-18"%3E%3CanimateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="1s" repeatCount="indefinite"/%3E%3C/path%3E%3C/g%3E%3C/g%3E%3C/svg%3E') center no-repeat;
+               border-radius: 4px;
+               border: 1px solid #dee2e6;
+            }
           `}</style>
-          {loading && !hasLoaded ? (
+          {loading && !detailsLoaded ? (
             <Group justify="center" py="xl">
               <Loader size="sm" color="violet" />
             </Group>

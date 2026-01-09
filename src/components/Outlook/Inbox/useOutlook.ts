@@ -27,9 +27,11 @@ export interface OutlookAttachment {
 }
 
 const detailsCache = new Map<string, Promise<any>>();
+const conversationCache = new Map<string, Promise<any>>();
 
 export function useOutlook(options?: { manualFetch?: boolean }) {
   const { instance, accounts } = useMsal();
+
   const [emails, setEmails] = useState<OutlookEmail[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +40,8 @@ export function useOutlook(options?: { manualFetch?: boolean }) {
   const pageSize = 25;
   const [searchQuery, setSearchQuery] = useState("");
   const [hasMore, setHasMore] = useState(true);
+
+  const [nextPageLinks, setNextPageLinks] = useState<(string | null)[]>([]);
 
   const getGraphClient = useCallback(async () => {
     const request = {
@@ -56,8 +60,8 @@ export function useOutlook(options?: { manualFetch?: boolean }) {
     }
   }, [accounts, instance]);
 
-  const fetchEmails = useCallback(
-    async (reset = false) => {
+  const loadPage = useCallback(
+    async (pageIndex: number) => {
       if (accounts.length === 0) return;
 
       setLoading(true);
@@ -65,43 +69,54 @@ export function useOutlook(options?: { manualFetch?: boolean }) {
 
       try {
         const client = await getGraphClient();
-        const currentPage = reset ? 0 : page;
-
-        let query = client
-          .api("/me/mailFolders/inbox/messages")
-          .select(
-            "id,conversationId,conversationIndex,subject,from,receivedDateTime,hasAttachments,bodyPreview,toRecipients"
-          )
-          .top(pageSize)
-          .skip(currentPage * pageSize);
+        let result;
 
         if (searchQuery) {
-          query = client
+          if (pageIndex === 0) {
+            result = await client
+              .api("/me/mailFolders/inbox/messages")
+              .search(`"${searchQuery}"`)
+              .select(
+                "id,conversationId,conversationIndex,subject,from,receivedDateTime,hasAttachments,bodyPreview,toRecipients"
+              )
+              .top(pageSize)
+              .get();
+          } else {
+            const cursorLink = nextPageLinks[pageIndex - 1];
+
+            if (!cursorLink) {
+              console.warn("No nextLink available for page", pageIndex);
+              setLoading(false);
+              return;
+            }
+
+            result = await client.api(cursorLink).get();
+          }
+        } else {
+          result = await client
             .api("/me/mailFolders/inbox/messages")
-            .search(`"${searchQuery}"`)
             .select(
               "id,conversationId,conversationIndex,subject,from,receivedDateTime,hasAttachments,bodyPreview,toRecipients"
             )
             .top(pageSize)
-            .skip(currentPage * pageSize);
-        } else {
-          query = query.orderby("receivedDateTime DESC");
+            .skip(pageIndex * pageSize)
+            .orderby("receivedDateTime DESC")
+            .get();
         }
 
-        const result = await query.get();
+        setEmails(result.value);
+        setPage(pageIndex);
 
-        if (reset) {
-          setEmails(result.value);
-          setPage(1);
-        } else {
-          setEmails(result.value);
-          setPage(currentPage + 1);
-        }
-
-        if (result.value.length < pageSize) {
-          setHasMore(false);
-        } else {
+        const nextLink = result["@odata.nextLink"];
+        if (nextLink) {
           setHasMore(true);
+          setNextPageLinks((prev) => {
+            const copy = [...prev];
+            copy[pageIndex] = nextLink;
+            return copy;
+          });
+        } else {
+          setHasMore(false);
         }
       } catch (err: any) {
         console.error(err);
@@ -115,79 +130,31 @@ export function useOutlook(options?: { manualFetch?: boolean }) {
         setLoading(false);
       }
     },
-    [accounts, getGraphClient, page, searchQuery]
+    [accounts, getGraphClient, searchQuery, nextPageLinks, pageSize]
   );
-
-  const [nextPageLinks, setNextPageLinks] = useState<(string | null)[]>([]);
 
   useEffect(() => {
     if (!options?.manualFetch && accounts.length > 0) {
-      setNextPageLinks([]); 
+      setNextPageLinks([]);
       loadPage(0);
     }
-  }, [searchQuery, accounts.length]); 
+  }, [searchQuery, accounts.length, options?.manualFetch]);
 
-  const loadPage = async (pageIndex: number) => {
-    if (accounts.length === 0) return;
-    setLoading(true);
-    try {
-      const client = await getGraphClient();
-      let result;
-
-      if (searchQuery) {
-        if (pageIndex === 0) {
-          result = await client
-            .api("/me/mailFolders/inbox/messages")
-            .search(`"${searchQuery}"`)
-            .select(
-              "id,conversationId,conversationIndex,subject,from,receivedDateTime,hasAttachments,bodyPreview,toRecipients"
-            )
-            .top(pageSize)
-            .get();
-        } else {
-          const cursorLink = nextPageLinks[pageIndex - 1];
-
-          if (!cursorLink) {
-            console.warn("No nextLink available for page", pageIndex);
-            setLoading(false);
-            return;
-          }
-
-          result = await client.api(cursorLink).get();
-        }
-      } else {
-        const query = client
-          .api("/me/mailFolders/inbox/messages")
-          .select(
-            "id,conversationId,conversationIndex,subject,from,receivedDateTime,hasAttachments,bodyPreview,toRecipients"
-          )
-          .top(pageSize)
-          .skip(pageIndex * pageSize)
-          .orderby("receivedDateTime DESC");
-
-        result = await query.get();
+  const fetchAttachments = useCallback(
+    async (messageId: string): Promise<OutlookAttachment[]> => {
+      try {
+        const client = await getGraphClient();
+        const result = await client
+          .api(`/me/messages/${messageId}/attachments`)
+          .get();
+        return result.value;
+      } catch (e) {
+        console.error(e);
+        return [];
       }
-
-      setEmails(result.value);
-      setPage(pageIndex);
-
-      const nextLink = result["@odata.nextLink"];
-      if (nextLink) {
-        setHasMore(true);
-        setNextPageLinks((prev) => {
-          const copy = [...prev];
-          copy[pageIndex] = nextLink;
-          return copy;
-        });
-      } else {
-        setHasMore(false);
-      }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [getGraphClient]
+  );
 
   const fetchEmailDetails = useCallback(
     async (
@@ -202,13 +169,8 @@ export function useOutlook(options?: { manualFetch?: boolean }) {
       const requestPromise = (async () => {
         try {
           const client = await getGraphClient();
-          const result = await client
-            .api(`/me/messages/${messageId}`)
-            .select(
-              "id,conversationId,conversationIndex,subject,from,receivedDateTime,hasAttachments,body,toRecipients"
-            )
-            .expand("attachments")
-            .get();
+          const result = await client.api(`/me/messages/${messageId}`).get();
+
           return result;
         } catch (e) {
           console.error(e);
@@ -227,45 +189,35 @@ export function useOutlook(options?: { manualFetch?: boolean }) {
     async (
       conversationId: string
     ): Promise<(OutlookEmail & { attachments?: OutlookAttachment[] })[]> => {
-      try {
-        const client = await getGraphClient();
-        const result = await client
-          .api("/me/messages")
-          .filter(`conversationId eq '${conversationId}'`)
-          .select(
-            "id,conversationId,conversationIndex,subject,from,receivedDateTime,hasAttachments,body,toRecipients"
-          )
-          .expand("attachments")
-          .get();
-
-        return (result.value || []).sort(
-          (a: OutlookEmail, b: OutlookEmail) =>
-            new Date(a.receivedDateTime).getTime() -
-            new Date(b.receivedDateTime).getTime()
-        );
-      } catch (e) {
-        console.error("Failed to fetch conversation thread", e);
-        return [];
+      if (conversationCache.has(conversationId)) {
+        return conversationCache.get(conversationId);
       }
+
+      const requestPromise = (async () => {
+        try {
+          const client = await getGraphClient();
+          const result = await client
+            .api("/me/messages")
+            .filter(`conversationId eq '${conversationId}'`)
+            .get();
+
+          return (result.value || []).sort(
+            (a: OutlookEmail, b: OutlookEmail) =>
+              new Date(a.receivedDateTime).getTime() -
+              new Date(b.receivedDateTime).getTime()
+          );
+        } catch (e) {
+          console.error("Failed to fetch conversation thread", e);
+          conversationCache.delete(conversationId);
+          return [];
+        }
+      })();
+
+      conversationCache.set(conversationId, requestPromise);
+      return requestPromise;
     },
     [getGraphClient]
   );
-
-  const fetchAttachments = async (
-    messageId: string
-  ): Promise<OutlookAttachment[]> => {
-    try {
-      const client = await getGraphClient();
-      const result = await client
-        .api(`/me/messages/${messageId}/attachments`)
-        .select("id,name,contentType,size,isInline,contentBytes,contentId")
-        .get();
-      return result.value;
-    } catch (e) {
-      console.error(e);
-      return [];
-    }
-  };
 
   return {
     emails,
