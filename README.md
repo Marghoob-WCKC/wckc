@@ -1,44 +1,61 @@
 # WCKC Tracker (Woodcraft Kitchen Cabinets)
 
-A modern, full-stack internal ERP application designed for Woodcraft Kitchen Cabinets to streamline operations. This application centralizes the workflow from initial client intake and sales quotes to production scheduling, purchasing, installation, and service/warranty orders.
+A modern, full-stack internal ERP application designed for Woodcraft Kitchen Cabinets to streamline operations. This application centralizes the workflow from initial client intake and sales quotes to production scheduling, purchasing, installation, site management, and service/warranty orders.
 
 ## 🚀 Tech Stack
 
-
-
-- **Framework:** [Next.js 14 (App Router)](https://nextjs.org/)
+- **Framework:** [Next.js 16 (App Router)](https://nextjs.org/)
 - **Language:** TypeScript
 - **Database:** [Supabase](https://supabase.com/) (PostgreSQL)
 - **Authentication:** [Clerk](https://clerk.com/)
+- **Integration:** [Microsoft Graph API](https://developer.microsoft.com/en-us/graph) (Outlook) via `@azure/msal-react`
 - **UI Library:** [Mantine v7](https://mantine.dev/)
-- **Styling:** Tailwind CSS & Mantine Styles
-- **State Management:** [TanStack Query](https://tanstack.com/query/latest)
+- **Styling:** Tailwind CSS v4 & Mantine Styles
+- **State Management:** [TanStack Query v5](https://tanstack.com/query/latest)
+- **Data Visualization:** [Recharts](https://recharts.org/) & Mantine Charts
 - **Form Validation:** [Zod](https://zod.dev/) & Mantine Form
-- **PDF Generation:** [@react-pdf/renderer](https://react-pdf.org/)
+- **Document Generation:** [@react-pdf/renderer](https://react-pdf.org/) (PDF) & [SheetJS](https://sheetjs.com/) (Excel)
 
-## ✨ Features
+## ✨ Core Modules & Features
 
-### 1. 📊 Sales & Estimates
-- **Quote to Job Workflow:** Create quotes and convert them into confirmed jobs with a single click.
-- **Detailed Specs:** Track cabinet specifications (Species, Door Style, Finish, Box construction) alongside financials (Total, Deposit, Balance).
-- **Client Management:** Dedicated CRM module to manage client contact info and history.
+### 1. 📈 Executive & Role-Based Dashboards
+- **Role-Specific Views:** Dynamic dashboards tailored for Managers, Designers, Production Schedulers, Installers, and Service Coordinators.
+- **Data Visualization:** Interactive charts tracking Sales Volume, Sales Spikes (Fiscal Year), and Top Designers.
+- **Operational Metrics:** Real-time counters for Active Quotes, Sold Jobs, Open Service Orders, and Upcoming Shipments.
+  
+### 2. 📧 Microsoft Outlook Integration
+- **Inbox Management:** Full read access to Outlook inboxes directly within the application.
+- **Job Association:** Seamlessly link emails to specific Jobs for centralized communication history.
+- **Authentication:** Secure OAuth2 sign-in via Microsoft Azure MSAL.
 
-### 2. 🏭 Production Management
+### 3. 📊 Sales & Estimates
+- **Detailed Specifications:** Tracking of cabinet specs (Species, Door Style, Finish, Box construction) and financials (Total, Deposit, Balance).
+- **Client CRM:** Centralized client management including project history and contact details.
+
+### 4. 🏭 Production Management
 - **Scheduler:** Visual interface to set dates for key production stages (Cut, Paint, Assembly, Shipping).
-- **Live Actuals:** Shop floor interface to track real-time progress (e.g., "Doors Completed", "In Plant").
-- **Visual Tracking:** Progress timelines and status indicators for every job.
+- **Plant View:** specialized views for shop floor management.
+- **Bulk Scheduling:** Tools to manage production schedules for multiple jobs simultaneously.
+- **Live Actuals:** Real-time status updates for production milestones.
 
-### 3. 🛒 Purchasing
-- **Material Tracking:** Track ordering and receiving status for Doors, Glass, Handles, Accessories, and Laminate.
-- **Status Actions:** Quick-action menus to mark items as "Ordered" or "Received" with timestamps.
+### 5. 🏗️ Field Operations (Installation & Site)
+- **Installation Management:** Assign installers, schedule dates, and track completion status.
+- **Site Visits:** Dedicated module for tracking pre-install and ongoing site visits with PDF report generation.
+- **Inspections:** Digital sign-off workflows for final inspections.
 
-### 4. 🚚 Installation
-- **Schedule Coordination:** Assign installers and set installation/inspection dates.
-- **Shipping Status:** Track when jobs are wrapped and shipped.
-- **Completion Sign-off:** Digital sign-off for installation and final inspection completion.
+### 6. 📦 Purchasing & Inventory
+- **Material Tracking:** Status tracking (Ordered/Received) for Doors, Glass, Handles, Accessories, and Laminate.
+- **Warehouse Tracking:** Monitor inventory location and movement within the warehouse.
+- **Backorder Management:** Specialized workflow for tracking, editing, and resolving backordered items.
 
-### 5. 🛠️ Service Orders
+### 7. 🛠️ Service Orders
 - **Warranty/Deficiency Tracking:** Generate service tickets linked to original jobs.
 - **PDF Generation:** Auto-generate professional PDF service orders for technicians.
-- **Parts List:** detailed tracking of required parts for every service call.
+- **Parts List:** Detailed tracking of required parts for every service call.
 
+### 8. 📑 Advanced Reporting
+- **PDF & Excel Export:** Generate and export high-fidelity reports.
+
+## 🔐 Security & Access Control
+- **RBAC (Role-Based Access Control):** Permission hooks strictly controlling access to specific modules
+- **Middleware Protection:** Navigation guards ensuring users cannot access unauthorized routes and Prevent unsaved changes.
