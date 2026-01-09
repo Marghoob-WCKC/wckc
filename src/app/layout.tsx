@@ -201,6 +201,7 @@ export default function RootLayout({
                             "/dashboard/plant/wrap",
                             "/dashboard/plant/ship",
                             "/dashboard/plant/service-orders",
+                            "/dashboard/clients",
                           ]}
                         />
                       )}
