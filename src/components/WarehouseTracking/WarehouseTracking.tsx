@@ -27,7 +27,10 @@ import {
   Accordion,
   SimpleGrid,
   ActionIcon,
+  Switch,
+  Badge,
 } from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
 import {
   FaSearch,
   FaSort,
@@ -35,7 +38,9 @@ import {
   FaSortUp,
   FaWarehouse,
   FaEdit,
+  FaCheckCircle,
 } from "react-icons/fa";
+import { IoMdCube } from "react-icons/io";
 import dayjs from "dayjs";
 import { useWarehouseTrackingTable } from "@/hooks/useWarehouseTrackingTable";
 import { gradients, linearGradients } from "@/theme";
@@ -51,7 +56,7 @@ export default function WarehouseTrackingTable() {
   const queryClient = useQueryClient();
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 12,
+    pageSize: 13,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -70,6 +75,7 @@ export default function WarehouseTrackingTable() {
 
   const tableData = data?.data || [];
   const totalCount = data?.count || 0;
+  const totalPalletsInWarehouse = data?.totalPallets || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
   const columnHelper = createColumnHelper<WarehouseTrackingRow>();
@@ -95,22 +101,31 @@ export default function WarehouseTrackingTable() {
       columnHelper.accessor("shipping_address", {
         id: "shipping_address",
         header: "Shipping Address",
-        size: 250,
+        size: 200,
         cell: (info) => (
           <Text size="sm" truncate>
             {info.getValue() || "—"}
           </Text>
         ),
       }),
+      columnHelper.accessor("box", {
+        header: "Boxes",
+        size: 80,
+        cell: (info) => (
+          <Text fw={600} size="sm">
+            {info.getValue() || "—"}
+          </Text>
+        ),
+      }),
       columnHelper.accessor("dropoff_date", {
         header: "Dropoff Date",
-        size: 120,
+        size: 150,
         cell: (info) =>
           info.getValue() ? dayjs(info.getValue()).format("YYYY-MM-DD") : "—",
       }),
       columnHelper.accessor("pickup_date", {
         header: "Pickup Date",
-        size: 120,
+        size: 150,
         cell: (info) =>
           info.getValue() ? dayjs(info.getValue()).format("YYYY-MM-DD") : "—",
       }),
@@ -119,18 +134,7 @@ export default function WarehouseTrackingTable() {
         size: 100,
         cell: (info) => <Text size="sm">{info.getValue() || 0}</Text>,
       }),
-      columnHelper.display({
-        id: "pallets_at_warehouse",
-        header: "Pallets In Warehouse",
-        size: 120,
-        cell: (info) => {
-          const row = info.row.original;
-          if (row.pickup_date) {
-            return 0;
-          }
-          return row.pallets || 0;
-        },
-      }),
+
       columnHelper.display({
         id: "days_at_warehouse",
         header: "Days In Warehouse",
@@ -145,6 +149,7 @@ export default function WarehouseTrackingTable() {
           const diff = end.diff(start, "day");
           return Math.max(0, diff);
         },
+        enableSorting: true,
       }),
       columnHelper.display({
         id: "cost",
@@ -172,6 +177,7 @@ export default function WarehouseTrackingTable() {
 
           return `$${totalCost.toFixed(2)}`;
         },
+        enableSorting: true,
       }),
       columnHelper.display({
         id: "actions",
@@ -233,13 +239,8 @@ export default function WarehouseTrackingTable() {
   };
 
   return (
-    <Box
-      p="md"
-      h="calc(100vh - 60px)"
-      display="flex"
-      style={{ flexDirection: "column" }}
-    >
-      <Group mb="lg" justify="space-between">
+    <Box p="md" h="100vh" display="flex" style={{ flexDirection: "column" }}>
+      <Group mb="lg" justify="space-between" align="center">
         <Group>
           <ThemeIcon
             size={44}
@@ -255,6 +256,21 @@ export default function WarehouseTrackingTable() {
               Track warehouse inventory and costs
             </Text>
           </Stack>
+        </Group>
+        <Group>
+          <Group gap="xs">
+            <Text fw={600} size="sm" c="dimmed">
+              Total Pallets in Warehouse:
+            </Text>
+            <Badge
+              size="lg"
+              variant="gradient"
+              gradient={gradients.primary}
+              leftSection={<IoMdCube size={14} />}
+            >
+              {totalPalletsInWarehouse}
+            </Badge>
+          </Group>
         </Group>
       </Group>
 
@@ -290,6 +306,76 @@ export default function WarehouseTrackingTable() {
                 }
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
+              <DatePickerInput
+                type="range"
+                allowSingleDateInRange
+                label="Dropoff Date Range"
+                placeholder="Pick dates"
+                value={
+                  (getFilterValue("dropoff_date_range") as [
+                    Date | null,
+                    Date | null
+                  ]) || [null, null]
+                }
+                onChange={(val) => setFilterValue("dropoff_date_range", val)}
+                clearable
+              />
+              <DatePickerInput
+                type="range"
+                allowSingleDateInRange
+                label="Pickup Date Range"
+                placeholder="Pick dates"
+                value={
+                  (getFilterValue("pickup_date_range") as [
+                    Date | null,
+                    Date | null
+                  ]) || [null, null]
+                }
+                onChange={(val) => setFilterValue("pickup_date_range", val)}
+                clearable
+              />
+              <Group align="flex-end" pb={6}>
+                <Switch
+                  label="Not Picked"
+                  size="md"
+                  thumbIcon={
+                    getFilterValue("not_picked") === "true" ? (
+                      <FaCheckCircle size={12} color={gradients.primary.from} />
+                    ) : null
+                  }
+                  styles={{
+                    track: {
+                      cursor: "pointer",
+                      background:
+                        getFilterValue("not_picked") === "true"
+                          ? linearGradients.primary
+                          : undefined,
+                      border: "none",
+                    },
+                    thumb: {
+                      borderColor: "transparent",
+                    },
+                  }}
+                  checked={getFilterValue("not_picked") === "true"}
+                  onChange={(e) => {
+                    const val = e.currentTarget.checked;
+                    setFilterValue("not_picked", val ? "true" : undefined);
+                    // Optional: if want immediate apply like current request implies
+                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                    setActiveFilters((prev) => {
+                      const existing = prev.filter(
+                        (f) => f.id !== "not_picked"
+                      );
+                      if (val)
+                        return [
+                          ...existing,
+                          { id: "not_picked", value: "true" },
+                        ];
+                      return existing;
+                    });
+                  }}
+                />
+              </Group>
             </SimpleGrid>
 
             <Group justify="flex-end" mt="md">

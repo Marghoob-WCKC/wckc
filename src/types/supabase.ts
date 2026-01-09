@@ -2150,8 +2150,9 @@ export type Database = {
       }
       warehouse_tracking_view: {
         Row: {
-          box: string | null
+          box: number | null
           dropoff_date: string | null
+          grouped_count: number | null
           id: number | null
           job_id: number | null
           job_number: string | null
