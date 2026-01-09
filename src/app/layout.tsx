@@ -62,6 +62,11 @@ const dashboardLinks: SidebarLink[] = [
         label: "Site Changes",
         path: "/dashboard/installation/site-changes",
       },
+      {
+        iconName: "FaWarehouse",
+        label: "Warehouse",
+        path: "/dashboard/installation/warehouse",
+      },
     ],
   },
   {

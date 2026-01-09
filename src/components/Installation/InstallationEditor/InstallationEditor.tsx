@@ -68,6 +68,7 @@ import { installationSchema } from "@/zod/install.schema";
 import { colors, gradients } from "@/theme";
 import JobAttachments from "@/components/Shared/JobAttachments/JobAttachments";
 import SiteVisitModal from "@/components/Sitevisits/SiteVisitModal/SiteVisitModal";
+import WarehouseTrackingModal from "@/components/Shared/WarehouseTrackingModal/WarehouseTrackingModal";
 
 dayjs.extend(utc);
 type InstallationType = Tables<"installation">;
@@ -113,6 +114,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
 
   const [isBackorderPromptOpen, setIsBackorderPromptOpen] = useState(false);
   const [isAddBackorderModalOpen, setIsAddBackorderModalOpen] = useState(false);
+  const [isWarehouseModalOpen, setIsWarehouseModalOpen] = useState(false);
 
   const [
     isAddInstallerOpen,
@@ -983,12 +985,58 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                             color="violet"
                             label="In Warehouse"
                             checked={!!form.values.in_warehouse}
-                            onChange={(event) => {
+                            onChange={async (event) => {
                               const isChecked = event.currentTarget.checked;
-                              form.setFieldValue(
-                                "in_warehouse",
-                                isChecked ? dayjs().toISOString() : null
-                              );
+                              if (isChecked) {
+                                setIsWarehouseModalOpen(true);
+                              } else {
+                                if (
+                                  confirm(
+                                    "Are you sure you want to remove this from warehouse tracking? This will delete the warehouse record."
+                                  )
+                                ) {
+                                  try {
+                                    const { error: deleteError } =
+                                      await supabase
+                                        .from("warehouse_tracking")
+                                        .delete()
+                                        .eq("job_id", jobId);
+
+                                    if (deleteError) throw deleteError;
+
+                                    const { error: updateError } =
+                                      await supabase
+                                        .from("installation")
+                                        .update({ in_warehouse: null } as any)
+                                        .eq("installation_id", installRecordId);
+
+                                    if (updateError) throw updateError;
+
+                                    form.setFieldValue("in_warehouse", null);
+
+                                    notifications.show({
+                                      title: "Success",
+                                      message:
+                                        "Removed from warehouse tracking",
+                                      color: "green",
+                                    });
+
+                                    queryClient.invalidateQueries({
+                                      queryKey: ["warehouse_tracking"],
+                                    });
+                                    queryClient.invalidateQueries({
+                                      queryKey: ["installation-editor", jobId],
+                                    });
+                                  } catch (error: any) {
+                                    notifications.show({
+                                      title: "Error",
+                                      message:
+                                        "Failed to remove warehouse tracking record",
+                                      color: "red",
+                                    });
+                                  }
+                                }
+                              }
                             }}
                             styles={{ label: { fontWeight: 500 } }}
                           />
@@ -1478,6 +1526,19 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         }}
         visit={selectedVisit}
         defaultJobId={String(jobId)}
+      />
+
+      <WarehouseTrackingModal
+        opened={isWarehouseModalOpen}
+        onClose={() => setIsWarehouseModalOpen(false)}
+        jobId={jobId}
+        installationId={jobData.installation?.installation_id}
+        onSuccess={() => {
+          form.setFieldValue(
+            "in_warehouse",
+            dayjs().format("YYYY-MM-DD HH:mm")
+          );
+        }}
       />
     </Container>
   );

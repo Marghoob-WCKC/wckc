@@ -1493,6 +1493,93 @@ export type Database = {
         }
         Relationships: []
       }
+      warehouse_tracking: {
+        Row: {
+          created_at: string
+          dropoff_date: string | null
+          id: number
+          job_id: number | null
+          notes: string | null
+          pallets: number | null
+          pickup_date: string | null
+        }
+        Insert: {
+          created_at?: string
+          dropoff_date?: string | null
+          id?: never
+          job_id?: number | null
+          notes?: string | null
+          pallets?: number | null
+          pickup_date?: string | null
+        }
+        Update: {
+          created_at?: string
+          dropoff_date?: string | null
+          id?: never
+          job_id?: number | null
+          notes?: string | null
+          pallets?: number | null
+          pickup_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "inspection_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "installation_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "prod_table_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "sales_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "service_orders_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "shipped_not_invoiced_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       backorders_view: {
@@ -2015,6 +2102,78 @@ export type Database = {
           shipping_client_name: string | null
         }
         Relationships: []
+      }
+      warehouse_tracking_view: {
+        Row: {
+          box: string | null
+          dropoff_date: string | null
+          id: number | null
+          job_id: number | null
+          job_number: string | null
+          notes: string | null
+          pallets: number | null
+          pickup_date: string | null
+          shipping_address: string | null
+          shipping_client_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "inspection_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "installation_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "prod_table_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "sales_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "service_orders_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "shipped_not_invoiced_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
