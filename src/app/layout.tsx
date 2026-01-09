@@ -130,6 +130,16 @@ const dashboardLinks: SidebarLink[] = [
     label: "Reports",
     links: [
       {
+        iconName: "FaCalendarAlt",
+        label: "Wrap Schedule",
+        path: "/dashboard/reports/wrapschedulereport",
+      },
+      {
+        iconName: "FaShippingFast",
+        label: "Ship Schedule",
+        path: "/dashboard/reports/shipschedulereport",
+      },
+      {
         iconName: "FaTruckLoading",
         label: "Past Shipping",
         path: "/dashboard/reports/pastshipreport",
@@ -148,16 +158,6 @@ const dashboardLinks: SidebarLink[] = [
         iconName: "FaFileInvoice",
         label: "Job Status",
         path: "/dashboard/reports/jobstatusreport",
-      },
-      {
-        iconName: "FaCalendarAlt",
-        label: "Wrap Schedule",
-        path: "/dashboard/reports/wrapschedulereport",
-      },
-      {
-        iconName: "FaShippingFast",
-        label: "Ship Schedule",
-        path: "/dashboard/reports/shipschedulereport",
       },
     ],
   },
