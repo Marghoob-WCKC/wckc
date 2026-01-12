@@ -1369,18 +1369,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                 <Fieldset legend="Requirements" variant="filled" bg={"white"}>
                   <Group>
                     <Checkbox
-                      label="Canopy Required"
-                      color="#4A00E0"
-                      styles={{
-                        label: { fontWeight: 500, cursor: "pointer" },
-                        input: { cursor: "pointer" },
-                      }}
-                      {...form.getInputProps("is_canopy_required", {
-                        type: "checkbox",
-                      })}
-                    />
-                    <Checkbox
-                      label="Woodtop Required"
+                      label="Column/Floating Shelve/Woodtop"
                       color="#4A00E0"
                       styles={{
                         label: { fontWeight: 500, cursor: "pointer" },
@@ -1391,7 +1380,19 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       })}
                     />
                     <Checkbox
-                      label="Finish Cabinet Required"
+                      label="Canopy"
+                      color="#4A00E0"
+                      styles={{
+                        label: { fontWeight: 500, cursor: "pointer" },
+                        input: { cursor: "pointer" },
+                      }}
+                      {...form.getInputProps("is_canopy_required", {
+                        type: "checkbox",
+                      })}
+                    />
+
+                    <Checkbox
+                      label="Finish Cabinet"
                       color="#4A00E0"
                       styles={{
                         label: { fontWeight: 500, cursor: "pointer" },
