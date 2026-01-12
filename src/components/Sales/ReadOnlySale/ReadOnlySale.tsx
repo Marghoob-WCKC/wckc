@@ -441,6 +441,39 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
               </Card>
 
               {}
+              <Card shadow="sm" padding="lg" radius="md" withBorder>
+                <SectionTitle
+                  icon={FaClipboardList}
+                  title="Requirements"
+                  color="teal"
+                />
+                <Group gap={4} wrap="wrap">
+                  {order.is_canopy_required && (
+                    <Badge color="cyan" variant="light">
+                      Canopy
+                    </Badge>
+                  )}
+                  {order.is_woodtop_required && (
+                    <Badge color="brown" variant="light">
+                      Woodtop
+                    </Badge>
+                  )}
+                  {order.is_custom_cab_required && (
+                    <Badge color="grape" variant="light">
+                      Custom Cabinet
+                    </Badge>
+                  )}
+                  {!order.is_canopy_required &&
+                    !order.is_woodtop_required &&
+                    !order.is_custom_cab_required && (
+                      <Text size="sm" c="dimmed" fs="italic">
+                        No special requirements.
+                      </Text>
+                    )}
+                </Group>
+              </Card>
+
+              {}
               <Box style={{ flex: 1 }}>
                 {jobId && <RelatedServiceOrders jobId={jobId} readOnly />}
               </Box>

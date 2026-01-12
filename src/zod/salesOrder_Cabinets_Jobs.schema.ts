@@ -52,6 +52,9 @@ export const MasterOrderSchema = z.object({
   manual_job_suffix: z.string().optional(),
   is_active: z.boolean().default(true).optional(),
   is_memo: z.boolean().default(false).optional(),
+  is_canopy_required: z.boolean().default(false).optional(),
+  is_woodtop_required: z.boolean().default(false).optional(),
+  is_custom_cab_required: z.boolean().default(false).optional(),
 });
 
 export type MasterOrderInput = z.infer<typeof MasterOrderSchema>;

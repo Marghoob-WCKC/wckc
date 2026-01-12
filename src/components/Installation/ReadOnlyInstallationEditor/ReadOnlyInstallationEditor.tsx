@@ -163,6 +163,9 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
             order_type,
             delivery_type,
             install,
+            is_canopy_required,
+            is_woodtop_required,
+            is_custom_cab_required,
             cabinet:cabinets (
               id,
               box,
@@ -547,7 +550,15 @@ export default function ReadOnlyInstallation({ jobId }: { jobId: number }) {
                 </Timeline>
               </Card>
 
-              <PlantActuals schedule={prod} title="Production History" />
+              <PlantActuals
+                schedule={prod}
+                title="Production History"
+                isCanopyRequired={jobData.sales_orders?.is_canopy_required}
+                isWoodtopRequired={jobData.sales_orders?.is_woodtop_required}
+                isCustomCabRequired={
+                  jobData.sales_orders?.is_custom_cab_required
+                }
+              />
             </Stack>
           </Grid.Col>
         </Grid>

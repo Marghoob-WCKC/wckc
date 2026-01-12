@@ -159,6 +159,9 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             delivery_type,
             comments,
             install,
+            is_canopy_required,
+            is_woodtop_required,
+            is_custom_cab_required,
             cabinet:cabinets (
               id,
               box,
@@ -1171,7 +1174,14 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
 
           <Grid.Col span={1.8} style={{ borderLeft: "1px solid #ccc" }}>
             <Box pt="md" style={{ justifyItems: "center" }}>
-              <PlantActuals schedule={jobData.production_schedule} />
+              <PlantActuals
+                schedule={jobData.production_schedule}
+                isCanopyRequired={jobData.sales_orders?.is_canopy_required}
+                isWoodtopRequired={jobData.sales_orders?.is_woodtop_required}
+                isCustomCabRequired={
+                  jobData.sales_orders?.is_custom_cab_required
+                }
+              />
             </Box>
           </Grid.Col>
         </Grid>

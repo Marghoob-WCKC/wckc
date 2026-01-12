@@ -181,6 +181,9 @@ export default function NewSale() {
       manual_job_base: "",
       manual_job_suffix: "",
       is_memo: false,
+      is_canopy_required: false,
+      is_woodtop_required: false,
+      is_custom_cab_required: false,
       flooring_type: "",
       flooring_clearance: "",
       cabinet: {
@@ -442,7 +445,9 @@ export default function NewSale() {
         shipping,
         manual_job_base,
         manual_job_suffix,
-        is_memo,
+        is_canopy_required,
+        is_woodtop_required,
+        is_custom_cab_required,
       } = values;
       if (stage === "SOLD" && !manual_job_base) {
         throw new Error("Job Base Number is required for Sold jobs.");
@@ -494,6 +499,9 @@ export default function NewSale() {
           ? manual_job_suffix.trim().toUpperCase()
           : null,
         is_memo: effectiveIsMemo,
+        is_canopy_required: is_canopy_required,
+        is_woodtop_required: is_woodtop_required,
+        is_custom_cab_required: is_custom_cab_required,
       };
 
       const { data: transactionResult, error: rpcError } = await supabase.rpc(
@@ -1456,6 +1464,43 @@ export default function NewSale() {
                     styles={{ input: { minHeight: "200px" } }}
                     {...form.getInputProps(`comments`)}
                   />
+                </Fieldset>
+                <Fieldset legend="Requirements" variant="filled" bg={"white"}>
+                  <Group>
+                    <Checkbox
+                      label="Canopy Required"
+                      color="#4A00E0"
+                      styles={{
+                        label: { fontWeight: 500, cursor: "pointer" },
+                        input: { cursor: "pointer" },
+                      }}
+                      {...form.getInputProps("is_canopy_required", {
+                        type: "checkbox",
+                      })}
+                    />
+                    <Checkbox
+                      label="Woodtop Required"
+                      color="#4A00E0"
+                      styles={{
+                        label: { fontWeight: 500, cursor: "pointer" },
+                        input: { cursor: "pointer" },
+                      }}
+                      {...form.getInputProps("is_woodtop_required", {
+                        type: "checkbox",
+                      })}
+                    />
+                    <Checkbox
+                      label="Custom Cabinet Required"
+                      color="#4A00E0"
+                      styles={{
+                        label: { fontWeight: 500, cursor: "pointer" },
+                        input: { cursor: "pointer" },
+                      }}
+                      {...form.getInputProps("is_custom_cab_required", {
+                        type: "checkbox",
+                      })}
+                    />
+                  </Group>
                 </Fieldset>
                 <Fieldset legend="Financials" variant="filled" bg={"white"}>
                   <Grid align="flex-end">

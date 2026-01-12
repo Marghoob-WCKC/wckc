@@ -131,6 +131,9 @@ export default function ReadOnlyScheduler({ jobId }: { jobId: number }) {
             order_type,
             delivery_type,
             install,
+            is_canopy_required,
+            is_woodtop_required,
+            is_custom_cab_required,
             cabinet:cabinets (
               id,
               box,
@@ -405,7 +408,12 @@ export default function ReadOnlyScheduler({ jobId }: { jobId: number }) {
           </Grid.Col>
 
           <Grid.Col span={2}>
-            <PlantActuals schedule={data.production_schedule} />
+            <PlantActuals
+              schedule={data.production_schedule}
+              isCanopyRequired={data.sales_orders?.is_canopy_required}
+              isWoodtopRequired={data.sales_orders?.is_woodtop_required}
+              isCustomCabRequired={data.sales_orders?.is_custom_cab_required}
+            />
           </Grid.Col>
         </Grid>
       </Box>

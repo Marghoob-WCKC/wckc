@@ -46,6 +46,7 @@ import {
   FaRegCircle,
   FaCalendarCheck,
 } from "react-icons/fa";
+import { IoIosWarning } from "react-icons/io";
 import { FaGears } from "react-icons/fa6";
 import dayjs from "dayjs";
 import { DatePickerInput } from "@mantine/dates";
@@ -169,7 +170,7 @@ export default function ProdTable() {
           <Text fw={600} size="sm">
             <Anchor
               component="button"
-              size="xs"
+              size="sm"
               fw={600}
               w="100%"
               c="#6f00ffff"
@@ -190,6 +191,23 @@ export default function ProdTable() {
         </Group>
       ),
     }),
+    columnHelper.accessor("shipping_client_name", {
+      id: "client",
+      header: "Client",
+      size: 150,
+      minSize: 120,
+      cell: (info) => <Text size="sm">{info.getValue() ?? "—"}</Text>,
+    }),
+    columnHelper.accessor("site_address", {
+      header: "Site Address",
+      size: 300,
+      minSize: 200,
+      cell: (info) => (
+        <Text size="sm" c="dimmed" lineClamp={1}>
+          {info.getValue() || "—"}
+        </Text>
+      ),
+    }),
     columnHelper.accessor("received_date", {
       header: "Received Date",
       size: 140,
@@ -202,7 +220,7 @@ export default function ProdTable() {
               TBD
             </Text>
           );
-        return <Text size="xs">{dayjs(date).format("YYYY-MM-DD")}</Text>;
+        return <Text size="sm">{dayjs(date).format("YYYY-MM-DD")}</Text>;
       },
     }),
     columnHelper.accessor("placement_date", {
@@ -217,176 +235,101 @@ export default function ProdTable() {
               TBD
             </Text>
           );
-        return <Text size="xs">{dayjs(date).format("YYYY-MM-DD")}</Text>;
+        return <Text size="sm">{dayjs(date).format("YYYY-MM-DD")}</Text>;
       },
     }),
     columnHelper.accessor("ship_schedule", {
       header: "Ship Date",
-      size: 250,
-      minSize: 200,
-      cell: (info) => {
-        const date = info.getValue();
-        const status = info.row.original.ship_status;
-
-        let gradient: string;
-        let label: string;
-
-        switch (status) {
-          case "confirmed":
-            gradient = "linear-gradient(135deg, #4A00E0, #8E2DE2)";
-            label = "CONFIRMED";
-            break;
-          case "tentative":
-            gradient = "linear-gradient(135deg, #FF6A00, #FFB347)";
-            label = "TENTATIVE";
-            break;
-          default:
-            gradient = "linear-gradient(135deg, #B0BEC5, #78909C)";
-            label = "UNPROCESSED";
-        }
-
-        return (
-          <Group
-            style={{ width: "100%" }}
-            justify="space-between"
-            wrap="nowrap"
-          >
-            <Text
-              size="xs"
-              style={{
-                whiteSpace: "nowrap",
-                color: date ? undefined : "orange",
-              }}
-            >
-              {date ? dayjs(date).format("YYYY-MM-DD") : "TBD"}
-            </Text>
-            <Badge
-              variant="filled"
-              size="sm"
-              style={{
-                background: gradient,
-                color: "white",
-                fontWeight: 600,
-                border: 0,
-                borderRadius: "6px",
-                textTransform: "uppercase",
-                cursor: "inherit",
-              }}
-            >
-              {label}
-            </Badge>
-          </Group>
-        );
-      },
-    }),
-    columnHelper.accessor("shipping_client_name", {
-      id: "client",
-      header: "Client",
       size: 150,
       minSize: 120,
-      cell: (info) => <Text size="xs">{info.getValue() ?? "—"}</Text>,
-    }),
-    columnHelper.display({
-      id: "production_status",
-      header: "Plant Progress",
-      size: 500,
-      minSize: 500,
       cell: (info) => {
+        const date = info.getValue();
         const row = info.row.original;
 
-        const steps = [
-          {
-            key: "in_plant_actual",
-            label: "Plant (D/P)",
-            val: row.in_plant_actual,
-          },
-          {
-            key: "in_plant_cabinets_actual",
-            label: "Plant (C)",
-            val: row.in_plant_cabinets_actual,
-          },
-          {
-            key: "doors_completed_actual",
-            label: "Doors",
-            val: row.doors_completed_actual,
-          },
-          {
-            key: "cut_finish_completed_actual",
-            label: "Cut Finish",
-            val: row.cut_finish_completed_actual,
-          },
-          {
-            key: "custom_finish_completed_actual",
-            label: "Custom Finish",
-            val: row.custom_finish_completed_actual,
-          },
-          {
-            key: "drawer_completed_actual",
-            label: "Drawer",
-            val: row.drawer_completed_actual,
-          },
-          {
-            key: "cut_melamine_completed_actual",
-            label: "Cut Melamine",
-            val: row.cut_melamine_completed_actual,
-          },
-          {
-            key: "paint_completed_actual",
-            label: "Paint",
-            val: row.paint_completed_actual,
-          },
-          {
-            key: "assembly_completed_actual",
-            label: "Assembly",
-            val: row.assembly_completed_actual,
-          },
-          {
-            key: "has_shipped",
-            label: "Shipped",
-            val: row.has_shipped,
-          },
-        ];
+        if (!date)
+          return (
+            <Center>
+              <Text c="orange" size="xs">
+                TBD
+              </Text>
+            </Center>
+          );
+
+        const status = row.ship_status;
 
         return (
           <Group
-            style={{
-              display: "flex",
-              flexWrap: "nowrap",
-              justifyContent: "flex-start",
-              gap: "12px",
-              width: "100%",
-            }}
+            gap={6}
+            wrap="nowrap"
+            justify="center"
+            style={{ width: "100%", height: "100%" }}
           >
-            {steps.map((step, idx) => {
-              const done = !!step.val;
-              return (
-                <Text
-                  key={idx}
-                  size="xs"
-                  c="dimmed"
-                  style={{ display: "flex", alignItems: "center" }}
-                >
-                  {done ? (
-                    <FaCheckCircle
-                      color="green"
-                      size={12}
-                      style={{ marginRight: 3 }}
-                    />
-                  ) : (
-                    <FaRegCircle
-                      color="gray"
-                      size={12}
-                      style={{ marginRight: 3 }}
-                    />
-                  )}
-                  {step.label}
-                </Text>
-              );
-            })}
+            <Text size="sm">{dayjs(date).format("YYYY-MM-DD")}</Text>
+
+            {status === "confirmed" && (
+              <Tooltip label="Confirmed">
+                <FaCheckCircle size={14} color="green" />
+              </Tooltip>
+            )}
+
+            {status === "tentative" && (
+              <Tooltip label="Tentative">
+                <IoIosWarning size={14} color="orange" />
+              </Tooltip>
+            )}
           </Group>
         );
       },
     }),
+    columnHelper.accessor("has_shipped", {
+      header: "Shipped",
+      id: "shipped_status",
+      size: 90,
+      minSize: 90,
+      cell: (info) => {
+        const hasShipped = info.getValue();
+        const partiallyShipped = (info.row.original as any).partially_shipped;
+
+        return (
+          <Center
+            style={{
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            {partiallyShipped ? (
+              <Badge
+                variant="gradient"
+                size="xs"
+                style={{ cursor: "pointer" }}
+                gradient={{ from: "orange", to: "yellow", deg: 90 }}
+              >
+                PARTIAL
+              </Badge>
+            ) : hasShipped ? (
+              <Badge
+                variant="gradient"
+                size="xs"
+                style={{ cursor: "pointer" }}
+                gradient={{ from: "lime", to: "green", deg: 90 }}
+              >
+                YES
+              </Badge>
+            ) : (
+              <Badge
+                variant="gradient"
+                size="xs"
+                style={{ cursor: "pointer" }}
+                gradient={{ from: "red", to: "#ff2c2cff", deg: 90 }}
+              >
+                NO
+              </Badge>
+            )}
+          </Center>
+        );
+      },
+    }),
+
     columnHelper.display({
       id: "cabinet_info",
       header: "Cabinet",
@@ -401,21 +344,11 @@ export default function ProdTable() {
         ].filter(Boolean);
 
         return (
-          <Text size="xs" c="dimmed" lineClamp={1} tt="capitalize">
+          <Text size="sm" c="dimmed" lineClamp={1} tt="capitalize">
             {parts.length > 0 ? parts.join(" • ") : "—"}
           </Text>
         );
       },
-    }),
-    columnHelper.accessor("site_address", {
-      header: "Site Address",
-      size: 300,
-      minSize: 200,
-      cell: (info) => (
-        <Text size="xs" c="dimmed" lineClamp={1}>
-          {info.getValue() || "—"}
-        </Text>
-      ),
     }),
   ];
 
@@ -664,13 +597,7 @@ export default function ProdTable() {
         }}
         type="always"
       >
-        <Table
-          striped
-          highlightOnHover
-          stickyHeader
-          withColumnBorders
-          style={{ minWidth: "2600px" }}
-        >
+        <Table striped highlightOnHover stickyHeader withColumnBorders>
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>

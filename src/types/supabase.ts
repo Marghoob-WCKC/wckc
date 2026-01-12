@@ -839,7 +839,10 @@ export type Database = {
           assembly_completed_actual: string | null
           assembly_schedule: string | null
           box_assembled_count: number
+          canopy_completed_actual: string | null
           created_at: string
+          cust_fin_assembled_completed_actual: string | null
+          cust_fin_parts_cut_completed_actual: string | null
           custom_finish_completed_actual: string | null
           cut_finish_completed_actual: string | null
           cut_finish_schedule: string | null
@@ -851,9 +854,13 @@ export type Database = {
           drawer_completed_actual: string | null
           in_plant_actual: string | null
           in_plant_cabinets_actual: string | null
+          paint_canopy_completed_actual: string | null
           paint_completed_actual: string | null
+          paint_cust_cab_completed_actual: string | null
+          paint_doors_completed_actual: string | null
           paint_in_schedule: string | null
           paint_out_schedule: string | null
+          panel_completed_actual: string | null
           placement_date: string | null
           prod_id: number
           production_comments: string | null
@@ -863,12 +870,16 @@ export type Database = {
           ship_schedule: string | null
           ship_status: Database["public"]["Enums"]["ShippingStatus"]
           updated_at: string
+          woodtop_completed_actual: string | null
         }
         Insert: {
           assembly_completed_actual?: string | null
           assembly_schedule?: string | null
           box_assembled_count?: number
+          canopy_completed_actual?: string | null
           created_at?: string
+          cust_fin_assembled_completed_actual?: string | null
+          cust_fin_parts_cut_completed_actual?: string | null
           custom_finish_completed_actual?: string | null
           cut_finish_completed_actual?: string | null
           cut_finish_schedule?: string | null
@@ -880,9 +891,13 @@ export type Database = {
           drawer_completed_actual?: string | null
           in_plant_actual?: string | null
           in_plant_cabinets_actual?: string | null
+          paint_canopy_completed_actual?: string | null
           paint_completed_actual?: string | null
+          paint_cust_cab_completed_actual?: string | null
+          paint_doors_completed_actual?: string | null
           paint_in_schedule?: string | null
           paint_out_schedule?: string | null
+          panel_completed_actual?: string | null
           placement_date?: string | null
           prod_id?: number
           production_comments?: string | null
@@ -892,12 +907,16 @@ export type Database = {
           ship_schedule?: string | null
           ship_status?: Database["public"]["Enums"]["ShippingStatus"]
           updated_at?: string
+          woodtop_completed_actual?: string | null
         }
         Update: {
           assembly_completed_actual?: string | null
           assembly_schedule?: string | null
           box_assembled_count?: number
+          canopy_completed_actual?: string | null
           created_at?: string
+          cust_fin_assembled_completed_actual?: string | null
+          cust_fin_parts_cut_completed_actual?: string | null
           custom_finish_completed_actual?: string | null
           cut_finish_completed_actual?: string | null
           cut_finish_schedule?: string | null
@@ -909,9 +928,13 @@ export type Database = {
           drawer_completed_actual?: string | null
           in_plant_actual?: string | null
           in_plant_cabinets_actual?: string | null
+          paint_canopy_completed_actual?: string | null
           paint_completed_actual?: string | null
+          paint_cust_cab_completed_actual?: string | null
+          paint_doors_completed_actual?: string | null
           paint_in_schedule?: string | null
           paint_out_schedule?: string | null
+          panel_completed_actual?: string | null
           placement_date?: string | null
           prod_id?: number
           production_comments?: string | null
@@ -921,6 +944,7 @@ export type Database = {
           ship_schedule?: string | null
           ship_status?: Database["public"]["Enums"]["ShippingStatus"]
           updated_at?: string
+          woodtop_completed_actual?: string | null
         }
         Relationships: []
       }
@@ -1117,7 +1141,10 @@ export type Database = {
           id: number
           install: boolean
           invoice_balance: number | null
+          is_canopy_required: boolean | null
+          is_custom_cab_required: boolean | null
           is_memo: boolean | null
+          is_woodtop_required: boolean | null
           layout_date: string | null
           markout_date: string | null
           order_type: string | null
@@ -1160,7 +1187,10 @@ export type Database = {
           id?: number
           install?: boolean
           invoice_balance?: number | null
+          is_canopy_required?: boolean | null
+          is_custom_cab_required?: boolean | null
           is_memo?: boolean | null
+          is_woodtop_required?: boolean | null
           layout_date?: string | null
           markout_date?: string | null
           order_type?: string | null
@@ -1203,7 +1233,10 @@ export type Database = {
           id?: number
           install?: boolean
           invoice_balance?: number | null
+          is_canopy_required?: boolean | null
+          is_custom_cab_required?: boolean | null
           is_memo?: boolean | null
+          is_woodtop_required?: boolean | null
           layout_date?: string | null
           markout_date?: string | null
           order_type?: string | null
@@ -1941,23 +1974,15 @@ export type Database = {
       }
       prod_table_view: {
         Row: {
-          assembly_completed_actual: string | null
           cabinet_box: string | null
           cabinet_color: string | null
           cabinet_door_style: string | null
           cabinet_species: string | null
           created_at: string | null
-          custom_finish_completed_actual: string | null
-          cut_finish_completed_actual: string | null
-          cut_melamine_completed_actual: string | null
-          doors_completed_actual: string | null
-          drawer_completed_actual: string | null
           has_shipped: boolean | null
           id: number | null
-          in_plant_actual: string | null
-          in_plant_cabinets_actual: string | null
           job_number: string | null
-          paint_completed_actual: string | null
+          partially_shipped: boolean | null
           placement_date: string | null
           prod_id: number | null
           received_date: string | null

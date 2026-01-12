@@ -43,6 +43,7 @@ import dayjs from "dayjs";
 import { useSupabase } from "@/hooks/useSupabase";
 import { Tables } from "@/types/db";
 import Link from "next/link";
+import PlantActuals from "@/components/Shared/PlantActuals/PlantActuals";
 
 import ClientInfo from "@/components/Shared/ClientInfo/ClientInfo";
 import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
@@ -61,17 +62,17 @@ type JoinedCabinet = Tables<"cabinets"> & {
 
 type FullJobData = Tables<"jobs"> & {
   sales_orders:
-  | (Tables<"sales_orders"> & {
-    client: Tables<"client"> | null;
-    cabinet: JoinedCabinet | null;
-  })
-  | null;
+    | (Tables<"sales_orders"> & {
+        client: Tables<"client"> | null;
+        cabinet: JoinedCabinet | null;
+      })
+    | null;
   production_schedule: Tables<"production_schedule"> | null;
   installation:
-  | (Tables<"installation"> & {
-    installer: Tables<"installers"> | null;
-  })
-  | null;
+    | (Tables<"installation"> & {
+        installer: Tables<"installers"> | null;
+      })
+    | null;
 };
 
 interface JobDetailsDrawerProps {
@@ -86,7 +87,7 @@ const SectionHeader = ({
   color = "violet",
 }: {
   icon: any;
-  title: string;
+  title?: string;
   color?: string;
 }) => (
   <Group mb="xs" gap="xs">
@@ -175,49 +176,6 @@ export default function JobDetailsDrawer({
     },
     enabled: isAuthenticated && !!jobId && opened,
   });
-
-  const productionSteps = [
-    {
-      key: "in_plant_actual",
-      label: "In Plant",
-      icon: FaIndustry,
-    },
-    {
-      key: "doors_completed_actual",
-      label: "Doors",
-      icon: FaDoorOpen,
-    },
-    {
-      key: "cut_finish_completed_actual",
-      label: "Cut Fin",
-      icon: FaCut,
-    },
-    {
-      key: "custom_finish_completed_actual",
-      label: "Custom Fin",
-      icon: FaPaintBrush,
-    },
-    {
-      key: "cut_melamine_completed_actual",
-      label: "Cut Mel",
-      icon: FaCut,
-    },
-    {
-      key: "drawer_completed_actual",
-      label: "Drawers",
-      icon: FaCut,
-    },
-    {
-      key: "paint_completed_actual",
-      label: "Paint",
-      icon: FaPaintBrush,
-    },
-    {
-      key: "assembly_completed_actual",
-      label: "Assembly",
-      icon: FaCogs,
-    },
-  ] as const;
 
   const renderContent = () => {
     if (isLoading)
@@ -329,42 +287,15 @@ export default function JobDetailsDrawer({
         </SimpleGrid>
 
         <Paper p="md" radius="md" withBorder shadow="sm">
-          <SectionHeader
-            icon={FaIndustry}
-            title="Production Status"
-            color="blue"
-          />
-
-          <Group justify="space-between" mb="lg" wrap="nowrap" gap={4}>
-            {productionSteps.map((step) => {
-              const isDone = !!prod?.[step.key];
-              return (
-                <Stack
-                  key={step.key}
-                  gap={4}
-                  align="center"
-                  style={{ flex: 1 }}
-                >
-                  <ThemeIcon
-                    size="lg"
-                    radius="xl"
-                    variant={isDone ? "filled" : "light"}
-                    color={isDone ? "#009c2fff" : "gray"}
-                  >
-                    <step.icon size={14} />
-                  </ThemeIcon>
-                  <Text
-                    size="10px"
-                    c={isDone ? "dark" : "dimmed"}
-                    fw={600}
-                    ta="center"
-                  >
-                    {step.label}
-                  </Text>
-                </Stack>
-              );
-            })}
-          </Group>
+          <Box mb="md">
+            <PlantActuals
+              schedule={prod}
+              isCanopyRequired={so?.is_canopy_required}
+              isWoodtopRequired={so?.is_woodtop_required}
+              isCustomCabRequired={so?.is_custom_cab_required}
+              variant="compact"
+            />
+          </Box>
 
           <Divider mb="md" />
 

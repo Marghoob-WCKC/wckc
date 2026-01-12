@@ -71,6 +71,9 @@ type EditSaleProps = {
 interface ExtendedMasterOrderInput extends MasterOrderInput {
   manual_job_base?: string;
   manual_job_suffix?: string;
+  is_canopy_required?: boolean;
+  is_woodtop_required?: boolean;
+  is_custom_cab_required?: boolean;
 }
 
 interface NewDoorStyleState {
@@ -142,6 +145,9 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
       manual_job_suffix: "",
       is_active: true,
       is_memo: false,
+      is_canopy_required: false,
+      is_woodtop_required: false,
+      is_custom_cab_required: false,
       flooring_type: "",
       flooring_clearance: "",
       cabinet: {
@@ -389,6 +395,9 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         manual_job_suffix: salesOrderData.job?.job_suffix || "",
         is_active: salesOrderData.job?.is_active || true,
         is_memo: salesOrderData.is_memo,
+        is_canopy_required: salesOrderData.is_canopy_required ?? false,
+        is_woodtop_required: salesOrderData.is_woodtop_required ?? false,
+        is_custom_cab_required: salesOrderData.is_custom_cab_required ?? false,
         flooring_type: salesOrderData.flooring_type || "",
         flooring_clearance: salesOrderData.flooring_clearance || "",
         cabinet: {
@@ -491,6 +500,9 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
           order_type: values.order_type,
           delivery_type: values.delivery_type,
           is_memo: effectiveIsMemo,
+          is_canopy_required: values.is_canopy_required,
+          is_woodtop_required: values.is_woodtop_required,
+          is_custom_cab_required: values.is_custom_cab_required,
           flooring_type: values.flooring_type,
           flooring_clearance: values.flooring_clearance,
           ...values.shipping,
@@ -1352,6 +1364,44 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                     styles={{ input: { minHeight: "200px" } }}
                     {...form.getInputProps("comments")}
                   />
+                </Fieldset>
+
+                <Fieldset legend="Requirements" variant="filled" bg={"white"}>
+                  <Group>
+                    <Checkbox
+                      label="Canopy Required"
+                      color="#4A00E0"
+                      styles={{
+                        label: { fontWeight: 500, cursor: "pointer" },
+                        input: { cursor: "pointer" },
+                      }}
+                      {...form.getInputProps("is_canopy_required", {
+                        type: "checkbox",
+                      })}
+                    />
+                    <Checkbox
+                      label="Woodtop Required"
+                      color="#4A00E0"
+                      styles={{
+                        label: { fontWeight: 500, cursor: "pointer" },
+                        input: { cursor: "pointer" },
+                      }}
+                      {...form.getInputProps("is_woodtop_required", {
+                        type: "checkbox",
+                      })}
+                    />
+                    <Checkbox
+                      label="Custom Cabinet Required"
+                      color="#4A00E0"
+                      styles={{
+                        label: { fontWeight: 500, cursor: "pointer" },
+                        input: { cursor: "pointer" },
+                      }}
+                      {...form.getInputProps("is_custom_cab_required", {
+                        type: "checkbox",
+                      })}
+                    />
+                  </Group>
                 </Fieldset>
 
                 <Fieldset legend="Financials" variant="filled" bg={"white"}>

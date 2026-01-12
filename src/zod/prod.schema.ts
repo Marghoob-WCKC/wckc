@@ -21,5 +21,13 @@ export const schedulingSchema = z.object({
   paint_completed_actual: z.string().nullable(),
   assembly_completed_actual: z.string().nullable(),
   production_comments: z.string().nullable().optional(),
+  canopy_completed_actual: z.string().nullable().optional(),
+  panel_completed_actual: z.string().nullable().optional(),
+  woodtop_completed_actual: z.string().nullable().optional(),
+  cust_fin_parts_cut_completed_actual: z.string().nullable().optional(),
+  cust_fin_assembled_completed_actual: z.string().nullable().optional(),
+  paint_doors_completed_actual: z.string().nullable().optional(),
+  paint_canopy_completed_actual: z.string().nullable().optional(),
+  paint_cust_cab_completed_actual: z.string().nullable().optional(),
 });
 export type SchedulingType = z.infer<typeof schedulingSchema>;

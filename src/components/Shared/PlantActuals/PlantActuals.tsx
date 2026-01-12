@@ -1,6 +1,16 @@
 "use client";
 
-import { Box, Paper, Text, Timeline, Center } from "@mantine/core";
+import {
+  Box,
+  Paper,
+  Text,
+  Timeline,
+  Center,
+  Group,
+  Stack,
+  Badge,
+  ThemeIcon,
+} from "@mantine/core";
 import {
   FaCheckCircle,
   FaCogs,
@@ -8,169 +18,315 @@ import {
   FaDoorOpen,
   FaIndustry,
   FaPaintBrush,
-  FaRegCircle,
   FaCalendarCheck,
+  FaClock,
 } from "react-icons/fa";
 import dayjs from "dayjs";
 import { useMemo } from "react";
 import { Tables } from "@/types/db";
+import { colors } from "@/theme";
 
-// Define the keys we care about
 type ActualKey =
   | "in_plant_actual"
   | "in_plant_cabinets_actual"
   | "doors_completed_actual"
   | "cut_finish_completed_actual"
-  | "custom_finish_completed_actual"
+  | "cust_fin_parts_cut_completed_actual"
+  | "cust_fin_assembled_completed_actual"
   | "drawer_completed_actual"
   | "cut_melamine_completed_actual"
-  | "paint_completed_actual"
+  | "paint_doors_completed_actual"
+  | "paint_canopy_completed_actual"
+  | "paint_cust_cab_completed_actual"
+  | "canopy_completed_actual"
+  | "woodtop_completed_actual"
+  | "panel_completed_actual"
   | "assembly_completed_actual";
 
-const STEPS_CONFIG: {
-  key: ActualKey;
-  label: string;
+type GroupConfig = {
+  title: string;
   icon: React.ReactNode;
-}[] = [
+  steps: {
+    key: ActualKey;
+    label: string;
+    requiredRule?: "always" | "custom" | "canopy" | "woodtop";
+  }[];
+};
+
+const GROUPS_CONFIG: GroupConfig[] = [
   {
-    key: "in_plant_actual",
-    label: "In Plant (Doors)",
-    icon: <FaIndustry size={12} />,
+    title: "In Plant",
+    icon: <FaIndustry size={14} />,
+    steps: [
+      { key: "in_plant_actual", label: "Doors" },
+      { key: "in_plant_cabinets_actual", label: "Cabinets" },
+    ],
   },
   {
-    key: "in_plant_cabinets_actual",
-    label: "In Plant (Cabinets)",
-    icon: <FaIndustry size={12} />,
+    title: "Cut",
+    icon: <FaCut size={14} />,
+    steps: [
+      { key: "cut_melamine_completed_actual", label: "Melamine" },
+      { key: "cut_finish_completed_actual", label: "Prefinished" },
+      {
+        key: "cust_fin_parts_cut_completed_actual",
+        label: "Custom Parts",
+        requiredRule: "custom",
+      },
+    ],
   },
   {
-    key: "doors_completed_actual",
-    label: "Doors",
-    icon: <FaDoorOpen size={12} />,
+    title: "Prep",
+    icon: <FaDoorOpen size={14} />,
+    steps: [
+      { key: "panel_completed_actual", label: "Panels" },
+      { key: "doors_completed_actual", label: "Doors" },
+      { key: "drawer_completed_actual", label: "Drawers" },
+
+      {
+        key: "woodtop_completed_actual",
+        label: "Woodtop",
+        requiredRule: "woodtop",
+      },
+      {
+        key: "canopy_completed_actual",
+        label: "Canopy",
+        requiredRule: "canopy",
+      },
+    ],
   },
   {
-    key: "cut_finish_completed_actual",
-    label: "Cut Finishing",
-    icon: <FaCut size={12} />,
+    title: "Paint",
+    icon: <FaPaintBrush size={14} />,
+    steps: [
+      { key: "paint_doors_completed_actual", label: "Doors/Panels" },
+      {
+        key: "paint_canopy_completed_actual",
+        label: "Canopy",
+        requiredRule: "canopy",
+      },
+      {
+        key: "paint_cust_cab_completed_actual",
+        label: "Custom",
+        requiredRule: "custom",
+      },
+    ],
   },
   {
-    key: "custom_finish_completed_actual",
-    label: "Custom Finish",
-    icon: <FaCut size={12} />,
-  },
-  {
-    key: "drawer_completed_actual",
-    label: "Drawers",
-    icon: <FaDoorOpen size={12} />,
-  },
-  {
-    key: "cut_melamine_completed_actual",
-    label: "Melamine Cut",
-    icon: <FaCut size={12} />,
-  },
-  {
-    key: "paint_completed_actual",
-    label: "Paint",
-    icon: <FaPaintBrush size={12} />,
-  },
-  {
-    key: "assembly_completed_actual",
-    label: "Assembly",
-    icon: <FaCogs size={12} />,
+    title: "Assembly",
+    icon: <FaCogs size={14} />,
+    steps: [
+      {
+        key: "cust_fin_assembled_completed_actual",
+        label: "Custom Cab Assembled",
+        requiredRule: "custom",
+      },
+
+      { key: "assembly_completed_actual", label: "Main Assembly" },
+    ],
   },
 ];
 
 interface PlantActualsProps {
   schedule: Partial<Tables<"production_schedule">> | null | undefined;
   title?: string;
+  isCanopyRequired?: boolean | null;
+  isWoodtopRequired?: boolean | null;
+  isCustomCabRequired?: boolean | null;
+  variant?: "default" | "compact";
 }
 
 export default function PlantActuals({
   schedule,
   title = "Plant Progress",
+  isCanopyRequired,
+  isWoodtopRequired,
+  isCustomCabRequired,
+  variant = "default",
 }: PlantActualsProps) {
-  const steps = useMemo(() => {
+  const groups = useMemo(() => {
     if (!schedule) return [];
 
-    return STEPS_CONFIG.map((step) => ({
-      ...step,
-      isCompleted: !!schedule[step.key],
-      date: schedule[step.key] as string | null,
-    }));
-  }, [schedule]);
+    return GROUPS_CONFIG.map((group) => {
+      const activeSteps = group.steps.filter((step) => {
+        if (step.requiredRule === "canopy") return !!isCanopyRequired;
+        if (step.requiredRule === "woodtop") return !!isWoodtopRequired;
+        if (step.requiredRule === "custom") return !!isCustomCabRequired;
+        return true;
+      });
+
+      if (activeSteps.length === 0) return null;
+
+      const stepsWithStatus = activeSteps.map((step) => {
+        const dateStr = schedule[step.key] as string | null;
+        const isCompleted = !!dateStr;
+        return {
+          ...step,
+          isCompleted,
+          date: dateStr,
+        };
+      });
+
+      const allCompleted = stepsWithStatus.every((s) => s.isCompleted);
+      const someCompleted = stepsWithStatus.some((s) => s.isCompleted);
+
+      return {
+        ...group,
+        steps: stepsWithStatus,
+        status: allCompleted
+          ? "completed"
+          : someCompleted
+          ? "in-progress"
+          : "pending",
+      };
+    }).filter(Boolean);
+  }, [schedule, isCanopyRequired, isWoodtopRequired, isCustomCabRequired]);
 
   if (!schedule) return null;
 
+  if (variant === "compact") {
+    return (
+      <Paper radius="md" shadow="unset">
+        <Group mb="xs" gap="xs">
+          <FaCalendarCheck
+            color={colors.violet.primary}
+            size={18}
+            radius="md"
+          />
+
+          <Text fw={700} size="lg" c={colors.violet.primary}>
+            {title}
+          </Text>
+        </Group>
+        <Group
+          align="flex-start"
+          gap="md"
+          style={{ overflowX: "auto", flexWrap: "nowrap", paddingBottom: 4 }}
+        >
+          {groups.map((group, idx) => {
+            if (!group) return null;
+            const isGroupComplete = group.status === "completed";
+
+            return (
+              <Box key={group.title} style={{ minWidth: 120 }}>
+                <Group gap={6} mb={4}>
+                  <ThemeIcon
+                    size="sm"
+                    radius="xl"
+                    variant={isGroupComplete ? "filled" : "light"}
+                    color={isGroupComplete ? "green" : "gray"}
+                  >
+                    {isGroupComplete ? <FaCheckCircle size={10} /> : group.icon}
+                  </ThemeIcon>
+                  <Text
+                    size="xs"
+                    fw={700}
+                    c={isGroupComplete ? "dark" : "dimmed"}
+                  >
+                    {group.title}
+                  </Text>
+                </Group>
+                <Stack gap={2}>
+                  {group.steps.map((step) => (
+                    <Group key={step.key} gap={4} wrap="nowrap">
+                      <ThemeIcon
+                        size={5}
+                        radius="xl"
+                        color={step.isCompleted ? "green" : "gray.3"}
+                      />
+                      <Text
+                        size="10px"
+                        c={step.isCompleted ? "dark" : "dimmed"}
+                        lineClamp={1}
+                      >
+                        {step.label}
+                      </Text>
+                    </Group>
+                  ))}
+                </Stack>
+              </Box>
+            );
+          })}
+        </Group>
+      </Paper>
+    );
+  }
+
   return (
     <Paper p="md" radius="md" w="100%" h="100%">
-      <Center>
-        <Text
-          fw={600}
-          size="lg"
-          mb="lg"
-          c="violet"
-          display="flex"
-          style={{ alignItems: "center" }}
-        >
-          <FaCalendarCheck style={{ marginRight: 8 }} /> {title}
-        </Text>
+      <Center mb="lg">
+        <Group gap="xs">
+          <ThemeIcon variant="light" color="violet" size="lg" radius="md">
+            <FaCalendarCheck size={18} />
+          </ThemeIcon>
+          <Text fw={700} size="lg" c="violet.9">
+            {title}
+          </Text>
+        </Group>
       </Center>
+
       <Timeline
-        bulletSize={24}
+        bulletSize={30}
         lineWidth={2}
         active={-1}
-        styles={{ root: { "--tl-color": "green" } }}
+        style={{ paddingLeft: 6 }}
       >
-        {steps.map((step, idx) => {
-          const bulletColor = step.isCompleted ? "#28a745" : "#6b6b6b";
-          const lineColor = step.isCompleted ? "#28a745" : "#e0e0e0";
+        {groups.map((group, idx) => {
+          if (!group) return null;
+
+          const isGroupComplete = group.status === "completed";
+          const isGroupInProgress = group.status === "in-progress";
 
           return (
             <Timeline.Item
-              key={idx}
-              title={step.label}
-              lineVariant="solid"
+              key={group.title}
               bullet={
-                <Box
-                  style={{
-                    backgroundColor: bulletColor,
-                    borderRadius: "50%",
-                    width: 24,
-                    height: 24,
-                    minWidth: 24,
-                    minHeight: 24,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    aspectRatio: "1 / 1",
-                  }}
-                >
-                  {step.isCompleted ? (
-                    <FaCheckCircle size={12} color="white" />
-                  ) : (
-                    step.icon
-                  )}
-                </Box>
+                <Center>
+                  {isGroupComplete ? <FaCheckCircle size={16} /> : group.icon}
+                </Center>
               }
-              styles={{
-                item: { "--tl-color": lineColor },
-                itemTitle: {
-                  color: step.isCompleted ? "#28a745" : "#6b6b6b",
-                },
-              }}
+              title={
+                <Text
+                  fw={600}
+                  size="sm"
+                  c={isGroupComplete ? "dark" : "dimmed"}
+                >
+                  {group.title}
+                </Text>
+              }
+              color={
+                isGroupComplete ? "green" : isGroupInProgress ? "blue" : "gray"
+              }
+              lineVariant={isGroupComplete ? "solid" : "dashed"}
             >
-              <Text size="xs" c="dimmed">
-                {step.isCompleted ? "Completed:" : "Pending"}
-              </Text>
-
-              {step.date === "1999-09-19T00:00:00+00:00" ? (
-                <Text size="sm" c="green.8" fw={600}>
-                  Completed
-                </Text>
-              ) : (
-                <Text size="sm" fw={500}>
-                  {step.date ? dayjs(step.date).format("MMM D, HH:mm") : "—"}
-                </Text>
-              )}
+              <Stack gap={6} mt={4}>
+                {group.steps.map((step) => (
+                  <Group key={step.key} justify="space-between" wrap="nowrap">
+                    <Group gap={6}>
+                      <ThemeIcon
+                        size={6}
+                        radius="xl"
+                        color={step.isCompleted ? "green" : "gray.4"}
+                        variant="filled"
+                      />
+                      <Text size="xs" c={step.isCompleted ? "dark" : "dimmed"}>
+                        {step.label}
+                      </Text>
+                    </Group>
+                    {step.isCompleted ? (
+                      <Text size="xs" fw={500} c="green.7">
+                        {step.date === "1999-09-19T00:00:00+00:00"
+                          ? "Done"
+                          : dayjs(step.date).format("MMM D")}
+                      </Text>
+                    ) : (
+                      <Text size="xs" c="dimmed" style={{ fontSize: 10 }}>
+                        Pending
+                      </Text>
+                    )}
+                  </Group>
+                ))}
+              </Stack>
             </Timeline.Item>
           );
         })}

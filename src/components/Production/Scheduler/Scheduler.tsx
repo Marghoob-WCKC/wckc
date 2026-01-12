@@ -110,6 +110,9 @@ export default function EditProductionSchedulePage({
             order_type,
             delivery_type,
             install,
+            is_canopy_required,
+            is_woodtop_required,
+            is_custom_cab_required,
             cabinet:cabinets (
               id,
               box,
@@ -580,7 +583,12 @@ export default function EditProductionSchedulePage({
 
           <Grid.Col span={2} style={{ borderLeft: "1px solid #ccc" }}>
             <Box pt="md" style={{ justifyItems: "center" }}>
-              <PlantActuals schedule={data.production_schedule} />
+              <PlantActuals
+                schedule={data.production_schedule}
+                isCanopyRequired={data.sales_orders?.is_canopy_required}
+                isWoodtopRequired={data.sales_orders?.is_woodtop_required}
+                isCustomCabRequired={data.sales_orders?.is_custom_cab_required}
+              />
             </Box>
           </Grid.Col>
         </Grid>
