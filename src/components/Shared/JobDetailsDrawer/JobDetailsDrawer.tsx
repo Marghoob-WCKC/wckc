@@ -9,7 +9,6 @@ import {
   Stack,
   Group,
   Badge,
-  Grid,
   ThemeIcon,
   Paper,
   Divider,
@@ -17,27 +16,17 @@ import {
   SimpleGrid,
   ScrollArea,
   Title,
-  Timeline,
   ActionIcon,
   Tooltip,
 } from "@mantine/core";
 import {
-  FaBoxOpen,
-  FaCalendarAlt,
   FaCheckCircle,
   FaClipboardList,
-  FaCogs,
-  FaCut,
-  FaDoorOpen,
   FaFire,
-  FaIndustry,
-  FaPaintBrush,
-  FaRegCircle,
   FaShippingFast,
-  FaTools,
-  FaTruckLoading,
   FaUserTie,
   FaExternalLinkAlt,
+  FaRegCircle,
 } from "react-icons/fa";
 import dayjs from "dayjs";
 import { useSupabase } from "@/hooks/useSupabase";
@@ -53,6 +42,7 @@ import RelatedBackorders from "@/components/Shared/RelatedBO/RelatedBO";
 import JobAttachments from "../JobAttachments/JobAttachments";
 import { usePermissions } from "@/hooks/usePermissions";
 import { IoIosWarning } from "react-icons/io";
+import { colors } from "@/theme";
 
 type JoinedCabinet = Tables<"cabinets"> & {
   door_styles: { name: string } | null;
@@ -81,42 +71,37 @@ interface JobDetailsDrawerProps {
   onClose: () => void;
 }
 
-const SectionHeader = ({
-  icon: Icon,
-  title,
-  color = "violet",
-}: {
-  icon: any;
-  title?: string;
-  color?: string;
-}) => (
-  <Group mb="xs" gap="xs">
-    <ThemeIcon size="sm" radius="md" variant="light" color={color}>
-      <Icon size={12} />
-    </ThemeIcon>
-    <Text
-      fw={700}
-      size="xs"
-      tt="uppercase"
-      c="dimmed"
-      style={{ letterSpacing: "0.5px" }}
-    >
-      {title}
-    </Text>
-  </Group>
+const SectionHeader = ({ icon: Icon, title }: { icon: any; title: string }) => (
+  <Text
+    fw={600}
+    size="lg"
+    mb="md"
+    c={colors.violet.primary}
+    style={{ display: "flex", alignItems: "center" }}
+  >
+    <Icon style={{ marginRight: 8 }} /> {title}
+  </Text>
+);
+
+const SectionCard = ({ children }: { children: React.ReactNode }) => (
+  <Paper p="md" radius="md" withBorder shadow="sm" bg="white">
+    {children}
+  </Paper>
 );
 
 const CompactDateBlock = ({
   label,
   date,
   color = "gray",
+  rightSection,
 }: {
   label: string;
   date: string | null | undefined;
   color?: string;
+  rightSection?: React.ReactNode;
 }) => (
   <Box
-    p={6}
+    p={8}
     bg="gray.0"
     style={{
       borderRadius: 6,
@@ -126,12 +111,15 @@ const CompactDateBlock = ({
         : undefined,
     }}
   >
-    <Text size="10px" c="dimmed" fw={700} tt="uppercase">
+    <Text size="xs" c="dimmed" fw={700} tt="uppercase" mb={2}>
       {label}
     </Text>
-    <Text size="sm" fw={600} c={date ? "dark" : "dimmed"}>
-      {date ? dayjs(date).format("MMM D, YYYY") : "—"}
-    </Text>
+    <Group gap={6} align="center">
+      <Text size="sm" fw={600} c={date ? "dark" : "dimmed"}>
+        {date ? dayjs(date).format("MMM D, YYYY") : "—"}
+      </Text>
+      {rightSection}
+    </Group>
   </Box>
 );
 
@@ -196,71 +184,76 @@ export default function JobDetailsDrawer({
     const prod = job.production_schedule;
     const install = job.installation;
 
-    const address = [so?.shipping_street, so?.shipping_city, so?.shipping_zip]
-      .filter(Boolean)
-      .join(", ");
-
     return (
-      <Stack gap="md" pb="xl">
-        <Paper p="md" radius="md" bg="gray.1">
-          <JobAttachments jobId={jobId as number} />
-          <Group justify="space-between" align="flex-start" mt="md">
-            <Group>
+      <Stack gap="lg" pb="xl">
+        {}
+        <SectionCard>
+          <Group justify="space-between" align="flex-start">
+            <Group align="flex-start" gap="md">
               <ThemeIcon
-                size={50}
+                size={56}
                 radius="md"
                 variant="gradient"
-                gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
+                gradient={{
+                  from: colors.violet.secondary,
+                  to: colors.violet.primary,
+                  deg: 135,
+                }}
               >
-                <FaClipboardList size={24} />
+                <FaClipboardList size={28} />
               </ThemeIcon>
-              <Stack gap={0}>
-                <Group gap="xs">
-                  <Title order={3}>Job #{job.job_number}</Title>
+              <Stack gap={2}>
+                <Group gap="xs" align="center">
+                  <Title order={3} style={{ lineHeight: 1.2 }}>
+                    Job #{job.job_number}
+                  </Title>
                   {prod?.rush && (
                     <Badge
                       color="red"
                       variant="filled"
-                      leftSection={<FaFire />}
+                      size="sm"
+                      leftSection={<FaFire size={10} />}
                     >
                       RUSH
                     </Badge>
                   )}
                 </Group>
-                <Text size="sm" c="dimmed" fw={500}>
+                <Text size="md" fw={500} c="dark">
                   {so?.shipping_client_name}
                 </Text>
-                {address && (
-                  <Text size="xs" c="dimmed">
-                    {address}
-                  </Text>
-                )}
-                <Text size="xs" mt="xs">
-                  Designer: {so?.designer}
+                <Text size="sm" c="dimmed">
+                  Designer: {so?.designer || "N/A"}
                 </Text>
-                <Text size="xs" mt="xs">
+                <Text size="xs" c="dimmed">
                   Created On: {dayjs(so?.created_at).format("MMM D, YYYY")}
                 </Text>
               </Stack>
             </Group>
 
-            <Tooltip label="Open Full Edit Page">
-              <ActionIcon
-                component={Link}
-                href={`/dashboard/sales/editsale/${so?.id}`}
-                variant="light"
-                color="violet"
-                size="lg"
-                onClick={onClose}
-              >
-                <FaExternalLinkAlt size={14} />
-              </ActionIcon>
-            </Tooltip>
+            <Group>
+              <Tooltip label="Open Full Edit Page">
+                <ActionIcon
+                  component={Link}
+                  href={`/dashboard/sales/editsale/${so?.id}`}
+                  variant="light"
+                  color="violet"
+                  size="xl"
+                  radius="md"
+                  onClick={onClose}
+                >
+                  <FaExternalLinkAlt size={18} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
           </Group>
-        </Paper>
 
-        <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          <Stack gap="xs">
+          <Box mt="lg">
+            <JobAttachments jobId={jobId as number} />
+          </Box>
+        </SectionCard>
+
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+          <Stack gap="lg">
             <ClientInfo
               shipping={{
                 shipping_client_name: so?.shipping_client_name,
@@ -286,8 +279,9 @@ export default function JobDetailsDrawer({
           <CabinetSpecs cabinet={cabinet} />
         </SimpleGrid>
 
-        <Paper p="md" radius="md" withBorder shadow="sm">
-          <Box mb="md">
+        {}
+        <SectionCard>
+          <Box mb="lg">
             <PlantActuals
               schedule={prod}
               isCanopyRequired={so?.is_canopy_required}
@@ -297,133 +291,141 @@ export default function JobDetailsDrawer({
             />
           </Box>
 
-          <Divider mb="md" />
+          <Divider
+            mb="lg"
+            label="Production & Shipping Schedule"
+            labelPosition="center"
+          />
 
-          <SimpleGrid cols={4} spacing="xs">
+          <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
             <CompactDateBlock label="Placement" date={prod?.placement_date} />
             <CompactDateBlock label="Wrap Date" date={install?.wrap_date} />
-            <Group>
-              <CompactDateBlock
-                label="Ship Date"
-                date={prod?.ship_schedule}
-                color="blue"
-              />
+            <CompactDateBlock
+              label="Ship Date"
+              date={prod?.ship_schedule}
+              color="blue"
+              rightSection={
+                <>
+                  {prod?.ship_status === "confirmed" && (
+                    <Tooltip label="Confirmed Ship Date">
+                      <Box style={{ display: "flex" }}>
+                        <FaCheckCircle size={14} color={colors.green.primary} />
+                      </Box>
+                    </Tooltip>
+                  )}
+                  {prod?.ship_status === "tentative" && (
+                    <Tooltip label="Tentative Ship Date">
+                      <Box style={{ display: "flex" }}>
+                        <IoIosWarning size={14} color={colors.orange.primary} />
+                      </Box>
+                    </Tooltip>
+                  )}
+                </>
+              }
+            />
 
-              {prod?.ship_status === "confirmed" && (
-                <Tooltip label="Confirmed">
-                  <FaCheckCircle size={16} color="green" />
-                </Tooltip>
-              )}
-
-              {prod?.ship_status === "tentative" && (
-                <Tooltip label="Tentative">
-                  <IoIosWarning size={16} color="orange" />
-                </Tooltip>
-              )}
-            </Group>
-
-            <Stack align="center" justify="center">
-              <Text size="10px" c="dimmed" fw={700} tt="uppercase">
+            <Box
+              p={8}
+              bg="gray.0"
+              style={{
+                borderRadius: 6,
+                border: "1px solid #e9ecef",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Text size="xs" c="dimmed" fw={700} tt="uppercase" mb={4}>
                 Shipped
               </Text>
-              <Group>
-                {!install?.partially_shipped && (
-                  <Badge
-                    color={install?.has_shipped ? "green" : "red"}
-                    variant="light"
-                    miw="60px"
-                  >
-                    <Text size="10px" fw={600}>
-                      {install?.has_shipped ? "YES" : "NO"}
-                    </Text>
-                  </Badge>
-                )}
-                {install?.partially_shipped && (
-                  <Badge color="orange" variant="outline" miw="60px">
-                    Partial
-                  </Badge>
-                )}
-              </Group>
-            </Stack>
+              {!install?.partially_shipped ? (
+                <Badge
+                  color={install?.has_shipped ? "green" : "gray"}
+                  variant="dot"
+                  size="sm"
+                >
+                  {install?.has_shipped ? "YES" : "NO"}
+                </Badge>
+              ) : (
+                <Badge color="orange" variant="light" size="sm">
+                  PARTIAL
+                </Badge>
+              )}
+            </Box>
           </SimpleGrid>
-        </Paper>
+        </SectionCard>
 
-        <Paper p="md" radius="md" withBorder shadow="sm">
+        {}
+        <SectionCard>
           <SectionHeader
             icon={FaShippingFast}
             title="Installation & Logistics"
-            color="orange"
           />
 
-          <Stack gap="xs">
-            <Group>
-              <Text size="sm" c="dimmed">
-                Installer:
+          <Stack gap="md">
+            <Group
+              justify="space-between"
+              p="xs"
+              bg="gray.0"
+              style={{ borderRadius: 8 }}
+            >
+              <Text size="sm" c="dimmed" fw={600}>
+                Assigned Installer
               </Text>
-              <Text size="sm" fw={600}>
-                {install?.installer?.company_name ||
-                  install?.installer?.first_name ||
-                  "Unassigned"}
-              </Text>
+              <Group gap="xs">
+                <FaUserTie size={14} color="gray" />
+                <Text size="sm" fw={700} c="dark">
+                  {install?.installer?.company_name ||
+                    install?.installer?.first_name ||
+                    "Unassigned"}
+                </Text>
+              </Group>
             </Group>
 
-            <SimpleGrid cols={2} spacing="xs">
+            <SimpleGrid cols={2} spacing="md">
               <CompactDateBlock
                 label="Install Date"
                 date={install?.installation_date}
                 color="orange"
+                rightSection={
+                  install?.installation_completed && (
+                    <Tooltip label="Installation Complete">
+                      <Box style={{ display: "flex" }}>
+                        <FaCheckCircle size={14} color={colors.green.primary} />
+                      </Box>
+                    </Tooltip>
+                  )
+                }
               />
               <CompactDateBlock
                 label="Inspect Date"
                 date={install?.inspection_date}
                 color="cyan"
+                rightSection={
+                  install?.inspection_completed && (
+                    <Tooltip label="Inspection Complete">
+                      <Box style={{ display: "flex" }}>
+                        <FaCheckCircle size={14} color={colors.blue.primary} />
+                      </Box>
+                    </Tooltip>
+                  )
+                }
               />
             </SimpleGrid>
-
-            <Group gap="xs" mt={4}>
-              <Badge
-                variant={install?.installation_completed ? "filled" : "outline"}
-                color={install?.installation_completed ? "green" : "gray"}
-                leftSection={
-                  install?.installation_completed ? (
-                    <FaCheckCircle size={10} />
-                  ) : (
-                    <FaRegCircle size={10} />
-                  )
-                }
-              >
-                Install Complete
-              </Badge>
-              <Badge
-                variant={install?.inspection_completed ? "filled" : "outline"}
-                color={install?.inspection_completed ? "blue" : "gray"}
-                leftSection={
-                  install?.inspection_completed ? (
-                    <FaCheckCircle size={10} />
-                  ) : (
-                    <FaRegCircle size={10} />
-                  )
-                }
-              >
-                Inspect Complete
-              </Badge>
-            </Group>
           </Stack>
-        </Paper>
+        </SectionCard>
 
-        <Paper p="md" radius="md" withBorder shadow="sm">
-          <SectionHeader
-            icon={FaClipboardList}
-            title="Comments & Notes"
-            color="grape"
-          />
+        {}
+        <SectionCard>
+          <SectionHeader icon={FaClipboardList} title="Comments & Notes" />
 
-          <Stack gap="md">
+          <Stack gap="lg">
             <Box>
               <Text size="sm" fw={700} c="dark" mb={4}>
                 Sales Order Comments
               </Text>
-              <Paper p="xs" withBorder bg="gray.0">
+              <Paper p="sm" withBorder bg="gray.0" radius="md">
                 <Text size="sm" c="dimmed" style={{ whiteSpace: "pre-wrap" }}>
                   {so?.comments || "No sales comments available."}
                 </Text>
@@ -434,7 +436,7 @@ export default function JobDetailsDrawer({
               <Text size="sm" fw={700} c="dark" mb={4}>
                 Production Notes
               </Text>
-              <Paper p="xs" withBorder bg="gray.0">
+              <Paper p="sm" withBorder bg="gray.0" radius="md">
                 <Text size="sm" c="dimmed" style={{ whiteSpace: "pre-wrap" }}>
                   {prod?.production_comments ||
                     "No production notes available."}
@@ -446,7 +448,7 @@ export default function JobDetailsDrawer({
               <Text size="sm" fw={700} c="dark" mb={4}>
                 Installation/Site Notes
               </Text>
-              <Paper p="xs" withBorder bg="gray.0">
+              <Paper p="sm" withBorder bg="gray.0" radius="md">
                 <Text size="sm" c="dimmed" style={{ whiteSpace: "pre-wrap" }}>
                   {install?.installation_notes ||
                     "No installation notes available."}
@@ -454,7 +456,7 @@ export default function JobDetailsDrawer({
               </Paper>
             </Box>
           </Stack>
-        </Paper>
+        </SectionCard>
 
         <RelatedServiceOrders
           jobId={jobId}
@@ -471,12 +473,23 @@ export default function JobDetailsDrawer({
       onClose={onClose}
       position="right"
       size="xl"
+      zIndex={999}
       title={
-        <Text fw={700} size="lg" c="violet">
-          Job Quick View
+        <Text
+          fw={700}
+          size="xl"
+          c="dark.4"
+          style={{ fontFamily: "var(--mantine-font-family)" }}
+        >
+          Job Details
         </Text>
       }
       overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+      styles={{
+        body: { backgroundColor: colors.gray.backgroundAlt },
+        header: { borderBottom: `1px solid ${colors.gray.borderLight}` },
+        content: { overflowY: "hidden" },
+      }}
     >
       <ScrollArea h="calc(100vh - 80px)" type="hover">
         {renderContent()}
