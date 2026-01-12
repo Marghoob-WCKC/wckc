@@ -260,6 +260,7 @@ export default function RelatedServiceOrders({
         onClose={handleClosePreview}
         title="Service Order Preview"
         fullScreen
+        zIndex={2000}
         styles={{
           body: { height: "80vh" },
         }}
