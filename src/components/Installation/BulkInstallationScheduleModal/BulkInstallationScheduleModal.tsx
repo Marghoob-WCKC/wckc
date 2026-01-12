@@ -82,10 +82,17 @@ export default function BulkScheduleModal({
   });
 
   const installerOptions = useMemo(() => {
-    return (installers || []).map((i) => ({
-      value: String(i.installer_id),
-      label: i.company_name || `${i.first_name} ${i.last_name}`,
-    }));
+    return (installers || []).map((i) => {
+      const fullName = [i.first_name, i.last_name].filter(Boolean).join(" ");
+      let label = fullName;
+      if (i.company_name) {
+        label = fullName ? `${i.company_name} (${fullName})` : i.company_name;
+      }
+      return {
+        value: String(i.installer_id),
+        label: label || "Unknown Installer",
+      };
+    });
   }, [installers]);
 
   const handleUpdate = (key: keyof BulkSchedulePayload, value: any) => {
@@ -138,7 +145,9 @@ export default function BulkScheduleModal({
   }, [selectedRows]);
 
   const selectedJobIds = useMemo(() => {
-    return selectedRows.map((row) => row.original.id).filter((id) => typeof id === 'number');
+    return selectedRows
+      .map((row) => row.original.id)
+      .filter((id) => typeof id === "number");
   }, [selectedRows]);
 
   return (
@@ -258,7 +267,10 @@ export default function BulkScheduleModal({
                       placeholder="Enter details..."
                       minRows={3}
                       onChange={(e) =>
-                        handleUpdate("site_changes_detail", e.currentTarget.value)
+                        handleUpdate(
+                          "site_changes_detail",
+                          e.currentTarget.value
+                        )
                       }
                     />
                   )}
@@ -284,7 +296,9 @@ export default function BulkScheduleModal({
                     onChange={(e) =>
                       handleUpdate(
                         "wrap_completed",
-                        e.currentTarget.checked ? new Date().toISOString() : null
+                        e.currentTarget.checked
+                          ? new Date().toISOString()
+                          : null
                       )
                     }
                     styles={{ label: { fontWeight: 500 } }}
@@ -296,8 +310,13 @@ export default function BulkScheduleModal({
                 <Switch
                   size="md"
                   color={updates.partially_shipped ? "orange" : "violet"}
-                  label={updates.partially_shipped ? "Shipped (Partial)" : "Shipped"}
-                  checked={updates.has_shipped === true || updates.partially_shipped === true}
+                  label={
+                    updates.partially_shipped ? "Shipped (Partial)" : "Shipped"
+                  }
+                  checked={
+                    updates.has_shipped === true ||
+                    updates.partially_shipped === true
+                  }
                   onChange={(e) => {
                     const isChecked = e.currentTarget.checked;
                     if (isChecked) {
@@ -322,8 +341,13 @@ export default function BulkScheduleModal({
                     size="md"
                     color="violet"
                     label="Installation Completed"
-                    checked={updates.installation_completed !== undefined && updates.installation_completed !== null}
-                    onChange={() => openCompletionModal("installation_completed")}
+                    checked={
+                      updates.installation_completed !== undefined &&
+                      updates.installation_completed !== null
+                    }
+                    onChange={() =>
+                      openCompletionModal("installation_completed")
+                    }
                     styles={{ label: { fontWeight: 500 } }}
                   />
                   {updates.installation_completed && (
@@ -331,7 +355,9 @@ export default function BulkScheduleModal({
                       variant="subtle"
                       color="red"
                       size="compact-xs"
-                      onClick={() => handleUpdate("installation_completed", undefined)}
+                      onClick={() =>
+                        handleUpdate("installation_completed", undefined)
+                      }
                     >
                       Reset
                     </Button>
@@ -352,7 +378,9 @@ export default function BulkScheduleModal({
                     onChange={(e) =>
                       handleUpdate(
                         "installation_report_received",
-                        e.currentTarget.checked ? new Date().toISOString() : null
+                        e.currentTarget.checked
+                          ? new Date().toISOString()
+                          : null
                       )
                     }
                     styles={{ label: { fontWeight: 500 } }}
@@ -373,7 +401,9 @@ export default function BulkScheduleModal({
                     onChange={(e) =>
                       handleUpdate(
                         "in_warehouse",
-                        e.currentTarget.checked ? new Date().toISOString() : null
+                        e.currentTarget.checked
+                          ? new Date().toISOString()
+                          : null
                       )
                     }
                     styles={{ label: { fontWeight: 500 } }}
@@ -394,7 +424,9 @@ export default function BulkScheduleModal({
                     onChange={(e) =>
                       handleUpdate(
                         "trade_30days",
-                        e.currentTarget.checked ? new Date().toISOString() : null
+                        e.currentTarget.checked
+                          ? new Date().toISOString()
+                          : null
                       )
                     }
                     styles={{ label: { fontWeight: 500 } }}
@@ -415,7 +447,9 @@ export default function BulkScheduleModal({
                     onChange={(e) =>
                       handleUpdate(
                         "trade_6months",
-                        e.currentTarget.checked ? new Date().toISOString() : null
+                        e.currentTarget.checked
+                          ? new Date().toISOString()
+                          : null
                       )
                     }
                     styles={{ label: { fontWeight: 500 } }}
@@ -436,13 +470,14 @@ export default function BulkScheduleModal({
                     onChange={(e) =>
                       handleUpdate(
                         "site_changes",
-                        e.currentTarget.checked ? new Date().toISOString() : null
+                        e.currentTarget.checked
+                          ? new Date().toISOString()
+                          : null
                       )
                     }
                     styles={{ label: { fontWeight: 500 } }}
                   />
                 </Group>
-
               </Stack>
             </Grid.Col>
           </Grid>
@@ -604,7 +639,7 @@ export default function BulkScheduleModal({
       <AddBackorderModal
         opened={isAddBackorderModalOpen}
         onClose={() => setIsAddBackorderModalOpen(false)}
-        jobId="" 
+        jobId=""
         jobNumber=""
         isBulk={true}
         jobIds={selectedJobIds}
