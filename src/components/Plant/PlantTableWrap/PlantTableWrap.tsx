@@ -742,13 +742,7 @@ export default function PlantTableWrap() {
           "cust_fin_assembled_completed_actual",
           "isCustom"
         ),
-        makeCheckboxCol(
-          "cust_fin",
-          "Custom Finish",
-          (r) => r.custom_finish_completed_actual,
-          "custom_finish_completed_actual",
-          "isCustom"
-        ),
+
         makeCheckboxCol(
           "assembly",
           "Assembly",
