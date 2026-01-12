@@ -28,97 +28,97 @@ const Quicksand = localFont({
 
 const dashboardLinks: SidebarLink[] = [
   {
-    iconName: "MdSupervisorAccount",
+    iconName: "LayoutDashboard",
     label: "Overview",
     path: "/dashboard",
   },
   {
-    iconName: "FaInbox",
+    iconName: "Inbox",
     label: "Inbox",
     path: "/dashboard/inbox",
     allowedRoles: ["admin", "installation"],
   },
   {
-    iconName: "FaHome",
+    iconName: "CircleDollarSign",
     label: "Sales",
     path: "/dashboard/sales",
     allowedRoles: ["designer", "admin", "manager"],
   },
   {
-    iconName: "FaGears",
+    iconName: "Hammer",
     label: "Production",
     path: "/dashboard/production",
     allowedRoles: ["admin", "scheduler", "reception"],
   },
   {
-    iconName: "FaShoppingBag",
+    iconName: "ShoppingCart",
     label: "Purchasing",
     path: "/dashboard/purchasing",
     allowedRoles: ["admin", "scheduler", "installation", "plant"],
   },
 
   {
-    iconName: "FaShippingFast",
+    iconName: "Truck",
     label: "Installation",
     allowedRoles: ["admin", "installation", "service", "reception"],
     links: [
       {
-        iconName: "GrSchedules",
+        iconName: "CalendarDays",
         label: "Schedule",
         path: "/dashboard/installation",
       },
       {
-        iconName: "FaClipboardCheck",
+        iconName: "MapPin",
         label: "Site Visits",
         path: "/dashboard/installation/site-visits",
       },
       {
-        iconName: "FaClipboardList",
+        iconName: "FilePenLine",
         label: "Site Changes",
         path: "/dashboard/installation/site-changes",
       },
       {
-        iconName: "FaWarehouse",
+        iconName: "Warehouse",
         label: "Warehouse",
         path: "/dashboard/installation/warehouse",
       },
     ],
   },
   {
-    iconName: "FaTools",
+    iconName: "Wrench",
     label: "Service Orders",
     path: "/dashboard/serviceorders",
     allowedRoles: ["admin", "installation", "service"],
   },
   {
-    iconName: "MdFeedback",
+    iconName: "Timer",
     label: "Backorders",
     path: "/dashboard/backorders",
     allowedRoles: ["admin", "scheduler", "service", "installation", "plant"],
   },
   {
-    iconName: "FaClipboardCheck",
+    iconName: "ClipboardCheck",
     label: "Inspections",
     path: "/dashboard/inspections",
     allowedRoles: ["admin", "installation", "inspection"],
   },
   {
-    iconName: "MdFactory",
+    iconName: "Factory",
     label: "Plant",
     allowedRoles: ["admin", "plant"],
     links: [
       {
-        iconName: "FaCalendarAlt",
+        iconName: "Package",
         label: "Wrap Schedule",
         path: "/dashboard/plant/wrap",
       },
       {
-        iconName: "FaCalendarAlt",
+        iconName: "Truck",
         label: "Ship Schedule",
         path: "/dashboard/plant/ship",
       },
       {
-        iconName: "FaCalendarAlt",
+        iconName: "Wrench",
         label: "Service Orders",
         path: "/dashboard/plant/service-orders",
       },
@@ -126,42 +126,42 @@ const dashboardLinks: SidebarLink[] = [
   },
 
   {
-    iconName: "FaFileInvoice",
+    iconName: "ReceiptText",
     label: "Invoices",
     path: "/dashboard/invoices",
     allowedRoles: ["admin", "reception"],
   },
   {
-    iconName: "FaClipboardCheck",
+    iconName: "FileChartColumn",
     label: "Reports",
     links: [
       {
-        iconName: "FaCalendarAlt",
+        iconName: "Package",
         label: "Wrap Schedule",
         path: "/dashboard/reports/wrapschedulereport",
       },
       {
-        iconName: "FaShippingFast",
+        iconName: "Truck",
         label: "Ship Schedule",
         path: "/dashboard/reports/shipschedulereport",
       },
       {
-        iconName: "FaTruckLoading",
+        iconName: "Archive",
         label: "Past Shipping",
         path: "/dashboard/reports/pastshipreport",
       },
       {
-        iconName: "FaBoxOpen",
+        iconName: "Box",
         label: "Box Count",
         path: "/dashboard/reports/boxcountreport",
       },
       {
-        iconName: "FaFileInvoice",
+        iconName: "FileWarning",
         label: "Not Invoiced",
         path: "/dashboard/reports/shippednotinvoiced",
       },
       {
-        iconName: "FaFileInvoice",
+        iconName: "Activity",
         label: "Job Status",
         path: "/dashboard/reports/jobstatusreport",
       },
@@ -169,13 +169,13 @@ const dashboardLinks: SidebarLink[] = [
   },
 
   {
-    iconName: "FaUsers",
+    iconName: "Users",
     label: "Clients",
     path: "/dashboard/clients",
     allowedRoles: ["designer", "admin", "manager"],
   },
   {
-    iconName: "GoTools",
+    iconName: "UserCog",
     label: "Installers",
     path: "/dashboard/installers",
     allowedRoles: ["admin", "installation", "service"],

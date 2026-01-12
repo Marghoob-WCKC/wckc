@@ -18,29 +18,36 @@ import {
 } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { useMediaQuery } from "@mantine/hooks";
-import {
-  FaHome,
-  FaUsers,
-  FaShippingFast,
-  FaTools,
-  FaShoppingBag,
-  FaFileInvoice,
-  FaChevronRight,
-  FaCalendarAlt,
-  FaClipboardCheck,
-  FaTruckLoading,
-  FaBoxOpen,
-  FaChevronLeft,
-  FaClipboardList,
-  FaWarehouse,
-  FaInbox,
-} from "react-icons/fa";
-import { FaGears, FaBarsStaggered } from "react-icons/fa6";
-import { MdFactory, MdFeedback, MdSupervisorAccount } from "react-icons/md";
-import { GoTools } from "react-icons/go";
 import { SignedIn, UserButton } from "@clerk/nextjs";
-import { GrSchedules } from "react-icons/gr";
-import { IoMenu } from "react-icons/io5";
+import {
+  TbLayoutDashboard,
+  TbInbox,
+  TbCurrencyDollar,
+  TbTools,
+  TbShoppingCart,
+  TbTruckDelivery,
+  TbCalendarEvent,
+  TbMapPin,
+  TbFileDescription,
+  TbBuildingWarehouse,
+  TbTool,
+  TbClockHour4,
+  TbChecklist,
+  TbBuildingFactory2,
+  TbPackage,
+  TbFileInvoice,
+  TbChartBar,
+  TbBox,
+  TbListCheck,
+  TbUsers,
+  TbUserCog,
+  TbChevronRight,
+  TbChevronLeft,
+  TbMenu2,
+  TbArchive,
+  TbAlertTriangle,
+  TbActivity,
+} from "react-icons/tb";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 import TopNavigationBar from "../Shared/TopNavigationBar/TopNavigationBar";
 import Link from "next/link";
@@ -73,25 +80,30 @@ type SidebarProps = {
 };
 
 const iconMap: Record<string, any> = {
-  FaHome,
-  FaUsers,
-  FaGears,
-  FaShippingFast,
-  FaTools,
-  MdFactory,
-  GoTools,
-  FaShoppingBag,
-  FaFileInvoice,
-  FaCalendarAlt,
-  FaClipboardCheck,
-  FaClipboardList,
-  FaTruckLoading,
-  MdSupervisorAccount,
-  GrSchedules,
-  FaBoxOpen,
-  MdFeedback,
-  FaWarehouse,
-  FaInbox,
+  LayoutDashboard: TbLayoutDashboard,
+  Inbox: TbInbox,
+  CircleDollarSign: TbCurrencyDollar,
+  Hammer: TbTools,
+  ShoppingCart: TbShoppingCart,
+  Truck: TbTruckDelivery,
+  CalendarDays: TbCalendarEvent,
+  MapPin: TbMapPin,
+  FilePenLine: TbFileDescription,
+  Warehouse: TbBuildingWarehouse,
+  Wrench: TbTool,
+  Timer: TbClockHour4,
+  ClipboardCheck: TbChecklist,
+  Factory: TbBuildingFactory2,
+  Package: TbPackage,
+  ReceiptText: TbFileInvoice,
+  FileChartColumn: TbChartBar,
+  Box: TbBox,
+  ListTodo: TbListCheck,
+  Users: TbUsers,
+  UserCog: TbUserCog,
+  Archive: TbArchive,
+  FileWarning: TbAlertTriangle,
+  Activity: TbActivity,
 };
 
 function MainLink({
@@ -102,7 +114,7 @@ function MainLink({
   collapsed: boolean;
 }) {
   const pathname = usePathname();
-  const Icon = iconMap[item.iconName] || FaHome;
+  const Icon = iconMap[item.iconName] || TbLayoutDashboard;
   const hasLinks = Array.isArray(item.links) && item.links.length > 0;
   const { navigatePush } = useNavigationGuard();
 
@@ -130,7 +142,7 @@ function MainLink({
     borderRadius: 6,
     backgroundColor:
       isActive || isChildActive ? "rgba(255, 255, 255, 0.15)" : "transparent",
-    color: isActive || isChildActive ? "#fff" : "rgba(255, 255, 255, 0.7)",
+    color: "#fff",
     cursor: "pointer",
     width: "100%",
     minHeight: rem(40),
@@ -161,7 +173,7 @@ function MainLink({
           <Menu.Target>
             <UnstyledButton p="xs" style={navItemStyle}>
               <Center style={{ width: "100%" }}>
-                <Icon size={20} />
+                <Icon size={24} color="white" />
               </Center>
             </UnstyledButton>
           </Menu.Target>
@@ -180,12 +192,12 @@ function MainLink({
               {item.label}
             </Menu.Label>
             {item.links?.map((link) => {
-              const SubIcon = iconMap[link.iconName] || FaHome;
+              const SubIcon = iconMap[link.iconName] || TbLayoutDashboard;
               return (
                 <Menu.Item
                   key={link.label}
                   className="sidebar-submenu-item"
-                  leftSection={<SubIcon size={14} />}
+                  leftSection={<SubIcon size={18} color="white" />}
                   component={(link.path ? Link : "button") as any}
                   href={link.path || undefined}
                   onClick={(e: React.MouseEvent) =>
@@ -229,7 +241,7 @@ function MainLink({
           style={{ ...navItemStyle, justifyContent: "center" }}
           onClick={(e: React.MouseEvent) => handleNavigation(e, item.path)}
         >
-          <Icon size={22} />
+          <Icon size={26} color="white" />
         </UnstyledButton>
       </Tooltip>
     );
@@ -252,7 +264,7 @@ function MainLink({
       >
         <Group justify="space-between" wrap="nowrap" style={{ width: "100%" }}>
           <Group gap="sm" wrap="nowrap">
-            <Icon size={18} />
+            <Icon size={22} color="white" />
             <Text
               size="sm"
               fw={isActive || isChildActive ? 600 : 400}
@@ -262,8 +274,9 @@ function MainLink({
             </Text>
           </Group>
           {hasLinks && (
-            <FaChevronRight
-              size={10}
+            <TbChevronRight
+              size={18}
+              color="white"
               style={{
                 transform: opened ? "rotate(90deg)" : "none",
                 transition: "transform 200ms ease",
@@ -375,7 +388,7 @@ export default function Sidebar({
                   backgroundColor: "#5700bbff",
                 }}
               >
-                v1.0.1
+                v1.0.2
               </Code>
             </Text>
           )}
@@ -386,7 +399,11 @@ export default function Sidebar({
             size="lg"
             style={{ flexShrink: 0 }}
           >
-            {collapsed ? <IoMenu size={40} /> : <FaChevronLeft size={14} />}
+            {collapsed ? (
+              <TbMenu2 size={28} color="white" />
+            ) : (
+              <TbChevronLeft size={22} color="white" />
+            )}
           </ActionIcon>
         </Group>
 
@@ -432,7 +449,7 @@ export default function Sidebar({
           },
         }}
       >
-        <Stack gap={4} px="md">
+        <Stack gap={2} px="md">
           {visibleLinks.map((link) => (
             <MainLink key={link.label} item={link} collapsed={collapsed} />
           ))}
