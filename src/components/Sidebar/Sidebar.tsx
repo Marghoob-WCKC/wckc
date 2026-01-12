@@ -354,7 +354,7 @@ export default function Sidebar({
         overflow: "hidden",
       }}
     >
-      <Box p="md" style={{ overflow: "hidden" }}>
+      <Box p="md">
         <Group
           justify={collapsed ? "center" : "space-between"}
           mb={collapsed ? 35 : "lg"}
