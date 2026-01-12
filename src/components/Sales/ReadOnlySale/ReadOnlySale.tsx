@@ -460,7 +460,7 @@ export default function ReadOnlySale({ salesOrderId }: ReadOnlySaleProps) {
                   )}
                   {order.is_custom_cab_required && (
                     <Badge color="grape" variant="light">
-                      Custom Cabinet
+                      Finish Cabinet
                     </Badge>
                   )}
                   {!order.is_canopy_required &&

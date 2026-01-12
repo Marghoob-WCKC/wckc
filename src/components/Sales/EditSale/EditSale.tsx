@@ -1391,7 +1391,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       })}
                     />
                     <Checkbox
-                      label="Custom Cabinet Required"
+                      label="Finish Cabinet Required"
                       color="#4A00E0"
                       styles={{
                         label: { fontWeight: 500, cursor: "pointer" },
