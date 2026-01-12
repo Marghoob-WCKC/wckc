@@ -33,6 +33,7 @@ import {
   ThemeIcon,
   Button,
   Anchor,
+  Menu,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import {
@@ -45,6 +46,9 @@ import {
   FaCut,
   FaPaintBrush,
   FaCogs,
+  FaBan,
+  FaPlus,
+  FaMinus,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
@@ -52,12 +56,16 @@ import { notifications } from "@mantine/notifications";
 import { usePlantWrapTable } from "@/hooks/usePlantWrapTable";
 import { Views } from "@/types/db";
 import { useDisclosure } from "@mantine/hooks";
+import { useUser } from "@clerk/nextjs";
 import WrapPdfPreviewModal from "./WrapPdfPreviewModal";
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
-type PlantTableView = Views<"plant_table_view">;
+import { usePermissions } from "@/hooks/usePermissions";
+import z from "zod";
+type PlantTableData = Views<"plant_table_view">;
 
-type PlantTableData = PlantTableView;
 export default function PlantTableWrap() {
+  const [userRole, setUserRole] = useState<any>("admin");
+  const [subRole, setSubRole] = useState<any>("assembly");
   const { supabase, isAuthenticated } = useSupabase();
   const queryClient = useQueryClient();
 
@@ -120,6 +128,7 @@ export default function PlantTableWrap() {
     }: {
       installId: number;
       currentStatus: boolean;
+      jobNumber?: string;
     }) => {
       const { error } = await supabase
         .from("installation")
@@ -129,20 +138,50 @@ export default function PlantTableWrap() {
         .eq("installation_id", installId);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plant_wrap_table"] });
-      queryClient.invalidateQueries({ queryKey: ["plant_shipping_table"] });
-      notifications.show({
-        title: "Updated",
-        message: "Wrap status updated successfully",
-        color: "green",
-      });
+    onMutate: async ({ installId, currentStatus }) => {
+      const queryKey = ["plant_wrap_table", pagination, activeFilters, sorting];
+      await queryClient.cancelQueries({ queryKey });
+      const previousData = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(
+        queryKey,
+        (old: { data: PlantTableData[]; count: number } | undefined) => {
+          if (!old) return old;
+          return {
+            ...old,
+            data: old.data.map((row) =>
+              row.installation_id === installId
+                ? {
+                    ...row,
+                    wrap_completed: currentStatus
+                      ? null
+                      : new Date().toISOString(),
+                  }
+                : row
+            ),
+          };
+        }
+      );
+      return { previousData, queryKey };
     },
-    onError: (err: any) => {
+    onError: (err: any, _, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
       notifications.show({
         title: "Error",
         message: err.message,
         color: "red",
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["plant_wrap_table"] });
+      queryClient.invalidateQueries({ queryKey: ["plant_shipping_table"] });
+    },
+    onSuccess: (_, variables) => {
+      notifications.show({
+        title: "Updated",
+        message: `Wrap status updated for ${variables.jobNumber || "job"}`,
+        color: "green",
       });
     },
   });
@@ -153,27 +192,21 @@ export default function PlantTableWrap() {
       prodId,
       field,
       currentValue,
+      jobNumber,
     }: {
       jobId: number;
       prodId: number | null;
       field: string;
       currentValue: string | null;
+      jobNumber?: string;
+      flags: {
+        isCanopy: boolean;
+        isWoodtop: boolean;
+        isCustom: boolean;
+      };
     }) => {
       const timestamp = currentValue ? null : new Date().toISOString();
       const updates: Record<string, any> = { [field]: timestamp };
-
-      if (field === "assembly_completed_actual" && timestamp) {
-        const allFields = [
-          "doors_completed_actual",
-          "cut_finish_completed_actual",
-          "custom_finish_completed_actual",
-          "drawer_completed_actual",
-          "cut_melamine_completed_actual",
-          "paint_completed_actual",
-          "assembly_completed_actual",
-        ];
-        allFields.forEach((f) => (updates[f] = timestamp));
-      }
 
       if (!prodId) throw new Error("No production schedule ID found");
 
@@ -183,12 +216,80 @@ export default function PlantTableWrap() {
         .eq("prod_id", prodId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async ({ prodId, field, currentValue }) => {
+      const queryKey = ["plant_wrap_table", pagination, activeFilters, sorting];
+      await queryClient.cancelQueries({ queryKey });
+      const previousData = queryClient.getQueryData(queryKey);
+      const timestamp = currentValue ? null : new Date().toISOString();
+      queryClient.setQueryData(
+        queryKey,
+        (old: { data: PlantTableData[]; count: number } | undefined) => {
+          if (!old) return old;
+          return {
+            ...old,
+            data: old.data.map((row) =>
+              row.prod_id === prodId ? { ...row, [field]: timestamp } : row
+            ),
+          };
+        }
+      );
+      return { previousData, queryKey };
+    },
+    onError: (err: any, _, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
+      notifications.show({
+        title: "Error",
+        message: err.message,
+        color: "red",
+      });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["plant_wrap_table"] });
       queryClient.invalidateQueries({ queryKey: ["plant_shipping_table"] });
+    },
+    onSuccess: (_, variables) => {
       notifications.show({
         title: "Updated",
-        message: "Production status updated",
+        message: `Production status updated for ${
+          variables.jobNumber || "job"
+        }`,
+        color: "green",
+      });
+    },
+  });
+
+  const toggleRequirementMutation = useMutation({
+    mutationFn: async ({
+      jobId,
+      field,
+      enable,
+    }: {
+      jobId: number;
+      field: string;
+      enable: boolean;
+    }) => {
+      const { data: jobData, error: jobError } = await supabase
+        .from("jobs")
+        .select("sales_order_id")
+        .eq("id", jobId)
+        .single();
+      if (jobError) throw jobError;
+      if (!jobData?.sales_order_id)
+        throw new Error("Sales Order ID not found on Job");
+
+      const { error } = await supabase
+        .from("sales_orders")
+        .update({ [field]: enable })
+        .eq("id", jobData.sales_order_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["plant_wrap_table"] });
+      notifications.show({
+        title: "Updated",
+        message: "Requirement updated successfully",
         color: "green",
       });
     },
@@ -233,286 +334,513 @@ export default function PlantTableWrap() {
 
   const columnHelper = createColumnHelper<PlantTableData>();
 
-  const columns = [
-    columnHelper.accessor("wrap_date", {
-      header: "Wrap Date",
-      size: 0,
-    }),
+  const columns = useMemo(() => {
+    const makeCheckboxCol = (
+      id: string,
+      header: string,
+      accessor: (row: PlantTableData) => any,
+      dbField: string,
+      requiredFlag?: "isCanopy" | "isWoodtop" | "isCustom",
+      customSize?: number
+    ) =>
+      columnHelper.accessor(accessor, {
+        id,
+        header: () => (
+          <Center>
+            <Text size="sm" fw={700} style={{ textAlign: "center" }}>
+              {header}
+            </Text>
+          </Center>
+        ),
+        size: customSize || 110,
+        cell: (info) => {
+          const val = info.getValue();
+          const isChecked = !!val;
+          const flags = {
+            isCanopy: !!info.row.original.is_canopy_required,
+            isWoodtop: !!info.row.original.is_woodtop_required,
+            isCustom: !!info.row.original.is_custom_cab_required,
+          };
 
-    columnHelper.accessor("placement_date", {
-      header: "Placement",
-      size: 100,
-      cell: (info) => {
-        const date = info.getValue();
-        if (!date)
+          if (requiredFlag && !flags[requiredFlag]) {
+            const canEnable =
+              userRole === "admin" ||
+              (subRole === "manager" && userRole === "plant");
+
+            if (canEnable) {
+              return (
+                <Menu shadow="md" width={200}>
+                  <Menu.Target>
+                    <Center
+                      style={{
+                        cursor: "pointer",
+                        height: "100%",
+                        width: "100%",
+                        opacity: 0.3,
+                      }}
+                    >
+                      <FaBan size={14} color="gray" />
+                    </Center>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Label>Requirement</Menu.Label>
+                    <Menu.Item
+                      leftSection={<FaCheck size={14} />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const fieldMap: Record<string, string> = {
+                          isCanopy: "is_canopy_required",
+                          isWoodtop: "is_woodtop_required",
+                          isCustom: "is_custom_cab_required",
+                        };
+                        if (info.row.original.job_id) {
+                          toggleRequirementMutation.mutate({
+                            jobId: info.row.original.job_id,
+                            field: fieldMap[requiredFlag],
+                            enable: true,
+                          });
+                        }
+                      }}
+                    >
+                      Enable {requiredFlag.replace("is", "")}
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              );
+            }
+
+            return (
+              <Tooltip label="Not Required" withArrow openDelay={500}>
+                <Center style={{ height: "100%", width: "100%", opacity: 0.3 }}>
+                  <FaBan size={14} color="gray" />
+                </Center>
+              </Tooltip>
+            );
+          }
+
+          const isWrapped = !!info.row.original.wrap_completed;
+
           return (
-            <Text size="xs" c="dimmed">
-              -
-            </Text>
+            <Tooltip
+              label={
+                isWrapped
+                  ? "Job is Wrapped - Read Only"
+                  : isChecked
+                  ? `Completed: ${dayjs(val).format("MMM D, HH:mm")}`
+                  : "Mark as Complete"
+              }
+              withArrow
+              openDelay={500}
+            >
+              <Center
+                style={{
+                  cursor: isWrapped ? "not-allowed" : "pointer",
+                  height: "100%",
+                  width: "100%",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isWrapped) return;
+                  info.row.original.job_id &&
+                    updateProductionMutation.mutate({
+                      jobId: info.row.original.job_id,
+                      prodId: info.row.original.prod_id,
+                      field: dbField,
+                      currentValue: val,
+                      jobNumber: info.row.original.job_number || "",
+                      flags: {
+                        isCanopy: !!info.row.original.is_canopy_required,
+                        isWoodtop: !!info.row.original.is_woodtop_required,
+                        isCustom: !!info.row.original.is_custom_cab_required,
+                      },
+                    });
+                }}
+              >
+                <ThemeIcon
+                  variant={isChecked ? "filled" : "outline"}
+                  color={isChecked ? "green" : "gray"}
+                  size="sm"
+                  radius="xl"
+                >
+                  {isChecked && <FaCheck size={10} />}
+                </ThemeIcon>
+              </Center>
+            </Tooltip>
           );
-        return (
-          <Tooltip label={dayjs(date).format("MMM D, YYYY")}>
-            <Center>
-              <FaCheck size={12} color="green" />
-            </Center>
-          </Tooltip>
-        );
-      },
-    }),
-    columnHelper.accessor("job_number", {
-      header: "Job #",
-      size: 100,
-      cell: (info) => (
-        <Anchor
-          component="button"
-          size="sm"
-          fw={600}
-          w="100%"
-          style={{ textAlign: "left" }}
-          c="#6f00ffff"
-          onClick={(e) => {
-            e.stopPropagation();
-            const jobId = info.row.original.job_id;
-            if (jobId) handleJobClick(jobId);
-          }}
-        >
-          <Text fw={600}>{info.getValue()}</Text>
-        </Anchor>
-      ),
-    }),
-    columnHelper.accessor("client_name", {
-      header: "Client",
-      size: 140,
-      cell: (info) => (
-        <Text size="sm" fw={500}>
-          {info.getValue() || "—"}
-        </Text>
-      ),
-    }),
-    columnHelper.accessor("shipping_city", {
-      id: "address",
-      header: "Location",
-      size: 160,
-      cell: (info) => {
-        const city = info.row.original.shipping_city;
-        const prov = info.row.original.shipping_province;
-        return (
-          <Tooltip label={info.row.original.shipping_street}>
-            <Text size="sm" truncate>
-              {[city, prov].filter(Boolean).join(", ")}
+        },
+      });
+
+    const commonStart = [
+      columnHelper.accessor("wrap_date", {
+        header: "Wrap Date",
+        size: 0,
+      }),
+      columnHelper.accessor("placement_date", {
+        header: "Placement",
+        size: 70,
+        cell: (info) => {
+          const date = info.getValue();
+          if (!date)
+            return (
+              <Text size="xs" c="dimmed">
+                -
+              </Text>
+            );
+          return (
+            <Tooltip label={dayjs(date).format("MMM D, YYYY")}>
+              <Center>
+                <FaCheck size={12} color="green" />
+              </Center>
+            </Tooltip>
+          );
+        },
+      }),
+      columnHelper.accessor("job_number", {
+        header: "Job #",
+        size: 90,
+        cell: (info) => (
+          <Anchor
+            component="button"
+            size="xs"
+            fw={600}
+            w="100%"
+            style={{ textAlign: "left" }}
+            c="#6f00ffff"
+            onClick={(e) => {
+              e.stopPropagation();
+              const jobId = info.row.original.job_id;
+              if (jobId) handleJobClick(jobId);
+            }}
+          >
+            <Text fw={600} size="xs">
+              {info.getValue()}
             </Text>
-          </Tooltip>
-        );
-      },
-    }),
-    columnHelper.accessor("cabinet_box", { header: "Box", size: 50 }),
-    columnHelper.accessor("cabinet_door_style", {
-      header: "Door Style",
-      size: 140,
-    }),
-    columnHelper.accessor("cabinet_species", { header: "Species", size: 110 }),
-    columnHelper.accessor("cabinet_color", { header: "Color", size: 110 }),
-    columnHelper.accessor("doors_completed_actual", {
-      header: "Doors",
-      size: 50,
-      cell: (info) => (
-        <Center onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={!!info.getValue()}
-            color="green"
-            size="xs"
-            onChange={() =>
-              info.row.original.job_id &&
-              updateProductionMutation.mutate({
-                jobId: info.row.original.job_id,
-                prodId: info.row.original.prod_id,
-                field: "doors_completed_actual",
-                currentValue: info.getValue(),
-              })
-            }
-          />
-        </Center>
-      ),
-    }),
-    columnHelper.accessor(
-      (row) => (row as PlantTableData).drawer_completed_actual,
-      {
-        id: "drawer_completed_actual",
-        header: "Drawer",
-        size: 50,
-        cell: (info) => (
-          <Center onClick={(e) => e.stopPropagation()}>
-            <Checkbox
-              checked={!!info.getValue()}
-              color="green"
-              size="xs"
-              onChange={() =>
-                info.row.original.job_id &&
-                updateProductionMutation.mutate({
-                  jobId: info.row.original.job_id,
-                  prodId: info.row.original.prod_id,
-                  field: "drawer_completed_actual",
-                  currentValue: info.getValue(),
-                })
-              }
-            />
-          </Center>
+          </Anchor>
         ),
-      }
-    ),
-    columnHelper.accessor(
-      (row) => (row as PlantTableData).cut_melamine_completed_actual,
-      {
-        id: "cut_melamine_completed_actual",
-        header: "CutMel",
-        size: 50,
+      }),
+      columnHelper.accessor("client_name", {
+        header: "Client",
+        size: 130,
         cell: (info) => (
-          <Center onClick={(e) => e.stopPropagation()}>
-            <Checkbox
-              checked={!!info.getValue()}
-              color="green"
-              size="xs"
-              onChange={() =>
-                info.row.original.job_id &&
-                updateProductionMutation.mutate({
-                  jobId: info.row.original.job_id,
-                  prodId: info.row.original.prod_id,
-                  field: "cut_melamine_completed_actual",
-                  currentValue: info.getValue(),
-                })
-              }
-            />
-          </Center>
-        ),
-      }
-    ),
-    columnHelper.accessor("cut_finish_completed_actual", {
-      header: "CutFin",
-      size: 50,
-      cell: (info) => (
-        <Center onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={!!info.getValue()}
-            color="green"
-            size="xs"
-            onChange={() =>
-              info.row.original.job_id &&
-              updateProductionMutation.mutate({
-                jobId: info.row.original.job_id,
-                prodId: info.row.original.prod_id,
-                field: "cut_finish_completed_actual",
-                currentValue: info.getValue(),
-              })
-            }
-          />
-        </Center>
-      ),
-    }),
-    columnHelper.accessor("custom_finish_completed_actual", {
-      header: "CustFin",
-      size: 50,
-      cell: (info) => (
-        <Center onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={!!info.getValue()}
-            color="green"
-            size="xs"
-            onChange={() =>
-              info.row.original.job_id &&
-              updateProductionMutation.mutate({
-                jobId: info.row.original.job_id,
-                prodId: info.row.original.prod_id,
-                field: "custom_finish_completed_actual",
-                currentValue: info.getValue(),
-              })
-            }
-          />
-        </Center>
-      ),
-    }),
-    columnHelper.accessor("paint_completed_actual", {
-      header: "Paint",
-      size: 50,
-      cell: (info) => (
-        <Center onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={!!info.getValue()}
-            color="green"
-            size="xs"
-            onChange={() =>
-              info.row.original.job_id &&
-              updateProductionMutation.mutate({
-                jobId: info.row.original.job_id,
-                prodId: info.row.original.prod_id,
-                field: "paint_completed_actual",
-                currentValue: info.getValue(),
-              })
-            }
-          />
-        </Center>
-      ),
-    }),
-    columnHelper.accessor("assembly_completed_actual", {
-      header: "Assembly",
-      size: 60,
-      cell: (info) => (
-        <Center onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={!!info.getValue()}
-            color="green"
-            size="xs"
-            onChange={() =>
-              info.row.original.job_id &&
-              updateProductionMutation.mutate({
-                jobId: info.row.original.job_id,
-                prodId: info.row.original.prod_id,
-                field: "assembly_completed_actual",
-                currentValue: info.getValue(),
-              })
-            }
-          />
-        </Center>
-      ),
-    }),
-    columnHelper.accessor("wrap_completed", {
-      header: "Wrapped",
-      size: 60,
-      cell: (info) => {
-        const isComplete = !!info.getValue();
-        const installId = info.row.original.installation_id;
-        return (
-          <Center onClick={(e) => e.stopPropagation()}>
-            <Checkbox
-              checked={isComplete}
-              color="#7400e0ff"
-              size="xs"
-              disabled={!installId || toggleWrapMutation.isPending}
-              onChange={() => {
-                if (installId) {
-                  toggleWrapMutation.mutate({
-                    installId,
-                    currentStatus: isComplete,
-                  });
-                }
-              }}
-              style={{ cursor: "pointer" }}
-            />
-          </Center>
-        );
-      },
-    }),
-    columnHelper.accessor("installation_notes", {
-      header: "Notes",
-      size: 180,
-      cell: (info) => (
-        <Tooltip label={info.getValue() || ""} multiline w={250}>
-          <Text size="xs" c={info.getValue() ? "dark" : "dimmed"} truncate>
+          <Text size="xs" fw={500}>
             {info.getValue() || "—"}
           </Text>
-        </Tooltip>
-      ),
-    }),
-  ];
+        ),
+      }),
+
+      columnHelper.accessor("cabinet_box", { header: "Box", size: 40 }),
+      columnHelper.accessor("cabinet_door_style", {
+        header: "Door Style",
+        size: 130,
+        cell: (info) => (
+          <Text size="xs" truncate>
+            {info.getValue() || "-"}
+          </Text>
+        ),
+      }),
+      columnHelper.accessor("cabinet_species", {
+        header: "Species",
+        size: 100,
+        cell: (info) => (
+          <Text size="xs" truncate>
+            {info.getValue() || "-"}
+          </Text>
+        ),
+      }),
+      columnHelper.accessor("cabinet_color", {
+        header: "Color",
+        size: 100,
+        cell: (info) => (
+          <Text size="xs" truncate>
+            {info.getValue() || "-"}
+          </Text>
+        ),
+      }),
+    ];
+
+    let actualsCols: any[] = [];
+
+    if (subRole === "wood" && userRole === "plant") {
+      actualsCols = [
+        makeCheckboxCol(
+          "doors",
+          "Doors",
+          (r) => r.doors_completed_actual,
+          "doors_completed_actual"
+        ),
+        makeCheckboxCol(
+          "panels",
+          "Panels",
+          (r) => r.panel_completed_actual,
+          "panel_completed_actual"
+        ),
+        makeCheckboxCol(
+          "drawers",
+          "Drawers",
+          (r) => r.drawer_completed_actual,
+          "drawer_completed_actual"
+        ),
+        makeCheckboxCol(
+          "woodtop",
+          "Woodtop",
+          (r) => r.woodtop_completed_actual,
+          "woodtop_completed_actual",
+          "isWoodtop"
+        ),
+        makeCheckboxCol(
+          "canopy",
+          "Canopy",
+          (r) => r.canopy_completed_actual,
+          "canopy_completed_actual",
+          "isCanopy"
+        ),
+      ];
+    } else if (subRole === "assembly" && userRole === "plant") {
+      actualsCols = [
+        makeCheckboxCol(
+          "cut_mel",
+          "Cut Melamine",
+          (r) => r.cut_melamine_completed_actual,
+          "cut_melamine_completed_actual"
+        ),
+        makeCheckboxCol(
+          "cut_fin",
+          "Cut Prefinished",
+          (r) => r.cut_finish_completed_actual,
+          "cut_finish_completed_actual"
+        ),
+        makeCheckboxCol(
+          "cust_parts_cut",
+          "Custom Parts Cut",
+          (r) => r.cust_fin_parts_cut_completed_actual,
+          "cust_fin_parts_cut_completed_actual",
+          "isCustom"
+        ),
+
+        makeCheckboxCol(
+          "cust_assm",
+          "Custom Assembled",
+          (r) => r.cust_fin_assembled_completed_actual,
+          "cust_fin_assembled_completed_actual",
+          "isCustom"
+        ),
+        makeCheckboxCol(
+          "assembly",
+          "Assembly",
+          (r) => r.assembly_completed_actual,
+          "assembly_completed_actual"
+        ),
+      ];
+    } else if (subRole === "paint" && userRole === "plant") {
+      actualsCols = [
+        makeCheckboxCol(
+          "paint_doors",
+          "Paint Doors/Panels",
+          (r) => r.paint_doors_completed_actual,
+          "paint_doors_completed_actual",
+          undefined,
+          150
+        ),
+        makeCheckboxCol(
+          "paint_canopy",
+          "Paint Canopy",
+          (r) => r.paint_canopy_completed_actual,
+          "paint_canopy_completed_actual",
+          "isCanopy"
+        ),
+        makeCheckboxCol(
+          "paint_custom",
+          "Paint Custom",
+          (r) => r.paint_cust_cab_completed_actual,
+          "paint_cust_cab_completed_actual",
+          "isCustom"
+        ),
+      ];
+    } else if (
+      (subRole === "manager" && userRole === "plant") ||
+      userRole === "admin"
+    ) {
+      actualsCols = [
+        makeCheckboxCol(
+          "doors",
+          "Doors",
+          (r) => r.doors_completed_actual,
+          "doors_completed_actual"
+        ),
+        makeCheckboxCol(
+          "panels",
+          "Panels",
+          (r) => r.panel_completed_actual,
+          "panel_completed_actual"
+        ),
+        makeCheckboxCol(
+          "drawers",
+          "Drawers",
+          (r) => r.drawer_completed_actual,
+          "drawer_completed_actual"
+        ),
+        makeCheckboxCol(
+          "woodtop",
+          "Woodtop",
+          (r) => r.woodtop_completed_actual,
+          "woodtop_completed_actual",
+          "isWoodtop"
+        ),
+        makeCheckboxCol(
+          "canopy",
+          "Canopy",
+          (r) => r.canopy_completed_actual,
+          "canopy_completed_actual",
+          "isCanopy"
+        ),
+        makeCheckboxCol(
+          "cut_mel",
+          "Cut Melamine",
+          (r) => r.cut_melamine_completed_actual,
+          "cut_melamine_completed_actual"
+        ),
+        makeCheckboxCol(
+          "cut_fin",
+          "Cut Prefinished",
+          (r) => r.cut_finish_completed_actual,
+          "cut_finish_completed_actual"
+        ),
+        makeCheckboxCol(
+          "paint_doors",
+          "Paint Doors/Panels",
+          (r) => r.paint_doors_completed_actual,
+          "paint_doors_completed_actual",
+          undefined,
+          150
+        ),
+        makeCheckboxCol(
+          "paint_canopy",
+          "Paint Canopy",
+          (r) => r.paint_canopy_completed_actual,
+          "paint_canopy_completed_actual",
+          "isCanopy"
+        ),
+        makeCheckboxCol(
+          "paint_custom",
+          "Paint Custom",
+          (r) => r.paint_cust_cab_completed_actual,
+          "paint_cust_cab_completed_actual",
+          "isCustom"
+        ),
+        makeCheckboxCol(
+          "cust_parts_cut",
+          "Custom Parts Cut",
+          (r) => r.cust_fin_parts_cut_completed_actual,
+          "cust_fin_parts_cut_completed_actual",
+          "isCustom"
+        ),
+
+        makeCheckboxCol(
+          "cust_assm",
+          "Custom Assembled",
+          (r) => r.cust_fin_assembled_completed_actual,
+          "cust_fin_assembled_completed_actual",
+          "isCustom"
+        ),
+        makeCheckboxCol(
+          "cust_fin",
+          "Custom Finish",
+          (r) => r.custom_finish_completed_actual,
+          "custom_finish_completed_actual",
+          "isCustom"
+        ),
+        makeCheckboxCol(
+          "assembly",
+          "Assembly",
+          (r) => r.assembly_completed_actual,
+          "assembly_completed_actual"
+        ),
+      ];
+    } else {
+      actualsCols = [];
+    }
+
+    const commonEnd = [];
+
+    if (
+      subRole === "manager" ||
+      subRole === "shipping" ||
+      userRole === "admin"
+    ) {
+      commonEnd.push(
+        columnHelper.accessor("wrap_completed", {
+          header: () => (
+            <Center w="100%">
+              <Text size="sm" fw={700}>
+                Wrapped
+              </Text>
+            </Center>
+          ),
+          size: 110,
+          cell: (info) => {
+            const val = info.getValue();
+            const isComplete = !!val;
+            const installId = info.row.original.installation_id;
+            return (
+              <Tooltip
+                label={
+                  isComplete
+                    ? `Completed: ${dayjs(val).format("MMM D, HH:mm")}`
+                    : "Mark as Wrapped"
+                }
+                withArrow
+                openDelay={500}
+              >
+                <Center
+                  style={{ cursor: "pointer", height: "100%", width: "100%" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (installId && !toggleWrapMutation.isPending) {
+                      toggleWrapMutation.mutate({
+                        installId,
+                        currentStatus: isComplete,
+                        jobNumber: info.row.original.job_number || "",
+                      });
+                    }
+                  }}
+                >
+                  <ThemeIcon
+                    variant={isComplete ? "filled" : "outline"}
+                    color={isComplete ? "#7400e0ff" : "gray"}
+                    size="sm"
+                    radius="xl"
+                  >
+                    {isComplete && <FaCheck size={10} />}
+                  </ThemeIcon>
+                </Center>
+              </Tooltip>
+            );
+          },
+        })
+      );
+    }
+
+    commonEnd.push(
+      columnHelper.accessor("installation_notes", {
+        header: "Notes",
+        size: 180,
+        cell: (info) =>
+          !!info.row.original.installation_notes ? (
+            <Tooltip label={info.getValue() || ""} multiline w={250}>
+              <Text size="xs" c={info.getValue() ? "dark" : "dimmed"} truncate>
+                {info.getValue() || "—"}
+              </Text>
+            </Tooltip>
+          ) : (
+            <Text size="xs" c={info.getValue() ? "dark" : "dimmed"} truncate>
+              {info.getValue() || "—"}
+            </Text>
+          ),
+      })
+    );
+
+    return [...commonStart, ...actualsCols, ...commonEnd];
+  }, [subRole, toggleWrapMutation, updateProductionMutation]);
 
   const table = useReactTable({
     data: tableData,
@@ -663,7 +991,15 @@ export default function PlantTableWrap() {
         </Accordion.Item>
       </Accordion>
 
-      <ScrollArea style={{ flex: 1 }} type="always">
+      <ScrollArea
+        style={{ flex: 1 }}
+        type="always"
+        styles={{
+          thumb: {
+            zIndex: "999",
+          },
+        }}
+      >
         {table.getRowModel().rows.length === 0 ? (
           <Center py="xl">
             <Text c="dimmed">No jobs found.</Text>
@@ -683,7 +1019,14 @@ export default function PlantTableWrap() {
               }}
             >
               {sortedGroupKeys.map((wrapDate) => {
-                const jobsInGroup = groupedRows[wrapDate];
+                const jobsInGroup = [...groupedRows[wrapDate]].sort((a, b) => {
+                  const jobA = a.original.job_number || "";
+                  const jobB = b.original.job_number || "";
+                  return jobA.localeCompare(jobB, undefined, {
+                    numeric: true,
+                    sensitivity: "base",
+                  });
+                });
                 const isOpen = openItems.includes(wrapDate);
                 const isPastDue = dayjs(wrapDate).isBefore(dayjs(), "day");
                 const uniqueJobCount = new Set(
@@ -737,54 +1080,76 @@ export default function PlantTableWrap() {
                               {table
                                 .getFlatHeaders()
                                 .slice(1)
-                                .map((header) => (
-                                  <Table.Th
-                                    style={{
-                                      backgroundColor: "#ffffffff",
-                                      width: header.getSize(),
-                                    }}
-                                    key={header.id}
-                                  >
-                                    {flexRender(
-                                      header.column.columnDef.header,
-                                      header.getContext()
-                                    )}
-                                  </Table.Th>
-                                ))}
+                                .map((header) => {
+                                  const isStickyJob =
+                                    header.column.id === "job_number";
+                                  let stickyStyle: React.CSSProperties = {};
+                                  if (isStickyJob) {
+                                    stickyStyle = {
+                                      position: "sticky",
+                                      left: -1,
+                                      zIndex: 2,
+                                    };
+                                  }
+
+                                  return (
+                                    <Table.Th
+                                      style={{
+                                        backgroundColor: "#ffffffff",
+                                        width: header.getSize(),
+                                        ...stickyStyle,
+                                      }}
+                                      key={header.id}
+                                    >
+                                      {flexRender(
+                                        header.column.columnDef.header,
+                                        header.getContext()
+                                      )}
+                                    </Table.Th>
+                                  );
+                                })}
                             </Table.Tr>
                           </Table.Thead>
                           <Table.Tbody>
                             {jobsInGroup.map((row) => {
                               const isCompleted = !!row.original.wrap_completed;
                               return (
-                                <Table.Tr
-                                  key={row.id}
-                                  style={{
-                                    opacity: isCompleted ? 0.3 : 1,
-                                    backgroundColor: isCompleted
-                                      ? "#f8f9fa"
-                                      : undefined,
-                                  }}
-                                >
+                                <Table.Tr key={row.id}>
                                   {row
                                     .getVisibleCells()
                                     .slice(1)
-                                    .map((cell) => (
-                                      <Table.Td
-                                        key={cell.id}
-                                        style={{
-                                          width: cell.column.getSize(),
-                                          whiteSpace: "nowrap",
-                                          overflow: "hidden",
-                                          textOverflow: "ellipsis",
-                                        }}
-                                      >
-                                        {flexRender(
-                                          cell.column.columnDef.cell,
-                                          cell.getContext()
-                                        )}
-                                      </Table.Td>
-                                    ))}
+                                    .map((cell) => {
+                                      const isStickyJob =
+                                        cell.column.id === "job_number";
+                                      let stickyStyle: React.CSSProperties = {};
+
+                                      if (isStickyJob) {
+                                        stickyStyle = {
+                                          position: "sticky",
+                                          left: -1,
+                                          zIndex: 1,
+                                          backgroundColor: "#f0f0f0ff",
+                                        };
+                                      }
+
+                                      return (
+                                        <Table.Td
+                                          key={cell.id}
+                                          style={{
+                                            width: cell.column.getSize(),
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            ...stickyStyle,
+                                          }}
+                                        >
+                                          {flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext()
+                                          )}
+                                        </Table.Td>
+                                      );
+                                    })}
                                 </Table.Tr>
                               );
                             })}

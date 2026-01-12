@@ -201,6 +201,7 @@ export default function PlantActuals({
         <Group
           align="flex-start"
           gap="md"
+          mt={20}
           style={{ overflowX: "auto", flexWrap: "nowrap", paddingBottom: 4 }}
         >
           {groups.map((group, idx) => {
@@ -219,23 +220,22 @@ export default function PlantActuals({
                     {isGroupComplete ? <FaCheckCircle size={10} /> : group.icon}
                   </ThemeIcon>
                   <Text
-                    size="xs"
+                    size="sm"
                     fw={700}
                     c={isGroupComplete ? "dark" : "dimmed"}
                   >
                     {group.title}
                   </Text>
                 </Group>
-                <Stack gap={2}>
+                <Stack gap={2} mt={10}>
                   {group.steps.map((step) => (
-                    <Group key={step.key} gap={4} wrap="nowrap">
-                      <ThemeIcon
-                        size={5}
-                        radius="xl"
-                        color={step.isCompleted ? "green" : "gray.3"}
+                    <Group key={step.key} gap={4} wrap="nowrap" pl={6}>
+                      <FaCheckCircle
+                        size={10}
+                        color={step.isCompleted ? "#00bd39ff" : "#d6d6d6ff"}
                       />
                       <Text
-                        size="10px"
+                        size="xs"
                         c={step.isCompleted ? "dark" : "dimmed"}
                         lineClamp={1}
                       >

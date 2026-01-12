@@ -1928,7 +1928,10 @@ export type Database = {
           cabinet_color: string | null
           cabinet_door_style: string | null
           cabinet_species: string | null
+          canopy_completed_actual: string | null
           client_name: string | null
+          cust_fin_assembled_completed_actual: string | null
+          cust_fin_parts_cut_completed_actual: string | null
           custom_finish_completed_actual: string | null
           cut_finish_completed_actual: string | null
           cut_melamine_completed_actual: string | null
@@ -1939,9 +1942,16 @@ export type Database = {
           installation_completed: string | null
           installation_id: number | null
           installation_notes: string | null
+          is_canopy_required: boolean | null
+          is_custom_cab_required: boolean | null
+          is_woodtop_required: boolean | null
           job_id: number | null
           job_number: string | null
+          paint_canopy_completed_actual: string | null
           paint_completed_actual: string | null
+          paint_cust_cab_completed_actual: string | null
+          paint_doors_completed_actual: string | null
+          panel_completed_actual: string | null
           partially_shipped: boolean | null
           placement_date: string | null
           prod_id: number | null
@@ -1952,6 +1962,7 @@ export type Database = {
           shipping_province: string | null
           shipping_street: string | null
           shipping_zip: string | null
+          woodtop_completed_actual: string | null
           wrap_completed: string | null
           wrap_date: string | null
         }

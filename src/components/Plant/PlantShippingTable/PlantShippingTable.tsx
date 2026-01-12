@@ -139,19 +139,49 @@ export default function PlantShippingTable() {
         .eq("installation_id", installationId);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plant_shipping_table"] });
-      notifications.show({
-        title: "Updated",
-        message: "Installation status updated",
-        color: "green",
-      });
+    onMutate: async ({ installationId, field, value }) => {
+      const queryKey = [
+        "plant_shipping_table",
+        pagination,
+        activeFilters,
+        sorting,
+      ];
+      await queryClient.cancelQueries({ queryKey });
+      const previousData = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(
+        queryKey,
+        (old: { data: PlantTableData[]; count: number } | undefined) => {
+          if (!old) return old;
+          return {
+            ...old,
+            data: old.data.map((row) =>
+              row.installation_id === installationId
+                ? { ...row, [field]: value }
+                : row
+            ),
+          };
+        }
+      );
+      return { previousData, queryKey };
     },
-    onError: (err: any) => {
+    onError: (err: any, _, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
+      }
       notifications.show({
         title: "Error",
         message: err.message,
         color: "red",
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["plant_shipping_table"] });
+    },
+    onSuccess: () => {
+      notifications.show({
+        title: "Updated",
+        message: "Installation status updated",
+        color: "green",
       });
     },
   });
@@ -170,25 +200,10 @@ export default function PlantShippingTable() {
     }) => {
       const timestamp = new Date().toISOString();
       const updates: any = {};
-      let prodUpdates: any = {};
-
       if (type === "full") {
         updates.has_shipped = true;
         updates.partially_shipped = false;
         updates.wrap_completed = timestamp;
-
-        if (prodId) {
-          const autoCompleteFields = [
-            "doors_completed_actual",
-            "cut_finish_completed_actual",
-            "custom_finish_completed_actual",
-            "drawer_completed_actual",
-            "cut_melamine_completed_actual",
-            "paint_completed_actual",
-            "assembly_completed_actual",
-          ];
-          autoCompleteFields.forEach((f) => (prodUpdates[f] = timestamp));
-        }
       } else if (type === "partial") {
         updates.has_shipped = false;
         updates.partially_shipped = true;
@@ -203,17 +218,61 @@ export default function PlantShippingTable() {
         .eq("installation_id", installId);
 
       if (installError) throw installError;
+    },
+    onMutate: async ({ installId, type }) => {
+      const queryKey = [
+        "plant_shipping_table",
+        pagination,
+        activeFilters,
+        sorting,
+      ];
+      await queryClient.cancelQueries({ queryKey });
+      const previousData = queryClient.getQueryData(queryKey);
+      const timestamp = new Date().toISOString();
 
-      if (type === "full" && prodId && Object.keys(prodUpdates).length > 0) {
-        const { error: prodError } = await supabase
-          .from("production_schedule")
-          .update(prodUpdates)
-          .eq("prod_id", prodId);
-        if (prodError) throw prodError;
+      queryClient.setQueryData(
+        queryKey,
+        (old: { data: PlantTableData[]; count: number } | undefined) => {
+          if (!old) return old;
+          return {
+            ...old,
+            data: old.data.map((row) => {
+              if (row.installation_id === installId) {
+                const updates: any = {};
+                if (type === "full") {
+                  updates.has_shipped = true;
+                  updates.partially_shipped = false;
+                  updates.wrap_completed = timestamp;
+                } else if (type === "partial") {
+                  updates.has_shipped = false;
+                  updates.partially_shipped = true;
+                } else {
+                  updates.has_shipped = false;
+                  updates.partially_shipped = false;
+                }
+                return { ...row, ...updates };
+              }
+              return row;
+            }),
+          };
+        }
+      );
+      return { previousData, queryKey };
+    },
+    onError: (err: any, _, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(context.queryKey, context.previousData);
       }
+      notifications.show({
+        title: "Error",
+        message: err.message,
+        color: "red",
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["plant_shipping_table"] });
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["plant_shipping_table"] });
       notifications.show({
         title: "Updated",
         message: "Shipping status updated",
@@ -232,13 +291,6 @@ export default function PlantShippingTable() {
           });
         }
       }
-    },
-    onError: (err: any) => {
-      notifications.show({
-        title: "Error",
-        message: err.message,
-        color: "red",
-      });
     },
   });
 
@@ -345,26 +397,34 @@ export default function PlantShippingTable() {
       size: 90,
       cell: (info) => {
         const status = info.getValue() || "unprocessed";
-        const colors: Record<string, string> = {
-          unprocessed: "gray",
-          tentative: "orange",
-          confirmed: "green",
-        };
+        let gradient = "";
+        let label = "";
 
-        const shortText: Record<string, string> = {
-          unprocessed: "Unproc.",
-          tentative: "Tent.",
-          confirmed: "Conf.",
-        };
+        switch (status) {
+          case "confirmed":
+            gradient = "linear-gradient(135deg, #4A00E0, #8E2DE2)";
+            label = "CONFIRMED";
+            break;
+          case "tentative":
+            gradient = "linear-gradient(135deg, #FF6A00, #FFB347)";
+            label = "TENTATIVE";
+            break;
+          default:
+            gradient = "linear-gradient(135deg, #B0BEC5, #78909C)";
+            label = "UNPROCESSED";
+        }
 
         return (
           <Badge
-            color={colors[status]}
-            variant={status === "unprocessed" ? "light" : "filled"}
+            variant="filled"
             size="xs"
             w="100%"
+            style={{
+              background: gradient,
+              border: "none",
+            }}
           >
-            {shortText[status] || status}
+            {label}
           </Badge>
         );
       },
@@ -401,27 +461,43 @@ export default function PlantShippingTable() {
       header: "Wrapped",
       size: 130,
       cell: (info) => {
-        const completed = info.getValue();
-        if (completed) {
-          return (
-            <Center>
-              <Badge
-                variant="light"
-                color="green"
-                size="sm"
-                leftSection={<FaCheck size={10} />}
-                pl={8}
-                pr={8}
-              >
-                {dayjs(completed).format("MMM D, YYYY")}
-              </Badge>
-            </Center>
-          );
-        }
+        const val = info.getValue();
+        const isComplete = !!val;
+        const installId = info.row.original.installation_id;
+
         return (
-          <Center>
-            <FaTimes size={14} color="red" />
-          </Center>
+          <Tooltip
+            label={
+              isComplete
+                ? `Completed: ${dayjs(val).format("MMM D, HH:mm")}`
+                : "Mark as Wrapped"
+            }
+            withArrow
+            openDelay={500}
+          >
+            <Center
+              style={{ cursor: "pointer", height: "100%", width: "100%" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (installId && !updateInstallationMutation.isPending) {
+                  updateInstallationMutation.mutate({
+                    installationId: installId,
+                    field: "wrap_completed",
+                    value: isComplete ? null : new Date().toISOString(),
+                  });
+                }
+              }}
+            >
+              <ThemeIcon
+                variant={isComplete ? "filled" : "outline"}
+                color={isComplete ? "#7400e0ff" : "gray"}
+                size="sm"
+                radius="xl"
+              >
+                {isComplete && <FaCheck size={10} />}
+              </ThemeIcon>
+            </Center>
+          </Tooltip>
         );
       },
     }),
@@ -433,41 +509,49 @@ export default function PlantShippingTable() {
         const partially = info.row.original.partially_shipped;
         const job = info.row.original;
 
-        let trigger = (
-          <Button
-            size="xs"
-            variant="light"
-            color="blue"
-            fullWidth
-            rightSection={<FaTruck size={12} />}
-          >
-            Mark Shipped
-          </Button>
-        );
+        let trigger;
 
         if (isShipped) {
           trigger = (
-            <Badge
-              color="green"
-              variant="light"
-              fullWidth
-              leftSection={<FaCheck size={10} />}
-              style={{ cursor: "pointer" }}
-            >
-              Shipped
-            </Badge>
+            <Tooltip label="Shipped - Click to Update" withArrow>
+              <ThemeIcon
+                variant="filled"
+                color="#7400e0ff"
+                size="sm"
+                radius="xl"
+                style={{ cursor: "pointer" }}
+              >
+                <FaCheck size={10} />
+              </ThemeIcon>
+            </Tooltip>
           );
         } else if (partially) {
           trigger = (
-            <Badge
-              color="orange"
-              variant="light"
-              fullWidth
-              leftSection={<FaTruck size={10} />}
-              style={{ cursor: "pointer" }}
-            >
-              Partial
-            </Badge>
+            <Tooltip label="Partially Shipped - Click to Update" withArrow>
+              <ThemeIcon
+                variant="light"
+                color="orange"
+                size="sm"
+                radius="xl"
+                style={{ cursor: "pointer" }}
+              >
+                <FaTruck size={10} />
+              </ThemeIcon>
+            </Tooltip>
+          );
+        } else {
+          trigger = (
+            <Tooltip label="Mark Shipped" withArrow>
+              <ThemeIcon
+                variant="outline"
+                color="gray"
+                size="sm"
+                radius="xl"
+                style={{ cursor: "pointer" }}
+              >
+                <FaTruck size={10} />
+              </ThemeIcon>
+            </Tooltip>
           );
         }
 
@@ -548,41 +632,7 @@ export default function PlantShippingTable() {
         </Center>
       ),
     }),
-    columnHelper.accessor((row) => (row as PlantTableData).in_warehouse, {
-      id: "in_warehouse",
-      header: "Warehouse",
-      size: 90,
-      cell: (info) => {
-        const value = info.getValue();
-        return (
-          <Tooltip
-            label={
-              value
-                ? dayjs(value).format("MMM D, YYYY h:mm A")
-                : "Not in warehouse"
-            }
-          >
-            <Center onClick={(e) => e.stopPropagation()}>
-              <Checkbox
-                checked={!!value}
-                color="violet"
-                size="xs"
-                onChange={(e) =>
-                  info.row.original.installation_id &&
-                  updateInstallationMutation.mutate({
-                    installationId: info.row.original.installation_id,
-                    field: "in_warehouse",
-                    value: e.currentTarget.checked
-                      ? new Date().toISOString()
-                      : null,
-                  })
-                }
-              />
-            </Center>
-          </Tooltip>
-        );
-      },
-    }),
+
     columnHelper.accessor("installation_notes", {
       header: "Notes",
       size: 150,
@@ -772,7 +822,14 @@ export default function PlantShippingTable() {
               }}
             >
               {sortedGroupKeys.map((shipDate) => {
-                const jobsInGroup = groupedRows[shipDate];
+                const jobsInGroup = [...groupedRows[shipDate]].sort((a, b) => {
+                  const jobA = a.original.job_number || "";
+                  const jobB = b.original.job_number || "";
+                  return jobA.localeCompare(jobB, undefined, {
+                    numeric: true,
+                    sensitivity: "base",
+                  });
+                });
                 const isOpen = openItems.includes(shipDate);
                 const isPastDue =
                   shipDate !== "Unscheduled" &&
@@ -847,15 +904,7 @@ export default function PlantShippingTable() {
                             {jobsInGroup.map((row) => {
                               const isShipped = !!row.original.has_shipped;
                               return (
-                                <Table.Tr
-                                  key={row.id}
-                                  style={{
-                                    opacity: isShipped ? 0.3 : 1,
-                                    backgroundColor: isShipped
-                                      ? "#f8f9fa"
-                                      : undefined,
-                                  }}
-                                >
+                                <Table.Tr key={row.id}>
                                   {row
                                     .getVisibleCells()
                                     .slice(1)

@@ -5,6 +5,7 @@ import { useUser } from "@clerk/nextjs";
 export function usePermissions() {
   const { user, isLoaded } = useUser();
   const role = user?.publicMetadata?.role as string | undefined;
+  const subRole = user?.publicMetadata?.sub_role as string | undefined;
 
   const isAdmin = role === "admin";
   const isDesigner = role === "designer";
@@ -60,7 +61,10 @@ export function usePermissions() {
     canEditInvoices,
     canEditReports,
     canDelete,
+    subRole,
     is: (checkRole: string) => role === checkRole,
+    isSub: (checkSubRole: string) => subRole === checkSubRole,
     hasAnyRole: (roles: string[]) => roles.includes(role || ""),
+    hasAnySubRole: (subRoles: string[]) => subRoles.includes(subRole || ""),
   };
 }
