@@ -71,6 +71,11 @@ export function useInspectionTable({
               query = query.is("inspection_date", null);
             }
             break;
+          case "incomplete":
+            if (value === true) {
+              query = query.is("inspection_completed", null);
+            }
+            break;
           default:
             break;
         }

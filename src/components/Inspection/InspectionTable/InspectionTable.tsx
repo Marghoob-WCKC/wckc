@@ -613,6 +613,50 @@ export default function InspectionTable() {
                     },
                   }}
                 />
+                <Switch
+                  label="Incomplete"
+                  size="md"
+                  checked={inputFilters.some(
+                    (f) => f.id === "incomplete" && f.value === true
+                  )}
+                  onChange={(event) => {
+                    const checked = event.currentTarget.checked;
+                    const val = checked ? true : undefined;
+
+                    setInputFilterValue("incomplete", val as any);
+
+                    const otherFilters = inputFilters.filter(
+                      (f) => f.id !== "incomplete"
+                    );
+                    const newActiveFilters = checked
+                      ? [...otherFilters, { id: "incomplete", value: true }]
+                      : otherFilters;
+
+                    setActiveFilters(newActiveFilters);
+                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+                  thumbIcon={<FaCheckCircle />}
+                  styles={{
+                    track: {
+                      cursor: "pointer",
+                      background: inputFilters.some(
+                        (f) => f.id === "incomplete" && f.value === true
+                      )
+                        ? "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)"
+                        : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
+                      color: "white",
+                      border: "none",
+                    },
+                    thumb: {
+                      background: inputFilters.some(
+                        (f) => f.id === "incomplete" && f.value === true
+                      )
+                        ? "#6e54ffff"
+                        : "#d1d1d1ff",
+                    },
+                  }}
+                />
               </Group>
             </SimpleGrid>
 
