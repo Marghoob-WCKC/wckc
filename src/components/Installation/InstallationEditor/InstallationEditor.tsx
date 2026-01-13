@@ -65,7 +65,7 @@ import OrderDetails from "@/components/Shared/OrderDetails/OrderDetails";
 import { useNavigationGuard } from "@/providers/NavigationGuardProvider";
 import { zodResolver } from "@/utils/zodResolver/zodResolver";
 import { installationSchema } from "@/zod/install.schema";
-import { colors, gradients } from "@/theme";
+import { colors, gradients, linearGradients } from "@/theme";
 import JobAttachments from "@/components/Shared/JobAttachments/JobAttachments";
 import SiteVisitModal from "@/components/Sitevisits/SiteVisitModal/SiteVisitModal";
 import WarehouseTrackingModal from "@/components/Shared/WarehouseTrackingModal/WarehouseTrackingModal";
@@ -101,6 +101,7 @@ type JobData = Tables<"jobs"> & {
   installation: InstallationType | null;
   production_schedule: Tables<"production_schedule"> | null;
   site_visits: Tables<"site_visits">[] | null;
+  warehouse_tracking: Tables<"warehouse_tracking"> | null;
   sales_orders:
     | (Tables<"sales_orders"> & {
         client: Tables<"client"> | null;
@@ -116,6 +117,8 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
   const [isBackorderPromptOpen, setIsBackorderPromptOpen] = useState(false);
   const [isAddBackorderModalOpen, setIsAddBackorderModalOpen] = useState(false);
   const [isWarehouseModalOpen, setIsWarehouseModalOpen] = useState(false);
+  const [isWarehouseUncheckModalOpen, setIsWarehouseUncheckModalOpen] =
+    useState(false);
 
   const [
     isAddInstallerOpen,
@@ -147,6 +150,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           installation:installation_id (*),
           production_schedule:production_schedule (*),
           site_visits (*),
+          warehouse_tracking (*),
           sales_orders:sales_orders (
             shipping_street, shipping_city, shipping_province, shipping_zip,
             shipping_client_name,
@@ -605,7 +609,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                     </Group>
                   </Group>
                 </Paper>
-                <Divider my="sm" color="violet" />
+                <Divider my="sm" color={colors.violet.primary} />
                 <SimpleGrid cols={3}>
                   <Stack>
                     <ClientInfo shipping={shipping} />
@@ -824,7 +828,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                         <Group justify="space-between">
                           <Switch
                             size="md"
-                            color="violet"
+                            color={colors.violet.primary}
                             label="Wrapped"
                             checked={!!form.values.wrap_completed}
                             onChange={(e) =>
@@ -854,7 +858,9 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                         <Switch
                           size="md"
                           color={
-                            form.values.partially_shipped ? "orange" : "violet"
+                            form.values.partially_shipped
+                              ? "orange"
+                              : `${colors.violet.primary}`
                           }
                           label={
                             form.values.partially_shipped
@@ -881,7 +887,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                         <Group justify="space-between">
                           <Switch
                             size="md"
-                            color="violet"
+                            color={colors.violet.primary}
                             label="Installation Completed"
                             checked={!!form.values.installation_completed}
                             onChange={() =>
@@ -906,7 +912,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                         <Group justify="space-between">
                           <Switch
                             size="md"
-                            color="violet"
+                            color={colors.violet.primary}
                             label="Installation Report Received"
                             checked={!!form.values.installation_report_received}
                             onChange={(event) => {
@@ -930,7 +936,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                         <Group justify="space-between">
                           <Switch
                             size="md"
-                            color="violet"
+                            color={colors.violet.primary}
                             label="In Warehouse"
                             checked={!!form.values.in_warehouse}
                             onChange={async (event) => {
@@ -938,69 +944,74 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                               if (isChecked) {
                                 setIsWarehouseModalOpen(true);
                               } else {
-                                if (
-                                  confirm(
-                                    "Are you sure you want to remove this from warehouse tracking? This will delete the warehouse record."
-                                  )
-                                ) {
-                                  try {
-                                    const { error: deleteError } =
-                                      await supabase
-                                        .from("warehouse_tracking")
-                                        .delete()
-                                        .eq("job_id", jobId);
+                                const trackingData = jobData.warehouse_tracking;
 
-                                    if (deleteError) throw deleteError;
-
-                                    const { error: updateError } =
-                                      await supabase
-                                        .from("installation")
-                                        .update({ in_warehouse: null } as any)
-                                        .eq("installation_id", installRecordId);
-
-                                    if (updateError) throw updateError;
-
+                                if (trackingData) {
+                                  setIsWarehouseUncheckModalOpen(true);
+                                } else {
+                                  if (
+                                    confirm(
+                                      "Are you sure you want to disable warehouse tracking?"
+                                    )
+                                  ) {
                                     form.setFieldValue("in_warehouse", null);
+                                    try {
+                                      const { error: deleteError } =
+                                        await supabase
+                                          .from("warehouse_tracking")
+                                          .delete()
+                                          .eq("job_id", jobId);
+                                      if (deleteError) throw deleteError;
 
-                                    notifications.show({
-                                      title: "Success",
-                                      message:
-                                        "Removed from warehouse tracking",
-                                      color: "green",
-                                    });
+                                      const { error: updateError } =
+                                        await supabase
+                                          .from("installation")
+                                          .update({ in_warehouse: null } as any)
+                                          .eq(
+                                            "installation_id",
+                                            installRecordId
+                                          );
+                                      if (updateError) throw updateError;
 
-                                    queryClient.invalidateQueries({
-                                      queryKey: ["warehouse_tracking"],
-                                    });
-                                    queryClient.invalidateQueries({
-                                      queryKey: ["installation-editor", jobId],
-                                    });
-                                  } catch (error: any) {
-                                    notifications.show({
-                                      title: "Error",
-                                      message:
-                                        "Failed to remove warehouse tracking record",
-                                      color: "red",
-                                    });
+                                      notifications.show({
+                                        title: "Success",
+                                        message:
+                                          "Removed from warehouse tracking",
+                                        color: "green",
+                                      });
+                                      queryClient.invalidateQueries({
+                                        queryKey: ["warehouse_tracking"],
+                                      });
+                                      queryClient.invalidateQueries({
+                                        queryKey: [
+                                          "installation-editor",
+                                          jobId,
+                                        ],
+                                      });
+                                    } catch (err: any) {
+                                      console.error(err);
+                                    }
                                   }
                                 }
                               }
                             }}
                             styles={{ label: { fontWeight: 500 } }}
                           />
-                          {form.values.in_warehouse && (
-                            <Text c="dimmed" size="xs">
-                              {dayjs
-                                .utc(form.values.in_warehouse)
-                                .format("YYYY-MM-DD")}
-                            </Text>
-                          )}
+                          <Group gap="xs">
+                            {form.values.in_warehouse && (
+                              <Text c="dimmed" size="xs">
+                                {dayjs
+                                  .utc(form.values.in_warehouse)
+                                  .format("YYYY-MM-DD")}
+                              </Text>
+                            )}
+                          </Group>
                         </Group>
                         <Divider variant="dashed" />
                         <Group justify="space-between">
                           <Switch
                             size="md"
-                            color="violet"
+                            color={colors.violet.primary}
                             label="Trade day (30 days)"
                             checked={!!form.values.trade_30days}
                             onChange={(event) => {
@@ -1024,7 +1035,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                         <Group justify="space-between">
                           <Switch
                             size="md"
-                            color="violet"
+                            color={colors.violet.primary}
                             label="Trade day (6 months)"
                             checked={!!form.values.trade_6months}
                             onChange={(event) => {
@@ -1050,7 +1061,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                       <Group>
                         <Switch
                           size="md"
-                          color="violet"
+                          color={colors.violet.primary}
                           label="Site Changes"
                           checked={!!form.values.site_changes}
                           onChange={(event) => {
@@ -1087,7 +1098,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                       <Group mb="md">
                         <Switch
                           size="md"
-                          color="violet"
+                          color={colors.violet.primary}
                           label="Log Site Visit"
                           checked={siteVisitModalOpen}
                           onChange={(event) => {
@@ -1417,8 +1428,85 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             "in_warehouse",
             dayjs().format("YYYY-MM-DD HH:mm")
           );
+          queryClient.invalidateQueries({
+            queryKey: ["installation-editor", jobId],
+          });
         }}
+        initialData={jobData?.warehouse_tracking || null}
       />
+
+      <Modal
+        opened={isWarehouseUncheckModalOpen}
+        onClose={() => setIsWarehouseUncheckModalOpen(false)}
+        title="Update Warehouse Status"
+        centered
+        radius="lg"
+      >
+        <Stack>
+          <Text size="sm">
+            You are disabling the &quot;In Warehouse&quot; status. What would
+            you like to do with the existing tracking record?
+          </Text>
+          <Group grow>
+            <Button
+              variant="gradient"
+              gradient={gradients.primary}
+              onClick={() => {
+                setIsWarehouseUncheckModalOpen(false);
+                setIsWarehouseModalOpen(true);
+              }}
+            >
+              Mark as Picked Up
+            </Button>
+            <Button
+              variant="outline"
+              color="red"
+              onClick={async () => {
+                if (
+                  confirm(
+                    "This will PERMANENTLY delete the warehouse tracking data (dates, pallets, notes). Are you sure?"
+                  )
+                ) {
+                  try {
+                    const { error: deleteError } = await supabase
+                      .from("warehouse_tracking")
+                      .delete()
+                      .eq("job_id", jobId);
+
+                    if (deleteError) throw deleteError;
+
+                    const { error: updateError } = await supabase
+                      .from("installation")
+                      .update({ in_warehouse: null } as any)
+                      .eq("installation_id", installRecordId);
+
+                    if (updateError) throw updateError;
+
+                    form.setFieldValue("in_warehouse", null);
+                    notifications.show({
+                      title: "Success",
+                      message: "Warehouse tracking record deleted",
+                      color: "green",
+                    });
+                    queryClient.invalidateQueries({
+                      queryKey: ["installation-editor", jobId],
+                    });
+                    setIsWarehouseUncheckModalOpen(false);
+                  } catch (error: any) {
+                    notifications.show({
+                      title: "Error",
+                      message: error.message,
+                      color: "red",
+                    });
+                  }
+                }
+              }}
+            >
+              Delete Record
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Container>
   );
 }
