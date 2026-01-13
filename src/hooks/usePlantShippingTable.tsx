@@ -87,9 +87,13 @@ export function usePlantShippingTable({
 
       if (sorting.length > 0) {
         const { id, desc } = sorting[0];
-        jobQuery = jobQuery.order(id, { ascending: !desc });
+        jobQuery = jobQuery
+          .order(id, { ascending: !desc })
+          .order("job_number", { ascending: true });
       } else {
-        jobQuery = jobQuery.order("ship_schedule", { ascending: true });
+        jobQuery = jobQuery
+          .order("ship_schedule", { ascending: true })
+          .order("job_number", { ascending: true });
       }
 
       const { data: jobs, error: jobError } = await jobQuery;

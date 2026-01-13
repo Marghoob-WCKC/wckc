@@ -65,7 +65,8 @@ export default function WrapScheduleReport() {
         .not("wrap_date", "is", null)
         .gte("wrap_date", startDate)
         .lte("wrap_date", endDate)
-        .order("wrap_date", { ascending: true });
+        .order("wrap_date", { ascending: true })
+        .order("job_number", { ascending: true });
 
       if (error) throw error;
       return data as Views<"plant_table_view">[];

@@ -64,7 +64,8 @@ export default function ShipScheduleReport() {
         .gte("ship_schedule", startDate)
         .lte("ship_schedule", endDate)
         .not("ship_schedule", "is", null)
-        .order("ship_schedule", { ascending: true });
+        .order("ship_schedule", { ascending: true })
+        .order("job_number", { ascending: true });
 
       if (error) throw error;
       return data as Views<"plant_table_view">[];

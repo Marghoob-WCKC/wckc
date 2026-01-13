@@ -91,9 +91,13 @@ export function usePlantWrapTable({
 
       if (sorting.length > 0) {
         const { id, desc } = sorting[0];
-        jobQuery = jobQuery.order(id, { ascending: !desc });
+        jobQuery = jobQuery
+          .order(id, { ascending: !desc })
+          .order("job_number", { ascending: true });
       } else {
-        jobQuery = jobQuery.order("wrap_date", { ascending: true });
+        jobQuery = jobQuery
+          .order("wrap_date", { ascending: true })
+          .order("job_number", { ascending: true });
       }
 
       const { data: jobs, error: jobError } = await jobQuery;
