@@ -122,18 +122,13 @@ export default function BulkScheduleModal({
 
   const openCompletionModal = (field: "installation_completed") => {
     setTargetCompletionField(field);
-    setCompletionDateInput(new Date());
+    setCompletionDateInput(dayjs().toDate());
     setCompletionModalOpen(true);
   };
 
   const confirmCompletionDate = () => {
     if (targetCompletionField && completionDateInput) {
-      const safeDate = dayjs(completionDateInput)
-        .hour(12)
-        .minute(0)
-        .second(0)
-        .toISOString();
-
+      const safeDate = dayjs(completionDateInput).format("YYYY-MM-DD");
       handleUpdate(targetCompletionField, safeDate);
       setCompletionModalOpen(false);
       setTargetCompletionField(null);
@@ -322,8 +317,8 @@ export default function BulkScheduleModal({
                     if (isChecked) {
                       setIsBackorderPromptOpen(true);
                     } else {
-                      handleUpdate("has_shipped", false);
-                      handleUpdate("partially_shipped", false);
+                      handleUpdate("has_shipped", undefined);
+                      handleUpdate("partially_shipped", undefined);
                     }
                   }}
                   styles={{
@@ -378,29 +373,6 @@ export default function BulkScheduleModal({
                     onChange={(e) =>
                       handleUpdate(
                         "installation_report_received",
-                        e.currentTarget.checked
-                          ? new Date().toISOString()
-                          : null
-                      )
-                    }
-                    styles={{ label: { fontWeight: 500 } }}
-                  />
-                </Group>
-
-                <Divider variant="dashed" />
-
-                <Group justify="space-between">
-                  <Switch
-                    size="md"
-                    color="violet"
-                    label="In Warehouse"
-                    checked={
-                      updates.in_warehouse !== undefined &&
-                      updates.in_warehouse !== null
-                    }
-                    onChange={(e) =>
-                      handleUpdate(
-                        "in_warehouse",
                         e.currentTarget.checked
                           ? new Date().toISOString()
                           : null
@@ -512,7 +484,7 @@ export default function BulkScheduleModal({
             placeholder="Pick a date"
             value={completionDateInput}
             onChange={(date) =>
-              setCompletionDateInput(date ? new Date(date) : null)
+              setCompletionDateInput(date ? dayjs(date).toDate() : null)
             }
             valueFormat="YYYY-MM-DD"
             data-autofocus
@@ -535,7 +507,6 @@ export default function BulkScheduleModal({
         opened={isBackorderPromptOpen}
         onClose={() => {
           setIsBackorderPromptOpen(false);
-          handleUpdate("has_shipped", false);
         }}
         withCloseButton={false}
         centered
@@ -627,8 +598,6 @@ export default function BulkScheduleModal({
             style={{ cursor: "pointer", textDecoration: "underline" }}
             onClick={() => {
               setIsBackorderPromptOpen(false);
-              handleUpdate("has_shipped", false);
-              handleUpdate("partially_shipped", false);
             }}
           >
             Cancel
