@@ -41,7 +41,10 @@ export default function ShippingPdfPreviewModal({
 
   const memoizedPreview = useMemo(
     () => (
-      <PDFViewer style={{ width: "100%", height: "100%", border: "none" }}>
+      <PDFViewer
+        key={Math.random()}
+        style={{ width: "100%", height: "100%", border: "none" }}
+      >
         <ShippingReportPdf
           data={formattedData}
           startDate={dateRange[0]}

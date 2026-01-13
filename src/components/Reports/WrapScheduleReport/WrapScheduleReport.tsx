@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
+import { useDebouncedValue } from "@mantine/hooks";
 import { usePlantWrapTable } from "@/hooks/usePlantWrapTable";
 import { Views } from "@/types/db";
 import {
@@ -41,17 +42,18 @@ const PDFViewer = dynamic(
 
 export default function WrapScheduleReport() {
   const { isAuthenticated } = useSupabase();
-  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
+  const [pickerDates, setPickerDates] = useState<[Date | null, Date | null]>([
     dayjs().subtract(1, "day").toDate(),
     dayjs().add(7, "day").toDate(),
   ]);
+  const [reportDates] = useDebouncedValue(pickerDates, 800);
 
   const activeFilters: ColumnFiltersState = useMemo(() => {
-    if (dateRange[0] && dateRange[1]) {
-      return [{ id: "wrap_date_range", value: dateRange }];
+    if (reportDates[0] && reportDates[1]) {
+      return [{ id: "wrap_date_range", value: reportDates }];
     }
     return [];
-  }, [dateRange]);
+  }, [reportDates]);
 
   const { data, isLoading, isError } = usePlantWrapTable({
     pagination: { pageIndex: 0, pageSize: 1000 },
@@ -67,15 +69,18 @@ export default function WrapScheduleReport() {
 
   const memoizedPreview = useMemo(
     () => (
-      <PDFViewer style={{ width: "100%", height: "100%", border: "none" }}>
+      <PDFViewer
+        key={Math.random()}
+        style={{ width: "100%", height: "100%", border: "none" }}
+      >
         <WrapSchedulePdf
           data={formattedData}
-          startDate={dateRange[0]}
-          endDate={dateRange[1]}
+          startDate={reportDates[0]}
+          endDate={reportDates[1]}
         />
       </PDFViewer>
     ),
-    [formattedData, dateRange]
+    [formattedData, reportDates]
   );
 
   if (!isAuthenticated || isLoading) {
@@ -122,9 +127,9 @@ export default function WrapScheduleReport() {
                 type="range"
                 allowSingleDateInRange
                 placeholder="Pick dates range"
-                value={dateRange}
+                value={pickerDates}
                 onChange={(val) =>
-                  setDateRange(val as [Date | null, Date | null])
+                  setPickerDates(val as [Date | null, Date | null])
                 }
                 clearable
                 leftSection={<FaCalendarAlt size={14} />}
