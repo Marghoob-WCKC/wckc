@@ -885,8 +885,9 @@ export default function PlantTableWrap() {
 
   return (
     <Box
-      p={20}
-      h="calc(100vh - 45px)"
+      px={20}
+      pt={20}
+      h="100vh"
       display="flex"
       style={{ flexDirection: "column" }}
     >
@@ -900,13 +901,21 @@ export default function PlantTableWrap() {
           >
             <FaCalendarAlt size={26} />
           </ThemeIcon>
-          <Stack gap={0}>
+          <Stack gap={4}>
             <Title order={2} style={{ color: "#343a40" }}>
               Plant Wrap Schedule
             </Title>
-            <Text size="sm" c="dimmed">
-              Track plant wrap schedule
-            </Text>
+            {dateRange[0] && dateRange[1] && (
+              <Badge
+                variant="light"
+                color="violet"
+                size="lg"
+                leftSection={<FaCalendarAlt size={12} />}
+              >
+                {dayjs(dateRange[0]).format("MMM D")} -{" "}
+                {dayjs(dateRange[1]).format("MMM D, YYYY")}
+              </Badge>
+            )}
           </Stack>
         </Group>
 
