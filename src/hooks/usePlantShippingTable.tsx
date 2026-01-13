@@ -58,8 +58,7 @@ export function usePlantShippingTable({
       let dateQuery = supabase
         .from("plant_table_view")
         .select("ship_schedule")
-        .not("ship_schedule", "is", null)
-        .is("installation_completed", null);
+        .not("ship_schedule", "is", null);
 
       dateQuery = applyFilters(dateQuery);
 

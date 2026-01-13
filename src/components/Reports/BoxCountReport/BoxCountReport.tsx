@@ -7,7 +7,6 @@ import {
   Paper,
   Group,
   Text,
-  Button,
   Stack,
   Title,
   ThemeIcon,
@@ -16,7 +15,7 @@ import {
   Loader,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
-import { FaBoxOpen, FaSearch } from "react-icons/fa";
+import { FaBoxOpen } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
 import { ShippingReportJob } from "@/documents/ShippingReportPdf";
@@ -47,7 +46,6 @@ export default function BoxCountReport() {
     isLoading,
     isError,
     error,
-    refetch,
   } = useQuery<ShippingReportJob[]>({
     queryKey: ["box_count_report", dateRange],
     queryFn: async () => {
@@ -121,15 +119,6 @@ export default function BoxCountReport() {
                 style={{ width: 300 }}
                 clearable={false}
               />
-              <Button
-                onClick={() => refetch()}
-                loading={isLoading}
-                leftSection={<FaSearch size={14} />}
-                variant="gradient"
-                gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
-              >
-                Generate
-              </Button>
             </Group>
           </Group>
         </Paper>

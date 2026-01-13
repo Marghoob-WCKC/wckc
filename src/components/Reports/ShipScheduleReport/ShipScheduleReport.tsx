@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useDebouncedValue } from "@mantine/hooks";
-import { usePlantShippingTable } from "@/hooks/usePlantShippingTable";
+import { useQuery } from "@tanstack/react-query";
 import { Views } from "@/types/db";
 import {
   ShippingReportPdf,
@@ -21,10 +20,9 @@ import {
   Paper,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
-import { FaShippingFast, FaCalendarCheck } from "react-icons/fa";
+import { FaShippingFast } from "react-icons/fa";
 import dayjs from "dayjs";
 import { useSupabase } from "@/hooks/useSupabase";
-import { ColumnFiltersState } from "@tanstack/react-table";
 import { colors } from "@/theme";
 import { formatShipScheduleData } from "@/utils/reportFormatters";
 
@@ -41,63 +39,55 @@ const PDFViewer = dynamic(
 );
 
 export default function ShipScheduleReport() {
-  const { isAuthenticated } = useSupabase();
-  const [pickerDates, setPickerDates] = useState<[Date | null, Date | null]>([
+  const { supabase, isAuthenticated } = useSupabase();
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
     dayjs().subtract(1, "day").toDate(),
     dayjs().add(7, "day").toDate(),
   ]);
-  const [reportDates] = useDebouncedValue(pickerDates, 800);
 
-  const activeFilters: ColumnFiltersState = useMemo(() => {
-    if (reportDates[0] && reportDates[1]) {
-      return [{ id: "ship_date_range", value: reportDates }];
-    }
-    return [];
-  }, [reportDates]);
+  const {
+    data: reportData,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["ship_schedule_report", dateRange],
+    queryFn: async () => {
+      if (!dateRange[0] || !dateRange[1]) return [];
 
-  const { data, isLoading, isError } = usePlantShippingTable({
-    pagination: { pageIndex: 0, pageSize: 1000 },
-    columnFilters: activeFilters,
-    sorting: [{ id: "ship_schedule", desc: false }],
+      const startDate = dayjs(dateRange[0]).format("YYYY-MM-DD");
+      const endDate = dayjs(dateRange[1]).format("YYYY-MM-DD");
+
+      const { data, error } = await supabase
+        .from("plant_table_view")
+        .select("*")
+        .gte("ship_schedule", startDate)
+        .lte("ship_schedule", endDate)
+        .not("ship_schedule", "is", null)
+        .order("ship_schedule", { ascending: true });
+
+      if (error) throw error;
+      return data as Views<"plant_table_view">[];
+    },
+    enabled: isAuthenticated && !!dateRange[0] && !!dateRange[1],
   });
 
-  const tableData = (data?.data as Views<"plant_table_view">[]) || [];
-
   const formattedData: ShippingReportJob[] = useMemo(() => {
-    return formatShipScheduleData(tableData);
-  }, [tableData]);
+    return formatShipScheduleData(reportData || []);
+  }, [reportData]);
 
   const memoizedPreview = useMemo(
     () => (
-      <PDFViewer
-        key={Math.random()}
-        style={{ width: "100%", height: "100%", border: "none" }}
-      >
+      <PDFViewer width="100%" height="100%" style={{ border: "none" }}>
         <ShippingReportPdf
           data={formattedData}
-          startDate={reportDates[0]}
-          endDate={reportDates[1]}
+          startDate={dateRange[0]}
+          endDate={dateRange[1]}
         />
       </PDFViewer>
     ),
-    [formattedData, reportDates]
+    [formattedData, dateRange]
   );
-
-  if (!isAuthenticated || isLoading) {
-    return (
-      <Center h="100vh">
-        <Loader size="xl" />
-      </Center>
-    );
-  }
-
-  if (isError) {
-    return (
-      <Center h="100vh">
-        <Text c="red">Error loading data.</Text>
-      </Center>
-    );
-  }
 
   return (
     <Container size="100%" p="md">
@@ -118,22 +108,22 @@ export default function ShipScheduleReport() {
                   Shipping Schedule Report
                 </Title>
                 <Text size="sm" c="dimmed">
-                  Printable PDF view of the shipping schedule
+                  Generate PDF report by ship schedule date range.
                 </Text>
               </Stack>
             </Group>
-            <Group>
+            <Group align="flex-end">
               <DatePickerInput
                 type="range"
                 allowSingleDateInRange
-                placeholder="Pick dates range"
-                value={pickerDates}
+                label="Report Date Range"
+                placeholder="Select dates"
+                value={dateRange}
                 onChange={(val) =>
-                  setPickerDates(val as [Date | null, Date | null])
+                  setDateRange(val as [Date | null, Date | null])
                 }
-                clearable
-                leftSection={<FaCalendarCheck size={14} />}
-                w={300}
+                style={{ width: 300 }}
+                clearable={false}
               />
             </Group>
           </Group>
@@ -149,7 +139,23 @@ export default function ShipScheduleReport() {
             border: `1px solid ${colors.gray?.border || "#e0e0e0"}`,
           }}
         >
-          {formattedData.length > 0 ? (
+          {!dateRange[0] || !dateRange[1] ? (
+            <Center h="100%">
+              <Text c="dimmed">
+                Please select a date range to view the report.
+              </Text>
+            </Center>
+          ) : isLoading ? (
+            <Center h="100%">
+              <Loader type="bars" size="xl" color="violet" />
+            </Center>
+          ) : isError ? (
+            <Center h="100%">
+              <Text c="red">
+                Error generating report: {(error as Error).message}
+              </Text>
+            </Center>
+          ) : formattedData.length > 0 ? (
             memoizedPreview
           ) : (
             <Center h="100%">

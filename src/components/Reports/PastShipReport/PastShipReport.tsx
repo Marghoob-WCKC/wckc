@@ -16,7 +16,7 @@ import {
   Loader,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
-import { FaPrint, FaSearch, FaFileExcel } from "react-icons/fa";
+import { FaPrint, FaFileExcel } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
 import { exportToExcel } from "@/utils/exportToExcel";
@@ -51,7 +51,6 @@ export default function PastShipReport() {
     isLoading,
     isError,
     error,
-    refetch,
   } = useQuery({
     queryKey: ["pastship_report", dateRange],
     queryFn: async () => {
@@ -214,15 +213,6 @@ export default function PastShipReport() {
                 style={{ width: 300 }}
                 clearable={false}
               />
-              <Button
-                onClick={() => refetch()}
-                loading={isLoading}
-                leftSection={<FaSearch size={14} />}
-                variant="gradient"
-                gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
-              >
-                Generate
-              </Button>
               <Button
                 onClick={handleExport}
                 disabled={!reportData || reportData.length === 0}
