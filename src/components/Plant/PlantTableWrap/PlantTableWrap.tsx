@@ -418,14 +418,10 @@ export default function PlantTableWrap() {
             );
           }
 
-          const isWrapped = !!info.row.original.wrap_completed;
-
           return (
             <Tooltip
               label={
-                isWrapped
-                  ? "Job is Wrapped - Read Only"
-                  : isChecked
+                isChecked
                   ? `Completed: ${dayjs(val).format("MMM D, HH:mm")}`
                   : "Mark as Complete"
               }
@@ -434,13 +430,12 @@ export default function PlantTableWrap() {
             >
               <Center
                 style={{
-                  cursor: isWrapped ? "not-allowed" : "pointer",
+                  cursor: "pointer",
                   height: "100%",
                   width: "100%",
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (isWrapped) return;
                   info.row.original.job_id &&
                     updateProductionMutation.mutate({
                       jobId: info.row.original.job_id,

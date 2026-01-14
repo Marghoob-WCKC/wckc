@@ -1369,7 +1369,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                 <Fieldset legend="Requirements" variant="filled" bg={"white"}>
                   <Group>
                     <Checkbox
-                      label="Column/Floating Shelve/Woodtop"
+                      label="Column/Floating Shelf/Woodtop"
                       color="#4A00E0"
                       styles={{
                         label: { fontWeight: 500, cursor: "pointer" },
