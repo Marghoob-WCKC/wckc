@@ -212,12 +212,7 @@ export default function RootLayout({
                           links={dashboardLinks}
                           autoCollapsePatterns={[
                             "/dashboard/installation",
-                            "/dashboard/production",
                             "/dashboard/sales/newsale",
-                            "/dashboard/plant/wrap",
-                            "/dashboard/plant/ship",
-                            "/dashboard/plant/service-orders",
-                            "/dashboard/clients",
                           ]}
                         />
                       )}

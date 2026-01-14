@@ -163,8 +163,8 @@ export default function ProdTable() {
       : []),
     columnHelper.accessor("job_number", {
       header: "Job No.",
-      size: 150,
-      minSize: 150,
+      size: 100,
+      minSize: 100,
       cell: (info) => (
         <Group gap={4}>
           <Text fw={600} size="sm">
@@ -194,24 +194,26 @@ export default function ProdTable() {
     columnHelper.accessor("shipping_client_name", {
       id: "client",
       header: "Client",
-      size: 150,
-      minSize: 120,
+      size: 200,
+      minSize: 200,
       cell: (info) => <Text size="sm">{info.getValue() ?? "—"}</Text>,
     }),
     columnHelper.accessor("site_address", {
       header: "Site Address",
-      size: 300,
+      size: 200,
       minSize: 200,
       cell: (info) => (
-        <Text size="sm" c="dimmed" lineClamp={1}>
-          {info.getValue() || "—"}
-        </Text>
+        <Tooltip label={info.getValue()} openDelay={300}>
+          <Text size="sm" c="dimmed" lineClamp={1}>
+            {info.getValue() || "—"}
+          </Text>
+        </Tooltip>
       ),
     }),
     columnHelper.accessor("received_date", {
       header: "Received Date",
-      size: 140,
-      minSize: 120,
+      size: 100,
+      minSize: 100,
       cell: (info) => {
         const date = info.getValue();
         if (!date)
@@ -225,7 +227,7 @@ export default function ProdTable() {
     }),
     columnHelper.accessor("placement_date", {
       header: "Placement Date",
-      size: 140,
+      size: 120,
       minSize: 120,
       cell: (info) => {
         const date = info.getValue();
@@ -240,8 +242,8 @@ export default function ProdTable() {
     }),
     columnHelper.accessor("ship_schedule", {
       header: "Ship Date",
-      size: 150,
-      minSize: 120,
+      size: 110,
+      minSize: 110,
       cell: (info) => {
         const date = info.getValue();
         const row = info.row.original;
@@ -284,8 +286,8 @@ export default function ProdTable() {
     columnHelper.accessor("has_shipped", {
       header: "Shipped",
       id: "shipped_status",
-      size: 90,
-      minSize: 90,
+      size: 70,
+      minSize: 70,
       cell: (info) => {
         const hasShipped = info.getValue();
         const partiallyShipped = (info.row.original as any).partially_shipped;
@@ -337,16 +339,29 @@ export default function ProdTable() {
       minSize: 150,
       cell: (info) => {
         const row = info.row.original;
+
         const parts = [
           row.cabinet_species,
           row.cabinet_color,
           row.cabinet_door_style,
-        ].filter(Boolean);
+        ].filter((part) => part && part.trim() !== "");
+
+        if (parts.length === 0) {
+          return (
+            <Text size="xs" c="dimmed">
+              —
+            </Text>
+          );
+        }
+
+        const text = parts.join(" • ");
 
         return (
-          <Text size="sm" c="dimmed" lineClamp={1} tt="capitalize">
-            {parts.length > 0 ? parts.join(" • ") : "—"}
-          </Text>
+          <Tooltip label={text} openDelay={300}>
+            <Text size="xs" lineClamp={1} tt="capitalize">
+              {text}
+            </Text>
+          </Tooltip>
         );
       },
     }),
@@ -597,7 +612,13 @@ export default function ProdTable() {
         }}
         type="always"
       >
-        <Table striped highlightOnHover stickyHeader withColumnBorders>
+        <Table
+          striped
+          highlightOnHover
+          stickyHeader
+          withColumnBorders
+          layout="fixed"
+        >
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>
