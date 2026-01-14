@@ -127,6 +127,7 @@ const mapServiceOrderToFormValues = (
       description: p.description || "",
       location: p.location || "",
       status: p.status || "",
+      part_due_date: p.part_due_date ? dayjs(p.part_due_date).toDate() : null,
       _deleted: false,
     })),
     homeowner_name: hoInfo?.homeowner_name || "",
@@ -362,6 +363,9 @@ export default function EditServiceOrder({
             description: p.description || "",
             location: p.location || "Unknown",
             status: p.status || "pending",
+            part_due_date: p.part_due_date
+              ? dayjs(p.part_due_date).format("YYYY-MM-DD")
+              : null,
           }));
 
         if (partsToUpdate.length > 0) {
@@ -382,6 +386,9 @@ export default function EditServiceOrder({
             description: p.description || "",
             location: p.location || "Unknown",
             status: p.status || "pending",
+            part_due_date: p.part_due_date
+              ? dayjs(p.part_due_date).format("YYYY-MM-DD")
+              : null,
           }));
 
         let newInsertedParts: Tables<"service_order_parts">[] = [];
@@ -406,6 +413,7 @@ export default function EditServiceOrder({
             description: p.description,
             location: p.location,
             status: p.status,
+            part_due_date: p.part_due_date,
             _deleted: false,
           })),
         ];
@@ -461,6 +469,7 @@ export default function EditServiceOrder({
       description: "",
       location: "",
       status: "pending",
+      part_due_date: null,
       _deleted: false,
     });
   };
@@ -887,6 +896,7 @@ export default function EditServiceOrder({
                     <Table.Th w={200}>Part</Table.Th>
                     <Table.Th>Description</Table.Th>
                     <Table.Th w={200}>Location</Table.Th>
+                    <Table.Th w={160}>Due Date</Table.Th>
                     <Table.Th w={200}>Status</Table.Th>
                     <Table.Th w={50} />
                   </Table.Tr>
@@ -947,6 +957,17 @@ export default function EditServiceOrder({
                               middlewares: { flip: false, shift: false },
                             }}
                             allowDeselect={false}
+                          />
+                        </Table.Td>
+                        <Table.Td>
+                          <DateInput
+                            placeholder="Due Date"
+                            valueFormat="YYYY-MM-DD"
+                            clearable
+                            disabled={isDeleted}
+                            {...form.getInputProps(
+                              `parts.${index}.part_due_date`
+                            )}
                           />
                         </Table.Td>
                         <Table.Td>

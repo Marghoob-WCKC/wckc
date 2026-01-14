@@ -35,6 +35,7 @@ import {
   Title,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
+import dayjs from "dayjs";
 import {
   FaPlus,
   FaTrash,
@@ -361,6 +362,9 @@ function ServiceOrderFormContent({
           description: p.description || "",
           location: p.location || "Unknown",
           status: p.status || "pending",
+          part_due_date: p.part_due_date
+            ? dayjs(p.part_due_date).format("YYYY-MM-DD")
+            : null,
         }));
 
         const { error: partsError } = await supabase
@@ -428,6 +432,7 @@ function ServiceOrderFormContent({
       description: "",
       location: "",
       status: "pending",
+      part_due_date: null,
     });
   };
 
@@ -728,6 +733,7 @@ function ServiceOrderFormContent({
                     <Table.Th w={200}>Part Name</Table.Th>
                     <Table.Th>Description</Table.Th>
                     <Table.Th w={200}>Location</Table.Th>
+                    <Table.Th w={160}>Due Date</Table.Th>
                     <Table.Th w={200}>Status</Table.Th>
                     <Table.Th w={50} />
                   </Table.Tr>
@@ -773,6 +779,16 @@ function ServiceOrderFormContent({
                             middlewares: { flip: false, shift: false },
                           }}
                           allowDeselect={false}
+                        />
+                      </Table.Td>
+                      <Table.Td>
+                        <DateInput
+                          placeholder="Due Date"
+                          valueFormat="YYYY-MM-DD"
+                          clearable
+                          {...form.getInputProps(
+                            `parts.${index}.part_due_date`
+                          )}
                         />
                       </Table.Td>
                       <Table.Td>
