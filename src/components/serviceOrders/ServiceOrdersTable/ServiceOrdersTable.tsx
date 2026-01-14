@@ -271,7 +271,7 @@ export default function ServiceOrdersTable() {
           }
         >
           <Tooltip label={info.getValue()}>
-            <Text truncate size="sm">
+            <Text truncate="end" size="sm">
               {info.getValue() || "—"}
             </Text>
           </Tooltip>
@@ -656,6 +656,7 @@ export default function ServiceOrdersTable() {
         <Table
           striped
           stickyHeader
+          layout="fixed"
           highlightOnHover
           withColumnBorders
           style={{ minWidth: "1000px" }}
@@ -799,8 +800,8 @@ export default function ServiceOrdersTable() {
                 }
               }}
               onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor =
-                "var(--mantine-color-gray-1)")
+                (e.currentTarget.style.backgroundColor =
+                  "var(--mantine-color-gray-1)")
               }
               onMouseLeave={(e) =>
                 (e.currentTarget.style.backgroundColor = "transparent")

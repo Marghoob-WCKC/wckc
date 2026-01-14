@@ -112,21 +112,22 @@ const htmlStyles = {
   body: {
     fontFamily: "Helvetica",
     fontSize: 10,
-    lineHeight: 1.4,
   },
   p: {
     fontSize: 10,
-    marginBottom: 4,
+    marginBottom: 0,
+    lineHeight: 0.7,
   },
+
   ul: {
     fontSize: 10,
-    marginBottom: 5,
+    marginBottom: 0,
     marginTop: 0,
     paddingLeft: 0,
   },
   li: {
     fontSize: 10,
-    marginBottom: 2,
+    marginBottom: 0,
     marginLeft: 0,
     paddingLeft: 0,
   },
@@ -175,7 +176,8 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
     if (isHtml) {
       return content
         .replace(/<li>\s*<p[^>]*>/g, "<li>")
-        .replace(/<\/p>\s*<\/li>/g, "</li>");
+        .replace(/<\/p>\s*<\/li>/g, "</li>")
+        .replace(/ï¿½/g, "...");
     }
 
     return content.replace(/\n/g, "<br />");
