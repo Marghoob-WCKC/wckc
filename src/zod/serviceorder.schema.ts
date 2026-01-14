@@ -8,6 +8,7 @@ export const ServiceOrderPartSchema = z.object({
   description: z.string().optional(),
   location: z.string().default("Unknown"),
   status: z.enum(["pending", "completed", "unknown"]).default("pending"),
+  part_due_date: z.coerce.date().nullable().optional(),
 });
 
 export const ServiceOrderSchema = z.object({
