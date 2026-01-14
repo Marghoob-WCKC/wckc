@@ -101,8 +101,9 @@ const styles = StyleSheet.create({
   },
   colQty: { width: "8%" },
   colPart: { width: "20%" },
-  colDescription: { width: "50%" },
+  colDescription: { width: "40%" },
   colLocation: { width: "11%" },
+  colDueDate: { width: "10%" },
   colStatus: { width: "11%" },
 });
 
@@ -340,6 +341,9 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
             <View style={styles.colLocation}>
               <Text style={styles.tableHeaderLabel}>Location</Text>
             </View>
+            <View style={styles.colDueDate}>
+              <Text style={styles.tableHeaderLabel}>Due Date</Text>
+            </View>
             <View style={styles.colStatus}>
               <Text style={styles.tableHeaderLabel}>Status</Text>
             </View>
@@ -364,6 +368,13 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
                 <View style={styles.colLocation}>
                   <Text style={{ fontSize: 8, textTransform: "uppercase" }}>
                     {part.location || "—"}
+                  </Text>
+                </View>
+                <View style={styles.colDueDate}>
+                  <Text style={{ fontSize: 8 }}>
+                    {part.part_due_date
+                      ? dayjs(part.part_due_date).format("MMM D, YYYY")
+                      : "—"}
                   </Text>
                 </View>
                 <View style={styles.colStatus}>
