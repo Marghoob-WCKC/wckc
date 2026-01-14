@@ -417,6 +417,7 @@ function ServiceOrderFormContent({
   });
 
   const handleSubmit = (values: ServiceOrderFormValues) => {
+    if (submitMutation.isPending) return;
     submitMutation.mutate(values);
   };
 
@@ -843,6 +844,7 @@ function ServiceOrderFormContent({
               type="submit"
               size="md"
               loading={submitMutation.isPending}
+              disabled={submitMutation.isPending}
               leftSection={<FaSave />}
               style={{
                 background: "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",

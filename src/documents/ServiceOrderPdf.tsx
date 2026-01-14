@@ -68,11 +68,9 @@ const styles = StyleSheet.create({
   },
 
   commentsSection: {
-    marginTop: 10,
+    paddingBottom: 10,
     borderBottomWidth: 4,
     borderBottomColor: "#000",
-    paddingBottom: 5,
-    marginBottom: 5,
   },
   commentsHeader: {
     fontSize: 12,
@@ -115,14 +113,14 @@ const htmlStyles = {
   },
   p: {
     fontSize: 10,
+    marginTop: 0,
     marginBottom: 0,
-    lineHeight: 0.7,
   },
 
   ul: {
     fontSize: 10,
-    marginBottom: 0,
-    marginTop: 0,
+    marginBottom: 4,
+    marginTop: 4,
     paddingLeft: 0,
   },
   li: {
@@ -177,6 +175,7 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
       return content
         .replace(/<li>\s*<p[^>]*>/g, "<li>")
         .replace(/<\/p>\s*<\/li>/g, "</li>")
+        .replace(/<p><\/p>/g, "<br />")
         .replace(/ï¿½/g, "...");
     }
 

@@ -75,6 +75,7 @@ import { IoIosWarning } from "react-icons/io";
 import { linearGradients } from "@/theme";
 
 dayjs.extend(utc);
+
 interface EditServiceOrderProps {
   serviceOrderId: string;
 }
@@ -98,6 +99,43 @@ type ServiceOrderData = Tables<"service_orders"> & {
     | null;
 };
 
+const mapServiceOrderToFormValues = (
+  data: ServiceOrderData
+): ServiceOrderFormValues => {
+  const hoInfo = data.jobs?.homeowners_info;
+
+  return {
+    job_id: String(data.job_id),
+    service_order_number: data.service_order_number,
+    due_date: data.due_date ? dayjs(data.due_date).toDate() : null,
+    installer_id: data.installer_id ? String(data.installer_id) : null,
+    service_type: data.service_type || "",
+    service_type_detail: data.service_type_detail || "",
+    service_by: data.service_by || "",
+    service_by_detail: data.service_by_detail || "",
+    hours_estimated: data.hours_estimated || 0,
+    chargeable: data.chargeable || false,
+    is_warranty_so: data.is_warranty_so || false,
+    installer_requested: data.installer_requested || false,
+    warranty_order_cost: data.warranty_order_cost || undefined,
+    comments: data.comments || "",
+    completed_at: data.completed_at ? new Date(data.completed_at) : null,
+    parts: data.service_order_parts.map((p: any) => ({
+      id: p.id,
+      qty: p.qty,
+      part: p.part,
+      description: p.description || "",
+      location: p.location || "",
+      status: p.status || "",
+      _deleted: false,
+    })),
+    homeowner_name: hoInfo?.homeowner_name || "",
+    homeowner_phone: hoInfo?.homeowner_phone || "",
+    homeowner_email: hoInfo?.homeowner_email || "",
+    homeowner_details: hoInfo?.homeowner_details || "",
+  };
+};
+
 export default function EditServiceOrder({
   serviceOrderId,
 }: EditServiceOrderProps) {
@@ -112,6 +150,7 @@ export default function EditServiceOrder({
     addInstallerOpened,
     { open: openAddInstaller, close: closeAddInstaller },
   ] = useDisclosure(false);
+
   const getLocationIcon = (value: string | null) => {
     switch (value) {
       case "In Bin":
@@ -130,6 +169,7 @@ export default function EditServiceOrder({
         return null;
     }
   };
+
   const form = useForm<ServiceOrderFormValues>({
     initialValues: {
       job_id: "",
@@ -240,44 +280,9 @@ export default function EditServiceOrder({
 
   useEffect(() => {
     if (serviceOrderData) {
-      const hoInfo = serviceOrderData.jobs?.homeowners_info;
-
-      form.initialize({
-        job_id: String(serviceOrderData.job_id),
-        service_order_number: serviceOrderData.service_order_number,
-        due_date: serviceOrderData.due_date
-          ? dayjs(serviceOrderData.due_date).toDate()
-          : null,
-        installer_id: serviceOrderData.installer_id
-          ? String(serviceOrderData.installer_id)
-          : null,
-        service_type: serviceOrderData.service_type || "",
-        service_type_detail: serviceOrderData.service_type_detail || "",
-        service_by: serviceOrderData.service_by || "",
-        service_by_detail: serviceOrderData.service_by_detail || "",
-        hours_estimated: serviceOrderData.hours_estimated || 0,
-        chargeable: serviceOrderData.chargeable || false,
-        is_warranty_so: serviceOrderData.is_warranty_so || false,
-        installer_requested: serviceOrderData.installer_requested || false,
-        warranty_order_cost: serviceOrderData.warranty_order_cost || undefined,
-        comments: serviceOrderData.comments || "",
-        completed_at: serviceOrderData.completed_at
-          ? new Date(serviceOrderData.completed_at)
-          : null,
-        parts: serviceOrderData.service_order_parts.map((p: any) => ({
-          id: p.id,
-          qty: p.qty,
-          part: p.part,
-          description: p.description || "",
-          location: p.location || "",
-          status: p.status || "",
-          _deleted: false,
-        })),
-        homeowner_name: hoInfo?.homeowner_name || "",
-        homeowner_phone: hoInfo?.homeowner_phone || "",
-        homeowner_email: hoInfo?.homeowner_email || "",
-        homeowner_details: hoInfo?.homeowner_details || "",
-      });
+      const mappedValues = mapServiceOrderToFormValues(serviceOrderData);
+      form.initialize(mappedValues);
+      form.resetDirty();
     }
   }, [serviceOrderData]);
 
@@ -332,7 +337,8 @@ export default function EditServiceOrder({
       }
 
       if (values.parts) {
-        const partsToDelete = values.parts
+        const parts = values.parts;
+        const partsToDelete = parts
           .filter((p) => p.id && p._deleted)
           .map((p) => p.id as number);
 
@@ -346,7 +352,7 @@ export default function EditServiceOrder({
             throw new Error(`Delete Parts Error: ${deleteError.message}`);
         }
 
-        const partsToUpdate = values.parts
+        const partsToUpdate = parts
           .filter((p) => p.id && !p._deleted)
           .map((p) => ({
             id: p.id,
@@ -367,7 +373,7 @@ export default function EditServiceOrder({
             throw new Error(`Update Parts Error: ${updateError.message}`);
         }
 
-        const partsToInsert = values.parts
+        const partsToInsert = parts
           .filter((p) => !p.id && !p._deleted)
           .map((p) => ({
             service_order_id: Number(serviceOrderId),
@@ -378,30 +384,61 @@ export default function EditServiceOrder({
             status: p.status || "pending",
           }));
 
+        let newInsertedParts: Tables<"service_order_parts">[] = [];
+
         if (partsToInsert.length > 0) {
-          const { error: insertError } = await supabase
+          const { data, error: insertError } = await supabase
             .from("service_order_parts")
-            .insert(partsToInsert);
+            .insert(partsToInsert)
+            .select();
 
           if (insertError)
             throw new Error(`Create Parts Error: ${insertError.message}`);
+          if (data) newInsertedParts = data;
         }
+
+        const finalParts = [
+          ...partsToUpdate.map((p) => ({ ...p, _deleted: false })),
+          ...newInsertedParts.map((p) => ({
+            id: p.id,
+            qty: p.qty,
+            part: p.part,
+            description: p.description,
+            location: p.location,
+            status: p.status,
+            _deleted: false,
+          })),
+        ];
+
+        return { parts: finalParts };
       }
+
+      return { parts: [] };
     },
-    onSuccess: () => {
+    onSuccess: async (data, variables) => {
       notifications.show({
         title: "Success",
         message: "Service Order updated successfully.",
         color: "green",
       });
-      queryClient.invalidateQueries();
+
+      if (data.parts.length > 0 || variables.parts.length > 0) {
+        const currentParts = form.values.parts;
+
+        if (data && data.parts) {
+          form.setFieldValue("parts", data.parts as any);
+        }
+      }
+
+      form.resetDirty();
+
+      await queryClient.invalidateQueries({
+        queryKey: ["service_order", serviceOrderId],
+      });
+
       queryClient.invalidateQueries({
         queryKey: ["service_orders_table_view"],
       });
-      queryClient.invalidateQueries({
-        queryKey: ["service_order", serviceOrderId],
-      });
-      router.refresh();
     },
     onError: (err: any) => {
       notifications.show({
@@ -413,6 +450,7 @@ export default function EditServiceOrder({
   });
 
   const handleSubmit = (values: ServiceOrderFormValues) => {
+    if (submitMutation.isPending) return;
     submitMutation.mutate(values);
   };
 
@@ -576,6 +614,7 @@ export default function EditServiceOrder({
       >
         <Stack gap="md">
           <Paper p="md" radius="md" shadow="sm" bg="gray.1">
+            {}
             <Group
               justify="space-between"
               align="center"
@@ -663,6 +702,7 @@ export default function EditServiceOrder({
               </Fieldset>
 
               <Fieldset legend="Details" variant="filled" bg="white">
+                {}
                 <Box mt="md">
                   <Group
                     visibleFrom="lg"
@@ -696,6 +736,7 @@ export default function EditServiceOrder({
                           style={{ flex: 1 }}
                           {...form.getInputProps("installer_id")}
                         />
+                        {}
                         <Tooltip label="Create New Installer">
                           <ActionIcon
                             variant="filled"
@@ -764,6 +805,7 @@ export default function EditServiceOrder({
                     </Box>
                   </Group>
 
+                  {}
                   <Stack hiddenFrom="lg" gap="xl">
                     <Stack gap="sm">
                       <Group align="flex-end" gap="xs" wrap="nowrap">
@@ -810,6 +852,7 @@ export default function EditServiceOrder({
           </Paper>
 
           <Paper p="md" radius="md" shadow="xl">
+            {}
             <Group justify="space-between" mb="md">
               <Text fw={600}>Required Parts</Text>
               <Group>
@@ -859,6 +902,7 @@ export default function EditServiceOrder({
                           textDecoration: isDeleted ? "line-through" : "none",
                         }}
                       >
+                        {}
                         <Table.Td>
                           <NumberInput
                             min={1}
@@ -981,9 +1025,13 @@ export default function EditServiceOrder({
               type="submit"
               size="md"
               loading={submitMutation.isPending}
+              disabled={submitMutation.isPending || !form.isDirty()}
               leftSection={<FaSave />}
               style={{
-                background: "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
+                background:
+                  !submitMutation.isPending && !form.isDirty()
+                    ? undefined
+                    : "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)",
                 color: "white",
                 border: "none",
               }}
