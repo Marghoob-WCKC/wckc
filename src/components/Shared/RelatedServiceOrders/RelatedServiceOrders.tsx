@@ -212,7 +212,7 @@ export default function RelatedServiceOrders({
                 <Table.Tr>
                   <Table.Th>SO #</Table.Th>
                   <Table.Th>Date Entered</Table.Th>
-                  <Table.Th>Due Date</Table.Th>
+                  <Table.Th>Service Date</Table.Th>
                   <Table.Th>Status</Table.Th>
                   <Table.Th></Table.Th>
                 </Table.Tr>

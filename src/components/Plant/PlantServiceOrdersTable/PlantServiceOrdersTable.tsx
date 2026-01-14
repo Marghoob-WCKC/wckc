@@ -325,7 +325,7 @@ export default function PlantServiceOrdersTable() {
               <DatePickerInput
                 type="range"
                 allowSingleDateInRange
-                label="Due Date Range"
+                label="Service Date Range"
                 placeholder="Pick dates range"
                 value={dateRange}
                 onChange={(val) =>
@@ -403,7 +403,7 @@ export default function PlantServiceOrdersTable() {
                       <Group gap="md">
                         <FaCalendarCheck size={16} />
                         <Text fw={700} size="md">
-                          Due Date:{" "}
+                          Service Date:{" "}
                           <span
                             style={{ color: isPastDue ? "red" : "#4A00E0" }}
                           >
