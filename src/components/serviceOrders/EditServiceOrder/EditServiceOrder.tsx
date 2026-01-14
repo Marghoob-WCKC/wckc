@@ -781,7 +781,7 @@ export default function EditServiceOrder({
                       </Group>
 
                       <DateInput
-                        label="Due Date"
+                        label="Service Date"
                         placeholder="YYYY-MM-DD"
                         clearable
                         valueFormat="YYYY-MM-DD"
@@ -821,7 +821,7 @@ export default function EditServiceOrder({
                       </Group>
                       <SimpleGrid cols={2}>
                         <DateInput
-                          label="Due Date"
+                          label="Service Date"
                           {...form.getInputProps("due_date")}
                         />
                       </SimpleGrid>

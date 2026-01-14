@@ -1281,6 +1281,7 @@ export type Database = {
           id: number
           location: string | null
           part: string
+          part_due_date: string | null
           qty: number
           service_order_id: number
           status: Database["public"]["Enums"]["so_part_status"] | null
@@ -1291,6 +1292,7 @@ export type Database = {
           id?: number
           location?: string | null
           part: string
+          part_due_date?: string | null
           qty?: number
           service_order_id: number
           status?: Database["public"]["Enums"]["so_part_status"] | null
@@ -1301,6 +1303,7 @@ export type Database = {
           id?: number
           location?: string | null
           part?: string
+          part_due_date?: string | null
           qty?: number
           service_order_id?: number
           status?: Database["public"]["Enums"]["so_part_status"] | null

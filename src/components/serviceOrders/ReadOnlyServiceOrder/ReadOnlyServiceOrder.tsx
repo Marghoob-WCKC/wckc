@@ -459,7 +459,7 @@ export default function ReadOnlyServiceOrder({
                   />
                   <Stack gap="xs">
                     <InfoRow
-                      label="Due Date"
+                      label="Service Date"
                       value={
                         so.due_date ? (
                           <Text c={isCompleted ? "dimmed" : "red.7"} fw={700}>
