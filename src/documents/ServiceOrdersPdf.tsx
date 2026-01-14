@@ -144,7 +144,7 @@ export const ServiceOrdersPdf = ({
           return (
             <View key={dateKey} wrap={false}>
               <View style={styles.dateGroupHeader}>
-                <Text style={styles.dateGroupText}>Due Date:</Text>
+                <Text style={styles.dateGroupText}>Service Date:</Text>
                 <Text style={styles.dateGroupText}>{formattedDate}</Text>
                 <Text style={styles.dateGroupText}>{dayName}</Text>
                 <Text style={[styles.dateGroupText, { marginLeft: "auto" }]}>

@@ -637,7 +637,7 @@ function ServiceOrderFormContent({
                       </Group>
 
                       <DateInput
-                        label="Due Date"
+                        label="Service Date"
                         placeholder="YYYY-MM-DD"
                         clearable
                         valueFormat="YYYY-MM-DD"
@@ -676,7 +676,7 @@ function ServiceOrderFormContent({
                       </Group>
                       <SimpleGrid cols={2}>
                         <DateInput
-                          label="Due Date"
+                          label="Service Date"
                           {...form.getInputProps("due_date")}
                         />
                       </SimpleGrid>
