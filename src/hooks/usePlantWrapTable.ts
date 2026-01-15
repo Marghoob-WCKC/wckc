@@ -21,15 +21,20 @@ export function usePlantWrapTable({
   const { supabase, isAuthenticated } = useSupabase();
 
   const applyFilters = (query: any) => {
+    const showPriorFilter = columnFilters.find((f) => f.id === "show_prior");
+    const showPrior = showPriorFilter ? Boolean(showPriorFilter.value) : false;
+
     columnFilters.forEach((filter) => {
       const { id, value } = filter;
+      if (id === "show_prior") return;
 
       if (id === "wrap_date_range" && Array.isArray(value)) {
         const [start, end] = value;
         if (start && end) {
-          query = query
-            .gte("wrap_date", dayjs(start).format("YYYY-MM-DD"))
-            .lte("wrap_date", dayjs(end).format("YYYY-MM-DD"));
+          if (!showPrior) {
+            query = query.gte("wrap_date", dayjs(start).format("YYYY-MM-DD"));
+          }
+          query = query.lte("wrap_date", dayjs(end).format("YYYY-MM-DD"));
         }
         return;
       }

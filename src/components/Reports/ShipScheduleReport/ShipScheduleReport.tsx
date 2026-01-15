@@ -18,12 +18,14 @@ import {
   ThemeIcon,
   Container,
   Paper,
+  Switch,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { FaShippingFast } from "react-icons/fa";
 import dayjs from "dayjs";
 import { useSupabase } from "@/hooks/useSupabase";
 import { colors } from "@/theme";
+import { useDebouncedValue } from "@mantine/hooks";
 import { formatShipScheduleData } from "@/utils/reportFormatters";
 
 const PDFViewer = dynamic(
@@ -40,10 +42,14 @@ const PDFViewer = dynamic(
 
 export default function ShipScheduleReport() {
   const { supabase, isAuthenticated } = useSupabase();
+  const [showPrior, setShowPrior] = useState(false);
+  const [debouncedShowPrior] = useDebouncedValue(showPrior, 600);
+
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
     dayjs().subtract(1, "day").toDate(),
     dayjs().add(7, "day").toDate(),
   ]);
+  const [debouncedDateRange] = useDebouncedValue(dateRange, 600);
 
   const {
     data: reportData,
@@ -51,26 +57,32 @@ export default function ShipScheduleReport() {
     isError,
     error,
   } = useQuery({
-    queryKey: ["ship_schedule_report", dateRange],
+    queryKey: ["ship_schedule_report", debouncedDateRange, debouncedShowPrior],
     queryFn: async () => {
-      if (!dateRange[0] || !dateRange[1]) return [];
+      if (!debouncedDateRange[0] || !debouncedDateRange[1]) return [];
 
-      const startDate = dayjs(dateRange[0]).format("YYYY-MM-DD");
-      const endDate = dayjs(dateRange[1]).format("YYYY-MM-DD");
+      const startDate = dayjs(debouncedDateRange[0]).format("YYYY-MM-DD");
+      const endDate = dayjs(debouncedDateRange[1]).format("YYYY-MM-DD");
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("plant_table_view")
         .select("*")
-        .gte("ship_schedule", startDate)
         .lte("ship_schedule", endDate)
-        .not("ship_schedule", "is", null)
+        .not("ship_schedule", "is", null);
+
+      if (!debouncedShowPrior) {
+        query = query.gte("ship_schedule", startDate);
+      }
+
+      const { data, error } = await query
         .order("ship_schedule", { ascending: true })
         .order("job_number", { ascending: true });
 
       if (error) throw error;
       return data as Views<"plant_table_view">[];
     },
-    enabled: isAuthenticated && !!dateRange[0] && !!dateRange[1],
+    enabled:
+      isAuthenticated && !!debouncedDateRange[0] && !!debouncedDateRange[1],
   });
 
   const formattedData: ShippingReportJob[] = useMemo(() => {
@@ -79,16 +91,24 @@ export default function ShipScheduleReport() {
 
   const memoizedPreview = useMemo(
     () => (
-      <PDFViewer width="100%" height="100%" style={{ border: "none" }}>
+      <PDFViewer
+        key={`${debouncedShowPrior}-${formattedData.length}-${debouncedDateRange[0]}`}
+        width="100%"
+        height="100%"
+        style={{ border: "none" }}
+      >
         <ShippingReportPdf
           data={formattedData}
-          startDate={dateRange[0]}
-          endDate={dateRange[1]}
+          startDate={debouncedDateRange[0]}
+          endDate={debouncedDateRange[1]}
         />
       </PDFViewer>
     ),
-    [formattedData, dateRange]
+    [formattedData, debouncedDateRange, debouncedShowPrior]
   );
+
+  const isDebouncing =
+    showPrior !== debouncedShowPrior || dateRange !== debouncedDateRange;
 
   return (
     <Container size="100%" p="md">
@@ -114,6 +134,14 @@ export default function ShipScheduleReport() {
               </Stack>
             </Group>
             <Group align="flex-end">
+              <Switch
+                label="Show Prior"
+                checked={showPrior}
+                onChange={(event) => setShowPrior(event.currentTarget.checked)}
+                color="violet"
+                size="md"
+                mb={8}
+              />
               <DatePickerInput
                 type="range"
                 allowSingleDateInRange
@@ -146,7 +174,7 @@ export default function ShipScheduleReport() {
                 Please select a date range to view the report.
               </Text>
             </Center>
-          ) : isLoading ? (
+          ) : isLoading || isDebouncing ? (
             <Center h="100%">
               <Loader type="bars" size="xl" color="violet" />
             </Center>

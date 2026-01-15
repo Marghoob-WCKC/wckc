@@ -21,14 +21,23 @@ export function usePlantShippingTable({
   const { supabase, isAuthenticated } = useSupabase();
 
   const applyFilters = (query: any) => {
+    const showPriorFilter = columnFilters.find((f) => f.id === "show_prior");
+    const showPrior = showPriorFilter ? Boolean(showPriorFilter.value) : false;
+
     columnFilters.forEach((filter) => {
       const { id, value } = filter;
+      if (id === "show_prior") return;
+
       if (id === "ship_date_range" && Array.isArray(value)) {
         const [start, end] = value;
         if (start && end) {
-          query = query
-            .gte("ship_schedule", dayjs(start).format("YYYY-MM-DD"))
-            .lte("ship_schedule", dayjs(end).format("YYYY-MM-DD"));
+          if (!showPrior) {
+            query = query.gte(
+              "ship_schedule",
+              dayjs(start).format("YYYY-MM-DD")
+            );
+          }
+          query = query.lte("ship_schedule", dayjs(end).format("YYYY-MM-DD"));
         }
         return;
       }

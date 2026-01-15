@@ -34,6 +34,7 @@ import {
   Button,
   Anchor,
   Menu,
+  Switch,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import {
@@ -91,6 +92,7 @@ export default function PlantTableWrap() {
     dayjs().subtract(1, "day").toDate(),
     dayjs().add(7, "day").toDate(),
   ]);
+  const [showPrior, setShowPrior] = useState(false);
   const [pdfOpened, { open: openPdf, close: closePdf }] = useDisclosure(false);
   const [drawerJobId, setDrawerJobId] = useState<number | null>(null);
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
@@ -322,12 +324,17 @@ export default function PlantTableWrap() {
       filters = filters.filter((f) => f.id !== "wrap_date_range");
       filters.push({ id: "wrap_date_range", value: dateRange });
     }
+
+    filters = filters.filter((f) => f.id !== "show_prior");
+    filters.push({ id: "show_prior", value: showPrior });
+
     setActiveFilters(filters);
   };
 
   const handleClearFilters = () => {
     setInputFilters([]);
     setActiveFilters([]);
+    setShowPrior(false);
     setDateRange([null, null]);
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
@@ -930,7 +937,7 @@ export default function PlantTableWrap() {
             Filters
           </Accordion.Control>
           <Accordion.Panel>
-            <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
+            <SimpleGrid cols={5} spacing="md">
               <TextInput
                 label="Job Number"
                 placeholder="Search..."
@@ -966,6 +973,16 @@ export default function PlantTableWrap() {
                 clearable
                 leftSection={<FaCalendarAlt size={14} />}
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+                style={{ flex: 1 }}
+              />
+              <Switch
+                label="Show Prior"
+                checked={showPrior}
+                onChange={(e) => setShowPrior(e.currentTarget.checked)}
+                color="violet"
+                size="md"
+                mb={8}
+                style={{ display: "flex", alignItems: "flex-end" }}
               />
             </SimpleGrid>
             <Group justify="flex-end" mt="md">

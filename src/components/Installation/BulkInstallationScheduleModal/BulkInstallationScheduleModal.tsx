@@ -16,9 +16,11 @@ import {
   TextInput,
   Textarea,
   Collapse,
+  ActionIcon,
+  Tooltip,
   Grid,
 } from "@mantine/core";
-import { DateInput } from "@mantine/dates";
+import { DatePickerInput, DateInput } from "@mantine/dates";
 import { useQuery } from "@tanstack/react-query";
 import { useSupabase } from "@/hooks/useSupabase";
 import {
@@ -30,6 +32,8 @@ import {
   FaExclamationTriangle,
   FaBoxOpen,
   FaCalendarCheck,
+  FaUndo,
+  FaTimes, 
 } from "react-icons/fa";
 import { colors, gradients } from "@/theme";
 import AddBackorderModal from "@/components/Installation/AddBOModal/AddBOModal";
@@ -45,6 +49,23 @@ interface BulkScheduleModalProps {
   selectedRows: any[];
   clearSelection: () => void;
 }
+
+const FIELD_LABELS: Partial<Record<keyof BulkSchedulePayload, string>> = {
+  installer_id: "Assigned Installer",
+  installation_date: "Scheduled Installation",
+  inspection_date: "Scheduled Inspection",
+  wrap_date: "Wrap Date",
+  ship_schedule: "Shipping Date",
+  ship_status: "Shipping Date Status",
+  wrap_completed: "Wrapped",
+  has_shipped: "Shipped",
+  partially_shipped: "Shipped",
+  installation_completed: "Installation Completed",
+  installation_report_received: "Report Received",
+  trade_30days: "Trade (30 Days)",
+  trade_6months: "Trade (6 Months)",
+  site_changes: "Site Changes",
+};
 
 export default function BulkScheduleModal({
   opened,
@@ -67,6 +88,11 @@ export default function BulkScheduleModal({
 
   const [isBackorderPromptOpen, setIsBackorderPromptOpen] = useState(false);
   const [isAddBackorderModalOpen, setIsAddBackorderModalOpen] = useState(false);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [fieldToDelete, setFieldToDelete] = useState<
+    keyof BulkSchedulePayload | null
+  >(null);
 
   const { data: installers } = useQuery({
     queryKey: ["installers-list"],
@@ -97,6 +123,121 @@ export default function BulkScheduleModal({
 
   const handleUpdate = (key: keyof BulkSchedulePayload, value: any) => {
     setUpdates((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const openDeleteModal = (field: keyof BulkSchedulePayload) => {
+    setFieldToDelete(field);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (fieldToDelete) {
+      if (fieldToDelete === "has_shipped") {
+        handleUpdate("has_shipped", false);
+        handleUpdate("partially_shipped", false);
+      } else {
+        handleUpdate(fieldToDelete, null);
+      }
+
+      if (fieldToDelete === "ship_schedule") {
+        handleUpdate("ship_status", "unprocessed");
+      }
+
+      setDeleteModalOpen(false);
+      setFieldToDelete(null);
+    }
+  };
+
+  const handleReset = (key: keyof BulkSchedulePayload) => {
+    setUpdates((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const renderRightSection = (field: keyof BulkSchedulePayload) => {
+    const isNullified = updates[field] === null;
+
+    if (isNullified) {
+      return (
+        <Tooltip label="Undo Remove" withArrow position="top">
+          <ActionIcon
+            variant="transparent"
+            color="gray"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleReset(field);
+            }}
+          >
+            <FaUndo size={12} />
+          </ActionIcon>
+        </Tooltip>
+      );
+    }
+
+    return (
+      <Tooltip
+        label="Clear values for all selected jobs"
+        withArrow
+        position="top"
+      >
+        <ActionIcon
+          variant="transparent"
+          color="red"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation(); 
+            openDeleteModal(field);
+          }}
+        >
+          <FaTimes size={12} />
+        </ActionIcon>
+      </Tooltip>
+    );
+  };
+
+  const renderSwitchAction = (field: keyof BulkSchedulePayload) => {
+    const isNullified = updates[field] === null;
+
+    if (isNullified) {
+      return (
+        <Tooltip label="Undo Remove" withArrow position="left">
+          <ActionIcon
+            variant="transparent"
+            color="gray"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleReset(field);
+            }}
+          >
+            <FaUndo size={14} />
+          </ActionIcon>
+        </Tooltip>
+      );
+    }
+
+    return (
+      <Tooltip
+        label="Clear values for all selected jobs"
+        withArrow
+        position="left"
+      >
+        <ActionIcon
+          variant="transparent"
+          color="red"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            openDeleteModal(field);
+          }}
+        >
+          <FaTimes size={14} />
+        </ActionIcon>
+      </Tooltip>
+    );
   };
 
   const handleSave = () => {
@@ -195,27 +336,64 @@ export default function BulkScheduleModal({
                   <SimpleGrid cols={2} spacing="lg">
                     <Select
                       label="Assigned Installer"
-                      placeholder="No Change"
+                      placeholder={
+                        updates.installer_id === null
+                          ? "Values will be removed"
+                          : "No Change"
+                      }
                       data={installerOptions}
                       searchable
                       clearable
+                      value={
+                        updates.installer_id
+                          ? String(updates.installer_id)
+                          : null
+                      }
                       onChange={(val) =>
                         handleUpdate("installer_id", val ? Number(val) : null)
                       }
+                      rightSection={renderRightSection("installer_id")}
+                      rightSectionPointerEvents="all"
                     />
                     <DateInput
                       label="Scheduled Installation"
-                      placeholder="No Change"
+                      placeholder={
+                        updates.installation_date === null
+                          ? "Values will be removed"
+                          : "No Change"
+                      }
                       clearable
+                      value={
+                        updates.installation_date
+                          ? typeof updates.installation_date === "string"
+                            ? dayjs(updates.installation_date).toDate()
+                            : updates.installation_date
+                          : null
+                      }
                       valueFormat="YYYY-MM-DD"
                       onChange={(val) => handleUpdate("installation_date", val)}
+                      rightSection={renderRightSection("installation_date")}
+                      rightSectionPointerEvents="all"
                     />
                     <DateInput
                       label="Scheduled Inspection"
-                      placeholder="No Change"
+                      placeholder={
+                        updates.inspection_date === null
+                          ? "Values will be removed"
+                          : "No Change"
+                      }
                       clearable
+                      value={
+                        updates.inspection_date
+                          ? typeof updates.inspection_date === "string"
+                            ? dayjs(updates.inspection_date).toDate()
+                            : updates.inspection_date
+                          : null
+                      }
                       valueFormat="YYYY-MM-DD"
                       onChange={(val) => handleUpdate("inspection_date", val)}
+                      rightSection={renderRightSection("inspection_date")}
+                      rightSectionPointerEvents="all"
                     />
                   </SimpleGrid>
                 </Box>
@@ -234,22 +412,54 @@ export default function BulkScheduleModal({
                   <SimpleGrid cols={3} spacing="lg">
                     <DateInput
                       label="Wrap Date"
-                      placeholder="No Change"
+                      placeholder={
+                        updates.wrap_date === null
+                          ? "Values will be removed"
+                          : "No Change"
+                      }
                       clearable
+                      value={
+                        updates.wrap_date
+                          ? typeof updates.wrap_date === "string"
+                            ? dayjs(updates.wrap_date).toDate()
+                            : updates.wrap_date
+                          : null
+                      }
                       valueFormat="YYYY-MM-DD"
                       onChange={(val) => handleUpdate("wrap_date", val)}
+                      rightSection={renderRightSection("wrap_date")}
+                      rightSectionPointerEvents="all"
                     />
                     <DateInput
                       label="Shipping Date"
-                      placeholder="No Change"
+                      placeholder={
+                        updates.ship_schedule === null
+                          ? "Values will be removed"
+                          : "No Change"
+                      }
                       clearable
+                      value={
+                        updates.ship_schedule
+                          ? typeof updates.ship_schedule === "string"
+                            ? dayjs(updates.ship_schedule).toDate()
+                            : updates.ship_schedule
+                          : null
+                      }
                       valueFormat="YYYY-MM-DD"
                       onChange={(val) => handleUpdate("ship_schedule", val)}
+                      rightSection={renderRightSection("ship_schedule")}
+                      rightSectionPointerEvents="all"
                     />
                     <Select
                       label="Shipping Date Status"
-                      placeholder="No Change"
+                      placeholder={
+                        updates.ship_status === null
+                          ? "Values will be removed"
+                          : "No Change"
+                      }
+                      clearable
                       data={["unprocessed", "tentative", "confirmed"]}
+                      value={updates.ship_status ?? null}
                       onChange={(val) => handleUpdate("ship_status", val)}
                     />
                   </SimpleGrid>
@@ -298,36 +508,42 @@ export default function BulkScheduleModal({
                     }
                     styles={{ label: { fontWeight: 500 } }}
                   />
+                  {renderSwitchAction("wrap_completed")}
                 </Group>
 
                 <Divider variant="dashed" />
 
-                <Switch
-                  size="md"
-                  color={updates.partially_shipped ? "orange" : "violet"}
-                  label={
-                    updates.partially_shipped ? "Shipped (Partial)" : "Shipped"
-                  }
-                  checked={
-                    updates.has_shipped === true ||
-                    updates.partially_shipped === true
-                  }
-                  onChange={(e) => {
-                    const isChecked = e.currentTarget.checked;
-                    if (isChecked) {
-                      setIsBackorderPromptOpen(true);
-                    } else {
-                      handleUpdate("has_shipped", undefined);
-                      handleUpdate("partially_shipped", undefined);
+                <Group justify="space-between">
+                  <Switch
+                    size="md"
+                    color={updates.partially_shipped ? "orange" : "violet"}
+                    label={
+                      updates.partially_shipped
+                        ? "Shipped (Partial)"
+                        : "Shipped"
                     }
-                  }}
-                  styles={{
-                    label: {
-                      fontWeight: 500,
-                      color: updates.partially_shipped ? "orange" : undefined,
-                    },
-                  }}
-                />
+                    checked={
+                      updates.has_shipped === true ||
+                      updates.partially_shipped === true
+                    }
+                    onChange={(e) => {
+                      const isChecked = e.currentTarget.checked;
+                      if (isChecked) {
+                        setIsBackorderPromptOpen(true);
+                      } else {
+                        handleUpdate("has_shipped", undefined);
+                        handleUpdate("partially_shipped", undefined);
+                      }
+                    }}
+                    styles={{
+                      label: {
+                        fontWeight: 500,
+                        color: updates.partially_shipped ? "orange" : undefined,
+                      },
+                    }}
+                  />
+                  {renderSwitchAction("has_shipped")}
+                </Group>
 
                 <Divider variant="dashed" />
 
@@ -345,18 +561,7 @@ export default function BulkScheduleModal({
                     }
                     styles={{ label: { fontWeight: 500 } }}
                   />
-                  {updates.installation_completed && (
-                    <Button
-                      variant="subtle"
-                      color="red"
-                      size="compact-xs"
-                      onClick={() =>
-                        handleUpdate("installation_completed", undefined)
-                      }
-                    >
-                      Reset
-                    </Button>
-                  )}
+                  {renderSwitchAction("installation_completed")}
                 </Group>
 
                 <Divider variant="dashed" />
@@ -380,6 +585,7 @@ export default function BulkScheduleModal({
                     }
                     styles={{ label: { fontWeight: 500 } }}
                   />
+                  {renderSwitchAction("installation_report_received")}
                 </Group>
 
                 <Divider variant="dashed" />
@@ -403,6 +609,7 @@ export default function BulkScheduleModal({
                     }
                     styles={{ label: { fontWeight: 500 } }}
                   />
+                  {renderSwitchAction("trade_30days")}
                 </Group>
 
                 <Divider variant="dashed" />
@@ -426,6 +633,7 @@ export default function BulkScheduleModal({
                     }
                     styles={{ label: { fontWeight: 500 } }}
                   />
+                  {renderSwitchAction("trade_6months")}
                 </Group>
 
                 <Divider variant="dashed" />
@@ -449,6 +657,7 @@ export default function BulkScheduleModal({
                     }
                     styles={{ label: { fontWeight: 500 } }}
                   />
+                  {renderSwitchAction("site_changes")}
                 </Group>
               </Stack>
             </Grid.Col>
@@ -465,6 +674,36 @@ export default function BulkScheduleModal({
               disabled={Object.keys(updates).length === 0}
             >
               Apply Changes
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Modal
+        opened={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Confirm Removal"
+        centered
+        size="sm"
+        zIndex={202} 
+      >
+        <Stack>
+          <Text size="sm">
+            Are you sure you want to remove all existing values for{" "}
+            <Text span fw={700}>
+              {fieldToDelete
+                ? FIELD_LABELS[fieldToDelete] ||
+                  fieldToDelete.replace(/_/g, " ")
+                : ""}
+            </Text>{" "}
+            from the selected jobs?
+          </Text>
+          <Group justify="flex-end" mt="md">
+            <Button variant="default" onClick={() => setDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmDelete} color="red">
+              Remove Values
             </Button>
           </Group>
         </Stack>
