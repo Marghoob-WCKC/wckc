@@ -21,7 +21,7 @@ export const InteriorOptions = [
   "ALMOND",
 ];
 export const DrawerBoxOptions = [
-  "Std Melamine",
+  "Melamine",
   "White Metal",
   "Grey Metal",
   "Dovetail",
@@ -29,7 +29,7 @@ export const DrawerBoxOptions = [
 ];
 
 export const HARDWARE_MAPPING: Record<string, string[]> = {
-  "Std Melamine": ["Soft Close", "Soft Close - Blum", "Std", "Custom"],
+  Melamine: ["Soft Close", "Soft Close - Blum", "Std", "Custom"],
   "White Metal": ["White Metal"],
   "Grey Metal": ["Grey Metal"],
   Dovetail: ["Soft Close", "Soft Close - Blum", "Custom"],
