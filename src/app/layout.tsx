@@ -211,7 +211,7 @@ export default function RootLayout({
                         <Sidebar
                           links={dashboardLinks}
                           autoCollapsePatterns={[
-                            "/dashboard/installation/",
+                            "/dashboard/installation",
                             "/dashboard/sales/newsale",
                           ]}
                         />

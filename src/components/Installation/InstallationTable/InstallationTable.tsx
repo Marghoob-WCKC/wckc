@@ -226,15 +226,17 @@ export default function InstallationTable() {
             id: "select",
             enableSorting: false,
             header: ({ table }: any) => (
-              <Checkbox
-                color="violet"
-                size="xs"
-                styles={{ input: { cursor: "pointer" } }}
-                checked={table.getIsAllPageRowsSelected()}
-                indeterminate={table.getIsSomePageRowsSelected()}
-                onChange={table.getToggleAllPageRowsSelectedHandler()}
-                aria-label="Select all"
-              />
+              <Center style={{ width: "100%", height: "100%" }}>
+                <Checkbox
+                  color="violet"
+                  size="xs"
+                  styles={{ input: { cursor: "pointer" } }}
+                  checked={table.getIsAllPageRowsSelected()}
+                  indeterminate={table.getIsSomePageRowsSelected()}
+                  onChange={table.getToggleAllPageRowsSelectedHandler()}
+                  aria-label="Select all"
+                />
+              </Center>
             ),
             cell: ({ row }: any) => (
               <Center style={{ width: "100%", height: "100%" }}>
@@ -256,9 +258,9 @@ export default function InstallationTable() {
       : []),
     {
       id: "actions",
-      header: "Action",
-      size: 60,
-      minSize: 60,
+      header: "Open",
+      size: 40,
+      minSize: 40,
       cell: ({ row }: any) => (
         <Center>
           <Tooltip label="Open Full Editor">
@@ -762,7 +764,7 @@ export default function InstallationTable() {
             Search Filters
           </Accordion.Control>
           <Accordion.Panel>
-            <SimpleGrid cols={{ base: 1, sm: 3, md: 4 }} mt="sm" spacing="md">
+            <SimpleGrid cols={{ base: 1, sm: 3, md: 4 }} spacing="xs">
               <TextInput
                 label="Job Number"
                 placeholder="e.g., 202401"
@@ -942,29 +944,30 @@ export default function InstallationTable() {
                   }}
                 />
               </Group>
+              <Group></Group>
+              <Group></Group>
+              <Group justify="flex-end">
+                <Button
+                  variant="default"
+                  color="gray"
+                  onClick={handleClearFilters}
+                >
+                  Clear Filters
+                </Button>
+                <Button
+                  variant="filled"
+                  color="blue"
+                  leftSection={<FaSearch size={14} />}
+                  onClick={handleApplyFilters}
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
+                  }}
+                >
+                  Apply Filters
+                </Button>
+              </Group>
             </SimpleGrid>
-
-            <Group justify="flex-end" mt="md">
-              <Button
-                variant="default"
-                color="gray"
-                onClick={handleClearFilters}
-              >
-                Clear Filters
-              </Button>
-              <Button
-                variant="filled"
-                color="blue"
-                leftSection={<FaSearch size={14} />}
-                onClick={handleApplyFilters}
-                style={{
-                  background:
-                    "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
-                }}
-              >
-                Apply Filters
-              </Button>
-            </Group>
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
@@ -1044,8 +1047,8 @@ export default function InstallationTable() {
           highlightOnHover
           stickyHeader
           withColumnBorders
+          layout="fixed"
           style={{
-            minWidth: "1000px",
             fontSize: "var(--mantine-font-size-xs)",
           }}
         >
