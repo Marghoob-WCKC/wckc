@@ -25,7 +25,8 @@ import dayjs from "dayjs";
 import { useMemo } from "react";
 import { Tables } from "@/types/db";
 import { colors } from "@/theme";
-
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 type ActualKey =
   | "in_plant_actual"
   | "in_plant_cabinets_actual"
@@ -317,7 +318,7 @@ export default function PlantActuals({
                       <Text size="xs" fw={500} c="green.7">
                         {step.date === "1999-09-19T00:00:00+00:00"
                           ? "Done"
-                          : dayjs(step.date).format("MMM D")}
+                          : dayjs.utc(step.date).format("MMM D")}
                       </Text>
                     ) : (
                       <Text size="xs" c="dimmed" style={{ fontSize: 10 }}>
