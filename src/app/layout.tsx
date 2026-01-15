@@ -105,7 +105,7 @@ const dashboardLinks: SidebarLink[] = [
   {
     iconName: "Factory",
     label: "Plant",
-    allowedRoles: ["admin", "plant"],
+    allowedRoles: ["admin", "plant", "service", "installation"],
     links: [
       {
         iconName: "Package",
