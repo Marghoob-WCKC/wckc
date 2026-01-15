@@ -32,7 +32,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import dayjs from "dayjs";
-import { DateInput } from "@mantine/dates";
+import { DateInput, DatePickerInput } from "@mantine/dates";
 import {
   FaPlus,
   FaTrash,
@@ -960,7 +960,15 @@ export default function EditServiceOrder({
                           />
                         </Table.Td>
                         <Table.Td>
-                          <DateInput
+                          <DatePickerInput
+                            presets={[
+                              {
+                                value: dayjs(form.values.due_date)
+                                  .subtract(2, "day")
+                                  .format("YYYY-MM-DD"),
+                                label: "Service minus 2",
+                              },
+                            ]}
                             placeholder="Due Date"
                             valueFormat="YYYY-MM-DD"
                             clearable
