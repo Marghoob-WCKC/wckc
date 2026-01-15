@@ -19,7 +19,7 @@ interface AddBackorderModalProps {
   onSuccess?: () => void;
   onSaveDraft?: (values: BackorderFormValues) => void;
   initialData?: BackorderFormValues | null;
-  jobIds?: number[]; 
+  jobIds?: number[];
   isBulk?: boolean;
 }
 
@@ -90,7 +90,7 @@ export default function AddBackorderModal({
         message: isBulk
           ? `Backorders logged for ${jobIds?.length} jobs.`
           : `Backorder for Job #${jobNumber} logged successfully.`,
-        color: "orange",
+        color: "green",
       });
       queryClient.invalidateQueries({
         queryKey: ["related-backorders"],

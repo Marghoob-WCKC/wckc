@@ -140,7 +140,12 @@ export default function RelatedBackorders({
           {bo.due_date ? dayjs(bo.due_date).format("MMM D, YYYY") : "—"}
         </Table.Td>
         <Table.Td>
-          <Tooltip label={bo.comments || "No comments"} multiline w={300}>
+          <Tooltip
+            label={bo.comments || "No comments"}
+            multiline
+            w={300}
+            openDelay={300}
+          >
             <Text size="sm" c="dimmed" truncate>
               {bo.comments || "—"}
             </Text>
