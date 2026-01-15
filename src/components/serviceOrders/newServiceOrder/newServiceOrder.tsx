@@ -783,14 +783,18 @@ function ServiceOrderFormContent({
                       </Table.Td>
                       <Table.Td>
                         <DatePickerInput
-                          presets={[
-                            {
-                              value: dayjs(form.values.due_date)
-                                .subtract(2, "day")
-                                .format("YYYY-MM-DD"),
-                              label: "Service minus 2",
-                            },
-                          ]}
+                          presets={
+                            form.values.due_date
+                              ? [
+                                  {
+                                    label: "Service minus 2",
+                                    value: dayjs(form.values.due_date)
+                                      .subtract(2, "day")
+                                      .format("YYYY-MM-DD"),
+                                  },
+                                ]
+                              : undefined
+                          }
                           placeholder="Due Date"
                           valueFormat="YYYY-MM-DD"
                           clearable
