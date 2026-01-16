@@ -6,6 +6,8 @@ export const OrderTypeOptions = [
   "Supply",
   "Project",
   "Pickup",
+  "Townhouse",
+  "Duplex",
 ];
 
 export const TopDrawerFrontOptions = ["Matching", "Slab", "N/A"];

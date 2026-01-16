@@ -71,9 +71,16 @@ type InstallationJobView = Views<"installation_table_view"> & {
   installer_id?: number | null;
 };
 
-export default function InstallationTable() {
+interface InstallationTableProps {
+  isReadOnly?: boolean;
+}
+
+export default function InstallationTable({
+  isReadOnly: isReadOnlyProp = false,
+}: InstallationTableProps) {
   const router = useRouter();
   const permissions = usePermissions();
+  const isReadOnly = isReadOnlyProp || !permissions.canEditInstallation;
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 19,
@@ -256,32 +263,36 @@ export default function InstallationTable() {
           },
         ]
       : []),
-    {
-      id: "actions",
-      header: "Open",
-      size: 40,
-      minSize: 40,
-      cell: ({ row }: any) => (
-        <Center>
-          <Tooltip label="Open Full Editor">
-            <ActionIcon
-              variant="subtle"
-              color="violet"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(
-                  `/dashboard/installation/${row.original.job_id}`,
-                  "_blank"
-                );
-              }}
-            >
-              <FaExternalLinkAlt size={12} />
-            </ActionIcon>
-          </Tooltip>
-        </Center>
-      ),
-    },
+    ...(!isReadOnly
+      ? [
+          {
+            id: "actions",
+            header: "Open",
+            size: 40,
+            minSize: 40,
+            cell: ({ row }: any) => (
+              <Center>
+                <Tooltip label="Open Full Editor">
+                  <ActionIcon
+                    variant="subtle"
+                    color="violet"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(
+                        `/dashboard/installation/${row.original.job_id}`,
+                        "_blank"
+                      );
+                    }}
+                  >
+                    <FaExternalLinkAlt size={12} />
+                  </ActionIcon>
+                </Tooltip>
+              </Center>
+            ),
+          },
+        ]
+      : []),
     columnHelper.accessor("job_number", {
       header: "Job No.",
       size: 90,
@@ -1121,6 +1132,7 @@ export default function InstallationTable() {
                   <Table.Tr
                     key={row.id}
                     onDoubleClick={(e) => {
+                      if (isReadOnly) return;
                       const cells = Array.from(
                         e.currentTarget.children
                       ) as HTMLElement[];
