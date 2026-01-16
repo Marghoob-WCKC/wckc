@@ -75,8 +75,12 @@ const styles = StyleSheet.create({
 
 export const ShippedNotInvoicedPdf = ({
   data,
+  startDate,
+  endDate,
 }: {
   data: ShippedNotInvoicedItem[];
+  startDate?: Date | null;
+  endDate?: Date | null;
 }) => (
   <Document>
     <Page size="A4" style={styles.page}>
@@ -85,6 +89,10 @@ export const ShippedNotInvoicedPdf = ({
         <View>
           <Text style={styles.meta}>
             Generated: {dayjs().format("DD-MMM-YY HH:mm")}
+          </Text>
+          <Text style={styles.meta}>
+            Range: {startDate ? dayjs(startDate).format("DD-MMM") : "?"} -{" "}
+            {endDate ? dayjs(endDate).format("DD-MMM") : "?"}
           </Text>
           <Text style={styles.meta}>Count: {data?.length || 0}</Text>
         </View>

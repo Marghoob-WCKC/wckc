@@ -32,7 +32,7 @@ import {
 import { FaSort, FaSortUp, FaSortDown, FaWrench, FaPlus } from "react-icons/fa";
 import dayjs from "dayjs";
 import { useDisclosure } from "@mantine/hooks";
-import { colors } from "@/theme";
+import { colors, gradients } from "@/theme";
 import AddInvoice from "@/components/Invoices/AddInvoice/AddInvoice";
 import {
   useServiceOrdersChargeable,
@@ -61,10 +61,18 @@ export default function ServiceOrdersChargeableTable() {
   const [selectedServiceOrderId, setSelectedServiceOrderId] = useState<
     number | undefined
   >(undefined);
+  const [selectedServiceOrderNumber, setSelectedServiceOrderNumber] = useState<
+    string | undefined
+  >(undefined);
 
-  const handleCreateInvoice = (jobId: number, serviceOrderId: number) => {
+  const handleCreateInvoice = (
+    jobId: number,
+    serviceOrderId: number,
+    serviceOrderNumber: string
+  ) => {
     setSelectedJobId(jobId);
     setSelectedServiceOrderId(serviceOrderId);
+    setSelectedServiceOrderNumber(serviceOrderNumber);
     openAddInvoiceModal();
   };
 
@@ -114,7 +122,10 @@ export default function ServiceOrdersChargeableTable() {
         cell: (info) => {
           const completed = !!info.getValue();
           return (
-            <Badge color={completed ? "green" : "blue"} variant="light">
+            <Badge
+              variant="gradient"
+              gradient={completed ? gradients.success : gradients.service}
+            >
               {completed ? "Completed" : "Open"}
             </Badge>
           );
@@ -129,12 +140,13 @@ export default function ServiceOrdersChargeableTable() {
             <Button
               leftSection={<FaPlus size={12} />}
               size="xs"
-              variant="light"
-              color="violet"
+              variant="gradient"
+              gradient={gradients.primary}
               onClick={() =>
                 handleCreateInvoice(
                   info.row.original.job_id,
-                  info.row.original.service_order_id
+                  info.row.original.service_order_id,
+                  info.row.original.service_order_number
                 )
               }
             >
@@ -287,9 +299,11 @@ export default function ServiceOrdersChargeableTable() {
             closeAddInvoiceModal();
             setSelectedJobId(undefined);
             setSelectedServiceOrderId(undefined);
+            setSelectedServiceOrderNumber(undefined);
           }}
           initialJobId={selectedJobId}
           serviceOrderId={selectedServiceOrderId}
+          serviceOrderNumber={selectedServiceOrderNumber}
         />
       )}
     </Box>

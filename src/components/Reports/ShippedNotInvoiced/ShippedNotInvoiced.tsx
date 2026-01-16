@@ -19,7 +19,7 @@ import { FaFileInvoice, FaCalendarAlt, FaFileExcel } from "react-icons/fa";
 import dayjs from "dayjs";
 
 import { useShippedNotInvoiced } from "@/hooks/useShippedNotInvoiced";
-import { ShippedNotInvoicedPdf } from "@/documents/ShippedNotInvoiced";
+import { ShippedNotInvoicedPdf } from "@/documents/ShippedNotInvoicedPdf";
 import { colors } from "@/theme";
 import "@mantine/dates/styles.css";
 import { exportToExcel } from "@/utils/exportToExcel";
@@ -60,12 +60,22 @@ export default function ShippedNotInvoicedReport() {
   } = useShippedNotInvoiced(queryRange);
   const memoizedPreview = useMemo(
     () => (
-      <PDFViewer width="100%" height="100%" style={{ border: "none" }}>
-        <ShippedNotInvoicedPdf data={reportData || []} />
+      <PDFViewer
+        key={queryRange.toString()}
+        width="100%"
+        height="100%"
+        style={{ border: "none" }}
+      >
+        <ShippedNotInvoicedPdf
+          data={reportData || []}
+          startDate={queryRange[0]}
+          endDate={queryRange[1]}
+        />
       </PDFViewer>
     ),
-    [reportData]
+    [reportData, queryRange]
   );
+
   const handleExport = () => {
     if (!reportData) return;
 
@@ -111,8 +121,8 @@ export default function ShippedNotInvoicedReport() {
 
             <Group align="flex-end">
               <DatePickerInput
-                allowSingleDateInRange
                 type="range"
+                allowSingleDateInRange
                 label="Filter by Ship Date"
                 placeholder="Select date range"
                 value={dateRange}
@@ -123,6 +133,35 @@ export default function ShippedNotInvoicedReport() {
                   <FaCalendarAlt size={16} color={colors.violet.primary} />
                 }
                 w={350}
+                presets={[
+                  {
+                    label: "This Year",
+                    value: [
+                      dayjs().startOf("year").format("YYYY-MM-DD"),
+                      dayjs().endOf("year").format("YYYY-MM-DD"),
+                    ] as [string, string],
+                  },
+                  {
+                    label: "Previous Year",
+                    value: [
+                      dayjs()
+                        .subtract(1, "year")
+                        .startOf("year")
+                        .format("YYYY-MM-DD"),
+                      dayjs()
+                        .subtract(1, "year")
+                        .endOf("year")
+                        .format("YYYY-MM-DD"),
+                    ] as [string, string],
+                  },
+                  ...[2024, 2023, 2022, 2021].map((year) => ({
+                    label: String(year),
+                    value: [
+                      dayjs().year(year).startOf("year").format("YYYY-MM-DD"),
+                      dayjs().year(year).endOf("year").format("YYYY-MM-DD"),
+                    ] as [string, string],
+                  })),
+                ]}
               />
               <Button
                 onClick={handleExport}

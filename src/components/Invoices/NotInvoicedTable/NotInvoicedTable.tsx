@@ -60,7 +60,7 @@ export default function NotInvoicedTable() {
   const queryClient = useQueryClient();
 
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
-    dayjs().startOf("year").toDate(),
+    dayjs().subtract(1, "year").startOf("year").toDate(),
     dayjs().endOf("year").toDate(),
   ]);
 
@@ -90,9 +90,11 @@ export default function NotInvoicedTable() {
   const [selectedJobId, setSelectedJobId] = useState<number | undefined>(
     undefined
   );
+  const [isCreditMemoMode, setIsCreditMemoMode] = useState(false);
 
-  const handleCreateInvoice = (jobId: number) => {
+  const handleCreateInvoice = (jobId: number, isCredit: boolean = false) => {
     setSelectedJobId(jobId);
+    setIsCreditMemoMode(isCredit);
     openAddInvoiceModal();
   };
 
@@ -177,9 +179,19 @@ export default function NotInvoicedTable() {
                 <Menu.Label>Actions</Menu.Label>
                 <Menu.Item
                   leftSection={<FaPlus size={14} />}
-                  onClick={() => handleCreateInvoice(info.row.original.id)}
+                  onClick={() =>
+                    handleCreateInvoice(info.row.original.id, false)
+                  }
                 >
                   Create Invoice
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<FaPlus size={14} />}
+                  onClick={() =>
+                    handleCreateInvoice(info.row.original.id, true)
+                  }
+                >
+                  Create Credit Memo
                 </Menu.Item>
                 <Menu.Item
                   leftSection={<FaBan size={14} />}
@@ -269,6 +281,35 @@ export default function NotInvoicedTable() {
                 setDateRange(value as [Date | null, Date | null])
               }
               clearable={false}
+              presets={[
+                {
+                  label: "This Year",
+                  value: [
+                    dayjs().startOf("year").format("YYYY-MM-DD"),
+                    dayjs().endOf("year").format("YYYY-MM-DD"),
+                  ] as [string, string],
+                },
+                {
+                  label: "Previous Year",
+                  value: [
+                    dayjs()
+                      .subtract(1, "year")
+                      .startOf("year")
+                      .format("YYYY-MM-DD"),
+                    dayjs()
+                      .subtract(1, "year")
+                      .endOf("year")
+                      .format("YYYY-MM-DD"),
+                  ] as [string, string],
+                },
+                ...[2024, 2023, 2022, 2021].map((year) => ({
+                  label: String(year),
+                  value: [
+                    dayjs().year(year).startOf("year").format("YYYY-MM-DD"),
+                    dayjs().year(year).endOf("year").format("YYYY-MM-DD"),
+                  ] as [string, string],
+                })),
+              ]}
             />
           </Group>
         </Group>
@@ -357,8 +398,10 @@ export default function NotInvoicedTable() {
           onClose={() => {
             closeAddInvoiceModal();
             setSelectedJobId(undefined);
+            setIsCreditMemoMode(false);
           }}
           initialJobId={selectedJobId}
+          isCreditMemo={isCreditMemoMode}
         />
       )}
     </Box>

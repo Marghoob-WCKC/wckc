@@ -270,42 +270,44 @@ export default function InvoicesTable() {
 
   const columns = [
     columnHelper.accessor("is_creditmemo", {
-      header: "Type",
-      size: 110,
-      cell: (info) => {
-        if (info.row.original.service_order_id) {
-          return (
+      header: () => (
+        <Center w="100%">
+          <Text size="sm" fw={700}>
+            Type
+          </Text>
+        </Center>
+      ),
+      size: 140,
+      minSize: 140,
+      cell: (info) => (
+        <Center>
+          <Group gap={2}>
             <Badge
               variant="gradient"
-              gradient={{ from: "#1c7ed6", to: "#228be6", deg: 135 }}
+              gradient={info.getValue() ? gradients.success : gradients.primary}
             >
-              Service
+              {info.getValue() ? "Credit" : "Invoice"}
             </Badge>
-          );
-        }
-        return (
-          <Badge
-            variant="gradient"
-            gradient={
-              info.getValue()
-                ? { from: "#002e41ff", to: "#007c53ff", deg: 270 }
-                : { from: "#2600ffff", to: "#ae00ffff", deg: 270 }
-            }
-          >
-            {info.getValue() ? "Credit" : "Invoice"}
-          </Badge>
-        );
-      },
+            {info.row.original.service_order_id && (
+              <Tooltip label="Service Order" openDelay={300}>
+                <Badge variant="gradient" gradient={gradients.backorder}>
+                  SO
+                </Badge>
+              </Tooltip>
+            )}
+          </Group>
+        </Center>
+      ),
     }),
     columnHelper.accessor("invoice_number", {
       header: "Invoice/Credit No.",
-      size: 150,
+      size: 170,
       cell: (info) => <Text fw={700}>{info.getValue() || "—"}</Text>,
     }),
     columnHelper.accessor("job.job_number", {
       id: "job_number",
-      header: "Job #",
-      size: 110,
+      header: "Job / Service No.",
+      size: 150,
       cell: (info) => {
         if (info.row.original.service_orders?.service_order_number) {
           return (
@@ -362,7 +364,13 @@ export default function InvoicesTable() {
     ),
     columnHelper.accessor("paid_at", {
       id: "status",
-      header: "Paid Status",
+      header: () => (
+        <Center w="100%">
+          <Text size="sm" fw={700}>
+            Paid Status
+          </Text>
+        </Center>
+      ),
       size: 130,
       enableSorting: false,
       cell: (info) => {
@@ -370,24 +378,30 @@ export default function InvoicesTable() {
         const noCharge = info.row.original.no_charge;
         if (noCharge)
           return (
-            <Badge color="gray" variant="light">
-              No Charge
-            </Badge>
+            <Center>
+              <Badge variant="gradient" gradient={gradients.inactive}>
+                No Charge
+              </Badge>
+            </Center>
           );
         if (paidAt)
           return (
-            <Badge
-              variant="gradient"
-              gradient={{ from: "teal", to: "lime", deg: 90 }}
-              leftSection={<FaCheckCircle size={10} />}
-            >
-              POSTED
-            </Badge>
+            <Center>
+              <Badge
+                variant="gradient"
+                gradient={gradients.success}
+                leftSection={<FaCheckCircle size={10} />}
+              >
+                POSTED
+              </Badge>
+            </Center>
           );
         return (
-          <Badge color="red" variant="light">
-            NOT POSTED
-          </Badge>
+          <Center>
+            <Badge variant="gradient" gradient={gradients.danger}>
+              NOT POSTED
+            </Badge>
+          </Center>
         );
       },
     }),

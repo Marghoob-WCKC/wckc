@@ -22,9 +22,11 @@ import { InvoiceSchema, InvoiceFormInput } from "@/zod/invoice.schema";
 import { useSupabase } from "@/hooks/useSupabase";
 import { useJobSearch } from "@/hooks/useJobSearch";
 import { Tables } from "@/types/db";
+import { gradients } from "@/theme";
 
 type InvoiceRow = Tables<"invoices"> & {
   job?: { job_number: string } | null;
+  service_orders?: { service_order_number: string } | null;
 };
 
 interface EditInvoiceProps {
@@ -133,21 +135,30 @@ export default function EditInvoice({
       >
         <Stack gap="md">
           <SimpleGrid cols={2}>
-            <Select
-              label="Link to Job"
-              placeholder="Search Job Number"
-              data={jobOptions}
-              searchable
-              searchValue={search}
-              onSearchChange={setSearch}
-              nothingFoundMessage={
-                jobsLoading ? "Searching..." : "No jobs found"
-              }
-              filter={({ options }) => options}
-              withAsterisk
-              clearable
-              {...form.getInputProps("job_id")}
-            />
+            {invoice?.service_order_id ? (
+              <TextInput
+                label="Service Order #"
+                value={invoice.service_orders?.service_order_number || ""}
+                readOnly
+                variant="filled"
+              />
+            ) : (
+              <Select
+                label="Link to Job"
+                placeholder="Search Job Number"
+                data={jobOptions}
+                searchable
+                searchValue={search}
+                onSearchChange={setSearch}
+                nothingFoundMessage={
+                  jobsLoading ? "Searching..." : "No jobs found"
+                }
+                filter={({ options }) => options}
+                withAsterisk
+                clearable
+                {...form.getInputProps("job_id")}
+              />
+            )}
             <TextInput
               label={isCreditMemo ? "Credit No." : "Invoice Number"}
               withAsterisk
@@ -196,7 +207,7 @@ export default function EditInvoice({
               type="submit"
               loading={updateMutation.isPending}
               variant="gradient"
-              gradient={{ from: "violet", to: "grape" }}
+              gradient={gradients.primary}
             >
               Save Changes
             </Button>

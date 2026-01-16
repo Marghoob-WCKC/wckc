@@ -21,7 +21,6 @@ export function useServiceOrdersChargeable() {
   return useQuery({
     queryKey: ["service_orders_chargeable_view"],
     queryFn: async () => {
-      // 1. Get all chargeable service orders
       const { data: serviceOrders, error: soError } = await supabase
         .from("service_orders")
         .select(
@@ -50,7 +49,6 @@ export function useServiceOrdersChargeable() {
 
       if (soError) throw soError;
 
-      // 2. Get all service_order_ids that are already invoiced
       const { data: invoicedIds, error: invError } = await supabase
         .from("invoices")
         .select("service_order_id")
@@ -60,7 +58,6 @@ export function useServiceOrdersChargeable() {
 
       const invoicedSet = new Set(invoicedIds?.map((i) => i.service_order_id));
 
-      // 3. Filter and map
       return serviceOrders
         .filter((so) => !invoicedSet.has(so.service_order_id))
         .map((so: any) => ({

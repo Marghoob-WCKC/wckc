@@ -28,6 +28,7 @@ interface AddInvoiceProps {
   isCreditMemo?: Boolean;
   initialJobId?: number;
   serviceOrderId?: number;
+  serviceOrderNumber?: string;
 }
 
 export default function AddInvoice({
@@ -36,6 +37,7 @@ export default function AddInvoice({
   isCreditMemo,
   initialJobId,
   serviceOrderId,
+  serviceOrderNumber,
 }: AddInvoiceProps) {
   const { supabase } = useSupabase();
   const queryClient = useQueryClient();
@@ -123,21 +125,30 @@ export default function AddInvoice({
       >
         <Stack gap="md">
           <SimpleGrid cols={2}>
-            <Select
-              label="Link to Job"
-              placeholder="Search Job Number"
-              data={jobOptions}
-              searchable
-              searchValue={search}
-              onSearchChange={setSearch}
-              nothingFoundMessage={
-                jobsLoading ? "Searching..." : "No jobs found"
-              }
-              filter={({ options }) => options}
-              withAsterisk
-              clearable
-              {...form.getInputProps("job_id")}
-            />
+            {serviceOrderId && serviceOrderNumber && (
+              <TextInput
+                label="Service Order #"
+                value={serviceOrderNumber}
+                disabled
+              />
+            )}
+            {!serviceOrderId && (
+              <Select
+                label="Link to Job"
+                placeholder="Search Job Number"
+                data={jobOptions}
+                searchable
+                searchValue={search}
+                onSearchChange={setSearch}
+                nothingFoundMessage={
+                  jobsLoading ? "Searching..." : "No jobs found"
+                }
+                filter={({ options }) => options}
+                withAsterisk
+                clearable
+                {...form.getInputProps("job_id")}
+              />
+            )}
             <TextInput
               label={isCreditMemo ? "Credit No." : "Invoice Number"}
               placeholder="e.g. 27000..."
