@@ -26,12 +26,16 @@ interface AddInvoiceProps {
   opened: boolean;
   onClose: () => void;
   isCreditMemo?: Boolean;
+  initialJobId?: number;
+  serviceOrderId?: number;
 }
 
 export default function AddInvoice({
   opened,
   onClose,
   isCreditMemo,
+  initialJobId,
+  serviceOrderId,
 }: AddInvoiceProps) {
   const { supabase } = useSupabase();
   const queryClient = useQueryClient();
@@ -44,6 +48,7 @@ export default function AddInvoice({
       paid_at: null,
       no_charge: false,
       comments: "",
+      service_order_id: null,
     },
     validate: zodResolver(InvoiceSchema),
   });
@@ -58,10 +63,16 @@ export default function AddInvoice({
   useEffect(() => {
     if (opened) {
       form.reset();
+      if (initialJobId) {
+        form.setFieldValue("job_id", String(initialJobId));
+      }
+      if (serviceOrderId) {
+        form.setFieldValue("service_order_id", serviceOrderId);
+      }
       form.setFieldValue("date_entered", new Date());
       setSearch("");
     }
-  }, [opened]);
+  }, [opened, initialJobId, serviceOrderId]);
 
   const createMutation = useMutation({
     mutationFn: async (values: InvoiceFormInput) => {
@@ -78,7 +89,7 @@ export default function AddInvoice({
     onSuccess: () => {
       notifications.show({
         title: "Success",
-        message: isCreditMemo
+        message: !isCreditMemo
           ? "Invoice created successfully"
           : "Credit Memo created Successfully",
         color: "green",

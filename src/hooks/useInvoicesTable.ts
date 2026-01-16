@@ -20,6 +20,9 @@ type InvoiceRow = Tables<"invoices"> & {
         sales_orders: (Tables<"sales_orders"> & {}) | null;
       })
     | null;
+  service_orders: {
+    service_order_number: string;
+  } | null;
 };
 
 export function useInvoicesTable({
@@ -43,6 +46,9 @@ export function useInvoicesTable({
             shipping_province,
             shipping_zip
           )
+        ),
+        service_orders (
+          service_order_number
         )
       `;
 

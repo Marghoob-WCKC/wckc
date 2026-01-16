@@ -69,6 +69,10 @@ type InvoiceRow = Tables<"invoices"> & {
         sales_orders: (Tables<"sales_orders"> & {}) | null;
       })
     | null;
+  service_orders: {
+    service_order_number: string;
+  } | null;
+  service_order_id?: number | null;
 };
 
 export default function InvoicesTable() {
@@ -268,18 +272,30 @@ export default function InvoicesTable() {
     columnHelper.accessor("is_creditmemo", {
       header: "Type",
       size: 110,
-      cell: (info) => (
-        <Badge
-          variant="gradient"
-          gradient={
-            info.getValue()
-              ? { from: "#002e41ff", to: "#007c53ff", deg: 270 }
-              : { from: "#2600ffff", to: "#ae00ffff", deg: 270 }
-          }
-        >
-          {info.getValue() ? "Credit" : "Invoice"}
-        </Badge>
-      ),
+      cell: (info) => {
+        if (info.row.original.service_order_id) {
+          return (
+            <Badge
+              variant="gradient"
+              gradient={{ from: "#1c7ed6", to: "#228be6", deg: 135 }}
+            >
+              Service
+            </Badge>
+          );
+        }
+        return (
+          <Badge
+            variant="gradient"
+            gradient={
+              info.getValue()
+                ? { from: "#002e41ff", to: "#007c53ff", deg: 270 }
+                : { from: "#2600ffff", to: "#ae00ffff", deg: 270 }
+            }
+          >
+            {info.getValue() ? "Credit" : "Invoice"}
+          </Badge>
+        );
+      },
     }),
     columnHelper.accessor("invoice_number", {
       header: "Invoice/Credit No.",
@@ -290,7 +306,16 @@ export default function InvoicesTable() {
       id: "job_number",
       header: "Job #",
       size: 110,
-      cell: (info) => <Text c="dimmed">{info.getValue() || "—"}</Text>,
+      cell: (info) => {
+        if (info.row.original.service_orders?.service_order_number) {
+          return (
+            <Text c="dimmed" size="sm">
+              {info.row.original.service_orders.service_order_number}
+            </Text>
+          );
+        }
+        return <Text c="dimmed">{info.getValue() || "—"}</Text>;
+      },
     }),
     columnHelper.accessor("job.sales_orders.shipping_client_name", {
       id: "client",
@@ -514,12 +539,7 @@ export default function InvoicesTable() {
     );
 
   return (
-    <Box
-      p={20}
-      h="calc(100vh - 60px)"
-      display="flex"
-      style={{ flexDirection: "column" }}
-    >
+    <Box p={20} h="100vh" display="flex" style={{ flexDirection: "column" }}>
       <Paper
         p="lg"
         radius="lg"
@@ -666,13 +686,7 @@ export default function InvoicesTable() {
       </Paper>
 
       <ScrollArea style={{ flex: 1 }}>
-        <Table
-          striped
-          stickyHeader
-          highlightOnHover
-          withColumnBorders
-          layout="fixed"
-        >
+        <Table striped stickyHeader highlightOnHover withColumnBorders>
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>

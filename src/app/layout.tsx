@@ -128,8 +128,24 @@ const dashboardLinks: SidebarLink[] = [
   {
     iconName: "ReceiptText",
     label: "Invoices",
-    path: "/dashboard/invoices",
     allowedRoles: ["admin", "reception"],
+    links: [
+      {
+        iconName: "ReceiptText",
+        label: "All Invoices",
+        path: "/dashboard/invoices",
+      },
+      {
+        iconName: "FileWarning",
+        label: "Not Invoiced",
+        path: "/dashboard/invoices/notinvoiced",
+      },
+      {
+        iconName: "Wrench",
+        label: "Service Orders",
+        path: "/dashboard/invoices/chargeableservice",
+      },
+    ],
   },
   {
     iconName: "FileChartColumn",

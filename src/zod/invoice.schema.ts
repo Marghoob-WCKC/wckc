@@ -12,6 +12,7 @@ export const InvoiceSchema = z.object({
   paid_at: z.coerce.date().nullable().optional(),
   no_charge: z.boolean().default(false),
   comments: z.string().optional().nullable(),
+  service_order_id: z.number().optional().nullable(),
 });
 
 export type InvoiceFormInput = z.input<typeof InvoiceSchema>;

@@ -555,6 +555,7 @@ export type Database = {
           job_id: number
           no_charge: boolean | null
           paid_at: string | null
+          service_order_id: number | null
           updated_at: string | null
         }
         Insert: {
@@ -568,6 +569,7 @@ export type Database = {
           job_id: number
           no_charge?: boolean | null
           paid_at?: string | null
+          service_order_id?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -581,6 +583,7 @@ export type Database = {
           job_id?: number
           no_charge?: boolean | null
           paid_at?: string | null
+          service_order_id?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -639,6 +642,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shipped_not_invoiced_view"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_service_order_id_fkey"
+            columns: ["service_order_id"]
+            isOneToOne: false
+            referencedRelation: "plant_service_orders_view"
+            referencedColumns: ["service_order_id"]
+          },
+          {
+            foreignKeyName: "invoices_service_order_id_fkey"
+            columns: ["service_order_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders"
+            referencedColumns: ["service_order_id"]
+          },
+          {
+            foreignKeyName: "invoices_service_order_id_fkey"
+            columns: ["service_order_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders_table_view"
+            referencedColumns: ["service_order_id"]
           },
         ]
       }
@@ -1281,6 +1305,7 @@ export type Database = {
           id: number
           location: string | null
           part: string
+          part_due_date: string | null
           qty: number
           service_order_id: number
           status: Database["public"]["Enums"]["so_part_status"] | null
@@ -1291,6 +1316,7 @@ export type Database = {
           id?: number
           location?: string | null
           part: string
+          part_due_date?: string | null
           qty?: number
           service_order_id: number
           status?: Database["public"]["Enums"]["so_part_status"] | null
@@ -1301,6 +1327,7 @@ export type Database = {
           id?: number
           location?: string | null
           part?: string
+          part_due_date?: string | null
           qty?: number
           service_order_id?: number
           status?: Database["public"]["Enums"]["so_part_status"] | null
