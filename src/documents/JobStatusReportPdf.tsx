@@ -29,6 +29,7 @@ const styles = StyleSheet.create({
     height: 40,
   },
   reportTitle: { fontSize: 18, fontWeight: "bold" },
+  periodText: { fontSize: 14, fontWeight: "bold" },
   metaInfo: { fontSize: 8, textAlign: "right" },
 
   tableHeader: {
@@ -103,6 +104,17 @@ const formatDate = (date: string | null) => {
 const truncate = (str: string | null, len: number) => {
   if (!str) return "";
   return str.length > len ? str.substring(0, len) + "..." : str;
+};
+
+const getReportingPeriod = (start: Date | null, end: Date | null) => {
+  if (!start || !end) return "Unknown Period";
+  const s = dayjs(start);
+  const e = dayjs(end);
+
+  if (s.isSame(e, "month") && s.isSame(e, "year")) {
+    return s.format("MMMM YYYY");
+  }
+  return `${s.format("MMMM YYYY")} - ${e.format("MMMM YYYY")}`;
 };
 
 const ColumnHeaders = () => (
@@ -254,6 +266,9 @@ export const JobStatusReportPdf = ({
         <Page size="A4" orientation="landscape" style={styles.page}>
           <View style={styles.headerContainer} fixed>
             <Text style={styles.reportTitle}>Job Status Report</Text>
+            <Text style={styles.periodText}>
+              {getReportingPeriod(startDate, endDate)}
+            </Text>
             <View>
               <Text style={styles.metaInfo}>
                 Printed: {dayjs().format("MMM DD, YYYY")}
@@ -279,6 +294,9 @@ export const JobStatusReportPdf = ({
         <Page key={index} size="A4" orientation="landscape" style={styles.page}>
           <View style={styles.headerContainer} fixed>
             <Text style={styles.reportTitle}>Job Status Report</Text>
+            <Text style={styles.periodText}>
+              {getReportingPeriod(startDate, endDate)}
+            </Text>
             <View>
               <Text style={styles.metaInfo}>
                 Printed: {dayjs().format("MMM DD, YYYY")}
