@@ -27,6 +27,7 @@ export type PastShippingJob = {
     installation_completed: string | null;
     inspection_completed: string | null;
     has_shipped: boolean;
+    partially_shipped: boolean;
     installers: {
       first_name: string | null;
       last_name: string | null;
@@ -89,13 +90,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#000",
     backgroundColor: "#f8f9fa",
-    alignItems: "stretch", 
+    alignItems: "stretch",
   },
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 0.5,
     borderBottomColor: BORDER_COLOR,
-    alignItems: "stretch", 
+    alignItems: "stretch",
   },
 
   cellBase: {
@@ -103,34 +104,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
     borderRightWidth: 0.5,
     borderRightColor: BORDER_COLOR,
-    justifyContent: "center", 
+    justifyContent: "center",
   },
   headerCellBase: {
     paddingVertical: 4,
     paddingHorizontal: 2,
     borderRightWidth: 0.5,
     borderRightColor: HEADER_BORDER_COLOR,
-    justifyContent: "center", 
+    justifyContent: "center",
     backgroundColor: "#f8f9fa",
   },
 
   colJob: { width: "6%" },
-  colCust: { width: "11%" },
-  colAddr: { width: "13%" },
+  colCust: { width: "15%" },
+  colAddr: { width: "15%" },
   colBox: { width: "4%", alignItems: "center" },
   colDel: { width: "6%" },
+  colPartial: { width: "4%", alignItems: "center" },
   colInstDate: { width: "8%", alignItems: "center" },
-  colInstComp: { width: "8%", alignItems: "center" },
+  colInstComp: { width: "6%", alignItems: "center" },
   colInstName: { width: "10%" },
-  colInspect: { width: "8%", alignItems: "center" },
+  colInspect: { width: "6%", alignItems: "center" },
   colInspectComp: { width: "8%", alignItems: "center" },
-  colInv: { width: "6%", alignItems: "center" },
   colInvDate: { width: "6%", alignItems: "center" },
-  colInvNum: { width: "6%", borderRightWidth: 0 }, 
+  colInvNum: { width: "6%", borderRightWidth: 0 },
 
   headerText: { fontSize: 7, fontWeight: "bold", textAlign: "center" },
   cellText: { fontSize: 8 },
-  cellTextSmall: { fontSize: 7 }, 
+  cellTextSmall: { fontSize: 7 },
 
   checkbox: {
     width: 10,
@@ -193,13 +194,16 @@ const ColumnHeaders = () => (
       <Text style={styles.headerText}>Box</Text>
     </View>
     <View style={[styles.headerCellBase, styles.colDel]}>
-      <Text style={styles.headerText}>Delivery</Text>
+      <Text style={styles.headerText}>Type</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colPartial]}>
+      <Text style={styles.headerText}>Partial</Text>
     </View>
     <View style={[styles.headerCellBase, styles.colInstDate]}>
       <Text style={styles.headerText}>Installation</Text>
     </View>
     <View style={[styles.headerCellBase, styles.colInstComp]}>
-      <Text style={styles.headerText}>Installation Comp</Text>
+      <Text style={styles.headerText}>Install Comp</Text>
     </View>
     <View style={[styles.headerCellBase, styles.colInstName]}>
       <Text style={styles.headerText}>Installer</Text>
@@ -208,10 +212,7 @@ const ColumnHeaders = () => (
       <Text style={styles.headerText}>Inspection</Text>
     </View>
     <View style={[styles.headerCellBase, styles.colInspectComp]}>
-      <Text style={styles.headerText}>Inspection Comp</Text>
-    </View>
-    <View style={[styles.headerCellBase, styles.colInv]}>
-      <Text style={styles.headerText}>Invoiced</Text>
+      <Text style={styles.headerText}>Inspect Comp</Text>
     </View>
     <View style={[styles.headerCellBase, styles.colInvDate]}>
       <Text style={styles.headerText}>Inv Date</Text>
@@ -313,6 +314,7 @@ export const PastShippingReportPdf = ({
                       .join(", ") || "—";
                   const box = cab?.box || "0";
                   const delivery = so?.delivery_type || "—";
+                  const partial = inst?.partially_shipped || false;
 
                   let installerName = "—";
                   if (inst?.installers) {
@@ -351,14 +353,10 @@ export const PastShippingReportPdf = ({
                         <Text style={styles.cellText}>{jobNum}</Text>
                       </View>
                       <View style={[styles.cellBase, styles.colCust]}>
-                        <Text style={styles.cellText}>
-                          {clientName.substring(0, 18)}
-                        </Text>
+                        <Text style={styles.cellText}>{clientName}</Text>
                       </View>
                       <View style={[styles.cellBase, styles.colAddr]}>
-                        <Text style={styles.cellTextSmall}>
-                          {address.substring(0, 22)}
-                        </Text>
+                        <Text style={styles.cellTextSmall}>{address}</Text>
                       </View>
 
                       <View style={[styles.cellBase, styles.colBox]}>
@@ -369,8 +367,12 @@ export const PastShippingReportPdf = ({
 
                       <View style={[styles.cellBase, styles.colDel]}>
                         <Text style={styles.cellTextSmall}>
-                          {delivery.substring(0, 10)}
+                          {String(delivery).toUpperCase()}
                         </Text>
+                      </View>
+
+                      <View style={[styles.cellBase, styles.colPartial]}>
+                        <Checkbox checked={partial} />
                       </View>
 
                       <View style={[styles.cellBase, styles.colInstDate]}>
@@ -395,10 +397,6 @@ export const PastShippingReportPdf = ({
                         <Text style={styles.cellText}>{inspectCompDate}</Text>
                       </View>
 
-                      <View style={[styles.cellBase, styles.colInv]}>
-                        <Checkbox checked={hasInvoice} />
-                      </View>
-
                       <View style={[styles.cellBase, styles.colInvDate]}>
                         <Text style={styles.cellText}>{invDate}</Text>
                       </View>
@@ -410,9 +408,7 @@ export const PastShippingReportPdf = ({
                           { borderRightWidth: 0 },
                         ]}
                       >
-                        <Text style={styles.cellText}>
-                          {invNum.substring(0, 10)}
-                        </Text>
+                        <Text style={styles.cellText}>{invNum}</Text>
                       </View>
                     </View>
                   );

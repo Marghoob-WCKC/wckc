@@ -102,6 +102,15 @@ export function RowEditorOverlay({
     return dayjs(dateVal).toDate();
   };
 
+  const checkRls = (error: any, data: any[] | null, context: string) => {
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error(
+        `Update blocked: You do not have permission to update ${context}.`
+      );
+    }
+  };
+
   const updateDB = async (
     field: keyof InstallationJobView | string,
     value: any
@@ -126,11 +135,13 @@ export function RowEditorOverlay({
 
         const payload = { [field]: value };
 
-        const { error } = await supabase
+        const { error, data: returnedData } = await supabase
           .from("installation")
           .update(payload)
-          .eq("installation_id", data.installation_id);
-        if (error) throw error;
+          .eq("installation_id", data.installation_id)
+          .select();
+
+        checkRls(error, returnedData, "this installation record");
       } else if (["ship_schedule", "ship_status"].includes(field as string)) {
         if (!data.prod_id) {
           console.error("prod_id missing from view data for job", data.job_id);
@@ -142,11 +153,13 @@ export function RowEditorOverlay({
           return;
         }
 
-        const { error } = await supabase
+        const { error, data: returnedData } = await supabase
           .from("production_schedule")
           .update({ [field]: value })
-          .eq("prod_id", data.prod_id);
-        if (error) throw error;
+          .eq("prod_id", data.prod_id)
+          .select();
+
+        checkRls(error, returnedData, "this shipping schedule");
       }
 
       notifications.show({
@@ -157,6 +170,11 @@ export function RowEditorOverlay({
       });
       onSuccess();
     } catch (err: any) {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: data[field as keyof InstallationJobView],
+      }));
+
       notifications.show({
         title: "Update Failed",
         message: err.message,
@@ -171,6 +189,7 @@ export function RowEditorOverlay({
 
   const handleChange = (key: keyof InstallationJobView, value: any) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
+
     if (
       typeof value === "string" &&
       key !== "ship_status" &&
@@ -187,6 +206,7 @@ export function RowEditorOverlay({
     date: Date | string | null
   ) => {
     const val = date instanceof Date ? dayjs(date).format("YYYY-MM-DD") : date;
+
     setFormData((prev) => ({ ...prev, [key]: val }));
     updateDB(key, val);
   };
@@ -203,12 +223,13 @@ export function RowEditorOverlay({
     setShipPopoverOpened(false);
 
     try {
-      const { error } = await supabase
+      const { error, data: returnedData } = await supabase
         .from("installation")
         .update({ has_shipped: isFull, partially_shipped: isPartial })
-        .eq("installation_id", data.installation_id!);
+        .eq("installation_id", data.installation_id!)
+        .select();
 
-      if (error) throw error;
+      checkRls(error, returnedData, "shipping status");
 
       notifications.show({
         title: "Updated",
@@ -218,6 +239,12 @@ export function RowEditorOverlay({
       });
       onSuccess();
     } catch (err: any) {
+      setFormData((prev) => ({
+        ...prev,
+        has_shipped: data.has_shipped,
+        partially_shipped: data.partially_shipped,
+      }));
+
       notifications.show({
         title: "Update Failed",
         message: err.message,
@@ -241,12 +268,13 @@ export function RowEditorOverlay({
         throw new Error("Missing Production ID");
       }
 
-      const { error } = await supabase
+      const { error, data: returnedData } = await supabase
         .from("production_schedule")
         .update({ ship_schedule: dateStr, ship_status: status })
-        .eq("prod_id", data.prod_id);
+        .eq("prod_id", data.prod_id)
+        .select();
 
-      if (error) throw error;
+      checkRls(error, returnedData, "shipping schedule");
 
       notifications.show({
         title: "Updated",
@@ -256,6 +284,12 @@ export function RowEditorOverlay({
       });
       onSuccess();
     } catch (err: any) {
+      setFormData((prev) => ({
+        ...prev,
+        ship_schedule: data.ship_schedule,
+        ship_status: data.ship_status,
+      }));
+
       notifications.show({
         title: "Update Failed",
         message: err.message,
@@ -270,7 +304,7 @@ export function RowEditorOverlay({
         opened={confirmModalOpened}
         onClose={() => setConfirmModalOpened(false)}
         title="Confirm Shipping Status"
-        zIndex={3000} 
+        zIndex={3000}
         centered
         overlayProps={{
           backgroundOpacity: 0.55,

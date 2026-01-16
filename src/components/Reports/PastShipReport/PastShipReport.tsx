@@ -84,6 +84,7 @@ export default function PastShipReport() {
       installation_completed,
       inspection_completed,
       has_shipped,
+      partially_shipped,
       installers (
         first_name,
         last_name,
@@ -99,7 +100,9 @@ export default function PastShipReport() {
         )
         .gte("production_schedule.ship_schedule", startDate)
         .lte("production_schedule.ship_schedule", endDate)
-        .eq("installation.has_shipped", true)
+        .or("has_shipped.eq.true,partially_shipped.eq.true", {
+          referencedTable: "installation",
+        })
         .order("ship_schedule", {
           referencedTable: "production_schedule",
           ascending: true,
