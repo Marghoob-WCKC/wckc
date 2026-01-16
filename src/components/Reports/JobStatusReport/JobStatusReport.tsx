@@ -75,7 +75,12 @@ export default function JobStatusReport() {
 
   const memoizedPreview = useMemo(
     () => (
-      <PDFViewer width="100%" height="100%" style={{ border: "none" }}>
+      <PDFViewer
+        key={`${dateRange[0]?.toISOString()}-${dateRange[1]?.toISOString()}`}
+        width="100%"
+        height="100%"
+        style={{ border: "none" }}
+      >
         <JobStatusReportPdf
           data={reportData || []}
           startDate={dateRange[0]}
