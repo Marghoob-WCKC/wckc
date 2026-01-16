@@ -350,12 +350,12 @@ export default function InvoicesTable() {
       },
       {
         id: "shipping",
-        header: "Shipping Address",
+        header: "Address",
         size: 250,
         enableSorting: false,
         cell: (info) => (
           <Tooltip label={info.getValue()} openDelay={500}>
-            <Text size="sm" lineClamp={1} c="dimmed">
+            <Text size="sm" lineClamp={1} c="dimmed" truncate="end">
               {info.getValue() || "—"}
             </Text>
           </Tooltip>
@@ -367,7 +367,7 @@ export default function InvoicesTable() {
       header: () => (
         <Center w="100%">
           <Text size="sm" fw={700}>
-            Paid Status
+            Posted
           </Text>
         </Center>
       ),

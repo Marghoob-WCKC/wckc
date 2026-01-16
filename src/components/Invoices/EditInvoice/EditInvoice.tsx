@@ -69,9 +69,7 @@ export default function EditInvoice({
       form.setValues({
         invoice_number: invoice.invoice_number,
         job_id: String(invoice.job_id),
-        date_entered: invoice.date_entered
-          ? new Date(invoice.date_entered)
-          : null,
+        date_entered: invoice.date_entered ? invoice.date_entered : null,
         paid_at: invoice.paid_at ? new Date(invoice.paid_at) : null,
         no_charge: invoice.no_charge ?? false,
         comments: invoice.comments || "",
