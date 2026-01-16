@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
 
-export type JobStatusItem = {
+export type PlantStatusItem = {
   id: number;
   job_number: string;
   shipping_client_name: string;
@@ -22,11 +22,11 @@ export type JobStatusItem = {
 
 type DateRange = [Date | null, Date | null];
 
-export function useJobStatusReport(dateRange: DateRange) {
+export function usePlantStatusReport(dateRange: DateRange) {
   const { supabase, isAuthenticated } = useSupabase();
 
   return useQuery({
-    queryKey: ["job_status_report", dateRange],
+    queryKey: ["plant_status_report", dateRange],
     queryFn: async () => {
       let query = supabase
         .from("jobs")
@@ -130,7 +130,7 @@ export function useJobStatusReport(dateRange: DateRange) {
           wrap: inst?.wrap_completed || null,
           completion_percentage: percentage,
         };
-      }) as JobStatusItem[];
+      }) as PlantStatusItem[];
     },
     enabled: isAuthenticated,
   });

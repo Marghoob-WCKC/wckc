@@ -75,15 +75,9 @@ dayjs.extend(utc);
 type InstallationType = Tables<"installation">;
 type ProductionScheduleType = Tables<"production_schedule">;
 
-type CombinedInstallFormValues = Omit<
-  TablesUpdate<"installation">,
-  "wrap_date" | "installation_date" | "inspection_date"
-> & {
-  wrap_date: Date | null;
-  installation_date: Date | null;
-  inspection_date: Date | null;
+type CombinedInstallFormValues = TablesUpdate<"installation"> & {
   prod_id: number;
-  ship_schedule: Date | null;
+  ship_schedule: string | null;
   ship_status: Tables<"production_schedule">["ship_status"];
 };
 
@@ -242,6 +236,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
       trade_6months: null,
       site_changes: null,
       site_changes_detail: "",
+      cabfinaldate: null,
     },
     validate: zodResolver(installationSchema),
   });
@@ -262,25 +257,17 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         form.setValues({
           installer_id: install.installer_id,
           installation_notes: install.installation_notes ?? "",
-          wrap_date: install.wrap_date
-            ? dayjs(install.wrap_date).toDate()
-            : null,
+          wrap_date: install.wrap_date || null,
           wrap_completed: install.wrap_completed,
           has_shipped: install.has_shipped,
           partially_shipped: install.partially_shipped || false,
-          installation_date: install.installation_date
-            ? dayjs(install.installation_date).toDate()
-            : null,
+          installation_date: install.installation_date || null,
           installation_completed: install.installation_completed,
-          inspection_date: install.inspection_date
-            ? dayjs(install.inspection_date).toDate()
-            : null,
+          inspection_date: install.inspection_date || null,
           inspection_completed: install.inspection_completed,
           legacy_ref: install.legacy_ref ?? "",
           prod_id: prod?.prod_id || 0,
-          ship_schedule: prod?.ship_schedule
-            ? dayjs(prod.ship_schedule).toDate()
-            : null,
+          ship_schedule: prod?.ship_schedule || null,
           ship_status: prod?.ship_status || "unprocessed",
           installation_report_received: install.installation_report_received,
           in_warehouse: install.in_warehouse,
@@ -288,6 +275,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           trade_6months: install.trade_6months,
           site_changes: install.site_changes,
           site_changes_detail: install.site_changes_detail ?? "",
+          cabfinaldate: install.cabfinaldate || null,
         });
         form.resetDirty();
       }
@@ -317,15 +305,10 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
           ? installValues.site_changes_detail
           : "",
         wrap_completed: finalWrapCompleted,
-        wrap_date: installValues.wrap_date
-          ? dayjs(installValues.wrap_date).format("YYYY-MM-DD")
-          : null,
-        installation_date: installValues.installation_date
-          ? dayjs(installValues.installation_date).format("YYYY-MM-DD")
-          : null,
-        inspection_date: installValues.inspection_date
-          ? dayjs(installValues.inspection_date).format("YYYY-MM-DD")
-          : null,
+        wrap_date: installValues.wrap_date || null,
+        installation_date: installValues.installation_date || null,
+        inspection_date: installValues.inspection_date || null,
+        cabfinaldate: installValues.cabfinaldate || null,
         installation_notes: installValues.installation_notes || null,
         legacy_ref: installValues.legacy_ref || null,
         partially_shipped: installValues.partially_shipped,
@@ -338,9 +321,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
       if (installError) throw installError;
 
       const prodUpdates: Record<string, any> = {
-        ship_schedule: ship_schedule
-          ? dayjs(ship_schedule).format("YYYY-MM-DD")
-          : null,
+        ship_schedule: ship_schedule || null,
         ship_status:
           ship_schedule && ship_status != "confirmed"
             ? "tentative"
@@ -701,7 +682,17 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           placeholder="Select Date"
                           clearable
                           valueFormat="YYYY-MM-DD"
-                          {...form.getInputProps("wrap_date")}
+                          value={
+                            form.values.wrap_date
+                              ? dayjs(form.values.wrap_date).toDate()
+                              : null
+                          }
+                          onChange={(date) =>
+                            form.setFieldValue(
+                              "wrap_date",
+                              date ? dayjs(date).format("YYYY-MM-DD") : null
+                            )
+                          }
                         />
 
                         <DateInput
@@ -710,7 +701,17 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           placeholder="Select Date"
                           clearable
                           valueFormat="YYYY-MM-DD"
-                          {...form.getInputProps("ship_schedule")}
+                          value={
+                            form.values.ship_schedule
+                              ? dayjs(form.values.ship_schedule).toDate()
+                              : null
+                          }
+                          onChange={(date) =>
+                            form.setFieldValue(
+                              "ship_schedule",
+                              date ? dayjs(date).format("YYYY-MM-DD") : null
+                            )
+                          }
                         />
 
                         <Select
@@ -745,7 +746,17 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           placeholder="Select Date"
                           clearable
                           valueFormat="YYYY-MM-DD"
-                          {...form.getInputProps("installation_date")}
+                          value={
+                            form.values.installation_date
+                              ? dayjs(form.values.installation_date).toDate()
+                              : null
+                          }
+                          onChange={(date) =>
+                            form.setFieldValue(
+                              "installation_date",
+                              date ? dayjs(date).format("YYYY-MM-DD") : null
+                            )
+                          }
                         />
 
                         <DateInput
@@ -763,7 +774,36 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           placeholder="Select Date"
                           clearable
                           valueFormat="YYYY-MM-DD"
-                          {...form.getInputProps("inspection_date")}
+                          value={
+                            form.values.inspection_date
+                              ? dayjs(form.values.inspection_date).toDate()
+                              : null
+                          }
+                          onChange={(date) =>
+                            form.setFieldValue(
+                              "inspection_date",
+                              date ? dayjs(date).format("YYYY-MM-DD") : null
+                            )
+                          }
+                        />
+
+                        <DateInput
+                          styles={{ label: { fontWeight: "bold" } }}
+                          label="Cab Final Date"
+                          placeholder="Select Date"
+                          clearable
+                          valueFormat="YYYY-MM-DD"
+                          value={
+                            form.values.cabfinaldate
+                              ? dayjs(form.values.cabfinaldate).toDate()
+                              : null
+                          }
+                          onChange={(date) =>
+                            form.setFieldValue(
+                              "cabfinaldate",
+                              date ? dayjs(date).format("YYYY-MM-DD") : null
+                            )
+                          }
                         />
                       </SimpleGrid>
                       {jobData.sales_orders?.comments && (

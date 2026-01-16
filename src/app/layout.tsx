@@ -178,6 +178,11 @@ const dashboardLinks: SidebarLink[] = [
       },
       {
         iconName: "Activity",
+        label: "Plant Status",
+        path: "/dashboard/reports/plantstatusreport",
+      },
+      {
+        iconName: "ClipboardCheck",
         label: "Job Status",
         path: "/dashboard/reports/jobstatusreport",
       },

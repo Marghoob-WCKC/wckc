@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import {
   Paper,
@@ -15,13 +16,15 @@ import {
   Loader,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
-import { FaTasks, FaCalendarAlt, FaFileExcel } from "react-icons/fa";
+import { FaPrint, FaFileExcel, FaCalendarCheck } from "react-icons/fa";
+import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
-import { useJobStatusReport } from "@/hooks/useJobStatusReport";
-import { colors } from "@/theme";
-import "@mantine/dates/styles.css";
-import { JobStatusPdf } from "@/documents/JobStatusReportPdf";
 import { exportToExcel } from "@/utils/exportToExcel";
+import "@mantine/dates/styles.css";
+import {
+  JobStatusJob,
+  JobStatusReportPdf,
+} from "@/documents/JobStatusReportPdf";
 
 const PDFViewer = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
@@ -36,55 +39,97 @@ const PDFViewer = dynamic(
 );
 
 export default function JobStatusReport() {
+  const { supabase, isAuthenticated } = useSupabase();
+
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
     dayjs().startOf("month").toDate(),
     dayjs().endOf("month").toDate(),
   ]);
-
-  const [queryRange, setQueryRange] =
-    useState<[Date | null, Date | null]>(dateRange);
-
-  useEffect(() => {
-    const [start, end] = dateRange;
-    if (start && end) {
-      setQueryRange(dateRange);
-    }
-  }, [dateRange]);
 
   const {
     data: reportData,
     isLoading,
     isError,
     error,
-  } = useJobStatusReport(queryRange);
+  } = useQuery({
+    queryKey: ["job_status_report", dateRange],
+    queryFn: async () => {
+      if (!dateRange[0] || !dateRange[1]) return [];
+
+      const startDate = dayjs(dateRange[0]).format("YYYY-MM-DD");
+      const endDate = dayjs(dateRange[1]).format("YYYY-MM-DD");
+
+      const { data, error } = await supabase
+        .from("job_status_report_view")
+        .select("*")
+        .gte("ship_schedule", startDate)
+        .lte("ship_schedule", endDate)
+        .order("ship_schedule", { ascending: true });
+
+      if (error) throw error;
+
+      return (data || []) as JobStatusJob[];
+    },
+    enabled: isAuthenticated && !!dateRange[0] && !!dateRange[1],
+  });
+
   const memoizedPreview = useMemo(
     () => (
       <PDFViewer width="100%" height="100%" style={{ border: "none" }}>
-        <JobStatusPdf data={reportData || []} />
+        <JobStatusReportPdf
+          data={reportData || []}
+          startDate={dateRange[0]}
+          endDate={dateRange[1]}
+        />
       </PDFViewer>
     ),
-    [reportData]
+    [reportData, dateRange]
   );
+
   const handleExport = () => {
     if (!reportData) return;
 
-    const excelData = reportData.map((item) => ({
-      "Job #": item.job_number,
-      Client: item.shipping_client_name,
-      "Shipping Address": item.shipping_address,
-      "Cut Mel": item.cut_melamine ? "Yes" : "No",
-      "Cut Fin": item.cut_finish ? "Yes" : "No",
-      "Cust Fin": item.custom_finish ? "Yes" : "No",
-      Doors: item.doors ? "Yes" : "No",
-      Drawers: item.drawers ? "Yes" : "No",
-      Paint: item.paint ? "Yes" : "No",
-      Assembly: item.assembly ? "Yes" : "No",
-      Wrap: item.wrap ? "Yes" : "No",
-      "% Done": `${item.completion_percentage}%`,
-    }));
+    const excelData = reportData.map((job) => {
+      const address =
+        [job.shipping_street, job.shipping_city].filter(Boolean).join(", ") ||
+        "";
+
+      return {
+        "Job #": job.job_number,
+        Client: job.shipping_client_name || "",
+        Address: address,
+        "Ship Date": job.ship_schedule
+          ? dayjs(job.ship_schedule).format("YYYY-MM-DD")
+          : "",
+        Shipped: job.has_shipped ? "Yes" : "No",
+        "Install Date": job.installation_date || "",
+        "Install Comp": job.installation_completed || "",
+        "Inspection Date": job.inspection_date || "",
+        "Inspection Comp": job.inspection_completed || "",
+        "Final Date": "", // View doesn't have cabfinaldate yet
+        "SO Count": job.service_order_count || 0,
+      };
+    });
 
     exportToExcel(excelData, "Job_Status_Report");
   };
+
+  const presets = [
+    {
+      label: "This Month",
+      value: [
+        dayjs().startOf("month").toDate(),
+        dayjs().endOf("month").toDate(),
+      ],
+    },
+    {
+      label: "Last Month",
+      value: [
+        dayjs().subtract(1, "month").startOf("month").toDate(),
+        dayjs().subtract(1, "month").endOf("month").toDate(),
+      ],
+    },
+  ] as any;
 
   return (
     <Container size="100%" p="md">
@@ -96,38 +141,33 @@ export default function JobStatusReport() {
                 size={50}
                 radius="md"
                 variant="gradient"
-                gradient={{
-                  from: colors.blue.secondary,
-                  to: colors.blue.primary,
-                  deg: 135,
-                }}
+                gradient={{ from: "#1c7ed6", to: "#228be6", deg: 135 }}
               >
-                <FaTasks size={26} />
+                <FaCalendarCheck size={26} />
               </ThemeIcon>
               <Stack gap={0}>
-                <Title order={2} style={{ color: colors.gray.title }}>
+                <Title order={2} style={{ color: "#343a40" }}>
                   Job Status Report
                 </Title>
                 <Text size="sm" c="dimmed">
-                  Tracking production actuals and completion percentage.
+                  Generate report by shipping date.
                 </Text>
               </Stack>
             </Group>
 
             <Group align="flex-end">
               <DatePickerInput
-                allowSingleDateInRange
                 type="range"
-                label="Filter by Date Sold"
-                placeholder="Select date range"
+                allowSingleDateInRange
+                label="Report Date Range"
+                placeholder="Select dates"
                 value={dateRange}
-                onChange={(value) =>
-                  setDateRange(value as [Date | null, Date | null])
+                onChange={(val) =>
+                  setDateRange(val as [Date | null, Date | null])
                 }
-                leftSection={
-                  <FaCalendarAlt size={16} color={colors.violet.primary} />
-                }
-                w={350}
+                style={{ width: 300 }}
+                clearable={false}
+                presets={presets}
               />
               <Button
                 onClick={handleExport}
@@ -149,16 +189,24 @@ export default function JobStatusReport() {
           style={{
             height: "calc(100vh - 200px)",
             overflow: "hidden",
-            border: `1px solid ${colors.gray.border}`,
+            border: "1px solid #e0e0e0",
           }}
         >
-          {isLoading ? (
+          {!dateRange[0] || !dateRange[1] ? (
+            <Center h="100%">
+              <Text c="dimmed">
+                Please select a date range to view the report.
+              </Text>
+            </Center>
+          ) : isLoading ? (
             <Center h="100%">
               <Loader type="bars" size="xl" color="violet" />
             </Center>
           ) : isError ? (
             <Center h="100%">
-              <Text c="red">Error: {(error as Error).message}</Text>
+              <Text c="red">
+                Error generating report: {(error as Error).message}
+              </Text>
             </Center>
           ) : reportData && reportData.length > 0 ? (
             memoizedPreview
@@ -166,10 +214,10 @@ export default function JobStatusReport() {
             <Center h="100%">
               <Stack align="center" gap="xs">
                 <ThemeIcon color="gray" variant="light" size={60} radius="xl">
-                  <FaTasks size={30} />
+                  <FaPrint size={30} />
                 </ThemeIcon>
                 <Text size="lg" fw={500} c="dimmed">
-                  No jobs found for this period.
+                  No records found in this range.
                 </Text>
               </Stack>
             </Center>

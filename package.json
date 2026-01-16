@@ -48,6 +48,7 @@
     "react-pdf-html": "^2.1.4",
     "recharts": "^3.4.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "xlsx-js-style": "^1.2.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {

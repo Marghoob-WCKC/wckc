@@ -59,6 +59,13 @@ export type Database = {
             foreignKeyName: "backorders_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "job_status_report_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
@@ -357,6 +364,13 @@ export type Database = {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: true
+            referencedRelation: "job_status_report_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "homeowners_info_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
@@ -399,6 +413,7 @@ export type Database = {
       }
       installation: {
         Row: {
+          cabfinaldate: string | null
           created_at: string
           has_shipped: boolean
           in_warehouse: string | null
@@ -422,6 +437,7 @@ export type Database = {
           wrap_date: string | null
         }
         Insert: {
+          cabfinaldate?: string | null
           created_at?: string
           has_shipped?: boolean
           in_warehouse?: string | null
@@ -445,6 +461,7 @@ export type Database = {
           wrap_date?: string | null
         }
         Update: {
+          cabfinaldate?: string | null
           created_at?: string
           has_shipped?: boolean
           in_warehouse?: string | null
@@ -605,6 +622,13 @@ export type Database = {
             foreignKeyName: "invoices_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "job_status_report_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "invoices_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
@@ -716,6 +740,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "installation_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "job_attachments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "job_status_report_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -1103,6 +1134,13 @@ export type Database = {
             foreignKeyName: "purchase_tracking_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: true
+            referencedRelation: "job_status_report_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
@@ -1447,6 +1485,13 @@ export type Database = {
             foreignKeyName: "service_orders_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "job_status_report_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
@@ -1528,6 +1573,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "installation_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "site_visits_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "job_status_report_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -1645,6 +1697,13 @@ export type Database = {
             foreignKeyName: "warehouse_tracking_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: true
+            referencedRelation: "job_status_report_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
@@ -1717,6 +1776,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "installation_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "job_status_report_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -1861,6 +1927,24 @@ export type Database = {
           },
         ]
       }
+      job_status_report_view: {
+        Row: {
+          has_shipped: boolean | null
+          inspection_completed: string | null
+          inspection_date: string | null
+          installation_completed: string | null
+          installation_date: string | null
+          job_id: number | null
+          job_number: string | null
+          service_order_count: number | null
+          ship_schedule: string | null
+          shipping_city: string | null
+          shipping_client_name: string | null
+          shipping_street: string | null
+          shipping_zip: string | null
+        }
+        Relationships: []
+      }
       plant_master_view: {
         Row: {
           client_name: string | null
@@ -1902,6 +1986,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "installation_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "job_status_report_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -2099,6 +2190,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: true
             referencedRelation: "installation_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "job_status_report_view"
             referencedColumns: ["job_id"]
           },
           {
