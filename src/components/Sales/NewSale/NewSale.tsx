@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useForm } from "@mantine/form";
@@ -135,6 +135,7 @@ export default function NewSale() {
 
   const [newItemValue, setNewItemValue] = useState("");
   const [highlightedFields, setHighlightedFields] = useState<string[]>([]);
+  const skipClientAutofillRef = useRef(false);
 
   const [newDoorStyle, setNewDoorStyle] = useState<NewDoorStyleState>({
     name: "",
@@ -283,18 +284,22 @@ export default function NewSale() {
       setHighlightedFields([]);
 
       if (selectedClientData) {
-        form.setFieldValue("shipping", {
-          project_name: "",
-          shipping_client_name: selectedClientData.lastName || "",
-          shipping_street: "",
-          shipping_city: "",
-          shipping_province: "",
-          shipping_zip: "",
-          shipping_phone_1: "",
-          shipping_phone_2: "",
-          shipping_email_1: "",
-          shipping_email_2: "",
-        });
+        if (skipClientAutofillRef.current) {
+          skipClientAutofillRef.current = false;
+        } else {
+          form.setFieldValue("shipping", {
+            project_name: "",
+            shipping_client_name: selectedClientData.lastName || "",
+            shipping_street: "",
+            shipping_city: "",
+            shipping_province: "",
+            shipping_zip: "",
+            shipping_phone_1: "",
+            shipping_phone_2: "",
+            shipping_email_1: "",
+            shipping_email_2: "",
+          });
+        }
       } else {
         form.setFieldValue("shipping", {
           project_name: "",
@@ -626,9 +631,34 @@ export default function NewSale() {
         const client = so?.client;
 
         if (client) {
+          skipClientAutofillRef.current = true;
           setSelectedClientData(client);
           form.setFieldValue("client_id", Number(client.id));
-          form.setFieldValue("shipping.shipping_client_name", client.lastName);
+
+          form.setFieldValue("shipping", {
+            ...form.values.shipping,
+            shipping_client_name: client.lastName || "",
+            shipping_street: so.shipping_street || "",
+            shipping_city: so.shipping_city || "",
+            shipping_province: so.shipping_province || "",
+            shipping_zip: so.shipping_zip || "",
+            shipping_phone_1: so.shipping_phone_1 || "",
+            shipping_phone_2: so.shipping_phone_2 || "",
+            shipping_email_1: so.shipping_email_1 || "",
+            shipping_email_2: so.shipping_email_2 || "",
+          });
+
+          setHighlightedFields([
+            "shipping.shipping_client_name",
+            "shipping.shipping_street",
+            "shipping.shipping_city",
+            "shipping.shipping_province",
+            "shipping.shipping_zip",
+            "shipping.shipping_phone_1",
+            "shipping.shipping_phone_2",
+            "shipping.shipping_email_1",
+            "shipping.shipping_email_2",
+          ]);
           queryClient.invalidateQueries({
             queryKey: ["client-lookup", client.id],
           });

@@ -38,6 +38,7 @@ import {
   Paper,
   UnstyledButton,
   Transition,
+  MantineGradient,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import {
@@ -50,6 +51,7 @@ import {
   FaTools,
   FaTrash,
   FaFilter,
+  FaBoxOpen,
 } from "react-icons/fa";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -59,9 +61,12 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useDisclosure } from "@mantine/hooks";
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 import { useDeleteServiceOrder } from "@/hooks/useDeleteServiceOrder";
+import { gradients } from "@/theme";
 
 dayjs.extend(utc);
-type ServiceOrderView = Views<"service_orders_table_view">;
+type ServiceOrderView = Views<"service_orders_table_view"> & {
+  service_order_parts: { status: string | null }[];
+};
 
 export default function ServiceOrdersTable() {
   const { canEditServiceOrders } = usePermissions();
@@ -306,6 +311,7 @@ export default function ServiceOrdersTable() {
         );
       },
     }),
+
     columnHelper.accessor("date_entered", {
       header: "Date Entered",
       size: 130,
@@ -360,30 +366,86 @@ export default function ServiceOrdersTable() {
             {date ? (
               <Tooltip label="Completed">
                 <Group gap={6}>
-                  <FaCheckCircle
-                    color="var(--mantine-color-green-6)"
-                    size={14}
-                  />
                   {date === "1999-09-19T00:00:00+00:00" ? (
-                    <Text size="sm" c="green.8" fw={600}>
+                    <Badge
+                      variant="gradient"
+                      gradient={{
+                        from: "#00a31bff",
+                        to: "#005e0eff",
+                        deg: 135,
+                      }}
+                      leftSection={<FaCheckCircle color="white" size={14} />}
+                    >
                       Completed
-                    </Text>
+                    </Badge>
                   ) : (
-                    <Text size="sm" c="green.8" fw={600}>
+                    <Badge
+                      variant="gradient"
+                      gradient={{
+                        from: "#00a31bff",
+                        to: "#005e0eff",
+                        deg: 135,
+                      }}
+                      leftSection={<FaCheckCircle color="white" size={14} />}
+                    >
                       {dayjs.utc(date).format("YYYY-MM-DD")}
-                    </Text>
-                  )}{" "}
+                    </Badge>
+                  )}
                 </Group>
               </Tooltip>
             ) : (
               <Badge
                 variant="gradient"
-                gradient={{ from: "#4da0ff", to: "#0066cc", deg: 135 }}
+                gradient={{ from: "#ff0000ff", to: "#ff8432ff", deg: 135 }}
                 leftSection={<FaTools />}
               >
                 Open
               </Badge>
             )}
+          </CellWrapper>
+        );
+      },
+    }),
+    columnHelper.accessor("service_order_parts", {
+      header: "Parts Status",
+      enableSorting: false,
+      size: 140,
+      minSize: 120,
+      cell: (info) => {
+        const parts = info.getValue() || [];
+        if (parts.length === 0) {
+          return (
+            <CellWrapper>
+              <Text size="sm" c="dimmed">
+                —
+              </Text>
+            </CellWrapper>
+          );
+        }
+
+        const total = parts.length;
+        const completed = parts.filter((p) => p.status === "completed").length;
+
+        let badgeGradient: MantineGradient = gradients.service;
+        let label = `Pending (${total})`;
+
+        if (completed === total) {
+          badgeGradient = gradients.success;
+          label = `Ready (${completed}/${total})`;
+        } else if (completed > 0) {
+          badgeGradient = gradients.backorder;
+          label = `Partial (${completed}/${total})`;
+        }
+
+        return (
+          <CellWrapper>
+            <Badge
+              variant="gradient"
+              gradient={badgeGradient}
+              leftSection={<FaBoxOpen size={10} />}
+            >
+              {label}
+            </Badge>
           </CellWrapper>
         );
       },

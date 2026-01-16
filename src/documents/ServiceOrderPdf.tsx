@@ -161,7 +161,6 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
   const cab = so.cabinet || {};
   const installer = data.installers || {};
   const homeowner = job.homeowners_info || {};
-
   const address = [so.shipping_street, so.shipping_city]
     .filter(Boolean)
     .join(", ");
@@ -189,6 +188,7 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
           <Text style={styles.title}>
             Service Order: {data.service_order_number}
           </Text>
+
           <View style={styles.dateContainer}>
             <View style={styles.dateRow}>
               <Text style={styles.dateLabel}>Date Entered</Text>
@@ -203,6 +203,12 @@ export const ServiceOrderPdf = ({ data }: PdfProps) => {
               </Text>
             </View>
           </View>
+        </View>
+        <View style={styles.row}>
+          <Text style={styles.label}>Status:</Text>
+          <Text style={styles.value}>
+            {data.completed_at ? "Completed" : "Pending"}
+          </Text>
         </View>
 
         <View style={styles.infoContainer}>

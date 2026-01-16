@@ -101,6 +101,36 @@ export function useServiceOrdersTable({
         throw new Error(error.message);
       }
 
+      if (data && data.length > 0) {
+        const soIds = data.map((d: any) => d.service_order_id).filter(Boolean);
+
+        if (soIds.length > 0) {
+          const { data: partsData, error: partsError } = await supabase
+            .from("service_order_parts")
+            .select("service_order_id, status")
+            .in("service_order_id", soIds);
+
+          if (!partsError && partsData) {
+            const partsMap = new Map<number, { status: string | null }[]>();
+
+            partsData.forEach((part: any) => {
+              const existing = partsMap.get(part.service_order_id) || [];
+              existing.push({ status: part.status });
+              partsMap.set(part.service_order_id, existing);
+            });
+
+            data.forEach((row: any) => {
+              row.service_order_parts =
+                partsMap.get(row.service_order_id) || [];
+            });
+          }
+        }
+      }
+
+      data?.forEach((row: any) => {
+        if (!row.service_order_parts) row.service_order_parts = [];
+      });
+
       return {
         data,
         count,
