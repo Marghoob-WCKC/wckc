@@ -118,7 +118,7 @@ export default function ReportsDashboard() {
         {reports.map((report) => (
           <UnstyledButton
             key={report.title}
-            onClick={() => router.push(report.path)}
+            onClick={() => window.open(report.path, "_blank")}
             style={{ height: "100%" }}
           >
             <Card
