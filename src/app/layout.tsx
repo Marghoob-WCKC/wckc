@@ -150,43 +150,7 @@ const dashboardLinks: SidebarLink[] = [
   {
     iconName: "FileChartColumn",
     label: "Reports",
-    links: [
-      {
-        iconName: "Package",
-        label: "Wrap Schedule",
-        path: "/dashboard/reports/wrapschedulereport",
-      },
-      {
-        iconName: "Truck",
-        label: "Ship Schedule",
-        path: "/dashboard/reports/shipschedulereport",
-      },
-      {
-        iconName: "Archive",
-        label: "Past Shipping",
-        path: "/dashboard/reports/pastshipreport",
-      },
-      {
-        iconName: "Box",
-        label: "Box Count",
-        path: "/dashboard/reports/boxcountreport",
-      },
-      {
-        iconName: "FileWarning",
-        label: "Not Invoiced",
-        path: "/dashboard/reports/shippednotinvoiced",
-      },
-      {
-        iconName: "Activity",
-        label: "Plant Status",
-        path: "/dashboard/reports/plantstatusreport",
-      },
-      {
-        iconName: "ClipboardCheck",
-        label: "Job Status",
-        path: "/dashboard/reports/jobstatusreport",
-      },
-    ],
+    path: "/dashboard/reports",
   },
 
   {

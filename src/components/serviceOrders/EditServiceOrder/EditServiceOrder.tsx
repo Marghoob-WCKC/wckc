@@ -574,7 +574,7 @@ export default function EditServiceOrder({
             dayjs.utc(form.values.completed_at).year() !== 1999 && (
               <Text size="sm" c="dimmed">
                 Completed on:{" "}
-                {dayjs.utc(form.values.completed_at).format("YYYY-MM-DD HH:mm")}
+                {dayjs.utc(form.values.completed_at).format("YYYY-MM-DD")}
               </Text>
             )}
         </Box>

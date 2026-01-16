@@ -396,7 +396,7 @@ export default function ServiceOrdersTable() {
             ) : (
               <Badge
                 variant="gradient"
-                gradient={{ from: "#ff0000ff", to: "#ff8432ff", deg: 135 }}
+                gradient={{ from: "#ff5050ff", to: "#ff4c4cff", deg: 135 }}
                 leftSection={<FaTools />}
               >
                 Open

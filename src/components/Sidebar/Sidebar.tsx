@@ -128,8 +128,7 @@ function MainLink({
     ? pathname === item.path ||
       (!hasLinks &&
         item.path !== "/dashboard" &&
-        pathname.startsWith(item.path) &&
-        pathname === item.path)
+        pathname.startsWith(item.path))
     : false;
 
   const [opened, setOpened] = useState(isChildActive);
