@@ -62,7 +62,51 @@ import WrapPdfPreviewModal from "./WrapPdfPreviewModal";
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 import { usePermissions } from "@/hooks/usePermissions";
 import z from "zod";
-type PlantTableData = Views<"plant_table_view">;
+// Custom interface to match plant_production_view
+export interface PlantTableData {
+  job_id: number | null;
+  prod_id: number | null;
+  job_number: string | null;
+  placement_date: string | null;
+  client_name: string | null;
+  project_name: string | null;
+  is_canopy_required: boolean | null;
+  is_woodtop_required: boolean | null;
+  is_custom_cab_required: boolean | null;
+  cabinet_box: string | null;
+  cabinet_door_style: string | null;
+  cabinet_species: string | null;
+  cabinet_color: string | null;
+  installation_id: number | null;
+  wrap_date: string | null;
+  wrap_completed: string | null;
+  has_shipped: boolean | null;
+  installation_notes: string | null;
+  cut_melamine_completed_actual: string | null;
+  doors_completed_actual: string | null;
+  panel_completed_actual: string | null;
+  custom_finish_completed_actual: string | null;
+  paint_completed_actual: string | null;
+  paint_doors_completed_actual: string | null;
+  paint_canopy_completed_actual: string | null;
+  paint_cust_cab_completed_actual: string | null;
+  assembly_completed_actual: string | null;
+  drawer_completed_actual: string | null;
+  woodtop_completed_actual: string | null;
+  canopy_completed_actual: string | null;
+  cut_finish_completed_actual: string | null;
+  cust_fin_parts_cut_completed_actual: string | null;
+  cust_fin_assembled_completed_actual: string | null;
+  ship_schedule: string | null;
+  ship_status: string | null;
+  shipping_street: string | null;
+  shipping_city: string | null;
+  shipping_province: string | null;
+  shipping_zip: string | null;
+  in_warehouse: boolean | string | null;
+  installation_completed: string | null;
+  partially_shipped: boolean | string | null;
+}
 
 export default function PlantTableWrap() {
   const [userRole, setUserRole] = useState<any>("admin");
@@ -905,7 +949,7 @@ export default function PlantTableWrap() {
           </ThemeIcon>
           <Stack gap={4}>
             <Title order={2} style={{ color: "#343a40" }}>
-              Plant Wrap Schedule
+              Plant Schedule
             </Title>
             {dateRange[0] && dateRange[1] && (
               <Badge
@@ -961,6 +1005,7 @@ export default function PlantTableWrap() {
                 onChange={(e) => setInputFilterValue("address", e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
+
               <DatePickerInput
                 type="range"
                 allowSingleDateInRange
@@ -1200,7 +1245,7 @@ export default function PlantTableWrap() {
       <WrapPdfPreviewModal
         opened={pdfOpened}
         onClose={closePdf}
-        data={tableData}
+        data={tableData as any}
         dateRange={dateRange}
       />
       <JobDetailsDrawer

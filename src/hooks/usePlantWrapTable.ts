@@ -42,6 +42,9 @@ export function usePlantWrapTable({
       const valStr = String(value);
       if (!valStr) return;
 
+      const col = id === "client" ? "client_name" : id;
+      // Address filter removed as columns are not in the new view
+
       switch (id) {
         case "job_number":
           query = query.ilike("job_number", `%${valStr}%`);
@@ -63,7 +66,7 @@ export function usePlantWrapTable({
     queryKey: ["plant_wrap_table", pagination, columnFilters, sorting],
     queryFn: async () => {
       let dateQuery = supabase
-        .from("plant_table_view")
+        .from("plant_production_view")
         .select("wrap_date")
         .not("has_shipped", "is", true)
         .not("wrap_date", "is", null);
@@ -86,7 +89,7 @@ export function usePlantWrapTable({
       }
 
       let jobQuery = supabase
-        .from("plant_table_view")
+        .from("plant_production_view")
         .select("*")
         .not("has_shipped", "is", true)
         .not("wrap_date", "is", null)
