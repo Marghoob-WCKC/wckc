@@ -2245,6 +2245,8 @@ export type Database = {
       }
       sales_table_view: {
         Row: {
+          cabinet_box: string | null
+          cabinet_color: string | null
           created_at: string | null
           deposit: number | null
           designer: string | null

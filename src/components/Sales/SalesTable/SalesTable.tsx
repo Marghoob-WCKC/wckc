@@ -186,7 +186,7 @@ export default function SalesTable() {
       return counts;
     },
     enabled: isAuthenticated,
-    staleTime: 1000 * 60 * 5, 
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data, isLoading, isError, error } = useSalesTable({
@@ -227,7 +227,7 @@ export default function SalesTable() {
     () => [
       columnHelper.accessor("job_number", {
         header: "Job Number",
-        size: 50,
+        size: 30,
         cell: (info) => {
           if (info.getValue()) {
             return (
@@ -254,7 +254,7 @@ export default function SalesTable() {
       }),
       columnHelper.accessor("stage", {
         header: "Status",
-        size: 70,
+        size: 50,
         cell: (info) => (
           <Badge
             style={{ cursor: "inherit" }}
@@ -272,7 +272,7 @@ export default function SalesTable() {
       columnHelper.accessor("shipping_client_name", {
         id: "clientlastName",
         header: "Client Name",
-        size: 150,
+        size: 300,
         cell: (info) => {
           const projectName = info.row.original.project_name;
           const clientName = info.getValue();
@@ -305,7 +305,7 @@ export default function SalesTable() {
         {
           id: "shippingAddress",
           header: "Site Address",
-          size: 200,
+          size: 500,
           cell: (info) => (
             <Text size="sm" truncate>
               {info.getValue()}
@@ -313,6 +313,24 @@ export default function SalesTable() {
           ),
         }
       ),
+      columnHelper.accessor("cabinet_box", {
+        header: "Box",
+        size: 50,
+        cell: (info) => (
+          <Text size="sm" truncate>
+            {info.getValue() || "—"}
+          </Text>
+        ),
+      }),
+      columnHelper.accessor("cabinet_color", {
+        header: "Color",
+        size: 80,
+        cell: (info) => (
+          <Text size="sm" truncate>
+            {info.getValue() || "—"}
+          </Text>
+        ),
+      }),
       columnHelper.accessor("total", {
         header: "Price",
         size: 100,
