@@ -31,6 +31,7 @@ import {
   SimpleGrid,
   Anchor,
   Switch,
+  Tooltip,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import {
@@ -227,7 +228,7 @@ export default function SalesTable() {
     () => [
       columnHelper.accessor("job_number", {
         header: "Job Number",
-        size: 30,
+        size: 100,
         cell: (info) => {
           if (info.getValue()) {
             return (
@@ -254,7 +255,7 @@ export default function SalesTable() {
       }),
       columnHelper.accessor("stage", {
         header: "Status",
-        size: 50,
+        size: 70,
         cell: (info) => (
           <Badge
             style={{ cursor: "inherit" }}
@@ -267,12 +268,12 @@ export default function SalesTable() {
       }),
       columnHelper.accessor("designer", {
         header: "Designer",
-        size: 100,
+        size: 80,
       }),
       columnHelper.accessor("shipping_client_name", {
         id: "clientlastName",
         header: "Client Name",
-        size: 300,
+        size: 250,
         cell: (info) => {
           const projectName = info.row.original.project_name;
           const clientName = info.getValue();
@@ -305,11 +306,13 @@ export default function SalesTable() {
         {
           id: "shippingAddress",
           header: "Site Address",
-          size: 500,
+          size: 300,
           cell: (info) => (
-            <Text size="sm" truncate>
-              {info.getValue()}
-            </Text>
+            <Tooltip label={info.getValue()} openDelay={300}>
+              <Text size="sm" truncate>
+                {info.getValue()}
+              </Text>
+            </Tooltip>
           ),
         }
       ),
@@ -324,16 +327,18 @@ export default function SalesTable() {
       }),
       columnHelper.accessor("cabinet_color", {
         header: "Color",
-        size: 80,
+        size: 100,
         cell: (info) => (
-          <Text size="sm" truncate>
-            {info.getValue() || "—"}
-          </Text>
+          <Tooltip label={info.getValue()} openDelay={300}>
+            <Text size="sm" truncate>
+              {info.getValue() || "—"}
+            </Text>
+          </Tooltip>
         ),
       }),
       columnHelper.accessor("total", {
         header: "Price",
-        size: 100,
+        size: 70,
         cell: (info) => `$${(info.getValue() as number)?.toFixed(2) || "0.00"}`,
       }),
       columnHelper.accessor("ship_schedule", {
@@ -680,7 +685,13 @@ export default function SalesTable() {
         }}
         type="hover"
       >
-        <Table striped stickyHeader highlightOnHover withColumnBorders>
+        <Table
+          striped
+          stickyHeader
+          highlightOnHover
+          withColumnBorders
+          layout="fixed"
+        >
           <Table.Thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <Table.Tr key={headerGroup.id}>
@@ -696,6 +707,7 @@ export default function SalesTable() {
                         cursor: "pointer",
                         whiteSpace: "nowrap",
                         userSelect: "none",
+                        width: header.getSize(),
                       }}
                     >
                       <Group gap="xs" wrap="nowrap">
