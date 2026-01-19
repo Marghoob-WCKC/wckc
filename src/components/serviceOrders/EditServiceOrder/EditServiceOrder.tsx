@@ -339,7 +339,14 @@ export default function EditServiceOrder({
       }
 
       if (values.parts) {
-        const parts = values.parts;
+        let parts = values.parts;
+
+        if (values.completed_at && parts.length > 0) {
+          parts = parts.map((part) => ({
+            ...part,
+            status: "completed" as Enums<"so_part_status">,
+          }));
+        }
         const partsToDelete = parts
           .filter((p) => p.id && p._deleted)
           .map((p) => p.id as number);
