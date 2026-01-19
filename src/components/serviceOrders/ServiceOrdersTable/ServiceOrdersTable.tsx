@@ -368,6 +368,7 @@ export default function ServiceOrdersTable() {
                 <Group gap={6}>
                   {date === "1999-09-19T00:00:00+00:00" ? (
                     <Badge
+                      style={{ cursor: "pointer" }}
                       variant="gradient"
                       gradient={{
                         from: "#00a31bff",
@@ -380,6 +381,7 @@ export default function ServiceOrdersTable() {
                     </Badge>
                   ) : (
                     <Badge
+                      style={{ cursor: "pointer" }}
                       variant="gradient"
                       gradient={{
                         from: "#00a31bff",
@@ -395,6 +397,7 @@ export default function ServiceOrdersTable() {
               </Tooltip>
             ) : (
               <Badge
+                style={{ cursor: "pointer" }}
                 variant="gradient"
                 gradient={{ from: "#ff5050ff", to: "#ff4c4cff", deg: 135 }}
                 leftSection={<FaTools />}
@@ -440,6 +443,7 @@ export default function ServiceOrdersTable() {
         return (
           <CellWrapper>
             <Badge
+              style={{ cursor: "pointer" }}
               variant="gradient"
               gradient={badgeGradient}
               leftSection={<FaBoxOpen size={10} />}
