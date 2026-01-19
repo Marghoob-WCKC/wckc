@@ -19,10 +19,7 @@ export const ServiceOrderSchema = z
     job_id: z.string().min(1, "Job selection is required"),
     service_order_number: z.string().min(1, "Service Order Number is required"),
 
-    due_date: z.coerce
-      .date()
-      .nullable()
-      .refine((date) => date !== null, { message: "Service date is required" }),
+    due_date: z.coerce.date().nullable().optional(),
     installer_id: z.string().nullable().optional(),
 
     service_type: z.string().optional(),
