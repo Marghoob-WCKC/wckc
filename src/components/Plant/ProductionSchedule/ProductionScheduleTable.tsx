@@ -989,7 +989,7 @@ export default function ProductionScheduleTable() {
           </ThemeIcon>
           <Stack gap={4}>
             <Title order={2} style={{ color: "#343a40" }}>
-              Plant Schedule
+              Production Schedule
             </Title>
             {dateRange[0] && dateRange[1] && (
               <Badge

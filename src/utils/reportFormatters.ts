@@ -119,6 +119,7 @@ export const formatShipScheduleData = (
           },
           installation: {
             notes: item.installation_notes,
+            wrap_completed: item.wrap_completed,
           },
         } as unknown as ShippingJob)
     );

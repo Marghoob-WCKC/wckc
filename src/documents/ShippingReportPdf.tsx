@@ -14,7 +14,7 @@ export type ShippingReportJob = Tables<"jobs"> & {
     cabinet: JoinedCabinet | null;
   };
   production_schedule: Tables<"production_schedule">;
-  installation: { notes: string | null } | null;
+  installation: { notes: string | null; wrap_completed?: boolean } | null;
 };
 
 const ITEMS_PER_PAGE = 45;
@@ -85,16 +85,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa",
   },
 
-  colPlace: { width: "6%", alignItems: "center" },
   colJob: { width: "8%" },
   colCust: { width: "14%" },
-  colAddr: { width: "18%" },
+  colAddr: { width: "17%" },
   colBox: { width: "3%", alignItems: "center" },
   colDoor: { width: "15%" },
   colSpec: { width: "6%" },
   colColor: { width: "10%" },
+  colWrapped: { width: "5%", alignItems: "center" },
   colCheck: { width: "4%", alignItems: "center" },
-  colNotes: { width: "20%", paddingRight: 4 },
+  colNotes: { width: "18%", paddingRight: 4 },
 
   headerText: { fontSize: 8, fontWeight: "bold", textAlign: "center" },
   headerTextLeft: { fontSize: 8, fontWeight: "bold", textAlign: "left" },
@@ -149,8 +149,8 @@ const safeGet = (data: any) => {
 
 const ColumnHeaders = () => (
   <View style={styles.tableHeader}>
-    <View style={[styles.headerCellBase, styles.colPlace]}>
-      <Text style={styles.headerText}>Placement</Text>
+    <View style={[styles.headerCellBase, styles.colWrapped]}>
+      <Text style={styles.headerText}>Wrapped</Text>
     </View>
     <View style={[styles.headerCellBase, styles.colJob]}>
       <Text style={styles.headerText}>Job #</Text>
@@ -173,6 +173,7 @@ const ColumnHeaders = () => (
     <View style={[styles.headerCellBase, styles.colColor]}>
       <Text style={styles.headerText}>Color</Text>
     </View>
+
     <View
       style={[
         styles.headerCellBase,
@@ -273,8 +274,8 @@ export const ShippingReportPdf = ({
 
       currentPage.push(
         <View style={styles.tableRow} key={job.id} wrap={false}>
-          <View style={[styles.cellBase, styles.colPlace]}>
-            <Checkbox checked={Boolean(ps?.placement_date)} />
+          <View style={[styles.cellBase, styles.colWrapped]}>
+            <Checkbox checked={Boolean(job.installation?.wrap_completed)} />
           </View>
           <View style={[styles.cellBase, styles.colJob]}>
             <Text style={styles.cellText}>{jobNum}</Text>
