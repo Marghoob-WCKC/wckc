@@ -70,13 +70,13 @@ export default function PlantServiceOrdersTable() {
     {
       id: "due_date_range",
       value: [
-        dayjs().subtract(2, "day").toDate(),
+        dayjs().subtract(1, "year").toDate(),
         dayjs().add(28, "day").toDate(),
       ],
     },
   ]);
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
-    dayjs().subtract(2, "day").toDate(),
+    dayjs().subtract(1, "year").toDate(),
     dayjs().add(28, "day").toDate(),
   ]);
 
