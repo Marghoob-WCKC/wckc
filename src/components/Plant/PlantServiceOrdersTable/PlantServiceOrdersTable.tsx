@@ -48,7 +48,7 @@ import { notifications } from "@mantine/notifications";
 import { usePlantServiceOrders } from "@/hooks/usePlantServiceOrders";
 import { Database } from "@/types/supabase";
 import { serviceorderLocationOptions } from "@/dropdowns/dropdownOptions";
-import { linearGradients } from "@/theme";
+import { linearGradients, gradients } from "@/theme";
 import ServiceOrderPdfPreviewModal from "./ServiceOrderPdfPreviewModal";
 
 type PlantServiceOrderView =
@@ -295,8 +295,8 @@ export default function PlantServiceOrdersTable() {
         </Group>
         <Button
           leftSection={<FaClipboardList size={20} />}
-          variant="light"
-          color="violet"
+          variant="gradient"
+          gradient={gradients.primary}
           onClick={() => setPdfModalOpen(true)}
         >
           Print Preview
@@ -374,7 +374,7 @@ export default function PlantServiceOrdersTable() {
       {}
       <ScrollArea
         style={{ flex: 1 }}
-        type="always"
+        type="auto"
         styles={{ scrollbar: { zIndex: 99 } }}
       >
         {table.getRowModel().rows.length === 0 ? (
@@ -388,12 +388,11 @@ export default function PlantServiceOrdersTable() {
               variant="contained"
               value={openDates}
               onChange={setOpenDates}
-              style={{ minWidth: "1200px" }}
               styles={{
                 item: {
                   marginBottom: 30,
-                  border: "2px solid #d3d3d3ff",
-                  borderRadius: "sm",
+                  border: "1px solid #d3d3d3ff",
+                  borderRadius: "2px",
                 },
                 control: { backgroundColor: "#f8f9fa" },
                 content: { padding: 0 },
@@ -588,8 +587,8 @@ export default function PlantServiceOrdersTable() {
                                         >
                                           <Button
                                             size="xs"
-                                            color="green"
-                                            variant="light"
+                                            variant="gradient"
+                                            gradient={gradients.success}
                                             leftSection={<FaCheck size={12} />}
                                             loading={
                                               updatePartStatusMutation.isPending &&

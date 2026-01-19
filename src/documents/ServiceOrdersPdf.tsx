@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 5,
     marginTop: 5,
+    marginBottom: 10,
     borderTopWidth: 1,
     borderTopColor: "#000",
     borderBottomWidth: 1,
@@ -55,12 +56,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: "#e0e0e0",
     paddingBottom: 4,
+    width: "98%",
+    marginLeft: "auto",
   },
   soHeader: {
     flexDirection: "row",
     backgroundColor: "#f0f0f0",
     padding: 4,
     marginBottom: 2,
+    borderLeft: "2px solid red",
   },
   soHeaderText: { fontSize: 9, fontWeight: "bold", marginRight: 10 },
 
@@ -108,9 +112,20 @@ export const ServiceOrdersPdf = ({
   endDate: Date | null;
 }) => {
   const grouped = data.reduce((acc, so) => {
-    const dateKey = so.due_date || "No Date";
-    if (!acc[dateKey]) acc[dateKey] = [];
-    acc[dateKey].push(so);
+    const parts = (so.pending_parts as unknown as ServiceOrderPart[]) || [];
+    const distinctDates = new Set<string>();
+
+    parts.forEach((part) => {
+      if (part.part_due_date) {
+        distinctDates.add(dayjs(part.part_due_date).format("YYYY-MM-DD"));
+      }
+    });
+
+    distinctDates.forEach((dateKey) => {
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(so);
+    });
+
     return acc;
   }, {} as Record<string, PlantServiceOrderView[]>);
 
@@ -124,7 +139,7 @@ export const ServiceOrdersPdf = ({
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.headerContainer} fixed>
-          <Text style={styles.reportTitle}>Service Orders Report</Text>
+          <Text style={styles.reportTitle}>Service Orders Schedule</Text>
           <View>
             <Text style={styles.metaInfo}>
               Printed: {dayjs().format("DD-MMM-YY")}
@@ -143,14 +158,25 @@ export const ServiceOrdersPdf = ({
             dateKey === "No Date" ? "Unscheduled" : dateObj.format("DD-MMM-YY");
           const dayName = dateKey === "No Date" ? "" : dateObj.format("dddd");
 
+          let totalPartsForDate = 0;
+          orders.forEach((so) => {
+            const parts =
+              (so.pending_parts as unknown as ServiceOrderPart[]) || [];
+            const matchingParts = parts.filter((p) => {
+              if (!p.part_due_date) return false;
+              return dayjs(p.part_due_date).format("YYYY-MM-DD") === dateKey;
+            });
+            totalPartsForDate += matchingParts.length;
+          });
+
           return (
             <View key={dateKey} wrap={false}>
               <View style={styles.dateGroupHeader}>
-                <Text style={styles.dateGroupText}>Service Date:</Text>
+                <Text style={styles.dateGroupText}>Part Due Date:</Text>
                 <Text style={styles.dateGroupText}>{formattedDate}</Text>
                 <Text style={styles.dateGroupText}>{dayName}</Text>
                 <Text style={[styles.dateGroupText, { marginLeft: "auto" }]}>
-                  Count: {orders.length}
+                  {orders.length} Orders, {totalPartsForDate} Parts
                 </Text>
               </View>
 
@@ -158,12 +184,21 @@ export const ServiceOrdersPdf = ({
                 const clientName = so.client_name || "Unknown";
                 const jobNum = so.job_number || "Unknown";
 
-                const parts =
+                const allParts =
                   (so.pending_parts as unknown as ServiceOrderPart[]) || [];
+
+                const displayParts = allParts.filter((part) => {
+                  if (!part.part_due_date) return false;
+                  return (
+                    dayjs(part.part_due_date).format("YYYY-MM-DD") === dateKey
+                  );
+                });
+
+                if (displayParts.length === 0) return null;
 
                 return (
                   <View
-                    key={so.service_order_number}
+                    key={`${so.service_order_number}-${dateKey}`}
                     style={styles.soContainer}
                     wrap={false}
                   >
@@ -201,7 +236,7 @@ export const ServiceOrdersPdf = ({
                       </Text>
                     </View>
 
-                    {parts.map((part) => (
+                    {displayParts.map((part) => (
                       <View key={part.id} style={styles.partRow}>
                         <Text style={[styles.cellText, styles.colQty]}>
                           {part.qty}
