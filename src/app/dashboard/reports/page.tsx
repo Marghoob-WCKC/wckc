@@ -27,11 +27,11 @@ import { colors, gradients, linearGradients } from "@/theme";
 
 const reports = [
   {
-    title: "Wrap Schedule",
-    description: "View Wrapping schedule and completion status.",
+    title: "Production Schedule",
+    description: "View Production schedule and completion status.",
     icon: TbPackage,
     gradient: gradients.service,
-    path: "/dashboard/reports/wrapschedulereport",
+    path: "/dashboard/reports/productionschedulereport",
   },
   {
     title: "Ship Schedule",

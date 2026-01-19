@@ -4,9 +4,9 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Views } from "@/types/db";
 import {
-  WrapSchedulePdf,
+  ProductionSchedulePdf,
   ShippingReportJob,
-} from "@/documents/WrapSchedulePdf";
+} from "@/documents/ProductionSchedulePdf";
 import dynamic from "next/dynamic";
 import {
   Loader,
@@ -26,7 +26,7 @@ import dayjs from "dayjs";
 import { useSupabase } from "@/hooks/useSupabase";
 import { colors } from "@/theme";
 import { useDebouncedValue } from "@mantine/hooks";
-import { formatWrapScheduleData } from "@/utils/reportFormatters";
+import { formatProductionScheduleData } from "@/utils/reportFormatters";
 
 const PDFViewer = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
@@ -40,7 +40,7 @@ const PDFViewer = dynamic(
   }
 );
 
-export default function WrapScheduleReport() {
+export default function ProductionScheduleReport() {
   const { supabase, isAuthenticated } = useSupabase();
   const [showPrior, setShowPrior] = useState(false);
   const [debouncedShowPrior] = useDebouncedValue(showPrior, 600);
@@ -57,7 +57,11 @@ export default function WrapScheduleReport() {
     isError,
     error,
   } = useQuery({
-    queryKey: ["wrap_schedule_report", debouncedDateRange, debouncedShowPrior],
+    queryKey: [
+      "production_schedule_report",
+      debouncedDateRange,
+      debouncedShowPrior,
+    ],
     queryFn: async () => {
       if (!debouncedDateRange[0] || !debouncedDateRange[1]) return [];
 
@@ -65,7 +69,7 @@ export default function WrapScheduleReport() {
       const endDate = dayjs(debouncedDateRange[1]).format("YYYY-MM-DD");
 
       let query = supabase
-        .from("plant_table_view")
+        .from("plant_production_view")
         .select("*")
         .not("has_shipped", "is", true)
         .not("wrap_date", "is", null)
@@ -80,25 +84,25 @@ export default function WrapScheduleReport() {
         .order("job_number", { ascending: true });
 
       if (error) throw error;
-      return data as Views<"plant_table_view">[];
+      return data as Views<"plant_production_view">[];
     },
     enabled:
       isAuthenticated && !!debouncedDateRange[0] && !!debouncedDateRange[1],
   });
 
   const formattedData: ShippingReportJob[] = useMemo(() => {
-    return formatWrapScheduleData(reportData || []);
+    return formatProductionScheduleData(reportData || []);
   }, [reportData]);
 
   const memoizedPreview = useMemo(
     () => (
       <PDFViewer
-        key={`${debouncedShowPrior}-${formattedData.length}-${debouncedDateRange[0]}`}
+        key={Math.random()}
         width="100%"
         height="100%"
         style={{ border: "none" }}
       >
-        <WrapSchedulePdf
+        <ProductionSchedulePdf
           data={formattedData}
           startDate={debouncedDateRange[0]}
           endDate={debouncedDateRange[1]}
@@ -127,7 +131,7 @@ export default function WrapScheduleReport() {
               </ThemeIcon>
               <Stack gap={0}>
                 <Title order={2} style={{ color: "#343a40" }}>
-                  Wrap Schedule Report
+                  Production Schedule Report
                 </Title>
                 <Text size="sm" c="dimmed">
                   Generate PDF report by wrap date range.

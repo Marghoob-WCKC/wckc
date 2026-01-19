@@ -622,7 +622,7 @@ export default function ServiceOrdersTable() {
 
               <DatePickerInput
                 type="range"
-                label="Due Date Range"
+                label="Service Date Range"
                 placeholder="Pick dates"
                 allowSingleDateInRange
                 value={

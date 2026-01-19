@@ -76,7 +76,7 @@ export default function JobStatusReport() {
   const memoizedPreview = useMemo(
     () => (
       <PDFViewer
-        key={`${dateRange[0]?.toISOString()}-${dateRange[1]?.toISOString()}`}
+        key={Math.random()}
         width="100%"
         height="100%"
         style={{ border: "none" }}
@@ -111,7 +111,7 @@ export default function JobStatusReport() {
         "Install Comp": job.installation_completed || "",
         "Inspection Date": job.inspection_date || "",
         "Inspection Comp": job.inspection_completed || "",
-        "Final Date": "", // View doesn't have cabfinaldate yet
+        "Final Date": "", 
         "SO Count": job.service_order_count || 0,
       };
     });

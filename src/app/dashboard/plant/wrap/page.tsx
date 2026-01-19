@@ -1,5 +1,5 @@
-import PlantTableWrap from "@/components/Plant/PlantTableWrap/PlantTableWrap";
+import WrapScheduleTable from "@/components/Plant/WrapSchedule/WrapScheduleTable";
 
-export default function PlantPage() {
-  return <PlantTableWrap />;
+export default function WrapPage() {
+  return <WrapScheduleTable />;
 }

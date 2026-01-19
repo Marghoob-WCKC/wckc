@@ -4,11 +4,11 @@ import { Modal, Loader, Center } from "@mantine/core";
 import dynamic from "next/dynamic";
 import { Views } from "@/types/db";
 import {
-  WrapSchedulePdf,
+  ProductionSchedulePdf,
   ShippingReportJob,
-} from "@/documents/WrapSchedulePdf";
+} from "@/documents/ProductionSchedulePdf";
 import { useMemo } from "react";
-import { formatWrapScheduleData } from "@/utils/reportFormatters";
+import { formatProductionScheduleData } from "@/utils/reportFormatters";
 
 const PDFViewer = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
@@ -22,30 +22,29 @@ const PDFViewer = dynamic(
   }
 );
 
-interface WrapPdfPreviewModalProps {
+interface ProductionPdfPreviewModalProps {
   opened: boolean;
   onClose: () => void;
-  data: Views<"plant_table_view">[];
+  data: Views<"plant_production_view">[];
   dateRange: [Date | null, Date | null];
 }
 
-export default function WrapPdfPreviewModal({
+export default function ProductionPdfPreviewModal({
   opened,
   onClose,
   data,
   dateRange,
-}: WrapPdfPreviewModalProps) {
+}: ProductionPdfPreviewModalProps) {
   const formattedData: ShippingReportJob[] = useMemo(() => {
-    return formatWrapScheduleData(data);
+    return formatProductionScheduleData(data);
   }, [data]);
-
   const memoizedPreview = useMemo(
     () => (
       <PDFViewer
         key={Math.random()}
         style={{ width: "100%", height: "100%", border: "none" }}
       >
-        <WrapSchedulePdf
+        <ProductionSchedulePdf
           data={formattedData}
           startDate={dateRange[0]}
           endDate={dateRange[1]}
@@ -58,7 +57,7 @@ export default function WrapPdfPreviewModal({
     <Modal
       opened={opened}
       onClose={onClose}
-      title="Wrap Schedule Preview"
+      title="Production Schedule Preview"
       fullScreen
       styles={{ body: { height: "calc(100vh - 60px)", padding: 0 } }}
     >

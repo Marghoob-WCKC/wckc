@@ -54,17 +54,15 @@ import {
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
 import { notifications } from "@mantine/notifications";
-import { usePlantWrapTable } from "@/hooks/usePlantWrapTable";
+import { useProductionScheduleTable } from "@/hooks/useProductionScheduleTable";
 import { Views } from "@/types/db";
 import { useDisclosure } from "@mantine/hooks";
 import { useUser } from "@clerk/nextjs";
-import WrapPdfPreviewModal from "./WrapPdfPreviewModal";
+import ProductionPdfPreviewModal from "./ProductionPdfPreviewModal";
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
-import { usePermissions } from "@/hooks/usePermissions";
-import z from "zod";
-type PlantTableData = Views<"plant_table_view">;
+export type PlantTableData = Views<"plant_production_view">;
 
-export default function PlantTableWrap() {
+export default function ProductionScheduleTable() {
   const [userRole, setUserRole] = useState<any>("admin");
   const [subRole, setSubRole] = useState<any>("assembly");
   const { supabase, isAuthenticated } = useSupabase();
@@ -114,7 +112,7 @@ export default function PlantTableWrap() {
     }
     openPdf();
   };
-  const { data, isLoading, isError, error } = usePlantWrapTable({
+  const { data, isLoading, isError, error } = useProductionScheduleTable({
     pagination,
     columnFilters: activeFilters,
     sorting,
@@ -141,7 +139,12 @@ export default function PlantTableWrap() {
       if (error) throw error;
     },
     onMutate: async ({ installId, currentStatus }) => {
-      const queryKey = ["plant_wrap_table", pagination, activeFilters, sorting];
+      const queryKey = [
+        "plant_production_table",
+        pagination,
+        activeFilters,
+        sorting,
+      ];
       await queryClient.cancelQueries({ queryKey });
       const previousData = queryClient.getQueryData(queryKey);
       queryClient.setQueryData(
@@ -176,7 +179,7 @@ export default function PlantTableWrap() {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["plant_wrap_table"] });
+      queryClient.invalidateQueries({ queryKey: ["plant_production_table"] });
       queryClient.invalidateQueries({ queryKey: ["plant_shipping_table"] });
     },
     onSuccess: (_, variables) => {
@@ -219,7 +222,12 @@ export default function PlantTableWrap() {
       if (error) throw error;
     },
     onMutate: async ({ prodId, field, currentValue }) => {
-      const queryKey = ["plant_wrap_table", pagination, activeFilters, sorting];
+      const queryKey = [
+        "plant_production_table",
+        pagination,
+        activeFilters,
+        sorting,
+      ];
       await queryClient.cancelQueries({ queryKey });
       const previousData = queryClient.getQueryData(queryKey);
       const timestamp = currentValue ? null : new Date().toISOString();
@@ -248,7 +256,7 @@ export default function PlantTableWrap() {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["plant_wrap_table"] });
+      queryClient.invalidateQueries({ queryKey: ["plant_production_table"] });
       queryClient.invalidateQueries({ queryKey: ["plant_shipping_table"] });
     },
     onSuccess: (_, variables) => {
@@ -288,7 +296,7 @@ export default function PlantTableWrap() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plant_wrap_table"] });
+      queryClient.invalidateQueries({ queryKey: ["plant_production_table"] });
       notifications.show({
         title: "Updated",
         message: "Requirement updated successfully",
@@ -344,19 +352,29 @@ export default function PlantTableWrap() {
   const columns = useMemo(() => {
     const makeCheckboxCol = (
       id: string,
-      header: string,
+      header: string | React.ReactNode,
       accessor: (row: PlantTableData) => any,
       dbField: string,
       requiredFlag?: "isCanopy" | "isWoodtop" | "isCustom",
-      customSize?: number
+      customSize?: number,
+      bgColor?: string
     ) =>
       columnHelper.accessor(accessor, {
         id,
+        meta: {
+          style: {
+            backgroundColor: bgColor,
+          },
+        } as any,
         header: () => (
           <Center>
-            <Text size="sm" fw={700} style={{ textAlign: "center" }}>
-              {header}
-            </Text>
+            {typeof header === "string" ? (
+              <Text size="sm" fw={700} style={{ textAlign: "center" }}>
+                {header}
+              </Text>
+            ) : (
+              header
+            )}
           </Center>
         ),
         size: customSize || 110,
@@ -478,8 +496,8 @@ export default function PlantTableWrap() {
         size: 0,
       }),
       columnHelper.accessor("placement_date", {
-        header: "Placement",
-        size: 70,
+        header: "Files",
+        size: 50,
         cell: (info) => {
           const date = info.getValue();
           if (!date)
@@ -577,6 +595,12 @@ export default function PlantTableWrap() {
           "panel_completed_actual"
         ),
         makeCheckboxCol(
+          "custom_finish",
+          "Custom Finish",
+          (r) => r.custom_finish_completed_actual,
+          "custom_finish_completed_actual"
+        ),
+        makeCheckboxCol(
           "drawers",
           "Drawers",
           (r) => r.drawer_completed_actual,
@@ -606,27 +630,6 @@ export default function PlantTableWrap() {
           "cut_melamine_completed_actual"
         ),
         makeCheckboxCol(
-          "cut_fin",
-          "Cut Prefinished",
-          (r) => r.cut_finish_completed_actual,
-          "cut_finish_completed_actual"
-        ),
-        makeCheckboxCol(
-          "cust_parts_cut",
-          "Custom Parts Cut",
-          (r) => r.cust_fin_parts_cut_completed_actual,
-          "cust_fin_parts_cut_completed_actual",
-          "isCustom"
-        ),
-
-        makeCheckboxCol(
-          "cust_assm",
-          "Custom Assembled",
-          (r) => r.cust_fin_assembled_completed_actual,
-          "cust_fin_assembled_completed_actual",
-          "isCustom"
-        ),
-        makeCheckboxCol(
           "assembly",
           "Assembly",
           (r) => r.assembly_completed_actual,
@@ -637,7 +640,12 @@ export default function PlantTableWrap() {
       actualsCols = [
         makeCheckboxCol(
           "paint_doors",
-          "Paint Doors/Panels",
+          <Stack gap={0} align="center">
+            <Text size="sm" fw={700}>
+              Paint
+            </Text>
+            <Text size="xs">Doors/Panels</Text>
+          </Stack>,
           (r) => r.paint_doors_completed_actual,
           "paint_doors_completed_actual",
           undefined,
@@ -645,14 +653,24 @@ export default function PlantTableWrap() {
         ),
         makeCheckboxCol(
           "paint_canopy",
-          "Paint Canopy",
+          <Stack gap={0} align="center">
+            <Text size="sm" fw={700}>
+              Paint
+            </Text>
+            <Text size="xs">Canopy</Text>
+          </Stack>,
           (r) => r.paint_canopy_completed_actual,
           "paint_canopy_completed_actual",
           "isCanopy"
         ),
         makeCheckboxCol(
           "paint_custom",
-          "Paint Custom",
+          <Stack gap={0} align="center">
+            <Text size="sm" fw={700}>
+              Paint
+            </Text>
+            <Text size="xs">Custom</Text>
+          </Stack>,
           (r) => r.paint_cust_cab_completed_actual,
           "paint_cust_cab_completed_actual",
           "isCustom"
@@ -664,6 +682,15 @@ export default function PlantTableWrap() {
     ) {
       actualsCols = [
         makeCheckboxCol(
+          "cut_mel",
+          "Cut Melamine",
+          (r) => r.cut_melamine_completed_actual,
+          "cut_melamine_completed_actual",
+          undefined,
+          undefined,
+          "#f6f6f6"
+        ),
+        makeCheckboxCol(
           "doors",
           "Doors",
           (r) => r.doors_completed_actual,
@@ -673,13 +700,25 @@ export default function PlantTableWrap() {
           "panels",
           "Panels",
           (r) => r.panel_completed_actual,
-          "panel_completed_actual"
+          "panel_completed_actual",
+          undefined,
+          undefined,
+          "#f6f6f6"
         ),
         makeCheckboxCol(
           "drawers",
           "Drawers",
           (r) => r.drawer_completed_actual,
           "drawer_completed_actual"
+        ),
+        makeCheckboxCol(
+          "custom_finish",
+          "Custom Finish",
+          (r) => r.custom_finish_completed_actual,
+          "custom_finish_completed_actual",
+          undefined,
+          undefined,
+          "#f6f6f6"
         ),
         makeCheckboxCol(
           "woodtop",
@@ -693,23 +732,18 @@ export default function PlantTableWrap() {
           "Canopy",
           (r) => r.canopy_completed_actual,
           "canopy_completed_actual",
-          "isCanopy"
-        ),
-        makeCheckboxCol(
-          "cut_mel",
-          "Cut Melamine",
-          (r) => r.cut_melamine_completed_actual,
-          "cut_melamine_completed_actual"
-        ),
-        makeCheckboxCol(
-          "cut_fin",
-          "Cut Prefinished",
-          (r) => r.cut_finish_completed_actual,
-          "cut_finish_completed_actual"
+          "isCanopy",
+          undefined,
+          "#f6f6f6"
         ),
         makeCheckboxCol(
           "paint_doors",
-          "Paint Doors/Panels",
+          <Stack gap={0} align="center">
+            <Text size="sm" fw={700}>
+              Paint
+            </Text>
+            <Text size="xs">Doors/Panels</Text>
+          </Stack>,
           (r) => r.paint_doors_completed_actual,
           "paint_doors_completed_actual",
           undefined,
@@ -717,39 +751,36 @@ export default function PlantTableWrap() {
         ),
         makeCheckboxCol(
           "paint_canopy",
-          "Paint Canopy",
+          <Stack gap={0} align="center">
+            <Text size="sm" fw={700}>
+              Paint
+            </Text>
+            <Text size="xs">Canopy</Text>
+          </Stack>,
           (r) => r.paint_canopy_completed_actual,
           "paint_canopy_completed_actual",
           "isCanopy"
         ),
         makeCheckboxCol(
           "paint_custom",
-          "Paint Custom",
+          <Stack gap={0} align="center">
+            <Text size="sm" fw={700}>
+              Paint
+            </Text>
+            <Text size="xs">Custom</Text>
+          </Stack>,
           (r) => r.paint_cust_cab_completed_actual,
           "paint_cust_cab_completed_actual",
           "isCustom"
         ),
         makeCheckboxCol(
-          "cust_parts_cut",
-          "Custom Parts Cut",
-          (r) => r.cust_fin_parts_cut_completed_actual,
-          "cust_fin_parts_cut_completed_actual",
-          "isCustom"
-        ),
-
-        makeCheckboxCol(
-          "cust_assm",
-          "Custom Assembled",
-          (r) => r.cust_fin_assembled_completed_actual,
-          "cust_fin_assembled_completed_actual",
-          "isCustom"
-        ),
-
-        makeCheckboxCol(
           "assembly",
           "Assembly",
           (r) => r.assembly_completed_actual,
-          "assembly_completed_actual"
+          "assembly_completed_actual",
+          undefined,
+          undefined,
+          "#f6f6f6"
         ),
       ];
     } else {
@@ -835,6 +866,59 @@ export default function PlantTableWrap() {
       })
     );
 
+    commonEnd.push(
+      columnHelper.display({
+        id: "requirements",
+        header: "Requirements",
+        size: 140,
+        cell: (info) => {
+          const {
+            is_canopy_required,
+            is_woodtop_required,
+            is_custom_cab_required,
+          } = info.row.original;
+
+          if (
+            !is_canopy_required &&
+            !is_woodtop_required &&
+            !is_custom_cab_required
+          ) {
+            return (
+              <Text size="xs" c="dimmed">
+                -
+              </Text>
+            );
+          }
+
+          return (
+            <Group gap={4}>
+              {is_canopy_required && (
+                <Tooltip label="Canopy Required" openDelay={300}>
+                  <Badge size="xs" color="cyan" variant="light">
+                    CNPY
+                  </Badge>
+                </Tooltip>
+              )}
+              {is_woodtop_required && (
+                <Tooltip label="WoodTop Required" openDelay={300}>
+                  <Badge size="xs" color="orange" variant="light">
+                    WT
+                  </Badge>
+                </Tooltip>
+              )}
+              {is_custom_cab_required && (
+                <Tooltip label="Custom/Finish Required" openDelay={300}>
+                  <Badge size="xs" color="grape" variant="light">
+                    Cust
+                  </Badge>
+                </Tooltip>
+              )}
+            </Group>
+          );
+        },
+      })
+    );
+
     return [...commonStart, ...actualsCols, ...commonEnd];
   }, [subRole, toggleWrapMutation, updateProductionMutation]);
 
@@ -905,7 +989,7 @@ export default function PlantTableWrap() {
           </ThemeIcon>
           <Stack gap={4}>
             <Title order={2} style={{ color: "#343a40" }}>
-              Plant Wrap Schedule
+              Plant Schedule
             </Title>
             {dateRange[0] && dateRange[1] && (
               <Badge
@@ -961,6 +1045,7 @@ export default function PlantTableWrap() {
                 onChange={(e) => setInputFilterValue("address", e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
+
               <DatePickerInput
                 type="range"
                 allowSingleDateInRange
@@ -1011,7 +1096,7 @@ export default function PlantTableWrap() {
         type="always"
         styles={{
           thumb: {
-            zIndex: "999",
+            zIndex: "200",
           },
         }}
       >
@@ -1110,7 +1195,10 @@ export default function PlantTableWrap() {
                                   return (
                                     <Table.Th
                                       style={{
-                                        backgroundColor: "#ffffffff",
+                                        backgroundColor:
+                                          (header.column.columnDef.meta as any)
+                                            ?.style?.backgroundColor ||
+                                          "#ffffffff",
                                         width: header.getSize(),
                                         ...stickyStyle,
                                       }}
@@ -1155,6 +1243,12 @@ export default function PlantTableWrap() {
                                             whiteSpace: "nowrap",
                                             overflow: "hidden",
                                             textOverflow: "ellipsis",
+                                            backgroundColor:
+                                              (
+                                                cell.column.columnDef
+                                                  .meta as any
+                                              )?.style?.backgroundColor ||
+                                              undefined,
                                             ...stickyStyle,
                                           }}
                                         >
@@ -1197,7 +1291,7 @@ export default function PlantTableWrap() {
           color="#4A00E0"
         />
       </Box>
-      <WrapPdfPreviewModal
+      <ProductionPdfPreviewModal
         opened={pdfOpened}
         onClose={closePdf}
         data={tableData}

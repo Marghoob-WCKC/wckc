@@ -459,7 +459,7 @@ export default function ReadOnlyServiceOrder({
                   />
                   <Stack gap="xs">
                     <InfoRow
-                      label="Due Date"
+                      label="Service Date"
                       value={
                         so.due_date ? (
                           <Text c={isCompleted ? "dimmed" : "red.7"} fw={700}>
@@ -520,6 +520,7 @@ export default function ReadOnlyServiceOrder({
                             </Table.Th>
                             <Table.Th>Part Details</Table.Th>
                             <Table.Th>Location</Table.Th>
+                            <Table.Th>Due Date</Table.Th>
                             <Table.Th>Status</Table.Th>
                           </Table.Tr>
                         </Table.Thead>
@@ -557,6 +558,15 @@ export default function ReadOnlyServiceOrder({
                                     {part.location || "Unknown"}
                                   </Text>
                                 </Group>
+                              </Table.Td>
+                              <Table.Td>
+                                <Text size="sm">
+                                  {part.part_due_date
+                                    ? dayjs(part.part_due_date).format(
+                                        "MMM D, YYYY"
+                                      )
+                                    : "—"}
+                                </Text>
                               </Table.Td>
                               <Table.Td>
                                 {part.status === "completed" ? (

@@ -9,7 +9,7 @@ export type JoinedCabinet = Tables<"cabinets"> & {
   colors: { Name: string } | null;
 };
 
-export type WrapScheduleJob = Tables<"jobs"> & {
+export type ShippingReportJob = Tables<"jobs"> & {
   sales_orders: Tables<"sales_orders"> & {
     cabinet: JoinedCabinet | null;
   };
@@ -88,9 +88,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa",
   },
 
-  colJob: { width: "10%" },
-  colCust: { width: "14%" },
-  colAddr: { width: "14%" },
+  colPlace: { width: "6%", alignItems: "center" },
+  colJob: { width: "8%" },
+  colCust: { width: "12%" },
+  colAddr: { width: "12%" },
   colReq: { width: "6%", alignItems: "center" },
   colBox: { width: "3%", alignItems: "center" },
   colDoor: { width: "14%" },
@@ -154,6 +155,9 @@ const safeGet = (data: any) => {
 
 const ColumnHeaders = () => (
   <View style={styles.tableHeader}>
+    <View style={[styles.headerCellBase, styles.colPlace]}>
+      <Text style={styles.headerText}>Placement</Text>
+    </View>
     <View style={[styles.headerCellBase, styles.colJob]}>
       <Text style={styles.headerText}>Job #</Text>
     </View>
@@ -201,12 +205,12 @@ const ColumnHeaders = () => (
   </View>
 );
 
-export const WrapSchedulePdf = ({
+export const ProductionSchedulePdf = ({
   data,
   startDate,
   endDate,
 }: {
-  data: WrapScheduleJob[];
+  data: ShippingReportJob[];
   startDate: Date | null;
   endDate: Date | null;
 }) => {
@@ -217,7 +221,7 @@ export const WrapSchedulePdf = ({
     if (!acc[dateKey]) acc[dateKey] = [];
     acc[dateKey].push(job);
     return acc;
-  }, {} as Record<string, WrapScheduleJob[]>);
+  }, {} as Record<string, ShippingReportJob[]>);
 
   const sortedDates = Object.keys(grouped).sort((a, b) => {
     if (a === "No Date") return 1;
@@ -289,6 +293,9 @@ export const WrapSchedulePdf = ({
 
       currentPage.push(
         <View style={styles.tableRow} key={job.id} wrap={false}>
+          <View style={[styles.cellBase, styles.colPlace]}>
+            <Checkbox checked={Boolean(ps?.placement_date)} />
+          </View>
           <View style={[styles.cellBase, styles.colJob]}>
             <Text style={styles.cellText}>{jobNum}</Text>
           </View>
@@ -396,7 +403,7 @@ export const WrapSchedulePdf = ({
       {pages.map((pageContent, index) => (
         <Page key={index} size="A4" orientation="landscape" style={styles.page}>
           <View style={styles.headerContainer} fixed>
-            <Text style={styles.reportTitle}>Wrap Schedule</Text>
+            <Text style={styles.reportTitle}>Production Schedule</Text>
           </View>
           <Text
             style={{

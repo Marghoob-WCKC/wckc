@@ -1,14 +1,11 @@
 "use client";
 
-import { Modal, Loader, Center, Text, rem } from "@mantine/core";
+import { Modal, Loader, Center } from "@mantine/core";
 import dynamic from "next/dynamic";
 import { Views } from "@/types/db";
-import {
-  ShippingReportPdf,
-  ShippingReportJob,
-} from "@/documents/ShippingReportPdf";
+import { WrapSchedulePdf, WrapScheduleJob } from "@/documents/WrapSchedulePdf";
 import { useMemo } from "react";
-import { formatShipScheduleData } from "@/utils/reportFormatters";
+import { formatWrapScheduleData } from "@/utils/reportFormatters";
 
 const PDFViewer = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
@@ -22,30 +19,29 @@ const PDFViewer = dynamic(
   }
 );
 
-interface ShippingPdfPreviewModalProps {
+interface WrapPdfPreviewModalProps {
   opened: boolean;
   onClose: () => void;
-  data: Views<"plant_shipping_view">[];
+  data: Views<"plant_wrap_view">[];
   dateRange: [Date | null, Date | null];
 }
 
-export default function ShippingPdfPreviewModal({
+export default function WrapPdfPreviewModal({
   opened,
   onClose,
   data,
   dateRange,
-}: ShippingPdfPreviewModalProps) {
-  const formattedData: ShippingReportJob[] = useMemo(() => {
-    return formatShipScheduleData(data);
+}: WrapPdfPreviewModalProps) {
+  const formattedData: WrapScheduleJob[] = useMemo(() => {
+    return formatWrapScheduleData(data);
   }, [data]);
-
   const memoizedPreview = useMemo(
     () => (
       <PDFViewer
         key={Math.random()}
         style={{ width: "100%", height: "100%", border: "none" }}
       >
-        <ShippingReportPdf
+        <WrapSchedulePdf
           data={formattedData}
           startDate={dateRange[0]}
           endDate={dateRange[1]}
@@ -58,7 +54,7 @@ export default function ShippingPdfPreviewModal({
     <Modal
       opened={opened}
       onClose={onClose}
-      title="Shipping Schedule Preview"
+      title="Wrap Schedule Preview"
       fullScreen
       styles={{ body: { height: "calc(100vh - 60px)", padding: 0 } }}
     >

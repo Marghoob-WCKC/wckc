@@ -6,6 +6,9 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import dayjs from "dayjs";
+import { Views } from "@/types/db";
+
+type PlantProductionViewRow = Views<"plant_production_view">;
 
 interface UsePlantTableParams {
   pagination: PaginationState;
@@ -42,6 +45,8 @@ export function usePlantWrapTable({
       const valStr = String(value);
       if (!valStr) return;
 
+      const col = id === "client" ? "client_name" : id;
+
       switch (id) {
         case "job_number":
           query = query.ilike("job_number", `%${valStr}%`);
@@ -60,10 +65,10 @@ export function usePlantWrapTable({
   };
 
   return useQuery({
-    queryKey: ["plant_wrap_table", pagination, columnFilters, sorting],
+    queryKey: ["plant_production_table", pagination, columnFilters, sorting],
     queryFn: async () => {
       let dateQuery = supabase
-        .from("plant_table_view")
+        .from("plant_production_view")
         .select("wrap_date")
         .not("has_shipped", "is", true)
         .not("wrap_date", "is", null);
@@ -86,7 +91,7 @@ export function usePlantWrapTable({
       }
 
       let jobQuery = supabase
-        .from("plant_table_view")
+        .from("plant_production_view")
         .select("*")
         .not("has_shipped", "is", true)
         .not("wrap_date", "is", null)
@@ -109,7 +114,7 @@ export function usePlantWrapTable({
       if (jobError) throw new Error(jobError.message);
 
       return {
-        data: jobs,
+        data: jobs as PlantProductionViewRow[],
         count: uniqueDates.length,
       };
     },

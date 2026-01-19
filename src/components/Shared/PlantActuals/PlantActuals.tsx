@@ -31,9 +31,6 @@ type ActualKey =
   | "in_plant_actual"
   | "in_plant_cabinets_actual"
   | "doors_completed_actual"
-  | "cut_finish_completed_actual"
-  | "cust_fin_parts_cut_completed_actual"
-  | "cust_fin_assembled_completed_actual"
   | "drawer_completed_actual"
   | "cut_melamine_completed_actual"
   | "paint_doors_completed_actual"
@@ -66,15 +63,7 @@ const GROUPS_CONFIG: GroupConfig[] = [
   {
     title: "Cut",
     icon: <FaCut size={14} />,
-    steps: [
-      { key: "cut_melamine_completed_actual", label: "Melamine" },
-      { key: "cut_finish_completed_actual", label: "Prefinished" },
-      {
-        key: "cust_fin_parts_cut_completed_actual",
-        label: "Custom Parts",
-        requiredRule: "custom",
-      },
-    ],
+    steps: [{ key: "cut_melamine_completed_actual", label: "Melamine" }],
   },
   {
     title: "Prep",
@@ -116,21 +105,14 @@ const GROUPS_CONFIG: GroupConfig[] = [
   {
     title: "Assembly",
     icon: <FaCogs size={14} />,
-    steps: [
-      {
-        key: "cust_fin_assembled_completed_actual",
-        label: "Custom Cab Assembled",
-        requiredRule: "custom",
-      },
-
-      { key: "assembly_completed_actual", label: "Main Assembly" },
-    ],
+    steps: [{ key: "assembly_completed_actual", label: "Main Assembly" }],
   },
 ];
 
 interface PlantActualsProps {
   schedule: Partial<Tables<"production_schedule">> | null | undefined;
   title?: string;
+  showTitle?: boolean | null;
   isCanopyRequired?: boolean | null;
   isWoodtopRequired?: boolean | null;
   isCustomCabRequired?: boolean | null;
@@ -140,6 +122,7 @@ interface PlantActualsProps {
 export default function PlantActuals({
   schedule,
   title = "Plant Progress",
+  showTitle = true,
   isCanopyRequired,
   isWoodtopRequired,
   isCustomCabRequired,
@@ -188,17 +171,19 @@ export default function PlantActuals({
   if (variant === "compact") {
     return (
       <Paper radius="md" shadow="unset">
-        <Group mb="xs" gap="xs">
-          <FaCalendarCheck
-            color={colors.violet.primary}
-            size={18}
-            radius="md"
-          />
+        {showTitle && (
+          <Group mb="xs" gap="xs">
+            <FaCalendarCheck
+              color={colors.violet.primary}
+              size={18}
+              radius="md"
+            />
 
-          <Text fw={700} size="lg" c={colors.violet.primary}>
-            {title}
-          </Text>
-        </Group>
+            <Text fw={700} size="lg" c={colors.violet.primary}>
+              {title}
+            </Text>
+          </Group>
+        )}
         <Group
           align="flex-start"
           gap="md"
@@ -255,16 +240,18 @@ export default function PlantActuals({
 
   return (
     <Paper p="md" radius="md" w="100%" h="100%">
-      <Center mb="lg">
-        <Group gap="xs">
-          <ThemeIcon variant="light" color="violet" size="lg" radius="md">
-            <FaCalendarCheck size={18} />
-          </ThemeIcon>
-          <Text fw={700} size="lg" c="violet.9">
-            {title}
-          </Text>
-        </Group>
-      </Center>
+      {showTitle && (
+        <Center mb="lg">
+          <Group gap="xs">
+            <ThemeIcon variant="light" color="violet" size="lg" radius="md">
+              <FaCalendarCheck size={18} />
+            </ThemeIcon>
+            <Text fw={700} size="lg" c="violet.9">
+              {title}
+            </Text>
+          </Group>
+        </Center>
+      )}
 
       <Timeline
         bulletSize={30}

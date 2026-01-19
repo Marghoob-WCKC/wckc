@@ -6,18 +6,21 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import dayjs from "dayjs";
+import { Views } from "@/types/db";
 
-interface UsePlantShippingTableParams {
+type PlantWrapViewRow = Views<"plant_wrap_view">;
+
+interface UsePlantTableParams {
   pagination: PaginationState;
   columnFilters: ColumnFiltersState;
   sorting: SortingState;
 }
 
-export function usePlantShippingTable({
+export function useWrapScheduleTable({
   pagination,
   columnFilters,
   sorting,
-}: UsePlantShippingTableParams) {
+}: UsePlantTableParams) {
   const { supabase, isAuthenticated } = useSupabase();
 
   const applyFilters = (query: any) => {
@@ -28,21 +31,21 @@ export function usePlantShippingTable({
       const { id, value } = filter;
       if (id === "show_prior") return;
 
-      if (id === "ship_date_range" && Array.isArray(value)) {
+      if (id === "wrap_date_range" && Array.isArray(value)) {
         const [start, end] = value;
         if (start && end) {
           if (!showPrior) {
-            query = query.gte(
-              "ship_schedule",
-              dayjs(start).format("YYYY-MM-DD")
-            );
+            query = query.gte("wrap_date", dayjs(start).format("YYYY-MM-DD"));
           }
-          query = query.lte("ship_schedule", dayjs(end).format("YYYY-MM-DD"));
+          query = query.lte("wrap_date", dayjs(end).format("YYYY-MM-DD"));
         }
         return;
       }
+
       const valStr = String(value);
       if (!valStr) return;
+
+      const col = id === "client" ? "client_name" : id;
 
       switch (id) {
         case "job_number":
@@ -53,7 +56,7 @@ export function usePlantShippingTable({
           break;
         case "address":
           query = query.or(
-            `shipping_street.ilike.%${valStr}%,shipping_city.ilike.%${valStr}%,shipping_province.ilike.%${valStr}%,shipping_zip.ilike.%${valStr}%`
+            `shipping_street.ilike.%${valStr}%,shipping_city.ilike.%${valStr}%`
           );
           break;
       }
@@ -62,19 +65,23 @@ export function usePlantShippingTable({
   };
 
   return useQuery({
-    queryKey: ["plant_shipping_table", pagination, columnFilters, sorting],
+    queryKey: ["plant_production_table", pagination, columnFilters, sorting],
     queryFn: async () => {
       let dateQuery = supabase
-        .from("plant_shipping_view")
-        .select("ship_schedule")
-        .not("ship_schedule", "is", null);
+        .from("plant_production_view")
+        .select("wrap_date")
+        .not("has_shipped", "is", true)
+        .not("wrap_date", "is", null);
 
       dateQuery = applyFilters(dateQuery);
 
-      const { data: dateRows, error: dateError } = await dateQuery;
+      const { data: dateRows, error: dateError } = await dateQuery.returns<
+        PlantWrapViewRow[]
+      >();
       if (dateError) throw new Error(dateError.message);
+
       const uniqueDates = Array.from(
-        new Set(dateRows.map((r) => r.ship_schedule))
+        new Set(dateRows.map((r) => r.wrap_date))
       ).sort();
 
       const from = pagination.pageIndex * pagination.pageSize;
@@ -86,11 +93,11 @@ export function usePlantShippingTable({
       }
 
       let jobQuery = supabase
-        .from("plant_shipping_view")
+        .from("plant_production_view")
         .select("*")
-        .in("ship_schedule", targetDates)
-        .not("ship_schedule", "is", null)
-        .is("installation_completed", null);
+        .not("has_shipped", "is", true)
+        .not("wrap_date", "is", null)
+        .in("wrap_date", targetDates);
 
       jobQuery = applyFilters(jobQuery);
 
@@ -101,7 +108,7 @@ export function usePlantShippingTable({
           .order("job_number", { ascending: true });
       } else {
         jobQuery = jobQuery
-          .order("ship_schedule", { ascending: true })
+          .order("wrap_date", { ascending: true })
           .order("job_number", { ascending: true });
       }
 
@@ -109,7 +116,7 @@ export function usePlantShippingTable({
       if (jobError) throw new Error(jobError.message);
 
       return {
-        data: jobs,
+        data: jobs as PlantWrapViewRow[],
         count: uniqueDates.length,
       };
     },

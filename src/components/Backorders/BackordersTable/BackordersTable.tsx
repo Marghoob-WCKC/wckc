@@ -87,7 +87,7 @@ export default function BackordersTable() {
   const { data: printListData, isLoading: isPrintListLoading } =
     useBackordersTable({
       pagination: { pageIndex: 0, pageSize: 0 },
-      columnFilters: activeFilters, 
+      columnFilters: activeFilters,
       sorting,
       fetchAll: true,
     });
@@ -508,17 +508,17 @@ export default function BackordersTable() {
             setSelectedBO(null);
           }}
           backorder={selectedBO}
-          readOnly={!permissions.canEditInstallation}
+          readOnly={!(permissions.canEditInstallation || permissions.isPlant)}
         />
       )}
 
-            <BackorderPdfPreviewModal
+      <BackorderPdfPreviewModal
         opened={printItemModalOpened}
         onClose={handleClosePrintItem}
         data={printData}
       />
 
-            <BackordersListPdfModal
+      <BackordersListPdfModal
         opened={printListModalOpened}
         onClose={closePrintListModal}
         data={printListData?.data || []}

@@ -65,7 +65,7 @@ export default function ShipScheduleReport() {
       const endDate = dayjs(debouncedDateRange[1]).format("YYYY-MM-DD");
 
       let query = supabase
-        .from("plant_table_view")
+        .from("plant_shipping_view")
         .select("*")
         .lte("ship_schedule", endDate)
         .not("ship_schedule", "is", null);
@@ -79,7 +79,7 @@ export default function ShipScheduleReport() {
         .order("job_number", { ascending: true });
 
       if (error) throw error;
-      return data as Views<"plant_table_view">[];
+      return data as Views<"plant_shipping_view">[];
     },
     enabled:
       isAuthenticated && !!debouncedDateRange[0] && !!debouncedDateRange[1],
@@ -92,7 +92,7 @@ export default function ShipScheduleReport() {
   const memoizedPreview = useMemo(
     () => (
       <PDFViewer
-        key={`${debouncedShowPrior}-${formattedData.length}-${debouncedDateRange[0]}`}
+        key={Math.random()}
         width="100%"
         height="100%"
         style={{ border: "none" }}

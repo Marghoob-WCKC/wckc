@@ -73,7 +73,28 @@ export type Database = {
             foreignKeyName: "backorders_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "plant_production_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_shipping_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_wrap_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -378,7 +399,28 @@ export type Database = {
             foreignKeyName: "homeowners_info_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: true
+            referencedRelation: "plant_production_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "homeowners_info_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "plant_shipping_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "homeowners_info_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
             referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "homeowners_info_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "plant_wrap_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -636,7 +678,28 @@ export type Database = {
             foreignKeyName: "invoices_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "plant_production_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "invoices_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_shipping_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "invoices_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "invoices_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_wrap_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -760,7 +823,28 @@ export type Database = {
             foreignKeyName: "job_attachments_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "plant_production_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "job_attachments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_shipping_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "job_attachments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "job_attachments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_wrap_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -856,7 +940,28 @@ export type Database = {
             foreignKeyName: "fk_installation_id"
             columns: ["installation_id"]
             isOneToOne: true
+            referencedRelation: "plant_production_view"
+            referencedColumns: ["installation_id"]
+          },
+          {
+            foreignKeyName: "fk_installation_id"
+            columns: ["installation_id"]
+            isOneToOne: true
+            referencedRelation: "plant_shipping_view"
+            referencedColumns: ["installation_id"]
+          },
+          {
+            foreignKeyName: "fk_installation_id"
+            columns: ["installation_id"]
+            isOneToOne: true
             referencedRelation: "plant_table_view"
+            referencedColumns: ["installation_id"]
+          },
+          {
+            foreignKeyName: "fk_installation_id"
+            columns: ["installation_id"]
+            isOneToOne: true
+            referencedRelation: "plant_wrap_view"
             referencedColumns: ["installation_id"]
           },
           {
@@ -1148,7 +1253,28 @@ export type Database = {
             foreignKeyName: "purchase_tracking_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: true
+            referencedRelation: "plant_production_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "plant_shipping_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
             referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "plant_wrap_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -1499,7 +1625,28 @@ export type Database = {
             foreignKeyName: "service_orders_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "plant_production_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_shipping_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_wrap_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -1593,7 +1740,28 @@ export type Database = {
             foreignKeyName: "site_visits_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "plant_production_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "site_visits_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_shipping_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "site_visits_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "site_visits_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_wrap_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -1711,7 +1879,28 @@ export type Database = {
             foreignKeyName: "warehouse_tracking_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: true
+            referencedRelation: "plant_production_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "plant_shipping_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
             referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "warehouse_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "plant_wrap_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -1796,7 +1985,28 @@ export type Database = {
             foreignKeyName: "backorders_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "plant_production_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_shipping_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "backorders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_wrap_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -1957,8 +2167,64 @@ export type Database = {
         }
         Relationships: []
       }
+      plant_production_view: {
+        Row: {
+          assembly_completed_actual: string | null
+          cabinet_box: string | null
+          cabinet_color: string | null
+          cabinet_door_style: string | null
+          cabinet_species: string | null
+          canopy_completed_actual: string | null
+          client_name: string | null
+          custom_finish_completed_actual: string | null
+          cut_melamine_completed_actual: string | null
+          doors_completed_actual: string | null
+          drawer_completed_actual: string | null
+          has_shipped: boolean | null
+          installation_id: number | null
+          installation_notes: string | null
+          is_canopy_required: boolean | null
+          is_custom_cab_required: boolean | null
+          is_woodtop_required: boolean | null
+          job_id: number | null
+          job_number: string | null
+          paint_canopy_completed_actual: string | null
+          paint_cust_cab_completed_actual: string | null
+          paint_doors_completed_actual: string | null
+          panel_completed_actual: string | null
+          placement_date: string | null
+          prod_id: number | null
+          project_name: string | null
+          ship_schedule: string | null
+          ship_status: Database["public"]["Enums"]["ShippingStatus"] | null
+          shipping_city: string | null
+          shipping_province: string | null
+          shipping_street: string | null
+          shipping_zip: string | null
+          woodtop_completed_actual: string | null
+          wrap_completed: string | null
+          wrap_date: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_prod_id_fkey"
+            columns: ["prod_id"]
+            isOneToOne: false
+            referencedRelation: "prod_table_view"
+            referencedColumns: ["prod_id"]
+          },
+          {
+            foreignKeyName: "jobs_prod_id_fkey"
+            columns: ["prod_id"]
+            isOneToOne: false
+            referencedRelation: "production_schedule"
+            referencedColumns: ["prod_id"]
+          },
+        ]
+      }
       plant_service_orders_view: {
         Row: {
+          chargeable: boolean | null
           client_name: string | null
           due_date: string | null
           job_id: number | null
@@ -2006,7 +2272,28 @@ export type Database = {
             foreignKeyName: "service_orders_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "plant_production_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_shipping_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "service_orders_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "plant_wrap_view"
             referencedColumns: ["job_id"]
           },
           {
@@ -2036,6 +2323,52 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shipped_not_invoiced_view"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      plant_shipping_view: {
+        Row: {
+          cabinet_box: string | null
+          cabinet_color: string | null
+          cabinet_door_style: string | null
+          cabinet_species: string | null
+          client_name: string | null
+          dropoff_date: string | null
+          has_shipped: boolean | null
+          in_warehouse: string | null
+          installation_completed: string | null
+          installation_id: number | null
+          installation_notes: string | null
+          job_id: number | null
+          job_number: string | null
+          partially_shipped: boolean | null
+          pickup_date: string | null
+          placement_date: string | null
+          prod_id: number | null
+          project_name: string | null
+          ship_schedule: string | null
+          ship_status: Database["public"]["Enums"]["ShippingStatus"] | null
+          shipping_city: string | null
+          shipping_province: string | null
+          shipping_street: string | null
+          shipping_zip: string | null
+          wrap_completed: string | null
+          wrap_date: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_prod_id_fkey"
+            columns: ["prod_id"]
+            isOneToOne: false
+            referencedRelation: "prod_table_view"
+            referencedColumns: ["prod_id"]
+          },
+          {
+            foreignKeyName: "jobs_prod_id_fkey"
+            columns: ["prod_id"]
+            isOneToOne: false
+            referencedRelation: "production_schedule"
+            referencedColumns: ["prod_id"]
           },
         ]
       }
@@ -2071,6 +2404,61 @@ export type Database = {
           paint_doors_completed_actual: string | null
           panel_completed_actual: string | null
           partially_shipped: boolean | null
+          placement_date: string | null
+          prod_id: number | null
+          project_name: string | null
+          ship_schedule: string | null
+          ship_status: Database["public"]["Enums"]["ShippingStatus"] | null
+          shipping_city: string | null
+          shipping_province: string | null
+          shipping_street: string | null
+          shipping_zip: string | null
+          woodtop_completed_actual: string | null
+          wrap_completed: string | null
+          wrap_date: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_prod_id_fkey"
+            columns: ["prod_id"]
+            isOneToOne: false
+            referencedRelation: "prod_table_view"
+            referencedColumns: ["prod_id"]
+          },
+          {
+            foreignKeyName: "jobs_prod_id_fkey"
+            columns: ["prod_id"]
+            isOneToOne: false
+            referencedRelation: "production_schedule"
+            referencedColumns: ["prod_id"]
+          },
+        ]
+      }
+      plant_wrap_view: {
+        Row: {
+          assembly_completed_actual: string | null
+          cabinet_box: string | null
+          cabinet_color: string | null
+          cabinet_door_style: string | null
+          cabinet_species: string | null
+          canopy_completed_actual: string | null
+          client_name: string | null
+          custom_finish_completed_actual: string | null
+          cut_melamine_completed_actual: string | null
+          doors_completed_actual: string | null
+          drawer_completed_actual: string | null
+          has_shipped: boolean | null
+          installation_id: number | null
+          installation_notes: string | null
+          is_canopy_required: boolean | null
+          is_custom_cab_required: boolean | null
+          is_woodtop_required: boolean | null
+          job_id: number | null
+          job_number: string | null
+          paint_canopy_completed_actual: string | null
+          paint_cust_cab_completed_actual: string | null
+          paint_doors_completed_actual: string | null
+          panel_completed_actual: string | null
           placement_date: string | null
           prod_id: number | null
           project_name: string | null
@@ -2210,7 +2598,28 @@ export type Database = {
             foreignKeyName: "purchase_tracking_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: true
+            referencedRelation: "plant_production_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "plant_shipping_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
             referencedRelation: "plant_table_view"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "purchase_tracking_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "plant_wrap_view"
             referencedColumns: ["job_id"]
           },
           {

@@ -210,15 +210,29 @@ export default function PlantServiceOrdersTable() {
 
   const groupedRows = useMemo(() => {
     if (!table.getRowModel().rows) return {};
-    return table.getRowModel().rows.reduce((acc, row) => {
+    const groups: Record<string, Row<PlantServiceOrderView>[]> = {};
+
+    table.getRowModel().rows.forEach((row) => {
       const so = row.original;
-      const dateKey = so.due_date
-        ? dayjs(so.due_date).format("YYYY-MM-DD")
-        : "No Date";
-      if (!acc[dateKey]) acc[dateKey] = [];
-      acc[dateKey].push(row);
-      return acc;
-    }, {} as Record<string, Row<PlantServiceOrderView>[]>);
+      const parts = (so.pending_parts as any[]) || [];
+      const distinctDates = new Set<string>();
+
+      if (parts.length > 0) {
+        parts.forEach((part) => {
+          if (!part.part_due_date) return;
+          const d = dayjs(part.part_due_date).format("YYYY-MM-DD");
+          distinctDates.add(d);
+        });
+      } else {
+      }
+
+      distinctDates.forEach((dateKey) => {
+        if (!groups[dateKey]) groups[dateKey] = [];
+        groups[dateKey].push(row);
+      });
+    });
+
+    return groups;
   }, [table.getRowModel().rows]);
 
   const sortedGroupKeys = useMemo(() => {
@@ -325,7 +339,7 @@ export default function PlantServiceOrdersTable() {
               <DatePickerInput
                 type="range"
                 allowSingleDateInRange
-                label="Due Date Range"
+                label="Service Date Range"
                 placeholder="Pick dates range"
                 value={dateRange}
                 onChange={(val) =>
@@ -403,7 +417,7 @@ export default function PlantServiceOrdersTable() {
                       <Group gap="md">
                         <FaCalendarCheck size={16} />
                         <Text fw={700} size="md">
-                          Due Date:{" "}
+                          Part Due Date:{" "}
                           <span
                             style={{ color: isPastDue ? "red" : "#4A00E0" }}
                           >
@@ -428,8 +442,24 @@ export default function PlantServiceOrdersTable() {
                       <Stack gap="md" p="md" bg="gray.0">
                         {ordersInGroup.map((row) => {
                           const so = row.original;
+                          const displayParts = (
+                            so.pending_parts as any[]
+                          )?.filter((part) => {
+                            if (!part.part_due_date) return false;
+                            const pDate = dayjs(part.part_due_date).format(
+                              "YYYY-MM-DD"
+                            );
+                            return pDate === dateKey;
+                          });
+
+                          if (!displayParts || displayParts.length === 0)
+                            return null;
+
                           return (
-                            <Paper key={so.service_order_id} radius="md">
+                            <Paper
+                              key={`${so.service_order_id}-${dateKey}`}
+                              radius="md"
+                            >
                               <Box bg={linearGradients.serviceparts} p="sm">
                                 <Grid align="center" gutter="sm">
                                   <Grid.Col span={1}>
@@ -478,7 +508,7 @@ export default function PlantServiceOrdersTable() {
                                         variant="filled"
                                         size="sm"
                                       >
-                                        {so.pending_parts_count} Pending
+                                        {displayParts.length} Pending
                                       </Badge>
                                     </Group>
                                   </Grid.Col>
@@ -527,67 +557,57 @@ export default function PlantServiceOrdersTable() {
                                     </Table.Tr>
                                   </Table.Thead>
                                   <Table.Tbody>
-                                    {(so.pending_parts as any[])?.map(
-                                      (part: any) => (
-                                        <Table.Tr key={part.id}>
-                                          <Table.Td fw={600}>
-                                            {part.qty}
-                                          </Table.Td>
-                                          <Table.Td>{part.part}</Table.Td>
-                                          <Table.Td>
-                                            {part.description}
-                                          </Table.Td>
-                                          <Table.Td>
-                                            <Select
-                                              size="xs"
-                                              data={serviceorderLocationOptions}
-                                              defaultValue={part.location}
-                                              placeholder="Select..."
-                                              onChange={(val) => {
-                                                if (
-                                                  val &&
-                                                  val !== part.location
-                                                ) {
-                                                  updatePartLocationMutation.mutate(
-                                                    {
-                                                      partId: part.id,
-                                                      location: val,
-                                                    }
-                                                  );
-                                                }
-                                              }}
-                                            />
-                                          </Table.Td>
-                                          <Table.Td
-                                            style={{ textAlign: "right" }}
-                                          >
-                                            <Button
-                                              size="xs"
-                                              color="green"
-                                              variant="light"
-                                              leftSection={
-                                                <FaCheck size={12} />
-                                              }
-                                              loading={
-                                                updatePartStatusMutation.isPending &&
-                                                updatePartStatusMutation
-                                                  .variables?.partId === part.id
-                                              }
-                                              onClick={() =>
-                                                updatePartStatusMutation.mutate(
+                                    {displayParts.map((part: any) => (
+                                      <Table.Tr key={part.id}>
+                                        <Table.Td fw={600}>{part.qty}</Table.Td>
+                                        <Table.Td>{part.part}</Table.Td>
+                                        <Table.Td>{part.description}</Table.Td>
+                                        <Table.Td>
+                                          <Select
+                                            size="xs"
+                                            data={serviceorderLocationOptions}
+                                            defaultValue={part.location}
+                                            placeholder="Select..."
+                                            onChange={(val) => {
+                                              if (
+                                                val &&
+                                                val !== part.location
+                                              ) {
+                                                updatePartLocationMutation.mutate(
                                                   {
                                                     partId: part.id,
-                                                    status: "completed",
+                                                    location: val,
                                                   }
-                                                )
+                                                );
                                               }
-                                            >
-                                              Complete
-                                            </Button>
-                                          </Table.Td>
-                                        </Table.Tr>
-                                      )
-                                    )}
+                                            }}
+                                          />
+                                        </Table.Td>
+                                        <Table.Td
+                                          style={{ textAlign: "right" }}
+                                        >
+                                          <Button
+                                            size="xs"
+                                            color="green"
+                                            variant="light"
+                                            leftSection={<FaCheck size={12} />}
+                                            loading={
+                                              updatePartStatusMutation.isPending &&
+                                              updatePartStatusMutation.variables
+                                                ?.partId === part.id
+                                            }
+                                            onClick={() =>
+                                              updatePartStatusMutation.mutate({
+                                                partId: part.id,
+                                                status: "completed",
+                                              })
+                                            }
+                                          >
+                                            Complete
+                                          </Button>
+                                        </Table.Td>
+                                      </Table.Tr>
+                                    ))}
                                   </Table.Tbody>
                                 </Table>
                               </Box>

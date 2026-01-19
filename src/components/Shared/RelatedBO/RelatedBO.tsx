@@ -283,7 +283,7 @@ export default function RelatedBackorders({
           setSelectedBackorder(null);
         }}
         backorder={selectedBackorder}
-        readOnly={!permissions.canEditInstallation}
+        readOnly={!(permissions.canEditInstallation || permissions.isPlant)}
       />
 
       <BackorderPdfPreviewModal

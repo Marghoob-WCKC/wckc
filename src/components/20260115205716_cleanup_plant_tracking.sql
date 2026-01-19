@@ -1,0 +1,5 @@
+alter table public.production_schedule
+drop column cust_fin_parts_cut_completed_actual,
+drop column cust_fin_assembled_completed_actual,
+drop column cut_finish_completed_actual,
+DROP VIEW IF EXISTS public.plant_table_view;

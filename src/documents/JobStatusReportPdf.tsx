@@ -243,7 +243,7 @@ export const JobStatusReportPdf = ({
         </View>
         <View style={[styles.cellBase, styles.colFinalDate]}>
           <Text style={styles.cellText}>
-            {/* job.cabfinaldate is not in view yet, use null or update view */}
+            {}
             —
           </Text>
         </View>

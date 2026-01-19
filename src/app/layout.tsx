@@ -109,6 +109,11 @@ const dashboardLinks: SidebarLink[] = [
     links: [
       {
         iconName: "Package",
+        label: "Production",
+        path: "/dashboard/plant/production",
+      },
+      {
+        iconName: "Package",
         label: "Wrap Schedule",
         path: "/dashboard/plant/wrap",
       },

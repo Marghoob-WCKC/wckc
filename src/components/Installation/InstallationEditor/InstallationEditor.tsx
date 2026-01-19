@@ -53,6 +53,8 @@ import {
   FaBoxOpen,
   FaExclamationTriangle,
   FaClipboardList,
+  FaWarehouse,
+  FaCheck,
 } from "react-icons/fa";
 
 import CabinetSpecs from "@/components/Shared/CabinetSpecs/CabinetSpecs";
@@ -789,7 +791,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
 
                         <DateInput
                           styles={{ label: { fontWeight: "bold" } }}
-                          label="Cab Final Date"
+                          label="Cabinet Final Date"
                           placeholder="Select Date"
                           clearable
                           valueFormat="YYYY-MM-DD"
@@ -1039,11 +1041,30 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           />
                           <Group gap="xs">
                             {form.values.in_warehouse && (
-                              <Text c="dimmed" size="xs">
-                                {dayjs
-                                  .utc(form.values.in_warehouse)
-                                  .format("YYYY-MM-DD")}
-                              </Text>
+                              <Badge
+                                color={
+                                  jobData?.warehouse_tracking?.pickup_date
+                                    ? "green"
+                                    : "violet"
+                                }
+                                variant="filled"
+                                size="sm"
+                                leftSection={
+                                  jobData?.warehouse_tracking?.pickup_date ? (
+                                    <FaCheck size={10} />
+                                  ) : (
+                                    <FaWarehouse size={10} />
+                                  )
+                                }
+                              >
+                                {jobData?.warehouse_tracking?.pickup_date
+                                  ? `Picked Up ${dayjs(
+                                      jobData.warehouse_tracking.pickup_date
+                                    ).format("MM/DD")}`
+                                  : `In Warehouse ${dayjs
+                                      .utc(form.values.in_warehouse)
+                                      .format("MM/DD")}`}
+                              </Badge>
                             )}
                           </Group>
                         </Group>

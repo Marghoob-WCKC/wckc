@@ -30,9 +30,10 @@ import {
   Modal,
   rem,
   Tooltip,
+  Radio,
 } from "@mantine/core";
 import dayjs from "dayjs";
-import { DateInput } from "@mantine/dates";
+import { DateInput, DatePickerInput } from "@mantine/dates";
 import {
   FaPlus,
   FaTrash,
@@ -114,7 +115,7 @@ const mapServiceOrderToFormValues = (
     service_by: data.service_by || "",
     service_by_detail: data.service_by_detail || "",
     hours_estimated: data.hours_estimated || 0,
-    chargeable: data.chargeable || false,
+    chargeable: data.chargeable,
     is_warranty_so: data.is_warranty_so || false,
     installer_requested: data.installer_requested || false,
     warranty_order_cost: data.warranty_order_cost || undefined,
@@ -127,6 +128,7 @@ const mapServiceOrderToFormValues = (
       description: p.description || "",
       location: p.location || "",
       status: p.status || "",
+      part_due_date: p.part_due_date ? dayjs(p.part_due_date).toDate() : null,
       _deleted: false,
     })),
     homeowner_name: hoInfo?.homeowner_name || "",
@@ -304,7 +306,7 @@ export default function EditServiceOrder({
           service_by: values.service_by,
           service_by_detail: values.service_by_detail,
           hours_estimated: values.hours_estimated,
-          chargeable: values.chargeable,
+          chargeable: values.chargeable ?? false,
           is_warranty_so: values.is_warranty_so,
           installer_requested: values.installer_requested,
           warranty_order_cost: values.warranty_order_cost,
@@ -362,6 +364,9 @@ export default function EditServiceOrder({
             description: p.description || "",
             location: p.location || "Unknown",
             status: p.status || "pending",
+            part_due_date: p.part_due_date
+              ? dayjs(p.part_due_date).format("YYYY-MM-DD")
+              : null,
           }));
 
         if (partsToUpdate.length > 0) {
@@ -382,6 +387,9 @@ export default function EditServiceOrder({
             description: p.description || "",
             location: p.location || "Unknown",
             status: p.status || "pending",
+            part_due_date: p.part_due_date
+              ? dayjs(p.part_due_date).format("YYYY-MM-DD")
+              : null,
           }));
 
         let newInsertedParts: Tables<"service_order_parts">[] = [];
@@ -406,6 +414,7 @@ export default function EditServiceOrder({
             description: p.description,
             location: p.location,
             status: p.status,
+            part_due_date: p.part_due_date,
             _deleted: false,
           })),
         ];
@@ -455,12 +464,18 @@ export default function EditServiceOrder({
   };
 
   const addPart = () => {
+    const activeParts = form.values.parts.filter((p) => !p._deleted);
+    if (activeParts.length === 0) {
+      form.setFieldValue("chargeable", null);
+    }
+
     form.insertListItem("parts", {
       qty: 1,
       part: "",
       description: "",
       location: "",
       status: "pending",
+      part_due_date: null,
       _deleted: false,
     });
   };
@@ -518,17 +533,6 @@ export default function EditServiceOrder({
 
   const switchControls = (
     <Stack gap="md" mt="md">
-      <Switch
-        styles={{
-          track: {
-            cursor: "pointer",
-          },
-        }}
-        size="md"
-        color="violet"
-        label="Chargeable"
-        {...form.getInputProps("chargeable", { type: "checkbox" })}
-      />
       <Group align="center" wrap="nowrap">
         <Switch
           styles={{
@@ -579,13 +583,6 @@ export default function EditServiceOrder({
             )}
         </Box>
       </Group>
-      <NumberInput
-        w={rem(250)}
-        size="sm"
-        placeholder="Associated Cost"
-        leftSection="$"
-        {...form.getInputProps("warranty_order_cost")}
-      />
     </Stack>
   );
 
@@ -781,7 +778,7 @@ export default function EditServiceOrder({
                       </Group>
 
                       <DateInput
-                        label="Due Date"
+                        label="Service Date"
                         placeholder="YYYY-MM-DD"
                         clearable
                         valueFormat="YYYY-MM-DD"
@@ -821,7 +818,7 @@ export default function EditServiceOrder({
                       </Group>
                       <SimpleGrid cols={2}>
                         <DateInput
-                          label="Due Date"
+                          label="Service Date"
                           {...form.getInputProps("due_date")}
                         />
                       </SimpleGrid>
@@ -856,6 +853,42 @@ export default function EditServiceOrder({
             <Group justify="space-between" mb="md">
               <Text fw={600}>Required Parts</Text>
               <Group>
+                <Radio.Group
+                  withAsterisk={
+                    form.values.parts &&
+                    form.values.parts.length > 0 &&
+                    form.values.parts.some((p) => !p._deleted)
+                  }
+                  value={
+                    form.values.chargeable === true
+                      ? "true"
+                      : form.values.chargeable === false
+                      ? "false"
+                      : ""
+                  }
+                  onChange={(val) =>
+                    form.setFieldValue("chargeable", val === "true")
+                  }
+                  error={form.errors.chargeable}
+                >
+                  <Group>
+                    <Radio value="true" label="Chargeable" color="#4a00e0" />
+                    <Radio
+                      value="false"
+                      label="Not Chargeable"
+                      color="#4a00e0"
+                    />
+                  </Group>
+                </Radio.Group>
+                <NumberInput
+                  w={rem(250)}
+                  size="sm"
+                  placeholder="Associated Cost"
+                  leftSection="$"
+                  {...form.getInputProps("warranty_order_cost")}
+                />
+              </Group>
+              <Group>
                 <Button
                   variant="light"
                   size="xs"
@@ -887,6 +920,7 @@ export default function EditServiceOrder({
                     <Table.Th w={200}>Part</Table.Th>
                     <Table.Th>Description</Table.Th>
                     <Table.Th w={200}>Location</Table.Th>
+                    <Table.Th w={160}>Due Date</Table.Th>
                     <Table.Th w={200}>Status</Table.Th>
                     <Table.Th w={50} />
                   </Table.Tr>
@@ -947,6 +981,29 @@ export default function EditServiceOrder({
                               middlewares: { flip: false, shift: false },
                             }}
                             allowDeselect={false}
+                          />
+                        </Table.Td>
+                        <Table.Td>
+                          <DatePickerInput
+                            presets={
+                              form.values.due_date
+                                ? [
+                                    {
+                                      label: "Service minus 2",
+                                      value: dayjs(form.values.due_date)
+                                        .subtract(2, "day")
+                                        .format("YYYY-MM-DD"),
+                                    },
+                                  ]
+                                : undefined
+                            }
+                            placeholder="Due Date"
+                            valueFormat="YYYY-MM-DD"
+                            clearable
+                            disabled={isDeleted}
+                            {...form.getInputProps(
+                              `parts.${index}.part_due_date`
+                            )}
                           />
                         </Table.Td>
                         <Table.Td>

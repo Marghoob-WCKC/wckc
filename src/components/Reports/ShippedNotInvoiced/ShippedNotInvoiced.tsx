@@ -61,7 +61,7 @@ export default function ShippedNotInvoicedReport() {
   const memoizedPreview = useMemo(
     () => (
       <PDFViewer
-        key={queryRange.toString()}
+        key={Math.random()}
         width="100%"
         height="100%"
         style={{ border: "none" }}

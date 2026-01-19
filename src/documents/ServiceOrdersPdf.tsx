@@ -13,6 +13,7 @@ interface ServiceOrderPart {
   description: string;
   location: string;
   status: string;
+  part_due_date?: string | null;
 }
 
 const styles = StyleSheet.create({
@@ -78,8 +79,9 @@ const styles = StyleSheet.create({
 
   colQty: { width: "5%", textAlign: "center" },
   colName: { width: "20%" },
-  colDesc: { width: "45%" },
+  colDesc: { width: "35%" },
   colLoc: { width: "15%" },
+  colDueDate: { width: "10%" },
   colStatus: { width: "15%" },
 
   headerText: { fontSize: 8, fontWeight: "bold" },
@@ -144,7 +146,7 @@ export const ServiceOrdersPdf = ({
           return (
             <View key={dateKey} wrap={false}>
               <View style={styles.dateGroupHeader}>
-                <Text style={styles.dateGroupText}>Due Date:</Text>
+                <Text style={styles.dateGroupText}>Service Date:</Text>
                 <Text style={styles.dateGroupText}>{formattedDate}</Text>
                 <Text style={styles.dateGroupText}>{dayName}</Text>
                 <Text style={[styles.dateGroupText, { marginLeft: "auto" }]}>
@@ -191,6 +193,9 @@ export const ServiceOrdersPdf = ({
                       <Text style={[styles.headerText, styles.colLoc]}>
                         Location
                       </Text>
+                      <Text style={[styles.headerText, styles.colDueDate]}>
+                        Due Date
+                      </Text>
                       <Text style={[styles.headerText, styles.colStatus]}>
                         Status
                       </Text>
@@ -209,6 +214,11 @@ export const ServiceOrdersPdf = ({
                         </Text>
                         <Text style={[styles.cellText, styles.colLoc]}>
                           {part.location || "-"}
+                        </Text>
+                        <Text style={[styles.cellText, styles.colDueDate]}>
+                          {part.part_due_date
+                            ? dayjs(part.part_due_date).format("MMM D, YY")
+                            : "-"}
                         </Text>
                         <Text style={[styles.cellText, styles.colStatus]}>
                           {part.status}

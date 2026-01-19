@@ -33,8 +33,10 @@ import {
   Modal,
   ThemeIcon,
   Title,
+  Radio,
 } from "@mantine/core";
-import { DateInput } from "@mantine/dates";
+import { DateInput, DatePickerInput } from "@mantine/dates";
+import dayjs from "dayjs";
 import {
   FaPlus,
   FaTrash,
@@ -135,7 +137,7 @@ function ServiceOrderFormContent({
       service_by: "",
       service_by_detail: "",
       hours_estimated: 0,
-      chargeable: false,
+      chargeable: null,
       is_warranty_so: false,
       installer_requested: false,
       warranty_order_cost: undefined,
@@ -340,7 +342,7 @@ function ServiceOrderFormContent({
           service_by: values.service_by,
           service_by_detail: values.service_by_detail,
           hours_estimated: values.hours_estimated,
-          chargeable: values.chargeable,
+          chargeable: values.chargeable ?? false,
           is_warranty_so: values.is_warranty_so,
           installer_requested: values.installer_requested,
           warranty_order_cost: values.warranty_order_cost,
@@ -361,6 +363,9 @@ function ServiceOrderFormContent({
           description: p.description || "",
           location: p.location || "Unknown",
           status: p.status || "pending",
+          part_due_date: p.part_due_date
+            ? dayjs(p.part_due_date).format("YYYY-MM-DD")
+            : null,
         }));
 
         const { error: partsError } = await supabase
@@ -428,6 +433,7 @@ function ServiceOrderFormContent({
       description: "",
       location: "",
       status: "pending",
+      part_due_date: null,
     });
   };
 
@@ -442,12 +448,6 @@ function ServiceOrderFormContent({
 
   const switchControls = (
     <Stack gap="md" mt="md">
-      <Switch
-        size="md"
-        color="violet"
-        label="Chargeable"
-        {...form.getInputProps("chargeable", { type: "checkbox" })}
-      />
       <Group align="center" wrap="nowrap">
         <Switch
           size="md"
@@ -458,13 +458,6 @@ function ServiceOrderFormContent({
           })}
         />
       </Group>
-      <NumberInput
-        w={rem(250)}
-        size="sm"
-        placeholder="Associated Cost"
-        leftSection="$"
-        {...form.getInputProps("warranty_order_cost")}
-      />
     </Stack>
   );
 
@@ -637,7 +630,7 @@ function ServiceOrderFormContent({
                       </Group>
 
                       <DateInput
-                        label="Due Date"
+                        label="Service Date"
                         placeholder="YYYY-MM-DD"
                         clearable
                         valueFormat="YYYY-MM-DD"
@@ -676,7 +669,7 @@ function ServiceOrderFormContent({
                       </Group>
                       <SimpleGrid cols={2}>
                         <DateInput
-                          label="Due Date"
+                          label="Service Date"
                           {...form.getInputProps("due_date")}
                         />
                       </SimpleGrid>
@@ -709,6 +702,42 @@ function ServiceOrderFormContent({
           <Paper p="md" radius="md" shadow="xl">
             <Group justify="space-between" mb="md">
               <Text fw={600}>Required Parts</Text>
+              <Group>
+                <Radio.Group
+                  withAsterisk={
+                    form.values.parts &&
+                    form.values.parts.length > 0 &&
+                    form.values.parts.some((p) => !p._deleted)
+                  }
+                  value={
+                    form.values.chargeable === true
+                      ? "true"
+                      : form.values.chargeable === false
+                      ? "false"
+                      : ""
+                  }
+                  onChange={(val) =>
+                    form.setFieldValue("chargeable", val === "true")
+                  }
+                  error={form.errors.chargeable}
+                >
+                  <Group>
+                    <Radio value="true" label="Chargeable" color="#4a00e0" />
+                    <Radio
+                      value="false"
+                      label="Not Chargeable"
+                      color="#4a00e0"
+                    />
+                  </Group>
+                </Radio.Group>
+                <NumberInput
+                  w={rem(250)}
+                  size="sm"
+                  placeholder="Associated Cost"
+                  leftSection="$"
+                  {...form.getInputProps("warranty_order_cost")}
+                />
+              </Group>
               <Button
                 variant="light"
                 size="xs"
@@ -728,6 +757,7 @@ function ServiceOrderFormContent({
                     <Table.Th w={200}>Part Name</Table.Th>
                     <Table.Th>Description</Table.Th>
                     <Table.Th w={200}>Location</Table.Th>
+                    <Table.Th w={160}>Due Date</Table.Th>
                     <Table.Th w={200}>Status</Table.Th>
                     <Table.Th w={50} />
                   </Table.Tr>
@@ -773,6 +803,28 @@ function ServiceOrderFormContent({
                             middlewares: { flip: false, shift: false },
                           }}
                           allowDeselect={false}
+                        />
+                      </Table.Td>
+                      <Table.Td>
+                        <DatePickerInput
+                          presets={
+                            form.values.due_date
+                              ? [
+                                  {
+                                    label: "Service minus 2",
+                                    value: dayjs(form.values.due_date)
+                                      .subtract(2, "day")
+                                      .format("YYYY-MM-DD"),
+                                  },
+                                ]
+                              : undefined
+                          }
+                          placeholder="Due Date"
+                          valueFormat="YYYY-MM-DD"
+                          clearable
+                          {...form.getInputProps(
+                            `parts.${index}.part_due_date`
+                          )}
                         />
                       </Table.Td>
                       <Table.Td>

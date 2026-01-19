@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   createColumnHelper,
   getCoreRowModel,
@@ -36,6 +36,7 @@ import {
   Menu,
   ActionIcon,
   Switch,
+  Modal,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import {
@@ -50,20 +51,22 @@ import {
   FaCogs,
   FaTimes,
   FaTruck,
+  FaWarehouse,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
 import { notifications } from "@mantine/notifications";
 import { usePlantShippingTable } from "@/hooks/usePlantShippingTable";
-import { Views } from "@/types/db";
+import { Views, Tables } from "@/types/db";
 import { useDisclosure } from "@mantine/hooks";
 import ShippingPdfPreviewModal from "./ShippingPdfPreviewModal";
 import JobDetailsDrawer from "@/components/Shared/JobDetailsDrawer/JobDetailsDrawer";
 import { usePermissions } from "@/hooks/usePermissions";
 import BackorderManagerCell from "./BackorderManagerCell";
 import AddBackorderModal from "@/components/Installation/AddBOModal/AddBOModal";
+import WarehouseTrackingModal from "@/components/Shared/WarehouseTrackingModal/WarehouseTrackingModal";
 
-type PlantTableView = Views<"plant_table_view">;
+type PlantTableView = Views<"plant_shipping_view">;
 
 type PlantTableData = PlantTableView;
 
@@ -114,6 +117,35 @@ export default function PlantShippingTable() {
     opened: false,
     jobId: "",
     jobNumber: "",
+  });
+
+  const [warehouseModalState, setWarehouseModalState] = useState<{
+    opened: boolean;
+    jobId: number | null;
+    installationId: number | null;
+  }>({
+    opened: false,
+    jobId: null,
+    installationId: null,
+  });
+
+  const [warehouseUncheckModalOpen, setWarehouseUncheckModalOpen] =
+    useState(false);
+
+  const { data: activeWarehouseData } = useQuery({
+    queryKey: ["warehouse_tracking_active", warehouseModalState.jobId],
+    queryFn: async () => {
+      if (!warehouseModalState.jobId) return null;
+      const { data, error } = await supabase
+        .from("warehouse_tracking")
+        .select("*")
+        .eq("job_id", warehouseModalState.jobId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as Tables<"warehouse_tracking"> | null;
+    },
+    enabled: !!warehouseModalState.jobId,
   });
 
   const { data, isLoading, isError, error } = usePlantShippingTable({
@@ -190,9 +222,7 @@ export default function PlantShippingTable() {
 
   const updateShippingMutation = useMutation({
     mutationFn: async ({
-      jobId,
       installId,
-      prodId,
       type,
     }: {
       jobId: number;
@@ -280,7 +310,9 @@ export default function PlantShippingTable() {
         message: "Shipping status updated",
         color: "green",
       });
-
+      queryClient.invalidateQueries({
+        queryKey: ["backorder-status"],
+      });
       if (variables.type === "partial") {
         const job = (data?.data as PlantTableData[])?.find(
           (j) => j.job_id === variables.jobId
@@ -378,26 +410,7 @@ export default function PlantShippingTable() {
         </Anchor>
       ),
     }),
-    columnHelper.accessor("placement_date", {
-      header: "Placement",
-      size: 90,
-      cell: (info) => {
-        const date = info.getValue();
-        if (!date)
-          return (
-            <Text size="xs" c="dimmed">
-              -
-            </Text>
-          );
-        return (
-          <Tooltip label={dayjs(date).format("MMM D, YYYY")}>
-            <Center>
-              <FaCheck size={12} color="green" />
-            </Center>
-          </Tooltip>
-        );
-      },
-    }),
+
     columnHelper.accessor((row) => (row as PlantTableData).ship_status, {
       id: "ship_status",
       header: "Date Status",
@@ -466,7 +479,7 @@ export default function PlantShippingTable() {
     columnHelper.accessor("cabinet_box", { header: "Box", size: 60 }),
     columnHelper.accessor("wrap_completed", {
       header: "Wrapped",
-      size: 130,
+      size: 80,
       cell: (info) => {
         const val = info.getValue();
         const isComplete = !!val;
@@ -623,6 +636,75 @@ export default function PlantShippingTable() {
               </Menu.Dropdown>
             </Menu>
           </Center>
+        );
+      },
+    }),
+    columnHelper.accessor("in_warehouse", {
+      header: "Warehouse",
+      size: 150,
+      cell: (info) => {
+        const val = info.getValue();
+        const isInWarehouse = !!val;
+        const job = info.row.original;
+
+        return (
+          <Tooltip
+            label={
+              isInWarehouse
+                ? !job.pickup_date
+                  ? `In Warehouse Since: ${job?.dropoff_date}`
+                  : `Picked Up`
+                : `Add to Warehouse`
+            }
+            withArrow
+            openDelay={500}
+          >
+            <Center
+              style={{ cursor: "pointer", height: "100%", width: "100%" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (job.job_id && job.installation_id) {
+                  queryClient.invalidateQueries({
+                    queryKey: ["warehouse_tracking_active", job.job_id],
+                  });
+                  setWarehouseModalState({
+                    opened: !isInWarehouse,
+                    jobId: job.job_id,
+                    installationId: job.installation_id,
+                  });
+                  if (isInWarehouse) {
+                    setWarehouseUncheckModalOpen(true);
+                  }
+                }
+              }}
+            >
+              {isInWarehouse ? (
+                <Badge
+                  color={(job as any).pickup_date ? "green" : "violet"}
+                  variant="filled"
+                  size="sm"
+                  style={{ cursor: "pointer" }}
+                  leftSection={
+                    (job as any).pickup_date ? (
+                      <FaCheck size={10} />
+                    ) : (
+                      <FaWarehouse size={10} />
+                    )
+                  }
+                >
+                  {(job as any).pickup_date
+                    ? `Picked Up ${dayjs((job as any).pickup_date).format(
+                        "DD/MM"
+                      )}`
+                    : `In Warehouse`}
+                </Badge>
+              ) : (
+                <ThemeIcon variant="outline" color="gray" size="sm" radius="xl">
+                  <FaWarehouse size={10} />
+                </ThemeIcon>
+              )}
+            </Center>
+          </Tooltip>
         );
       },
     }),
@@ -999,6 +1081,111 @@ export default function PlantShippingTable() {
         jobNumber={backorderModalState.jobNumber}
         onSuccess={() => {}}
       />
+      {warehouseModalState.jobId && (
+        <WarehouseTrackingModal
+          key={warehouseModalState.jobId}
+          opened={warehouseModalState.opened}
+          onClose={() =>
+            setWarehouseModalState({
+              opened: false,
+              jobId: null,
+              installationId: null,
+            })
+          }
+          jobId={warehouseModalState.jobId}
+          installationId={warehouseModalState.installationId || undefined}
+          initialData={activeWarehouseData}
+          onSuccess={() => {
+            queryClient.invalidateQueries({
+              queryKey: ["plant_shipping_table"],
+            });
+            queryClient.invalidateQueries({
+              queryKey: [
+                "warehouse_tracking_active",
+                warehouseModalState.jobId,
+              ],
+            });
+          }}
+        />
+      )}
+      {}
+      <Modal
+        opened={warehouseUncheckModalOpen}
+        onClose={() => setWarehouseUncheckModalOpen(false)}
+        title="Update Warehouse Status"
+        centered
+        radius="lg"
+      >
+        <Stack>
+          <Text size="sm">
+            You are disabling the &quot;In Warehouse&quot; status. What would
+            you like to do with the existing tracking record?
+          </Text>
+          <Group grow>
+            <Button
+              variant="gradient"
+              gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
+              onClick={() => {
+                setWarehouseUncheckModalOpen(false);
+                setWarehouseModalState((prev) => ({ ...prev, opened: true }));
+              }}
+            >
+              Mark as Picked Up
+            </Button>
+            <Button
+              variant="outline"
+              color="red"
+              onClick={async () => {
+                if (
+                  confirm(
+                    "This will PERMANENTLY delete the warehouse tracking data (dates, pallets, notes). Are you sure?"
+                  )
+                ) {
+                  try {
+                    const { error: deleteError } = await supabase
+                      .from("warehouse_tracking")
+                      .delete()
+                      .eq("job_id", warehouseModalState.jobId);
+
+                    if (deleteError) throw deleteError;
+
+                    if (warehouseModalState.installationId) {
+                      const { error: updateError } = await supabase
+                        .from("installation")
+                        .update({ in_warehouse: null } as any)
+                        .eq(
+                          "installation_id",
+                          warehouseModalState.installationId
+                        );
+
+                      if (updateError) throw updateError;
+                    }
+
+                    notifications.show({
+                      title: "Success",
+                      message: "Warehouse tracking record deleted",
+                      color: "green",
+                    });
+                    queryClient.invalidateQueries({
+                      queryKey: ["plant_shipping_table"],
+                    });
+                    setWarehouseUncheckModalOpen(false);
+                  } catch (error: any) {
+                    notifications.show({
+                      title: "Error",
+                      message: error.message,
+                      color: "red",
+                    });
+                  }
+                }
+              }}
+            >
+              Delete Record
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
       <JobDetailsDrawer
         jobId={drawerJobId}
         opened={drawerOpened}
