@@ -1330,6 +1330,7 @@ export type Database = {
           install: boolean
           invoice_balance: number | null
           is_canopy_required: boolean | null
+          is_cod: boolean | null
           is_custom_cab_required: boolean | null
           is_memo: boolean | null
           is_woodtop_required: boolean | null
@@ -1376,6 +1377,7 @@ export type Database = {
           install?: boolean
           invoice_balance?: number | null
           is_canopy_required?: boolean | null
+          is_cod?: boolean | null
           is_custom_cab_required?: boolean | null
           is_memo?: boolean | null
           is_woodtop_required?: boolean | null
@@ -1422,6 +1424,7 @@ export type Database = {
           install?: boolean
           invoice_balance?: number | null
           is_canopy_required?: boolean | null
+          is_cod?: boolean | null
           is_custom_cab_required?: boolean | null
           is_memo?: boolean | null
           is_woodtop_required?: boolean | null

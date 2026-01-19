@@ -148,6 +148,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
       is_canopy_required: false,
       is_woodtop_required: false,
       is_custom_cab_required: false,
+      is_cod: false,
       flooring_type: "",
       flooring_clearance: "",
       cabinet: {
@@ -184,7 +185,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
 
   const getSafeOptions = (
     options: string[],
-    currentValue: string | null | undefined
+    currentValue: string | null | undefined,
   ) => {
     if (currentValue && !options.includes(currentValue)) {
       return [...options, currentValue];
@@ -346,7 +347,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                 color_name:colors(Name), 
                 door_style_name:door_styles(name)
             )
-          `
+          `,
         )
         .eq("id", salesOrderId)
         .single();
@@ -398,6 +399,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         is_canopy_required: salesOrderData.is_canopy_required ?? false,
         is_woodtop_required: salesOrderData.is_woodtop_required ?? false,
         is_custom_cab_required: salesOrderData.is_custom_cab_required ?? false,
+        is_cod: salesOrderData.is_cod ?? false,
         flooring_type: salesOrderData.flooring_type || "",
         flooring_clearance: salesOrderData.flooring_clearance || "",
         cabinet: {
@@ -485,8 +487,8 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         salesOrderData.date_sold === null && values.stage === "SOLD"
           ? dayjs.utc().format()
           : salesOrderData.stage === "SOLD"
-          ? salesOrderData.date_sold
-          : null;
+            ? salesOrderData.date_sold
+            : null;
       const { error: soError } = await supabase
         .from("sales_orders")
         .update({
@@ -503,6 +505,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
           is_canopy_required: values.is_canopy_required,
           is_woodtop_required: values.is_woodtop_required,
           is_custom_cab_required: values.is_custom_cab_required,
+          is_cod: values.is_cod,
           flooring_type: values.flooring_type,
           flooring_clearance: values.flooring_clearance,
           ...values.shipping,
@@ -543,7 +546,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         if (existingJob) {
           const errorSuffix = suffixStr ? `-${suffixStr}` : "";
           throw new Error(
-            `Job ${manual_job_base}${errorSuffix} already exists!`
+            `Job ${manual_job_base}${errorSuffix} already exists!`,
           );
         }
 
@@ -689,7 +692,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                     onChange={(e) =>
                       form.setFieldValue(
                         "stage",
-                        e.currentTarget.checked ? "SOLD" : "QUOTE"
+                        e.currentTarget.checked ? "SOLD" : "QUOTE",
                       )
                     }
                   />
@@ -775,7 +778,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                     onChange={(val) => {
                       form.setFieldValue("client_id", Number(val));
                       const fullObj = clientOptions.find(
-                        (c: any) => c.value === val
+                        (c: any) => c.value === val,
                       )?.original;
                       setSelectedClientData(fullObj as Tables<"client">);
                       form.setFieldValue("shipping", {
@@ -859,7 +862,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                           onChange={(e) =>
                             form.setFieldValue(
                               "is_active",
-                              e.currentTarget.checked
+                              e.currentTarget.checked,
                             )
                           }
                           styles={{
@@ -1083,8 +1086,8 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                         form.values.install === true
                           ? "true"
                           : form.values.install === false
-                          ? "false"
-                          : ""
+                            ? "false"
+                            : ""
                       }
                       onChange={(val) =>
                         form.setFieldValue("install", val === "true")
@@ -1121,7 +1124,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                           speciesOptions,
                           "cabinet.species",
                           setSpeciesSearch,
-                          form
+                          form,
                         );
                       }}
                       nothingFoundMessage={
@@ -1156,7 +1159,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                           colorOptions,
                           "cabinet.color",
                           setColorSearch,
-                          form
+                          form,
                         )
                       }
                       nothingFoundMessage={
@@ -1191,7 +1194,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                           doorStyleOptions,
                           "cabinet.door_style",
                           setDoorStyleSearch,
-                          form
+                          form,
                         )
                       }
                       nothingFoundMessage={
@@ -1220,7 +1223,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       data={TopDrawerFrontOptions}
                       {...getInputPropsWithDefault(
                         "cabinet.top_drawer_front",
-                        "Matching"
+                        "Matching",
                       )}
                     />
 
@@ -1231,11 +1234,11 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       rightSection
                       data={getSafeOptions(
                         InteriorOptions,
-                        form.values.cabinet.interior
+                        form.values.cabinet.interior,
                       )}
                       {...getInputPropsWithDefault(
                         "cabinet.interior",
-                        "WHITE MEL"
+                        "WHITE MEL",
                       )}
                     />
                     <Autocomplete
@@ -1250,7 +1253,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       label="Drawer Box"
                       data={getSafeOptions(
                         DrawerBoxOptions,
-                        form.values.cabinet.drawer_box
+                        form.values.cabinet.drawer_box,
                       )}
                       rightSection
                       {...form.getInputProps("cabinet.drawer_box")}
@@ -1275,7 +1278,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                           ? HARDWARE_MAPPING[form.values.cabinet.drawer_box] ||
                               []
                           : [],
-                        form.values.cabinet.drawer_hardware
+                        form.values.cabinet.drawer_hardware,
                       )}
                       {...form.getInputProps("cabinet.drawer_hardware")}
                       value={form.values.cabinet.drawer_hardware || null}
@@ -1406,6 +1409,20 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                 </Fieldset>
 
                 <Fieldset legend="Financials" variant="filled" bg={"white"}>
+                  <Radio.Group
+                    label="Cash on delivery (COD)"
+                    withAsterisk
+                    value={String(form.values.is_cod ?? "")}
+                    onChange={(val) =>
+                      form.setFieldValue("is_cod", val === "true")
+                    }
+                    error={form.errors.is_cod}
+                  >
+                    <Group mt="xs" style={{ marginBottom: 10 }}>
+                      <Radio value="true" label="Yes" color="#4a00e0" />
+                      <Radio value="false" label="No" color="#4a00e0" />
+                    </Group>
+                  </Radio.Group>
                   <Grid align="flex-end">
                     <Grid.Col span={3}>
                       <NumberInput

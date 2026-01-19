@@ -121,11 +121,11 @@ export default function NewSale() {
   const [isVariantAutofilled, setIsVariantAutofilled] = useState(false);
 
   const [targetProjectName, setTargetProjectName] = useState<string | null>(
-    null
+    null,
   );
 
   const [autofilledSourceJob, setAutofilledSourceJob] = useState<string | null>(
-    null
+    null,
   );
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [successBannerData, setSuccessBannerData] = useState<{
@@ -185,6 +185,7 @@ export default function NewSale() {
       is_canopy_required: false,
       is_woodtop_required: false,
       is_custom_cab_required: false,
+      is_cod: undefined as unknown as boolean,
       flooring_type: "",
       flooring_clearance: "",
       cabinet: {
@@ -453,6 +454,7 @@ export default function NewSale() {
         is_canopy_required,
         is_woodtop_required,
         is_custom_cab_required,
+        is_cod,
       } = values;
       if (stage === "SOLD" && !manual_job_base) {
         throw new Error("Job Base Number is required for Sold jobs.");
@@ -507,13 +509,14 @@ export default function NewSale() {
         is_canopy_required: is_canopy_required,
         is_woodtop_required: is_woodtop_required,
         is_custom_cab_required: is_custom_cab_required,
+        is_cod: is_cod,
       };
 
       const { data: transactionResult, error: rpcError } = await supabase.rpc(
         "create_master_order_transaction",
         {
           p_payload: transactionPayload,
-        }
+        },
       );
 
       if (rpcError) throw new Error(`Transaction Failed: ${rpcError.message}`);
@@ -593,7 +596,7 @@ export default function NewSale() {
       const { data, error } = await supabase
         .from("jobs")
         .select(
-          "id, job_base_number, job_suffix, created_at, sales_orders!fk_jobs_sales_order_id( *, client:client_id(*) )"
+          "id, job_base_number, job_suffix, created_at, sales_orders!fk_jobs_sales_order_id( *, client:client_id(*) )",
         )
         .eq("job_base_number", debouncedJobNum)
         .order("job_suffix", { ascending: false });
@@ -809,7 +812,7 @@ export default function NewSale() {
                     onChange={(e) =>
                       form.setFieldValue(
                         "stage",
-                        e.currentTarget.checked ? "SOLD" : "QUOTE"
+                        e.currentTarget.checked ? "SOLD" : "QUOTE",
                       )
                     }
                   />
@@ -941,7 +944,7 @@ export default function NewSale() {
                     onChange={(val) => {
                       form.setFieldValue("client_id", Number(val));
                       const fullObj = clientOptions.find(
-                        (c: any) => c.value === val
+                        (c: any) => c.value === val,
                       )?.original;
                       setSelectedClientData(fullObj as Tables<"client">);
 
@@ -1099,7 +1102,7 @@ export default function NewSale() {
                       placeholder="Builder/Client Name...."
                       {...form.getInputProps(`shipping.shipping_client_name`)}
                       styles={getAutofillStyles(
-                        "shipping.shipping_client_name"
+                        "shipping.shipping_client_name",
                       )}
                     />
                     <Autocomplete
@@ -1227,8 +1230,8 @@ export default function NewSale() {
                         form.values.install === true
                           ? "true"
                           : form.values.install === false
-                          ? "false"
-                          : ""
+                            ? "false"
+                            : ""
                       }
                       onChange={(val) =>
                         form.setFieldValue("install", val === "true")
@@ -1264,7 +1267,7 @@ export default function NewSale() {
                           speciesOptions,
                           "cabinet.species",
                           setSpeciesSearch,
-                          form
+                          form,
                         );
                       }}
                       nothingFoundMessage={
@@ -1299,7 +1302,7 @@ export default function NewSale() {
                           colorOptions,
                           "cabinet.color",
                           setColorSearch,
-                          form
+                          form,
                         )
                       }
                       nothingFoundMessage={
@@ -1334,7 +1337,7 @@ export default function NewSale() {
                           doorStyleOptions,
                           "cabinet.door_style",
                           setDoorStyleSearch,
-                          form
+                          form,
                         )
                       }
                       nothingFoundMessage={
@@ -1363,7 +1366,7 @@ export default function NewSale() {
                       data={TopDrawerFrontOptions}
                       {...getInputPropsWithDefault(
                         "cabinet.top_drawer_front",
-                        "Matching"
+                        "Matching",
                       )}
                     />
                     <Select
@@ -1373,7 +1376,7 @@ export default function NewSale() {
                       data={InteriorOptions}
                       {...getInputPropsWithDefault(
                         "cabinet.interior",
-                        "WHITE MEL"
+                        "WHITE MEL",
                       )}
                     />
 
@@ -1534,6 +1537,20 @@ export default function NewSale() {
                   </Group>
                 </Fieldset>
                 <Fieldset legend="Financials" variant="filled" bg={"white"}>
+                  <Radio.Group
+                    label="Cash on delivery (COD)"
+                    withAsterisk
+                    value={String(form.values.is_cod ?? "")}
+                    onChange={(val) =>
+                      form.setFieldValue("is_cod", val === "true")
+                    }
+                    error={form.errors.is_cod}
+                  >
+                    <Group mt="xs" style={{ marginBottom: 10 }}>
+                      <Radio value="true" label="Yes" color="#4a00e0" />
+                      <Radio value="false" label="No" color="#4a00e0" />
+                    </Group>
+                  </Radio.Group>
                   <Grid align="flex-end">
                     <Grid.Col span={3}>
                       <NumberInput
