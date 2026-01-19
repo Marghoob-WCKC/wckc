@@ -104,6 +104,8 @@ export function useInvoicesTable({
               query = query.is("is_creditmemo", false);
             } else if (valStr === "creditmemos") {
               query = query.is("is_creditmemo", true);
+            } else if (valStr === "service_orders") {
+              query = query.not("service_order_id", "is", null);
             }
             break;
         }

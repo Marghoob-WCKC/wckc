@@ -138,7 +138,7 @@ const dashboardLinks: SidebarLink[] = [
       {
         iconName: "ReceiptText",
         label: "All Invoices",
-        path: "/dashboard/invoices",
+        path: "/dashboard/invoices/allinvoices",
       },
       {
         iconName: "FileWarning",

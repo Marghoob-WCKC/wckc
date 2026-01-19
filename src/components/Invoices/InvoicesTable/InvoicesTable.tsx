@@ -247,7 +247,7 @@ export default function InvoicesTable() {
         .eq("invoice_id", id);
       if (error) throw error;
     },
-    onSuccess: (_, isCreditMemo) => {
+    onSuccess: (_, { isCreditMemo }) => {
       queryClient.invalidateQueries({ queryKey: ["invoices_list_server"] });
       notifications.show({
         title: "Deleted",
@@ -647,6 +647,7 @@ export default function InvoicesTable() {
                   data={[
                     { value: "invoices", label: "Invoices" },
                     { value: "creditmemos", label: "Credit Memos" },
+                    { value: "service_orders", label: "Service Orders" },
                     { value: "all", label: "All" },
                   ]}
                   value={(getInputFilterValue("type") as string) || "all"}
