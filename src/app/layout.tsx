@@ -11,6 +11,7 @@ import "@mantine/tiptap/styles.css";
 import "@mantine/dropzone/styles.css";
 
 import { MantineProvider, mantineHtmlProps } from "@mantine/core";
+import { DatesProvider } from "@mantine/dates";
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { Notifications } from "@mantine/notifications";
@@ -189,35 +190,39 @@ export default function RootLayout({
             <SupabaseProvider>
               <QueryProvider>
                 <MantineProvider>
-                  <Notifications />
-                  <NavigationGuardProvider>
-                    <div
-                      style={{
-                        display: "flex",
-                        minHeight: "100vh",
-                      }}
-                    >
-                      {showSidebar && (
-                        <Sidebar
-                          links={dashboardLinks}
-                          autoCollapsePatterns={[
-                            "/dashboard/installation",
-                            "/dashboard/sales/newsale",
-                          ]}
-                        />
-                      )}
+                  <DatesProvider
+                    settings={{ firstDayOfWeek: 0, weekendDays: [0, 6] }}
+                  >
+                    <Notifications />
+                    <NavigationGuardProvider>
                       <div
                         style={{
-                          flex: 1,
-                          minWidth: 0,
+                          display: "flex",
+                          minHeight: "100vh",
                         }}
                       >
-                        <div style={{ flex: 1, position: "relative" }}>
-                          {children}
+                        {showSidebar && (
+                          <Sidebar
+                            links={dashboardLinks}
+                            autoCollapsePatterns={[
+                              "/dashboard/installation",
+                              "/dashboard/sales/newsale",
+                            ]}
+                          />
+                        )}
+                        <div
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <div style={{ flex: 1, position: "relative" }}>
+                            {children}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </NavigationGuardProvider>
+                    </NavigationGuardProvider>
+                  </DatesProvider>
                 </MantineProvider>
               </QueryProvider>
             </SupabaseProvider>
