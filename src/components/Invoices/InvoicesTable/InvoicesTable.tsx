@@ -51,6 +51,7 @@ import {
   FaCheckSquare,
   FaTrash,
   FaEdit,
+  FaFileExcel,
 } from "react-icons/fa";
 import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
@@ -62,6 +63,7 @@ import EditInvoice from "../EditInvoice/EditInvoice";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useInvoicesTable } from "@/hooks/useInvoicesTable";
 import { colors, gradients } from "@/theme";
+import { exportToExcel } from "@/utils/exportToExcel";
 
 type InvoiceRow = Tables<"invoices"> & {
   job:
@@ -116,10 +118,10 @@ export default function InvoicesTable() {
     text: string;
   } | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceRow | null>(
-    null
+    null,
   );
 
-  const { data, isLoading } = useInvoicesTable({
+  const { data, isLoading, fetchAllInvoices } = useInvoicesTable({
     pagination,
     columnFilters: activeFilters,
     sorting,
@@ -151,6 +153,63 @@ export default function InvoicesTable() {
     setInputFilters([]);
     setActiveFilters([]);
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  };
+
+  const handleExport = async () => {
+    try {
+      const exportData = await fetchAllInvoices();
+
+      if (!exportData || exportData.length === 0) {
+        notifications.show({
+          title: "No Data",
+          message: "No invoices to export",
+          color: "yellow",
+        });
+        return;
+      }
+
+      const excelData = exportData.map((invoice) => ({
+        Type: invoice.is_creditmemo ? "Credit Memo" : "Invoice",
+        "Invoice/Credit No.": invoice.invoice_number || "",
+        "Job/Service No.":
+          invoice.service_orders?.service_order_number ||
+          invoice.job?.job_number ||
+          "—",
+        Client: invoice.job?.sales_orders?.shipping_client_name || "—",
+        "Date Entered": invoice.date_entered
+          ? dayjs(invoice.date_entered).format("YYYY-MM-DD")
+          : "—",
+        Address:
+          [
+            invoice.job?.sales_orders?.shipping_street,
+            invoice.job?.sales_orders?.shipping_city,
+            invoice.job?.sales_orders?.shipping_province,
+            invoice.job?.sales_orders?.shipping_zip,
+          ]
+            .filter(Boolean)
+            .join(", ") || "—",
+        Status: invoice.no_charge
+          ? "No Charge"
+          : invoice.paid_at
+            ? "Posted"
+            : "Not Posted",
+
+        Comments: invoice.comments || "",
+      }));
+
+      exportToExcel(excelData, "Invoices_Export");
+      notifications.show({
+        title: "Export Successful",
+        message: `Exported ${excelData.length} invoice(s)`,
+        color: "green",
+      });
+    } catch (error: any) {
+      notifications.show({
+        title: "Export Error",
+        message: error.message || "Failed to export invoices",
+        color: "red",
+      });
+    }
   };
 
   const togglePaidMutation = useMutation({
@@ -360,7 +419,7 @@ export default function InvoicesTable() {
             </Text>
           </Tooltip>
         ),
-      }
+      },
     ),
     columnHelper.accessor("paid_at", {
       id: "status",
@@ -509,10 +568,10 @@ export default function InvoicesTable() {
                       if (
                         info.row.original.is_creditmemo
                           ? confirm(
-                              "Are you sure you want to delete this Credit Memo?"
+                              "Are you sure you want to delete this Credit Memo?",
                             )
                           : confirm(
-                              "Are you sure you want to delete this invoice?"
+                              "Are you sure you want to delete this invoice?",
                             )
                       ) {
                         deleteInvoiceMutation.mutate({
@@ -583,26 +642,37 @@ export default function InvoicesTable() {
               </Text>
             </Stack>
           </Group>
-          {permissions.canEditInvoices && (
-            <Group>
-              <Button
-                leftSection={<FaPlus size={14} />}
-                onClick={openAddInvoiceModal}
-                variant="gradient"
-                gradient={gradients.primary}
-              >
-                Add Invoice
-              </Button>
-              <Button
-                leftSection={<FaPlus size={14} />}
-                onClick={openAddCreditModal}
-                variant="gradient"
-                gradient={{ from: "#004d1dff", to: "#007c53ff", deg: 90 }}
-              >
-                Add Credit Memo
-              </Button>
-            </Group>
-          )}
+          <Group>
+            {permissions.canEditInvoices && (
+              <>
+                <Button
+                  leftSection={<FaPlus size={14} />}
+                  onClick={openAddInvoiceModal}
+                  variant="gradient"
+                  gradient={gradients.primary}
+                >
+                  Add Invoice
+                </Button>
+                <Button
+                  leftSection={<FaPlus size={14} />}
+                  onClick={openAddCreditModal}
+                  variant="gradient"
+                  gradient={{ from: "#004d1dff", to: "#007c53ff", deg: 90 }}
+                >
+                  Add Credit Memo
+                </Button>
+              </>
+            )}
+            <Button
+              onClick={handleExport}
+              disabled={!invoices || invoices.length === 0}
+              leftSection={<FaFileExcel size={14} />}
+              variant="outline"
+              color="green"
+            >
+              Export Excel
+            </Button>
+          </Group>
         </Group>
 
         <Accordion variant="contained" radius="md">
@@ -668,7 +738,7 @@ export default function InvoicesTable() {
                   onChange={(val) =>
                     setInputFilterValue(
                       "status",
-                      val === "all" ? undefined : val
+                      val === "all" ? undefined : val,
                     )
                   }
                 />
@@ -680,7 +750,7 @@ export default function InvoicesTable() {
                   value={
                     (getInputFilterValue("date_entered") as [
                       Date | null,
-                      Date | null
+                      Date | null,
                     ]) || [null, null]
                   }
                   onChange={(val) => setInputFilterValue("date_entered", val)}
@@ -719,7 +789,7 @@ export default function InvoicesTable() {
                     <Group gap={4} wrap="nowrap">
                       {flexRender(
                         header.column.columnDef.header,
-                        header.getContext()
+                        header.getContext(),
                       )}
                       {{
                         asc: <FaSortUp />,
@@ -757,7 +827,7 @@ export default function InvoicesTable() {
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </Table.Td>
                   ))}
@@ -828,7 +898,7 @@ export default function InvoicesTable() {
             value={editingComment?.text || ""}
             onChange={(e) =>
               setEditingComment((prev) =>
-                prev ? { ...prev, text: e.currentTarget.value } : null
+                prev ? { ...prev, text: e.currentTarget.value } : null,
               )
             }
             data-autofocus

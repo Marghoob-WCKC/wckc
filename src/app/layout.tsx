@@ -115,12 +115,12 @@ const dashboardLinks: SidebarLink[] = [
       },
       {
         iconName: "Package",
-        label: "Wrap Schedule",
+        label: "Wrapping",
         path: "/dashboard/plant/wrap",
       },
       {
         iconName: "Truck",
-        label: "Ship Schedule",
+        label: "Shipping",
         path: "/dashboard/plant/ship",
       },
       {
@@ -152,6 +152,12 @@ const dashboardLinks: SidebarLink[] = [
         path: "/dashboard/invoices/chargeableservice",
       },
     ],
+  },
+  {
+    iconName: "Archive",
+    label: "Dead Jobs",
+    path: "/dashboard/deadjobs",
+    allowedRoles: ["admin", "designer"],
   },
   {
     iconName: "FileChartColumn",
