@@ -14,31 +14,49 @@ export type ShippingReportJob = Tables<"jobs"> & {
     cabinet: JoinedCabinet | null;
   };
   production_schedule: Tables<"production_schedule">;
-  installation: { notes: string | null; wrap_completed?: boolean } | null;
+  installation: {
+    notes: string | null;
+    wrap_completed?: boolean;
+    in_warehouse?: string | null;
+  } | null;
+  warehouse_tracking?: {
+    pickup_date?: string | null;
+    dropoff_date?: string | null;
+  } | null;
 };
 
-const ITEMS_PER_PAGE = 45;
 const BORDER_COLOR = "#e0e0e0";
 const HEADER_BORDER_COLOR = "#000";
 
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
+    paddingTop: 80,
+    paddingBottom: 40,
+    paddingHorizontal: 30,
     fontFamily: "Helvetica",
     fontSize: 9,
     lineHeight: 1.3,
     flexDirection: "column",
   },
   headerContainer: {
+    position: "absolute",
+    top: 30,
+    left: 30,
+    right: 30,
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
     borderBottomWidth: 2,
     borderBottomColor: "#000",
     paddingBottom: 5,
     height: 40,
   },
   reportTitle: { fontSize: 18, fontWeight: "bold" },
+  metaInfoContainer: {
+    position: "absolute",
+    top: 30,
+    right: 30,
+    alignItems: "flex-end",
+  },
   metaInfo: { fontSize: 8, textAlign: "right" },
 
   dateGroupHeader: {
@@ -47,7 +65,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#dfdfdf",
     paddingVertical: 4,
     paddingHorizontal: 5,
-    marginTop: 5,
+    marginTop: 10,
     borderTopWidth: 1,
     borderTopColor: "#000",
     borderBottomWidth: 1,
@@ -85,16 +103,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa",
   },
 
-  colJob: { width: "8%" },
-  colCust: { width: "14%" },
+  colJob: { width: "7%" },
+  colCust: { width: "16%" },
   colAddr: { width: "17%" },
   colBox: { width: "3%", alignItems: "center" },
-  colDoor: { width: "15%" },
+  colDoor: { width: "13%" },
   colSpec: { width: "6%" },
-  colColor: { width: "10%" },
+  colColor: { width: "9%" },
   colWrapped: { width: "5%", alignItems: "center" },
-  colCheck: { width: "4%", alignItems: "center" },
-  colNotes: { width: "18%", paddingRight: 4 },
+  colWarehouse: { width: "9%", alignItems: "center" },
+  colNotes: { width: "15%", paddingRight: 4 },
 
   headerText: { fontSize: 8, fontWeight: "bold", textAlign: "center" },
   headerTextLeft: { fontSize: 8, fontWeight: "bold", textAlign: "left" },
@@ -132,6 +150,7 @@ const styles = StyleSheet.create({
     paddingTop: 5,
     borderTopWidth: 1,
     borderTopColor: "#000",
+    marginBottom: 5,
   },
   totalText: { fontSize: 9, fontWeight: "bold" },
 });
@@ -148,7 +167,7 @@ const safeGet = (data: any) => {
 };
 
 const ColumnHeaders = () => (
-  <View style={styles.tableHeader}>
+  <View style={styles.tableHeader} wrap={false}>
     <View style={[styles.headerCellBase, styles.colWrapped]}>
       <Text style={styles.headerText}>Wrapped</Text>
     </View>
@@ -173,7 +192,9 @@ const ColumnHeaders = () => (
     <View style={[styles.headerCellBase, styles.colColor]}>
       <Text style={styles.headerText}>Color</Text>
     </View>
-
+    <View style={[styles.headerCellBase, styles.colWarehouse]}>
+      <Text style={styles.headerText}>Warehouse</Text>
+    </View>
     <View
       style={[
         styles.headerCellBase,
@@ -195,14 +216,16 @@ export const ShippingReportPdf = ({
   startDate: Date | null;
   endDate: Date | null;
 }) => {
-  const grouped = data.reduce((acc, job) => {
-    const ps = safeGet(job.production_schedule);
-    const dateKey = ps?.ship_schedule || "No Date";
-
-    if (!acc[dateKey]) acc[dateKey] = [];
-    acc[dateKey].push(job);
-    return acc;
-  }, {} as Record<string, ShippingReportJob[]>);
+  const grouped = data.reduce(
+    (acc, job) => {
+      const ps = safeGet(job.production_schedule);
+      const dateKey = ps?.ship_schedule || "No Date";
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(job);
+      return acc;
+    },
+    {} as Record<string, ShippingReportJob[]>,
+  );
 
   const sortedDates = Object.keys(grouped).sort((a, b) => {
     if (a === "No Date") return 1;
@@ -210,198 +233,150 @@ export const ShippingReportPdf = ({
     return new Date(a).getTime() - new Date(b).getTime();
   });
 
-  const pages: React.ReactNode[][] = [];
-  let currentPage: React.ReactNode[] = [];
-  let currentCount = 0;
-
-  const startNewPage = () => {
-    if (currentPage.length > 0) pages.push(currentPage);
-    currentPage = [];
-    currentCount = 0;
-  };
-
-  sortedDates.forEach((dateKey) => {
-    const jobs = grouped[dateKey];
-    const dateObj = dayjs(dateKey);
-    const formattedDate =
-      dateKey === "No Date" ? "Unscheduled" : dateObj.format("DD-MMM-YY");
-    const dayName = dateKey === "No Date" ? "" : dateObj.format("dddd");
-
-    const boxTotal = jobs.reduce((sum, job) => {
-      const so = safeGet(job.sales_orders);
-      const cab = safeGet(so?.cabinet);
-      const box = parseInt(cab?.box || "0", 10);
-      return isNaN(box) ? sum : sum + box;
-    }, 0);
-
-    if (currentCount > ITEMS_PER_PAGE - 5) {
-      startNewPage();
-    }
-
-    currentPage.push(
-      <View key={`date-header-${dateKey}`} style={styles.dateGroupHeader}>
-        <Text style={styles.dateGroupText}>Ship Date:</Text>
-        <Text style={styles.dateGroupText}>{formattedDate}</Text>
-        <Text style={styles.dateGroupText}>{dayName}</Text>
-      </View>
-    );
-    currentCount += 1;
-
-    currentPage.push(<ColumnHeaders key={`col-header-start-${dateKey}`} />);
-    currentCount += 1;
-
-    jobs.forEach((job) => {
-      if (currentCount >= ITEMS_PER_PAGE) {
-        startNewPage();
-        currentPage.push(<ColumnHeaders key={`col-header-cont-${job.id}`} />);
-        currentCount += 1;
-      }
-
-      const so = safeGet(job.sales_orders);
-      const cab = safeGet(so?.cabinet);
-      const ps = safeGet(job.production_schedule);
-
-      const jobNum = job.job_number || "—";
-      const clientName = so?.shipping_client_name || "Unknown";
-      const address =
-        [so?.shipping_street, so?.shipping_city].filter(Boolean).join(", ") ||
-        "—";
-
-      const box = cab?.box || "0";
-      const door = safeGet(cab?.door_styles)?.name || "—";
-      const species = safeGet(cab?.species)?.Species || "—";
-      const color = safeGet(cab?.colors)?.Name || "—";
-
-      currentPage.push(
-        <View style={styles.tableRow} key={job.id} wrap={false}>
-          <View style={[styles.cellBase, styles.colWrapped]}>
-            <Checkbox checked={Boolean(job.installation?.wrap_completed)} />
-          </View>
-          <View style={[styles.cellBase, styles.colJob]}>
-            <Text style={styles.cellText}>{jobNum}</Text>
-          </View>
-          <View style={[styles.cellBase, styles.colCust]}>
-            <Text style={styles.cellText}>{clientName}</Text>
-          </View>
-          <View style={[styles.cellBase, styles.colAddr]}>
-            <Text style={styles.cellTextSmall}>{address}</Text>
-          </View>
-
-          <View style={[styles.cellBase, styles.colBox]}>
-            <Text style={[styles.cellText, { fontWeight: "bold" }]}>{box}</Text>
-          </View>
-          <View style={[styles.cellBase, styles.colDoor]}>
-            <Text style={styles.cellTextSmall}>{door}</Text>
-          </View>
-
-          <View style={[styles.cellBase, styles.colSpec]}>
-            <Text style={styles.cellTextSmall}>{species}</Text>
-          </View>
-          <View style={[styles.cellBase, styles.colColor]}>
-            <Text style={styles.cellTextSmall}>{color}</Text>
-          </View>
-
-          <View
-            style={[
-              styles.cellBase,
-              styles.colNotes,
-              {
-                borderRightWidth: 0,
-                justifyContent: "flex-start",
-                paddingLeft: 4,
-              },
-            ]}
-          >
-            <Text style={styles.cellTextSmall}>
-              {job.installation?.notes || "—"}
-            </Text>
-          </View>
-        </View>
-      );
-      currentCount += 1;
-    });
-
-    if (currentCount >= ITEMS_PER_PAGE) {
-      startNewPage();
-    }
-
-    currentPage.push(
-      <View key={`total-${dateKey}`} style={styles.totalRow} wrap={false}>
-        <Text style={styles.totalText}>Total Boxes: {boxTotal}</Text>
-      </View>
-    );
-    currentCount += 1;
-  });
-
-  if (currentPage.length > 0) pages.push(currentPage);
-
-  if (pages.length === 0) {
-    return (
-      <Document>
-        <Page size="A4" orientation="landscape" style={styles.page}>
-          <Text>No data found for this date range.</Text>
-        </Page>
-      </Document>
-    );
-  }
-
   return (
     <Document>
-      {pages.map((pageContent, index) => (
-        <Page key={index} size="A4" orientation="landscape" style={styles.page}>
-          <View style={styles.headerContainer} fixed>
-            <Text style={styles.reportTitle}>Shipping Report</Text>
-          </View>
-          <Text
-            style={{
-              fontSize: 8,
-              textAlign: "right",
-              position: "absolute",
-              top: 30,
-              right: 30,
-            }}
-            fixed
-          >
+      <Page size="A4" orientation="landscape" style={styles.page}>
+        {}
+        <View style={styles.headerContainer} fixed>
+          <Text style={styles.reportTitle}>Shipping Report</Text>
+        </View>
+
+        {}
+        <View style={styles.metaInfoContainer} fixed>
+          <Text style={styles.metaInfo}>
             Printed: {dayjs().format("DD-MMM-YY")}
           </Text>
-          <Text
-            style={{
-              fontSize: 8,
-              textAlign: "right",
-              position: "absolute",
-              top: 52,
-              right: 30,
-            }}
-            fixed
-          >
+          <Text style={styles.metaInfo}>
             Range: {startDate ? dayjs(startDate).format("DD-MMM") : "?"} -{" "}
             {endDate ? dayjs(endDate).format("DD-MMM") : "?"}
           </Text>
           <Text
-            style={{
-              fontSize: 8,
-              textAlign: "right",
-              position: "absolute",
-              top: 41,
-              right: 30,
-            }}
+            style={styles.metaInfo}
             render={({ pageNumber, totalPages }) =>
               `Page ${pageNumber} of ${totalPages}`
             }
-            fixed
           />
+        </View>
 
-          <View>{pageContent}</View>
+        {}
+        {sortedDates.map((dateKey) => {
+          const jobs = grouped[dateKey];
+          const dateObj = dayjs(dateKey);
+          const formattedDate =
+            dateKey === "No Date" ? "Unscheduled" : dateObj.format("DD-MMM-YY");
+          const dayName = dateKey === "No Date" ? "" : dateObj.format("dddd");
 
-          <Text
-            style={styles.footer}
-            render={({ pageNumber, totalPages }) =>
-              `Page ${pageNumber} of ${totalPages}`
-            }
-            fixed
-          />
-        </Page>
-      ))}
+          const boxTotal = jobs.reduce((sum, job) => {
+            const so = safeGet(job.sales_orders);
+            const cab = safeGet(so?.cabinet);
+            const box = parseInt(cab?.box || "0", 10);
+            return isNaN(box) ? sum : sum + box;
+          }, 0);
+
+          return (
+            <View key={dateKey}>
+              {}
+              <View style={styles.dateGroupHeader} wrap={false}>
+                <Text style={styles.dateGroupText}>Ship Date:</Text>
+                <Text style={styles.dateGroupText}>{formattedDate}</Text>
+                <Text style={styles.dateGroupText}>{dayName}</Text>
+              </View>
+
+              <ColumnHeaders />
+
+              {}
+              {jobs.map((job) => {
+                const so = safeGet(job.sales_orders);
+                const cab = safeGet(so?.cabinet);
+                const jobNum = job.job_number || "—";
+                const clientName = so?.shipping_client_name || "Unknown";
+                const address =
+                  [so?.shipping_street, so?.shipping_city]
+                    .filter(Boolean)
+                    .join(", ") || "—";
+                const box = cab?.box || "0";
+                const door = safeGet(cab?.door_styles)?.name || "—";
+                const species = safeGet(cab?.species)?.Species || "—";
+                const color = safeGet(cab?.colors)?.Name || "—";
+                const warehouseStatus = job.installation?.in_warehouse
+                  ? job.warehouse_tracking?.pickup_date
+                    ? `Picked Up (${dayjs(
+                        job.warehouse_tracking.pickup_date,
+                      ).format("DD/MM")})`
+                    : "In Warehouse"
+                  : "—";
+
+                return (
+                  <View style={styles.tableRow} key={job.id} wrap={false}>
+                    <View style={[styles.cellBase, styles.colWrapped]}>
+                      <Checkbox
+                        checked={Boolean(job.installation?.wrap_completed)}
+                      />
+                    </View>
+                    <View style={[styles.cellBase, styles.colJob]}>
+                      <Text style={styles.cellText}>{jobNum}</Text>
+                    </View>
+                    <View style={[styles.cellBase, styles.colCust]}>
+                      <Text style={styles.cellText}>{clientName}</Text>
+                    </View>
+                    <View style={[styles.cellBase, styles.colAddr]}>
+                      <Text style={styles.cellTextSmall}>{address}</Text>
+                    </View>
+                    <View style={[styles.cellBase, styles.colBox]}>
+                      <Text style={[styles.cellText, { fontWeight: "bold" }]}>
+                        {box}
+                      </Text>
+                    </View>
+                    <View style={[styles.cellBase, styles.colDoor]}>
+                      <Text style={styles.cellTextSmall}>{door}</Text>
+                    </View>
+                    <View style={[styles.cellBase, styles.colSpec]}>
+                      <Text style={styles.cellTextSmall}>{species}</Text>
+                    </View>
+                    <View style={[styles.cellBase, styles.colColor]}>
+                      <Text style={styles.cellTextSmall}>{color}</Text>
+                    </View>
+                    <View style={[styles.cellBase, styles.colWarehouse]}>
+                      <Text style={styles.cellTextSmall}>
+                        {warehouseStatus}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.cellBase,
+                        styles.colNotes,
+                        {
+                          borderRightWidth: 0,
+                          justifyContent: "flex-start",
+                          paddingLeft: 4,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.cellTextSmall}>
+                        {job.installation?.notes || "—"}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
+
+              {}
+              <View style={styles.totalRow} wrap={false}>
+                <Text style={styles.totalText}>Total Boxes: {boxTotal}</Text>
+              </View>
+            </View>
+          );
+        })}
+
+        {}
+        <Text
+          style={styles.footer}
+          render={({ pageNumber, totalPages }) =>
+            `Page ${pageNumber} of ${totalPages}`
+          }
+          fixed
+        />
+      </Page>
     </Document>
   );
 };

@@ -98,6 +98,12 @@ export default function AddBackorderModal({
       queryClient.invalidateQueries({
         queryKey: ["installation-editor"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["plant_shipping_table"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["backorder-status"],
+      });
       if (onSuccess) onSuccess();
       onClose();
       form.reset();

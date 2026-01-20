@@ -56,7 +56,7 @@ export function useInstallationTable({
             break;
           case "installer":
             query = query.or(
-              `installer_company.ilike.%${valStr}%,installer_first_name.ilike.%${valStr}%,installer_last_name.ilike.%${valStr}%`
+              `installer_company.ilike.%${valStr}%,installer_first_name.ilike.%${valStr}%,installer_last_name.ilike.%${valStr}%`,
             );
             break;
 
@@ -82,13 +82,17 @@ export function useInstallationTable({
           id === "client"
             ? "shipping_client_name"
             : id === "installer"
-            ? "installer_company"
-            : id;
+              ? "installer_company"
+              : id;
 
         query = query.order(dbColumn, { ascending: !desc });
       } else {
-        query = query.order("created_at", { ascending: false });
+        query = query.order("ship_schedule", {
+          ascending: true,
+          nullsFirst: true,
+        });
         query = query.order("job_number", { ascending: true });
+        query = query.order("ship_status_sort_order", { ascending: false });
       }
 
       const from = pagination.pageIndex * pagination.pageSize;
@@ -108,5 +112,7 @@ export function useInstallationTable({
     },
     enabled: isAuthenticated,
     placeholderData: (previousData) => previousData,
+    refetchOnWindowFocus: true,
+    staleTime: 5000,
   });
 }

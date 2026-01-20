@@ -4,7 +4,7 @@ import { ShippingReportJob as ShippingJob } from "@/documents/ShippingReportPdf"
 import { WrapScheduleJob } from "@/documents/WrapSchedulePdf";
 
 export const formatWrapScheduleData = (
-  data: Views<"plant_wrap_view">[]
+  data: Views<"plant_wrap_view">[],
 ): WrapScheduleJob[] => {
   return data.map(
     (item) =>
@@ -43,12 +43,12 @@ export const formatWrapScheduleData = (
           wrap_date: item.wrap_date,
           wrap_completed: item.wrap_completed,
         },
-      } as unknown as WrapScheduleJob)
+      }) as unknown as WrapScheduleJob,
   );
 };
 
 export const formatProductionScheduleData = (
-  data: Views<"plant_production_view">[]
+  data: Views<"plant_production_view">[],
 ): ProductionJob[] => {
   return data.map(
     (item) =>
@@ -87,12 +87,12 @@ export const formatProductionScheduleData = (
           wrap_date: item.wrap_date,
           wrap_completed: item.wrap_completed,
         },
-      } as unknown as ProductionJob)
+      }) as unknown as ProductionJob,
   );
 };
 
 export const formatShipScheduleData = (
-  data: Views<"plant_shipping_view">[]
+  data: Views<"plant_shipping_view">[],
 ): ShippingJob[] => {
   return data
     .filter((item) => !item.has_shipped)
@@ -120,7 +120,12 @@ export const formatShipScheduleData = (
           installation: {
             notes: item.installation_notes,
             wrap_completed: item.wrap_completed,
+            in_warehouse: item.in_warehouse,
           },
-        } as unknown as ShippingJob)
+          warehouse_tracking: {
+            pickup_date: item.pickup_date,
+            dropoff_date: item.dropoff_date,
+          },
+        }) as unknown as ShippingJob,
     );
 };

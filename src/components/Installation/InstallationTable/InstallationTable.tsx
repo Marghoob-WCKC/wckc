@@ -28,6 +28,7 @@ import {
   rem,
   Accordion,
   SimpleGrid,
+  Grid,
   Tooltip,
   Stack,
   ThemeIcon,
@@ -66,6 +67,7 @@ import BulkScheduleModal from "../BulkInstallationScheduleModal/BulkInstallation
 import { usePermissions } from "@/hooks/usePermissions";
 
 import { RowEditorOverlay } from "./RowEditorOverlay";
+import { FaDollarSign, FaHandHoldingDollar } from "react-icons/fa6";
 type InstallationJobView = Views<"installation_table_view"> & {
   partially_shipped?: boolean;
   installer_id?: number | null;
@@ -83,7 +85,7 @@ export default function InstallationTable({
   const isReadOnly = isReadOnlyProp || !permissions.canEditInstallation;
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 19,
+    pageSize: 21,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([
@@ -101,7 +103,7 @@ export default function InstallationTable({
     useDisclosure(false);
 
   const [editingRow, setEditingRow] = useState<InstallationJobView | null>(
-    null
+    null,
   );
   const [editingRowMeta, setEditingRowMeta] = useState<{
     top: number;
@@ -128,7 +130,7 @@ export default function InstallationTable({
   useEffect(() => {
     const handleClick = () => {
       setContextMenu((prev) =>
-        prev.visible ? { ...prev, visible: false } : prev
+        prev.visible ? { ...prev, visible: false } : prev,
       );
     };
     document.addEventListener("click", handleClick);
@@ -142,7 +144,7 @@ export default function InstallationTable({
 
   const setInputFilterValue = (
     id: string,
-    value: string | undefined | null | [Date | null, Date | null]
+    value: string | undefined | null | [Date | null, Date | null],
   ) => {
     setInputFilters((prev) => {
       const existing = prev.filter((f) => f.id !== id);
@@ -281,7 +283,7 @@ export default function InstallationTable({
                       e.stopPropagation();
                       window.open(
                         `/dashboard/installation/${row.original.job_id}`,
-                        "_blank"
+                        "_blank",
                       );
                     }}
                   >
@@ -295,8 +297,8 @@ export default function InstallationTable({
       : []),
     columnHelper.accessor("job_number", {
       header: "Job No.",
-      size: 90,
-      minSize: 80,
+      size: 100,
+      minSize: 100,
       cell: (info) => (
         <Anchor
           component="button"
@@ -317,6 +319,24 @@ export default function InstallationTable({
             {info.row.original.rush && (
               <Tooltip label="RUSH JOB">
                 <FaFire size={12} color="red" />
+              </Tooltip>
+            )}
+            {info.row.original.is_cod && (
+              <Tooltip label="Cash On Delivery">
+                <Badge
+                  style={{ cursor: "pointer" }}
+                  size="xs"
+                  radius="100%"
+                  styles={{ root: { padding: 3, marginLeft: 3 } }}
+                  variant="gradient"
+                  gradient={{
+                    from: "#00470cff",
+                    to: "#009917ff",
+                    deg: 135,
+                  }}
+                >
+                  <FaDollarSign size={10} color="white" />
+                </Badge>
               </Tooltip>
             )}
           </Group>
@@ -377,6 +397,16 @@ export default function InstallationTable({
         </CellWrapper>
       ),
     }),
+    columnHelper.accessor("box", {
+      header: "Box",
+      size: 40,
+      minSize: 40,
+      cell: (info) => (
+        <Center>
+          <Text size="xs">{info.getValue() ?? "—"}</Text>
+        </Center>
+      ),
+    }),
 
     columnHelper.accessor("wrap_date", {
       header: "Wrap Date",
@@ -396,7 +426,7 @@ export default function InstallationTable({
               handleContextMenu(
                 e,
                 "wrap_date",
-                dayjs(date).format("YYYY-MM-DD")
+                dayjs(date).format("YYYY-MM-DD"),
               )
             }
           >
@@ -471,7 +501,7 @@ export default function InstallationTable({
               handleContextMenu(
                 e,
                 "has_shipped",
-                hasShipped ? "true" : "false"
+                hasShipped ? "true" : "false",
               );
             }}
           >
@@ -596,7 +626,7 @@ export default function InstallationTable({
               handleContextMenu(
                 e,
                 "inspection_date",
-                dayjs(date).format("YYYY-MM-DD")
+                dayjs(date).format("YYYY-MM-DD"),
               )
             }
           >
@@ -618,7 +648,7 @@ export default function InstallationTable({
                 handleContextMenu(
                   e,
                   "installation_completed",
-                  dayjs(date).format("YYYY-MM-DD")
+                  dayjs(date).format("YYYY-MM-DD"),
                 );
               } else {
                 handleContextMenu(e, "installation_completed", "pending");
@@ -663,7 +693,7 @@ export default function InstallationTable({
                 handleContextMenu(
                   e,
                   "inspection_completed",
-                  dayjs(date).format("YYYY-MM-DD")
+                  dayjs(date).format("YYYY-MM-DD"),
                 );
               } else {
                 handleContextMenu(e, "inspection_completed", "pending");
@@ -705,6 +735,7 @@ export default function InstallationTable({
       rowSelection,
     },
     enableRowSelection: true,
+    enableSortingRemoval: true,
     manualPagination: true,
     manualFiltering: true,
     manualSorting: true,
@@ -735,7 +766,7 @@ export default function InstallationTable({
     ? table
         .getRowModel()
         .rows.find(
-          (r) => r.original.installation_id === editingRow.installation_id
+          (r) => r.original.installation_id === editingRow.installation_id,
         )
     : null;
 
@@ -744,244 +775,291 @@ export default function InstallationTable({
       style={{
         display: "flex",
         flexDirection: "column",
-        padding: rem(20),
-        height: "calc(100vh - 45px)",
+        paddingTop: rem(5),
+        paddingBottom: rem(1),
+        paddingLeft: rem(20),
+        paddingRight: rem(20),
+        height: "100vh",
         position: "relative",
       }}
       fz={"xs"}
     >
-      <Group mb="md">
-        <ThemeIcon
-          size={50}
-          radius="md"
-          variant="gradient"
-          gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
-        >
-          <FaShippingFast size={26} />
-        </ThemeIcon>
-        <Stack gap={0}>
-          <Title order={2} style={{ color: "#343a40" }}>
-            Installation Schedule
-          </Title>
-          <Text size="sm" c="dimmed">
-            Track installation schedule
-          </Text>
-        </Stack>
-      </Group>
+      <Stack gap={6}>
+        <Center>
+          <Group>
+            <ThemeIcon
+              size={30}
+              radius="md"
+              variant="gradient"
+              gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
+            >
+              <FaShippingFast size={16} />
+            </ThemeIcon>
+            <Title order={4} style={{ color: "#343a40" }}>
+              Installation Schedule
+            </Title>
+          </Group>
+        </Center>
 
-      <Accordion variant="contained" radius="md" mb="md">
-        <Accordion.Item value="search-filters">
-          <Accordion.Control icon={<FaSearch size={16} />}>
-            Search Filters
-          </Accordion.Control>
-          <Accordion.Panel>
-            <SimpleGrid cols={{ base: 1, sm: 3, md: 4 }} spacing="xs">
-              <TextInput
-                label="Job Number"
-                placeholder="e.g., 202401"
-                value={getInputFilterValue("job_number") as string}
-                onChange={(e) =>
-                  setInputFilterValue("job_number", e.target.value)
-                }
-                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
-              />
-              <TextInput
-                label="Site Address"
-                placeholder="e.g., 123 Main St, Anytown, CA"
-                value={getInputFilterValue("site_address") as string}
-                onChange={(e) =>
-                  setInputFilterValue("site_address", e.target.value)
-                }
-                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
-              />
-              <TextInput
-                label="Client"
-                placeholder="e.g., Smith"
-                value={getInputFilterValue("client") as string}
-                onChange={(e) => setInputFilterValue("client", e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
-              />
-              <TextInput
-                label="Project Name"
-                placeholder="Search Project..."
-                value={(getInputFilterValue("projectName") as string) || ""}
-                onChange={(e) =>
-                  setInputFilterValue("projectName", e.target.value)
-                }
-                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
-              />
-              <TextInput
-                label="Installer"
-                placeholder="Company or Name"
-                value={getInputFilterValue("installer") as string}
-                onChange={(e) =>
-                  setInputFilterValue("installer", e.target.value)
-                }
-                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
-              />
-              <DatePickerInput
-                type="range"
-                allowSingleDateInRange
-                label="Installation Date"
-                placeholder="Filter by Date Range"
-                clearable
-                value={
-                  (inputFilters.find((f) => f.id === "installation_date")
-                    ?.value as [Date | null, Date | null]) || [null, null]
-                }
-                onChange={(value) => {
-                  setInputFilterValue("installation_date", value as any);
-                }}
-                valueFormat="YYYY-MM-DD"
-              />
-              <DatePickerInput
-                type="range"
-                allowSingleDateInRange
-                label="Shipping Date"
-                placeholder="Filter by Date Range"
-                clearable
-                value={
-                  (inputFilters.find((f) => f.id === "ship_schedule")
-                    ?.value as [Date | null, Date | null]) || [null, null]
-                }
-                onChange={(value) => {
-                  setInputFilterValue("ship_schedule", value as any);
-                }}
-                valueFormat="YYYY-MM-DD"
-              />
-              <Select
-                label="Ship Date Status"
-                placeholder="Date Status"
-                data={[
-                  { label: "Confirmed", value: "confirmed" },
-                  { label: "Tentative", value: "tentative" },
-                  { label: "Unprocessed", value: "unprocessed" },
-                  { label: "All", value: "all" },
-                ]}
-                value={(getInputFilterValue("ship_status") as string) || "all"}
-                onChange={(val) => {
-                  setInputFilterValue(
-                    "ship_status",
-                    val === "all" ? null : val
-                  );
-                }}
-                allowDeselect={false}
-              />
-              <Group
-                style={{
-                  display: "flex",
-                  alignItems: "flex-end",
-                  paddingBottom: "6px",
-                }}
-              >
-                <Switch
-                  label="Not Shipped"
-                  size="md"
-                  thumbIcon={<FaCheckCircle />}
-                  styles={{
-                    track: {
-                      cursor: "pointer",
-                      background:
-                        getInputFilterValue("has_shipped") === "true"
-                          ? "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)"
-                          : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
-                      color: "white",
-                      border: "none",
-                    },
-                    thumb: {
-                      background:
-                        getInputFilterValue("has_shipped") === "true"
-                          ? "#6e54ffff"
-                          : "#d1d1d1ff",
-                    },
-                  }}
-                  checked={getInputFilterValue("has_shipped") === "true"}
-                  onChange={(e) => {
-                    const val = e.currentTarget.checked;
+        <Accordion variant="contained" radius="md" mb="xs">
+          <Accordion.Item value="search-filters" w="100%">
+            <Accordion.Control
+              icon={<FaSearch size={13} />}
+              style={{ fontSize: 13 }}
+              styles={{
+                label: {
+                  padding: 6,
+                },
+              }}
+            >
+              Search Filters
+            </Accordion.Control>
+            <Accordion.Panel styles={{ content: { padding: 8 } }}>
+              <Grid columns={24} gutter="xs">
+                <Grid.Col span={{ base: 24, sm: 8, md: 3 }}>
+                  <TextInput
+                    size="xs"
+                    label="Job Number"
+                    placeholder="e.g., 202401"
+                    value={getInputFilterValue("job_number") as string}
+                    onChange={(e) =>
+                      setInputFilterValue("job_number", e.target.value)
+                    }
+                    onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+                  />
+                </Grid.Col>
+                <Grid.Col span={{ base: 24, sm: 8, md: 4 }}>
+                  <TextInput
+                    size="xs"
+                    label="Site Address"
+                    placeholder="e.g., 123 Main St, Anytown, CA"
+                    value={getInputFilterValue("site_address") as string}
+                    onChange={(e) =>
+                      setInputFilterValue("site_address", e.target.value)
+                    }
+                    onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+                  />
+                </Grid.Col>
+                <Grid.Col span={{ base: 24, sm: 8, md: 4 }}>
+                  <TextInput
+                    size="xs"
+                    label="Client"
+                    placeholder="e.g., Smith"
+                    value={getInputFilterValue("client") as string}
+                    onChange={(e) =>
+                      setInputFilterValue("client", e.target.value)
+                    }
+                    onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+                  />
+                </Grid.Col>
+                <Grid.Col span={{ base: 24, sm: 8, md: 3 }}>
+                  <TextInput
+                    size="xs"
+                    label="Project Name"
+                    placeholder="Search Project..."
+                    value={(getInputFilterValue("projectName") as string) || ""}
+                    onChange={(e) =>
+                      setInputFilterValue("projectName", e.target.value)
+                    }
+                    onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+                  />
+                </Grid.Col>
+                <Grid.Col span={{ base: 24, sm: 8, md: 2 }}>
+                  <TextInput
+                    size="xs"
+                    label="Installer"
+                    placeholder="Company or Name"
+                    value={getInputFilterValue("installer") as string}
+                    onChange={(e) =>
+                      setInputFilterValue("installer", e.target.value)
+                    }
+                    onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+                  />
+                </Grid.Col>
+                <Grid.Col span={{ base: 24, sm: 8, md: 3 }}>
+                  <DatePickerInput
+                    size="xs"
+                    type="range"
+                    allowSingleDateInRange
+                    label="Installation Date"
+                    placeholder="Filter by Date Range"
+                    clearable
+                    value={
+                      (inputFilters.find((f) => f.id === "installation_date")
+                        ?.value as [Date | null, Date | null]) || [null, null]
+                    }
+                    onChange={(value) => {
+                      setInputFilterValue("installation_date", value as any);
+                    }}
+                    valueFormat="YYYY-MM-DD"
+                  />
+                </Grid.Col>
+                <Grid.Col span={{ base: 24, sm: 8, md: 3 }}>
+                  <DatePickerInput
+                    size="xs"
+                    type="range"
+                    allowSingleDateInRange
+                    label="Shipping Date"
+                    placeholder="Filter by Date Range"
+                    clearable
+                    value={
+                      (inputFilters.find((f) => f.id === "ship_schedule")
+                        ?.value as [Date | null, Date | null]) || [null, null]
+                    }
+                    onChange={(value) => {
+                      setInputFilterValue("ship_schedule", value as any);
+                    }}
+                    valueFormat="YYYY-MM-DD"
+                  />
+                </Grid.Col>
+                <Grid.Col span={{ base: 24, sm: 8, md: 2 }}>
+                  <Select
+                    size="xs"
+                    label="Ship Date Status"
+                    placeholder="Date Status"
+                    data={[
+                      { label: "Confirmed", value: "confirmed" },
+                      { label: "Tentative", value: "tentative" },
+                      { label: "Unprocessed", value: "unprocessed" },
+                      { label: "All", value: "all" },
+                    ]}
+                    value={
+                      (getInputFilterValue("ship_status") as string) || "all"
+                    }
+                    onChange={(val) => {
+                      setInputFilterValue(
+                        "ship_status",
+                        val === "all" ? null : val,
+                      );
+                    }}
+                    allowDeselect={false}
+                  />
+                </Grid.Col>
+                <Grid.Col span={{ base: 24, sm: 8, md: 6 }}>
+                  <Group
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Switch
+                      label="Not Shipped"
+                      size="sm"
+                      thumbIcon={<FaCheckCircle />}
+                      styles={{
+                        label: {
+                          fontSize: 12,
+                        },
+                        track: {
+                          cursor: "pointer",
+                          background:
+                            getInputFilterValue("has_shipped") === "true"
+                              ? "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)"
+                              : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
+                          color: "white",
+                          border: "none",
+                        },
+                        thumb: {
+                          background:
+                            getInputFilterValue("has_shipped") === "true"
+                              ? "#6e54ffff"
+                              : "#d1d1d1ff",
+                        },
+                      }}
+                      checked={getInputFilterValue("has_shipped") === "true"}
+                      onChange={(e) => {
+                        const val = e.currentTarget.checked;
 
-                    setInputFilterValue(
-                      "has_shipped",
-                      val ? "true" : undefined
-                    );
-                    const otherFilters = inputFilters.filter(
-                      (f) => f.id !== "has_shipped"
-                    );
-                    const newActiveFilters = val
-                      ? [...otherFilters, { id: "has_shipped", value: val }]
-                      : otherFilters;
+                        setInputFilterValue(
+                          "has_shipped",
+                          val ? "true" : undefined,
+                        );
+                        const otherFilters = inputFilters.filter(
+                          (f) => f.id !== "has_shipped",
+                        );
+                        const newActiveFilters = val
+                          ? [...otherFilters, { id: "has_shipped", value: val }]
+                          : otherFilters;
 
-                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-                    setActiveFilters(newActiveFilters);
-                  }}
-                />
-                <Switch
-                  label="Rush"
-                  size="md"
-                  thumbIcon={<FaCheckCircle />}
-                  styles={{
-                    track: {
-                      cursor: "pointer",
-                      background:
-                        getInputFilterValue("rush") === "true"
-                          ? "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)"
-                          : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
-                      color: "white",
-                      border: "none",
-                    },
-                    thumb: {
-                      background:
-                        getInputFilterValue("rush") === "true"
-                          ? "#6e54ffff"
-                          : "#d1d1d1ff",
-                    },
-                  }}
-                  checked={getInputFilterValue("rush") === "true"}
-                  onChange={(e) => {
-                    const val = e.currentTarget.checked;
+                        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                        setActiveFilters(newActiveFilters);
+                      }}
+                    />
+                    <Switch
+                      label="Rush"
+                      size="sm"
+                      thumbIcon={<FaCheckCircle />}
+                      styles={{
+                        label: {
+                          fontSize: 12,
+                        },
+                        track: {
+                          cursor: "pointer",
+                          background:
+                            getInputFilterValue("rush") === "true"
+                              ? "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)"
+                              : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
+                          color: "white",
+                          border: "none",
+                        },
+                        thumb: {
+                          background:
+                            getInputFilterValue("rush") === "true"
+                              ? "#6e54ffff"
+                              : "#d1d1d1ff",
+                        },
+                      }}
+                      checked={getInputFilterValue("rush") === "true"}
+                      onChange={(e) => {
+                        const val = e.currentTarget.checked;
 
-                    setInputFilterValue(
-                      "rush",
-                      e.target.checked ? "true" : undefined
-                    );
-                    const otherFilters = inputFilters.filter(
-                      (f) => f.id !== "rush"
-                    );
-                    const newActiveFilters = val
-                      ? [...otherFilters, { id: "rush", value: val }]
-                      : otherFilters;
+                        setInputFilterValue(
+                          "rush",
+                          e.target.checked ? "true" : undefined,
+                        );
+                        const otherFilters = inputFilters.filter(
+                          (f) => f.id !== "rush",
+                        );
+                        const newActiveFilters = val
+                          ? [...otherFilters, { id: "rush", value: val }]
+                          : otherFilters;
 
-                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-                    setActiveFilters(newActiveFilters);
-                  }}
-                />
-              </Group>
-              <Group></Group>
-              <Group></Group>
-              <Group justify="flex-end">
-                <Button
-                  variant="default"
-                  color="gray"
-                  onClick={handleClearFilters}
-                >
-                  Clear Filters
-                </Button>
-                <Button
-                  variant="filled"
-                  color="blue"
-                  leftSection={<FaSearch size={14} />}
-                  onClick={handleApplyFilters}
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
-                  }}
-                >
-                  Apply Filters
-                </Button>
-              </Group>
-            </SimpleGrid>
-          </Accordion.Panel>
-        </Accordion.Item>
-      </Accordion>
+                        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                        setActiveFilters(newActiveFilters);
+                      }}
+                    />
+                  </Group>
+                </Grid.Col>
+                <Grid.Col span={{ base: 24, sm: 24, md: 18 }}>
+                  <Group justify="flex-end" align="center">
+                    <Button
+                      size="xs"
+                      variant="default"
+                      color="gray"
+                      onClick={handleClearFilters}
+                    >
+                      Clear Filters
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="filled"
+                      color="blue"
+                      leftSection={<FaSearch size={14} />}
+                      onClick={handleApplyFilters}
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
+                      }}
+                    >
+                      Apply Filters
+                    </Button>
+                  </Group>
+                </Grid.Col>
+              </Grid>
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
+      </Stack>
 
       <Transition
         mounted={Object.keys(rowSelection).length > 1}
@@ -1086,7 +1164,7 @@ export default function InstallationTable({
                     >
                       {flexRender(
                         header.column.columnDef.header,
-                        header.getContext()
+                        header.getContext(),
                       )}
                       {canSort && (
                         <span className="inline-block ml-1">
@@ -1134,10 +1212,10 @@ export default function InstallationTable({
                     onDoubleClick={(e) => {
                       if (isReadOnly) return;
                       const cells = Array.from(
-                        e.currentTarget.children
+                        e.currentTarget.children,
                       ) as HTMLElement[];
                       const widths = cells.map(
-                        (c) => c.getBoundingClientRect().width
+                        (c) => c.getBoundingClientRect().width,
                       );
                       const rect = e.currentTarget.getBoundingClientRect();
 
@@ -1175,7 +1253,7 @@ export default function InstallationTable({
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </Table.Td>
                     ))}
@@ -1186,17 +1264,12 @@ export default function InstallationTable({
           </Table.Tbody>
         </Table>
       </ScrollArea>
-
       <Box
         style={{
-          position: "fixed",
-          bottom: 0,
-          left: rem(250),
-          right: 0,
-          padding: "1rem 0",
+          width: "100%",
+          padding: "5px",
           background: "white",
           borderTop: "1px solid #eee",
-          zIndex: 100,
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -1205,6 +1278,7 @@ export default function InstallationTable({
         <Pagination
           color="#4A00E0"
           withEdges
+          size="sm"
           total={table.getPageCount()}
           value={table.getState().pagination.pageIndex + 1}
           onChange={(page) => table.setPageIndex(page - 1)}
@@ -1263,7 +1337,7 @@ export default function InstallationTable({
                 if (contextMenu.filterId && contextMenu.filterValue !== null) {
                   handleQuickFilter(
                     contextMenu.filterId,
-                    contextMenu.filterValue
+                    contextMenu.filterValue,
                   );
                 }
               }}

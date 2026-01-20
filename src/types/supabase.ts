@@ -2078,6 +2078,7 @@ export type Database = {
       }
       installation_table_view: {
         Row: {
+          box: number | null
           created_at: string | null
           has_shipped: boolean | null
           inspection_completed: string | null
@@ -2089,6 +2090,7 @@ export type Database = {
           installer_first_name: string | null
           installer_id: number | null
           installer_last_name: string | null
+          is_cod: boolean | null
           job_id: number | null
           job_number: string | null
           partially_shipped: boolean | null
@@ -2098,6 +2100,7 @@ export type Database = {
           sales_order_id: number | null
           ship_schedule: string | null
           ship_status: Database["public"]["Enums"]["ShippingStatus"] | null
+          ship_status_sort_order: number | null
           shipping_client_name: string | null
           site_address: string | null
           wrap_date: string | null

@@ -132,7 +132,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     "installation_completed" | "inspection_completed" | null
   >(null);
   const [completionDateInput, setCompletionDateInput] = useState<Date | null>(
-    new Date()
+    new Date(),
   );
   const { data: jobData, isLoading: isJobLoading } = useQuery<JobData>({
     queryKey: ["installation-editor", jobId],
@@ -179,7 +179,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
               colors(Name)
             )
           )
-        `
+        `,
         )
         .eq("id", jobId)
         .single();
@@ -438,7 +438,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
   };
 
   const handleBackorderDecision = (
-    type: "complete" | "partial-with-bo" | "partial-only"
+    type: "complete" | "partial-with-bo" | "partial-only",
   ) => {
     setIsBackorderPromptOpen(false);
 
@@ -468,7 +468,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
   };
 
   const handleCompletionToggle = (
-    field: "installation_completed" | "inspection_completed"
+    field: "installation_completed" | "inspection_completed",
   ) => {
     const currentValue = form.values[field];
 
@@ -485,7 +485,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
     if (targetCompletionField && completionDateInput) {
       form.setFieldValue(
         targetCompletionField,
-        dayjs(completionDateInput).toISOString()
+        dayjs(completionDateInput).toISOString(),
       );
       setCompletionModalOpen(false);
       setTargetCompletionField(null);
@@ -638,7 +638,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                               >
                                 {prodSchedule[step.key]
                                   ? dayjs(
-                                      prodSchedule[step.key] as string
+                                      prodSchedule[step.key] as string,
                                     ).format("YYYY-MM-DD")
                                   : "—"}
                               </Text>
@@ -674,7 +674,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           onChange={(val) =>
                             form.setFieldValue(
                               "installer_id",
-                              val ? Number(val) : null
+                              val ? Number(val) : null,
                             )
                           }
                         />
@@ -692,7 +692,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           onChange={(date) =>
                             form.setFieldValue(
                               "wrap_date",
-                              date ? dayjs(date).format("YYYY-MM-DD") : null
+                              date ? dayjs(date).format("YYYY-MM-DD") : null,
                             )
                           }
                         />
@@ -711,7 +711,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           onChange={(date) =>
                             form.setFieldValue(
                               "ship_schedule",
-                              date ? dayjs(date).format("YYYY-MM-DD") : null
+                              date ? dayjs(date).format("YYYY-MM-DD") : null,
                             )
                           }
                         />
@@ -756,7 +756,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           onChange={(date) =>
                             form.setFieldValue(
                               "installation_date",
-                              date ? dayjs(date).format("YYYY-MM-DD") : null
+                              date ? dayjs(date).format("YYYY-MM-DD") : null,
                             )
                           }
                         />
@@ -784,7 +784,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           onChange={(date) =>
                             form.setFieldValue(
                               "inspection_date",
-                              date ? dayjs(date).format("YYYY-MM-DD") : null
+                              date ? dayjs(date).format("YYYY-MM-DD") : null,
                             )
                           }
                         />
@@ -803,7 +803,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           onChange={(date) =>
                             form.setFieldValue(
                               "cabfinaldate",
-                              date ? dayjs(date).format("YYYY-MM-DD") : null
+                              date ? dayjs(date).format("YYYY-MM-DD") : null,
                             )
                           }
                         />
@@ -850,7 +850,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                                   : dateString;
                                 form.setFieldValue(
                                   "installation_notes",
-                                  newValue
+                                  newValue,
                                 );
                               }
                             }}
@@ -878,7 +878,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                                 "wrap_completed",
                                 e.currentTarget.checked
                                   ? new Date().toISOString()
-                                  : null
+                                  : null,
                               )
                             }
                             styles={{ label: { fontWeight: 500 } }}
@@ -961,7 +961,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                               const isChecked = event.currentTarget.checked;
                               form.setFieldValue(
                                 "installation_report_received",
-                                isChecked ? dayjs().toISOString() : null
+                                isChecked ? dayjs().toISOString() : null,
                               );
                             }}
                             styles={{ label: { fontWeight: 500 } }}
@@ -969,7 +969,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           {form.values.installation_report_received && (
                             <Text c="dimmed" size="xs">
                               {dayjs(
-                                form.values.installation_report_received
+                                form.values.installation_report_received,
                               ).format("YYYY-MM-DD")}
                             </Text>
                           )}
@@ -993,7 +993,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                                 } else {
                                   if (
                                     confirm(
-                                      "Are you sure you want to disable warehouse tracking?"
+                                      "Are you sure you want to disable warehouse tracking?",
                                     )
                                   ) {
                                     form.setFieldValue("in_warehouse", null);
@@ -1011,7 +1011,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                                           .update({ in_warehouse: null } as any)
                                           .eq(
                                             "installation_id",
-                                            installRecordId
+                                            installRecordId,
                                           );
                                       if (updateError) throw updateError;
 
@@ -1059,7 +1059,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                               >
                                 {jobData?.warehouse_tracking?.pickup_date
                                   ? `Picked Up ${dayjs(
-                                      jobData.warehouse_tracking.pickup_date
+                                      jobData.warehouse_tracking.pickup_date,
                                     ).format("MM/DD")}`
                                   : `In Warehouse ${dayjs
                                       .utc(form.values.in_warehouse)
@@ -1079,7 +1079,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                               const isChecked = event.currentTarget.checked;
                               form.setFieldValue(
                                 "trade_30days",
-                                isChecked ? dayjs().toISOString() : null
+                                isChecked ? dayjs().toISOString() : null,
                               );
                             }}
                             styles={{ label: { fontWeight: 500 } }}
@@ -1087,7 +1087,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           {form.values.trade_30days && (
                             <Text c="dimmed" size="xs">
                               {dayjs(form.values.trade_30days).format(
-                                "YYYY-MM-DD"
+                                "YYYY-MM-DD",
                               )}
                             </Text>
                           )}
@@ -1103,7 +1103,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                               const isChecked = event.currentTarget.checked;
                               form.setFieldValue(
                                 "trade_6months",
-                                isChecked ? dayjs().toISOString() : null
+                                isChecked ? dayjs().toISOString() : null,
                               );
                             }}
                             styles={{ label: { fontWeight: 500 } }}
@@ -1111,7 +1111,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                           {form.values.trade_6months && (
                             <Text c="dimmed" size="xs">
                               {dayjs(form.values.trade_6months).format(
-                                "YYYY-MM-DD"
+                                "YYYY-MM-DD",
                               )}
                             </Text>
                           )}
@@ -1129,7 +1129,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                             const isChecked = event.currentTarget.checked;
                             form.setFieldValue(
                               "site_changes",
-                              isChecked ? dayjs().toISOString() : null
+                              isChecked ? dayjs().toISOString() : null,
                             );
                           }}
                           styles={{ label: { fontWeight: 500 } }}
@@ -1137,7 +1137,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
                         {form.values.site_changes && (
                           <Text c="dimmed" size="xs">
                             {dayjs(form.values.site_changes).format(
-                              "YYYY-MM-DD"
+                              "YYYY-MM-DD",
                             )}
                           </Text>
                         )}
@@ -1487,7 +1487,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
         onSuccess={() => {
           form.setFieldValue(
             "in_warehouse",
-            dayjs().format("YYYY-MM-DD HH:mm")
+            dayjs().format("YYYY-MM-DD HH:mm"),
           );
           queryClient.invalidateQueries({
             queryKey: ["installation-editor", jobId],
@@ -1525,7 +1525,7 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
               onClick={async () => {
                 if (
                   confirm(
-                    "This will PERMANENTLY delete the warehouse tracking data (dates, pallets, notes). Are you sure?"
+                    "This will PERMANENTLY delete the warehouse tracking data (dates, pallets, notes). Are you sure?",
                   )
                 ) {
                   try {
