@@ -116,6 +116,7 @@ export const formatShipScheduleData = (
           production_schedule: {
             placement_date: item.placement_date,
             ship_schedule: item.ship_schedule || "",
+            ship_status: item.ship_status || "",
           },
           installation: {
             notes: item.installation_notes,

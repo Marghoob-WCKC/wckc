@@ -103,8 +103,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa",
   },
 
-  colJob: { width: "7%" },
-  colCust: { width: "16%" },
+  colJob: { width: "6%" },
+  colConfirm: { width: "3%", alignItems: "center" },
+  colCust: { width: "14%" },
   colAddr: { width: "17%" },
   colBox: { width: "3%", alignItems: "center" },
   colDoor: { width: "13%" },
@@ -168,6 +169,9 @@ const safeGet = (data: any) => {
 
 const ColumnHeaders = () => (
   <View style={styles.tableHeader} wrap={false}>
+    <View style={[styles.headerCellBase, styles.colConfirm]}>
+      <Text style={styles.headerText}>Conf</Text>
+    </View>
     <View style={[styles.headerCellBase, styles.colWrapped]}>
       <Text style={styles.headerText}>Wrapped</Text>
     </View>
@@ -308,6 +312,13 @@ export const ShippingReportPdf = ({
 
                 return (
                   <View style={styles.tableRow} key={job.id} wrap={false}>
+                    <View style={[styles.cellBase, styles.colConfirm]}>
+                      <Checkbox
+                        checked={
+                          job.production_schedule?.ship_status === "confirmed"
+                        }
+                      />
+                    </View>
                     <View style={[styles.cellBase, styles.colWrapped]}>
                       <Checkbox
                         checked={Boolean(job.installation?.wrap_completed)}
