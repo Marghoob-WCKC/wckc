@@ -56,7 +56,6 @@ const styles = StyleSheet.create({
     padding: 20,
     fontFamily: "Helvetica",
     fontSize: 9,
-    lineHeight: 1.3,
     flexDirection: "column",
   },
   headerContainer: {
@@ -236,14 +235,17 @@ export const PastShippingReportPdf = ({
   startDate,
   endDate,
 }: PastShippingReportPdfProps) => {
-  const grouped = data.reduce((acc, job) => {
-    const ps = safeGet(job.production_schedule);
-    const dateKey = ps?.ship_schedule || "No Date";
+  const grouped = data.reduce(
+    (acc, job) => {
+      const ps = safeGet(job.production_schedule);
+      const dateKey = ps?.ship_schedule || "No Date";
 
-    if (!acc[dateKey]) acc[dateKey] = [];
-    acc[dateKey].push(job);
-    return acc;
-  }, {} as Record<string, PastShippingJob[]>);
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(job);
+      return acc;
+    },
+    {} as Record<string, PastShippingJob[]>,
+  );
 
   const sortedDates = Object.keys(grouped).sort((a, b) => {
     if (a === "No Date") return 1;
