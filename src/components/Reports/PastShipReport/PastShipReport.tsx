@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
 import {
   Paper,
   Group,
@@ -21,22 +20,7 @@ import { useSupabase } from "@/hooks/useSupabase";
 import dayjs from "dayjs";
 import { exportToExcel } from "@/utils/exportToExcel";
 import "@mantine/dates/styles.css";
-import {
-  PastShippingJob,
-  PastShippingReportPdf,
-} from "@/documents/PastShipReportPdf";
-
-const PDFViewer = dynamic(
-  () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
-  {
-    ssr: false,
-    loading: () => (
-      <Center h="100%">
-        <Loader color="violet" />
-      </Center>
-    ),
-  }
-);
+import { PastShippingJob } from "@/documents/PastShipReportPdf";
 
 export default function PastShipReport() {
   const { supabase, isAuthenticated } = useSupabase();
@@ -96,7 +80,7 @@ export default function PastShipReport() {
       invoice_number,
       date_entered
     )
-  `
+  `,
         )
         .gte("production_schedule.ship_schedule", startDate)
         .lte("production_schedule.ship_schedule", endDate)
@@ -114,18 +98,54 @@ export default function PastShipReport() {
     enabled: isAuthenticated && !!dateRange[0] && !!dateRange[1],
   });
 
-  const memoizedPreview = useMemo(
-    () => (
-      <PDFViewer width="100%" height="100%" style={{ border: "none" }}>
-        <PastShippingReportPdf
-          data={reportData || []}
-          startDate={dateRange[0]}
-          endDate={dateRange[1]}
-        />
-      </PDFViewer>
-    ),
-    [reportData, dateRange]
-  );
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!reportData || reportData.length === 0) {
+      setPdfUrl(null);
+      return;
+    }
+
+    const generatePdf = async () => {
+      setIsPdfGenerating(true);
+      try {
+        const response = await fetch("/api/pdf/past-ship-report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            data: reportData,
+            startDate: dateRange[0],
+            endDate: dateRange[1],
+          }),
+        });
+
+        if (!response.ok) throw new Error("Failed to generate PDF");
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        if (active) {
+          setPdfUrl((prev) => {
+            if (prev) URL.revokeObjectURL(prev);
+            return url;
+          });
+        } else {
+          URL.revokeObjectURL(url);
+        }
+      } catch (e) {
+      } finally {
+        if (active) setIsPdfGenerating(false);
+      }
+    };
+
+    generatePdf();
+
+    return () => {
+      active = false;
+    };
+  }, [reportData, dateRange]);
 
   const handleExport = () => {
     if (!reportData) return;
@@ -245,7 +265,7 @@ export default function PastShipReport() {
                 Please select a date range to view the report.
               </Text>
             </Center>
-          ) : isLoading ? (
+          ) : isLoading || isPdfGenerating ? (
             <Center h="100%">
               <Loader type="bars" size="xl" color="violet" />
             </Center>
@@ -255,8 +275,12 @@ export default function PastShipReport() {
                 Error generating report: {(error as Error).message}
               </Text>
             </Center>
-          ) : reportData && reportData.length > 0 ? (
-            memoizedPreview
+          ) : pdfUrl ? (
+            <iframe
+              src={pdfUrl}
+              style={{ width: "100%", height: "100%", border: "none" }}
+              title="Past Shipping Report"
+            />
           ) : (
             <Center h="100%">
               <Stack align="center" gap="xs">
