@@ -16,7 +16,6 @@ const styles = StyleSheet.create({
     padding: 30,
     fontFamily: "Helvetica",
     fontSize: 9,
-    lineHeight: 1.3,
     flexDirection: "column",
   },
   headerContainer: {

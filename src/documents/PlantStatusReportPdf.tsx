@@ -9,7 +9,6 @@ const styles = StyleSheet.create({
     padding: 20,
     fontFamily: "Helvetica",
     fontSize: 9,
-    lineHeight: 1.3,
   },
   header: {
     marginBottom: 15,

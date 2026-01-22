@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useForm } from "@mantine/form";
@@ -200,32 +200,6 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
     setSearch: setClientSearch,
     search: clientSearch,
   } = useClientSearch(form.values.client_id || null);
-
-  const selectData = useMemo(() => {
-    const items: any[] = [...clientOptions];
-
-    if (items.length === 0) {
-      if (clientsLoading) {
-        items.push({
-          value: "STATUS_SEARCHING",
-          label: "Searching...",
-          disabled: true,
-        });
-      } else {
-        items.push({
-          value: "STATUS_NOTHING_FOUND",
-          label: "No matching clients found.",
-          disabled: true,
-        });
-      }
-    }
-
-    items.push({
-      value: "ADD_NEW_CLIENT_OPTION",
-      label: "Add New Client",
-    });
-    return items;
-  }, [clientOptions, clientsLoading]);
 
   const {
     options: speciesOptions,
@@ -758,12 +732,35 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       middlewares: { flip: false, shift: false },
                       offset: 0,
                     }}
-                    data={selectData}
-                    filter={({ options }) => options}
+                    data={clientOptions}
                     searchable
                     searchValue={clientSearch}
                     onSearchChange={setClientSearch}
-                    nothingFoundMessage={null}
+                    nothingFoundMessage={
+                      clientsLoading ? (
+                        "Searching..."
+                      ) : (
+                        <Stack align="center" p="xs" gap="xs">
+                          <Text size="sm" c="dimmed">
+                            No matching clients found.
+                          </Text>
+                          <Button
+                            variant="filled"
+                            size="xs"
+                            onClick={() => setIsAddClientModalOpen(true)}
+                            leftSection={<FaPlus size={12} />}
+                            style={{
+                              background:
+                                "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
+                              color: "white",
+                              border: "none",
+                            }}
+                          >
+                            Add New Client
+                          </Button>
+                        </Stack>
+                      )
+                    }
                     disabled={clientsLoading}
                     style={{ flex: 1 }}
                     styles={{
@@ -775,60 +772,9 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                       },
                       root: { width: "100%" },
                     }}
-                    renderOption={({ option }) => {
-                      if (option.value === "ADD_NEW_CLIENT_OPTION") {
-                        return (
-                          <div
-                            style={{
-                              width: "100%",
-                              padding: "4px 0",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <Center>
-                              <Button
-                                variant="filled"
-                                size="xs"
-                                component="div"
-                                leftSection={<FaPlus size={12} />}
-                                style={{
-                                  background:
-                                    "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
-                                  color: "white",
-                                  border: "none",
-                                  pointerEvents: "none",
-                                }}
-                              >
-                                Add New Client
-                              </Button>
-                            </Center>
-                          </div>
-                        );
-                      }
-                      if (option.value === "STATUS_SEARCHING") {
-                        return (
-                          <Text size="sm" c="dimmed" ta="center" py="xs">
-                            Searching...
-                          </Text>
-                        );
-                      }
-                      if (option.value === "STATUS_NOTHING_FOUND") {
-                        return (
-                          <Text size="sm" c="dimmed" ta="center" py="xs">
-                            No matching clients found.
-                          </Text>
-                        );
-                      }
-                      return option.label;
-                    }}
                     {...form.getInputProps("client_id")}
                     value={String(form.values.client_id)}
                     onChange={(val) => {
-                      if (val === "ADD_NEW_CLIENT_OPTION") {
-                        setIsAddClientModalOpen(true);
-                        return;
-                      }
-
                       form.setFieldValue("client_id", Number(val));
                       const fullObj = clientOptions.find(
                         (c: any) => c.value === val,

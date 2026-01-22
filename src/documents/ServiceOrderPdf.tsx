@@ -10,7 +10,6 @@ const styles = StyleSheet.create({
     paddingRight: 40,
     fontFamily: "Helvetica",
     fontSize: 10,
-    lineHeight: 1.3,
   },
 
   headerContainer: {

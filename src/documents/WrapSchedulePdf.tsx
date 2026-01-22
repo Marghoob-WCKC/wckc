@@ -29,7 +29,6 @@ const styles = StyleSheet.create({
     padding: 30,
     fontFamily: "Helvetica",
     fontSize: 9,
-    lineHeight: 1.3,
     flexDirection: "column",
   },
   headerContainer: {
@@ -210,14 +209,17 @@ export const WrapSchedulePdf = ({
   startDate: Date | null;
   endDate: Date | null;
 }) => {
-  const grouped = data.reduce((acc, job) => {
-    const install = safeGet(job.installation);
-    const dateKey = install?.wrap_date || "No Date";
+  const grouped = data.reduce(
+    (acc, job) => {
+      const install = safeGet(job.installation);
+      const dateKey = install?.wrap_date || "No Date";
 
-    if (!acc[dateKey]) acc[dateKey] = [];
-    acc[dateKey].push(job);
-    return acc;
-  }, {} as Record<string, WrapScheduleJob[]>);
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(job);
+      return acc;
+    },
+    {} as Record<string, WrapScheduleJob[]>,
+  );
 
   const sortedDates = Object.keys(grouped).sort((a, b) => {
     if (a === "No Date") return 1;
@@ -258,7 +260,7 @@ export const WrapSchedulePdf = ({
         <Text style={styles.dateGroupText}>Wrap Date:</Text>
         <Text style={styles.dateGroupText}>{formattedDate}</Text>
         <Text style={styles.dateGroupText}>{dayName}</Text>
-      </View>
+      </View>,
     );
     currentCount += 1;
 
@@ -362,7 +364,7 @@ export const WrapSchedulePdf = ({
               </Text>
             )}
           </View>
-        </View>
+        </View>,
       );
       currentCount += 1;
     });
@@ -374,7 +376,7 @@ export const WrapSchedulePdf = ({
     currentPage.push(
       <View key={`total-${dateKey}`} style={styles.totalRow} wrap={false}>
         <Text style={styles.totalText}>Total Boxes: {boxTotal}</Text>
-      </View>
+      </View>,
     );
     currentCount += 1;
   });

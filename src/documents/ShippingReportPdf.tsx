@@ -36,7 +36,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     fontFamily: "Helvetica",
     fontSize: 9,
-    lineHeight: 1.3,
     flexDirection: "column",
   },
   headerContainer: {
@@ -225,7 +224,6 @@ export const ShippingReportPdf = ({
   startDate: Date | null;
   endDate: Date | null;
 }) => {
-  console.log(data);
   const grouped = data.reduce(
     (acc, job) => {
       const ps = safeGet(job.production_schedule);
