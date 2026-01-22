@@ -2763,6 +2763,10 @@ export type Database = {
           project_name: string
         }[]
       }
+      revert_job_to_quote: {
+        Args: { p_sales_order_id: number }
+        Returns: undefined
+      }
     }
     Enums: {
       SalesStage: "QUOTE" | "SOLD"

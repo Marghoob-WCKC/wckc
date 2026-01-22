@@ -62,7 +62,6 @@ import { useDoorStyleSearch } from "@/hooks/useDoorStyleSearch";
 import dayjs from "dayjs";
 import { handleTabSelect } from "@/utils/handleTabSelect";
 dayjs.extend(utc);
-const FEATURE_MANUAL_JOB_ENTRY = true;
 
 type EditSaleProps = {
   salesOrderId: number;
@@ -454,7 +453,48 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
   const updateMutation = useMutation({
     mutationFn: async (values: ExtendedMasterOrderInput) => {
       if (!user) throw new Error("User not authenticated");
+
       const effectiveIsMemo = values.is_memo === true;
+      const isRevertingToQuote =
+        values.stage === "QUOTE" && salesOrderData.stage === "SOLD";
+
+      if (values.stage === "SOLD") {
+        const { manual_job_base, manual_job_suffix } = values;
+
+        if (!manual_job_base) {
+          throw new Error("Job Base Number is required for sold jobs.");
+        }
+
+        const suffixStr = manual_job_suffix
+          ? manual_job_suffix.trim().toUpperCase()
+          : null;
+        const currentJobId = salesOrderData.job?.id;
+
+        let dupQuery = supabase
+          .from("jobs")
+          .select("id")
+          .eq("job_base_number", manual_job_base);
+
+        if (suffixStr) {
+          dupQuery = dupQuery.eq("job_suffix", suffixStr);
+        } else {
+          dupQuery = dupQuery.is("job_suffix", null);
+        }
+
+        if (currentJobId) {
+          dupQuery = dupQuery.neq("id", currentJobId);
+        }
+
+        const { data: existingJob } = await dupQuery.maybeSingle();
+
+        if (existingJob) {
+          const errorSuffix = suffixStr ? `-${suffixStr}` : "";
+          throw new Error(
+            `Job ${manual_job_base}${errorSuffix} already exists!`,
+          );
+        }
+      }
+
       const cabinetPayload = {
         species_id: values.cabinet.species
           ? Number(values.cabinet.species)
@@ -483,96 +523,76 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         .update(cabinetPayload)
         .eq("id", salesOrderData.cabinet.id);
 
-      const dateSold =
-        salesOrderData.date_sold === null && values.stage === "SOLD"
-          ? dayjs.utc().format()
-          : salesOrderData.stage === "SOLD"
-            ? salesOrderData.date_sold
+      if (isRevertingToQuote) {
+        const { error: rpcError } = await supabase.rpc("revert_job_to_quote", {
+          p_sales_order_id: salesOrderId,
+        });
+        if (rpcError) throw rpcError;
+      } else {
+        const dateSold =
+          salesOrderData.date_sold === null && values.stage === "SOLD"
+            ? dayjs.utc().format()
+            : salesOrderData.stage === "SOLD"
+              ? salesOrderData.date_sold
+              : null;
+
+        const { error: soError } = await supabase
+          .from("sales_orders")
+          .update({
+            date_sold: dateSold,
+            client_id: values.client_id,
+            stage: values.stage,
+            total: values.total,
+            deposit: values.deposit,
+            install: values.install,
+            comments: values.comments,
+            order_type: values.order_type,
+            delivery_type: values.delivery_type,
+            is_memo: effectiveIsMemo,
+            is_canopy_required: values.is_canopy_required,
+            is_woodtop_required: values.is_woodtop_required,
+            is_custom_cab_required: values.is_custom_cab_required,
+            is_cod: values.is_cod,
+            flooring_type: values.flooring_type,
+            flooring_clearance: values.flooring_clearance,
+            ...values.shipping,
+          })
+          .eq("id", salesOrderId);
+
+        if (soError) throw soError;
+
+        if (values.stage === "SOLD") {
+          const { manual_job_base, manual_job_suffix } = values;
+          const suffixStr = manual_job_suffix
+            ? manual_job_suffix.trim().toUpperCase()
             : null;
-      const { error: soError } = await supabase
-        .from("sales_orders")
-        .update({
-          date_sold: dateSold,
-          client_id: values.client_id,
-          stage: values.stage,
-          total: values.total,
-          deposit: values.deposit,
-          install: values.install,
-          comments: values.comments,
-          order_type: values.order_type,
-          delivery_type: values.delivery_type,
-          is_memo: effectiveIsMemo,
-          is_canopy_required: values.is_canopy_required,
-          is_woodtop_required: values.is_woodtop_required,
-          is_custom_cab_required: values.is_custom_cab_required,
-          is_cod: values.is_cod,
-          flooring_type: values.flooring_type,
-          flooring_clearance: values.flooring_clearance,
-          ...values.shipping,
-        })
-        .eq("id", salesOrderId);
+          const currentJobId = salesOrderData.job?.id;
 
-      if (soError) throw soError;
+          if (currentJobId) {
+            const { error: jobUpdateError } = await supabase
+              .from("jobs")
+              .update({
+                job_base_number: manual_job_base,
+                job_suffix: suffixStr,
+                is_active: values.is_active,
+              })
+              .eq("id", currentJobId);
 
-      if (values.stage === "SOLD" && FEATURE_MANUAL_JOB_ENTRY) {
-        const { manual_job_base, manual_job_suffix } = values;
+            if (jobUpdateError) throw jobUpdateError;
+          } else {
+            const { error: jobInsertError } = await supabase
+              .from("jobs")
+              .insert({
+                sales_order_id: salesOrderId,
+                job_base_number: manual_job_base,
+                job_suffix: suffixStr,
+                is_active: values.is_active,
+              });
 
-        if (!manual_job_base) {
-          throw new Error("Job Base Number is required for sold jobs.");
-        }
-
-        const suffixStr = manual_job_suffix
-          ? manual_job_suffix.trim().toUpperCase()
-          : null;
-
-        let dupQuery = supabase
-          .from("jobs")
-          .select("id")
-          .eq("job_base_number", manual_job_base);
-
-        if (suffixStr) {
-          dupQuery = dupQuery.eq("job_suffix", suffixStr);
-        } else {
-          dupQuery = dupQuery.is("job_suffix", null);
-        }
-
-        const currentJobId = salesOrderData.job?.id;
-        if (currentJobId) {
-          dupQuery = dupQuery.neq("id", currentJobId);
-        }
-
-        const { data: existingJob } = await dupQuery.maybeSingle();
-
-        if (existingJob) {
-          const errorSuffix = suffixStr ? `-${suffixStr}` : "";
-          throw new Error(
-            `Job ${manual_job_base}${errorSuffix} already exists!`,
-          );
-        }
-
-        if (currentJobId) {
-          const { error: jobUpdateError } = await supabase
-            .from("jobs")
-            .update({
-              job_base_number: manual_job_base,
-              job_suffix: suffixStr,
-              is_active: values.is_active,
-            })
-            .eq("id", currentJobId);
-
-          if (jobUpdateError) throw jobUpdateError;
-        } else {
-          const { error: jobInsertError } = await supabase.from("jobs").insert({
-            sales_order_id: salesOrderId,
-            job_base_number: manual_job_base,
-            job_suffix: suffixStr,
-            is_active: values.is_active,
-          });
-
-          if (jobInsertError) throw jobInsertError;
+            if (jobInsertError) throw jobInsertError;
+          }
         }
       }
-
       return true;
     },
     onSuccess: () => {
@@ -584,9 +604,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
       queryClient.invalidateQueries({
         queryKey: ["sales-order", salesOrderId],
       });
-      queryClient.invalidateQueries({
-        queryKey: ["sales_table"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["sales_table"] });
       router.push("/dashboard/sales");
     },
     onError: (err: any) => {
