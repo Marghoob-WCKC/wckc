@@ -17,7 +17,7 @@ export type ShippingReportJob = Tables<"jobs"> & {
   installation: {
     notes: string | null;
     wrap_completed?: boolean;
-    partially_shipped?: boolean;
+    partially_shipped: boolean;
     in_warehouse?: string | null;
   } | null;
   warehouse_tracking?: {
@@ -106,14 +106,14 @@ const styles = StyleSheet.create({
 
   colJob: { width: "6%" },
   colConfirm: { width: "3%", alignItems: "center" },
-  colCust: { width: "14%" },
+  colCust: { width: "16%" },
   colAddr: { width: "17%" },
   colBox: { width: "3%", alignItems: "center" },
   colDoor: { width: "13%" },
   colSpec: { width: "6%" },
   colColor: { width: "9%" },
-  colWrapped: { width: "7%", alignItems: "center" },
-  colWarehouse: { width: "7%", alignItems: "center" },
+  colWrapped: { width: "3%", alignItems: "center" },
+  colWarehouse: { width: "4%", alignItems: "center" },
   colNotes: { width: "15%", paddingRight: 4 },
 
   headerText: { fontSize: 8, fontWeight: "bold", textAlign: "center" },
@@ -174,10 +174,10 @@ const ColumnHeaders = () => (
       <Text style={styles.headerText}>Conf</Text>
     </View>
     <View style={[styles.headerCellBase, styles.colWrapped]}>
-      <Text style={styles.headerText}>Wrapped</Text>
+      <Text style={styles.headerText}>W</Text>
     </View>
     <View style={[styles.headerCellBase, styles.colWarehouse]}>
-      <Text style={styles.headerText}>Warehouse</Text>
+      <Text style={styles.headerText}>WrHs</Text>
     </View>
     <View style={[styles.headerCellBase, styles.colWarehouse]}>
       <Text style={styles.headerText}>Partial</Text>

@@ -122,6 +122,7 @@ export const formatShipScheduleData = (
             notes: item.installation_notes,
             wrap_completed: item.wrap_completed,
             in_warehouse: item.in_warehouse,
+            partially_shipped: item.partially_shipped,
           },
           warehouse_tracking: {
             pickup_date: item.pickup_date,
