@@ -1,11 +1,11 @@
 import { z } from "zod";
 
 export const CabinetSpecsSchema = z.object({
-  species: z.string().optional(),
-  color: z.string().optional(),
-  door_style: z.string().optional(),
-  top_drawer_front: z.string().optional(),
-  interior: z.string().optional(),
+  species: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
+  door_style: z.string().nullable().optional(),
+  top_drawer_front: z.string().nullable().optional(),
+  interior: z.string().nullable().optional(),
   drawer_box: z.string().nullable().optional(),
   drawer_hardware: z.string().nullable().optional(),
   box: z.string().optional(),

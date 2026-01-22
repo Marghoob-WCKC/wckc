@@ -322,7 +322,7 @@ export default function InstallationTable({
               </Tooltip>
             )}
             {info.row.original.is_cod && (
-              <Tooltip label="Cash On Delivery">
+              <Tooltip label="Payment Required Before Delivery">
                 <Badge
                   style={{ cursor: "pointer" }}
                   size="xs"
