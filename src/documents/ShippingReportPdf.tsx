@@ -17,6 +17,7 @@ export type ShippingReportJob = Tables<"jobs"> & {
   installation: {
     notes: string | null;
     wrap_completed?: boolean;
+    partially_shipped?: boolean;
     in_warehouse?: string | null;
   } | null;
   warehouse_tracking?: {
@@ -111,8 +112,8 @@ const styles = StyleSheet.create({
   colDoor: { width: "13%" },
   colSpec: { width: "6%" },
   colColor: { width: "9%" },
-  colWrapped: { width: "5%", alignItems: "center" },
-  colWarehouse: { width: "9%", alignItems: "center" },
+  colWrapped: { width: "7%", alignItems: "center" },
+  colWarehouse: { width: "7%", alignItems: "center" },
   colNotes: { width: "15%", paddingRight: 4 },
 
   headerText: { fontSize: 8, fontWeight: "bold", textAlign: "center" },
@@ -175,6 +176,12 @@ const ColumnHeaders = () => (
     <View style={[styles.headerCellBase, styles.colWrapped]}>
       <Text style={styles.headerText}>Wrapped</Text>
     </View>
+    <View style={[styles.headerCellBase, styles.colWarehouse]}>
+      <Text style={styles.headerText}>Warehouse</Text>
+    </View>
+    <View style={[styles.headerCellBase, styles.colWarehouse]}>
+      <Text style={styles.headerText}>Partial</Text>
+    </View>
     <View style={[styles.headerCellBase, styles.colJob]}>
       <Text style={styles.headerText}>Job #</Text>
     </View>
@@ -196,9 +203,7 @@ const ColumnHeaders = () => (
     <View style={[styles.headerCellBase, styles.colColor]}>
       <Text style={styles.headerText}>Color</Text>
     </View>
-    <View style={[styles.headerCellBase, styles.colWarehouse]}>
-      <Text style={styles.headerText}>Warehouse</Text>
-    </View>
+
     <View
       style={[
         styles.headerCellBase,
@@ -220,6 +225,7 @@ export const ShippingReportPdf = ({
   startDate: Date | null;
   endDate: Date | null;
 }) => {
+  console.log(data);
   const grouped = data.reduce(
     (acc, job) => {
       const ps = safeGet(job.production_schedule);
@@ -302,13 +308,6 @@ export const ShippingReportPdf = ({
                 const door = safeGet(cab?.door_styles)?.name || "—";
                 const species = safeGet(cab?.species)?.Species || "—";
                 const color = safeGet(cab?.colors)?.Name || "—";
-                const warehouseStatus = job.installation?.in_warehouse
-                  ? job.warehouse_tracking?.pickup_date
-                    ? `Picked Up (${dayjs(
-                        job.warehouse_tracking.pickup_date,
-                      ).format("DD/MM")})`
-                    : "In Warehouse"
-                  : "—";
 
                 return (
                   <View style={styles.tableRow} key={job.id} wrap={false}>
@@ -322,6 +321,16 @@ export const ShippingReportPdf = ({
                     <View style={[styles.cellBase, styles.colWrapped]}>
                       <Checkbox
                         checked={Boolean(job.installation?.wrap_completed)}
+                      />
+                    </View>
+                    <View style={[styles.cellBase, styles.colWarehouse]}>
+                      <Checkbox
+                        checked={Boolean(job.installation?.in_warehouse)}
+                      />
+                    </View>
+                    <View style={[styles.cellBase, styles.colWarehouse]}>
+                      <Checkbox
+                        checked={Boolean(job.installation?.partially_shipped)}
                       />
                     </View>
                     <View style={[styles.cellBase, styles.colJob]}>
@@ -347,11 +356,7 @@ export const ShippingReportPdf = ({
                     <View style={[styles.cellBase, styles.colColor]}>
                       <Text style={styles.cellTextSmall}>{color}</Text>
                     </View>
-                    <View style={[styles.cellBase, styles.colWarehouse]}>
-                      <Text style={styles.cellTextSmall}>
-                        {warehouseStatus}
-                      </Text>
-                    </View>
+
                     <View
                       style={[
                         styles.cellBase,
