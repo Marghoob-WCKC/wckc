@@ -330,27 +330,6 @@ export default function InstallationEditor({ jobId }: { jobId: number }) {
             : ship_status,
       };
 
-      if (installValues.has_shipped && !installValues.partially_shipped) {
-        const autoCompleteFields = [
-          "in_plant_actual",
-          "doors_completed_actual",
-          "cut_finish_completed_actual",
-          "custom_finish_completed_actual",
-          "drawer_completed_actual",
-          "cut_melamine_completed_actual",
-          "paint_completed_actual",
-          "assembly_completed_actual",
-        ] as const;
-
-        const currentSchedule = jobData.production_schedule;
-
-        autoCompleteFields.forEach((field) => {
-          if (currentSchedule && !currentSchedule[field]) {
-            prodUpdates[field] = timestamp;
-          }
-        });
-      }
-
       const { error: prodError } = await supabase
         .from("production_schedule")
         .update(prodUpdates)
