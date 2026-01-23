@@ -66,19 +66,10 @@ export default function PlantServiceOrdersTable() {
     { id: "due_date", desc: false },
   ]);
   const [inputFilters, setInputFilters] = useState<ColumnFiltersState>([]);
-  const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([
-    {
-      id: "due_date_range",
-      value: [
-        dayjs().subtract(1, "year").toDate(),
-        dayjs().add(28, "day").toDate(),
-      ],
-    },
-  ]);
-  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
-    dayjs().subtract(1, "year").toDate(),
-    dayjs().add(28, "day").toDate(),
-  ]);
+  const [activeFilters, setActiveFilters] = useState<ColumnFiltersState>([]);
+  const [partDateRange, setPartDateRange] = useState<
+    [Date | null, Date | null]
+  >([null, null]);
 
   const [openDates, setOpenDates] = useState<string[]>([]);
 
@@ -91,7 +82,7 @@ export default function PlantServiceOrdersTable() {
     sorting,
   });
 
-  const tableData = (data?.data as PlantServiceOrderView[]) || [];
+  const tableData = (data?.data as unknown as PlantServiceOrderView[]) || [];
   const totalCount = data?.count || 0;
 
   useEffect(() => {
@@ -181,9 +172,11 @@ export default function PlantServiceOrdersTable() {
   const handleApplyFilters = () => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     let filters = [...inputFilters];
-    if (dateRange[0] && dateRange[1]) {
-      filters = filters.filter((f) => f.id !== "due_date_range");
-      filters.push({ id: "due_date_range", value: dateRange });
+
+    filters = filters.filter((f) => f.id !== "part_due_date_range");
+
+    if (partDateRange[0] && partDateRange[1]) {
+      filters.push({ id: "part_due_date_range", value: partDateRange });
     }
     setActiveFilters(filters);
   };
@@ -191,7 +184,7 @@ export default function PlantServiceOrdersTable() {
   const handleClearFilters = () => {
     setInputFilters([]);
     setActiveFilters([]);
-    setDateRange([null, null]);
+    setPartDateRange([null, null]);
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
 
@@ -221,9 +214,19 @@ export default function PlantServiceOrdersTable() {
         parts.forEach((part) => {
           if (!part.part_due_date) return;
           const d = dayjs(part.part_due_date).format("YYYY-MM-DD");
+
+          // Check if this date is within the active partDateRange filter
+          if (partDateRange[0] && partDateRange[1]) {
+            const pDate = dayjs(part.part_due_date);
+            const start = dayjs(partDateRange[0]).startOf("day");
+            const end = dayjs(partDateRange[1]).endOf("day");
+            if (pDate.isBefore(start) || pDate.isAfter(end)) {
+              return;
+            }
+          }
+
           distinctDates.add(d);
         });
-      } else {
       }
 
       distinctDates.forEach((dateKey) => {
@@ -233,7 +236,7 @@ export default function PlantServiceOrdersTable() {
     });
 
     return groups;
-  }, [table.getRowModel().rows]);
+  }, [table.getRowModel().rows, partDateRange]);
 
   const sortedGroupKeys = useMemo(() => {
     return Object.keys(groupedRows).sort((a, b) => {
@@ -280,15 +283,15 @@ export default function PlantServiceOrdersTable() {
             <Title order={2} style={{ color: "#343a40" }}>
               Plant Service Orders
             </Title>
-            {dateRange[0] && dateRange[1] && (
+            {partDateRange[0] && partDateRange[1] && (
               <Badge
                 variant="light"
-                color="violet"
+                color="blue"
                 size="lg"
                 leftSection={<FaCalendarCheck size={12} />}
               >
-                {dayjs(dateRange[0]).format("MMM D")} -{" "}
-                {dayjs(dateRange[1]).format("MMM D, YYYY")}
+                Part Due: {dayjs(partDateRange[0]).format("MMM D")} -{" "}
+                {dayjs(partDateRange[1]).format("MMM D, YYYY")}
               </Badge>
             )}
           </Stack>
@@ -339,11 +342,11 @@ export default function PlantServiceOrdersTable() {
               <DatePickerInput
                 type="range"
                 allowSingleDateInRange
-                label="Service Date Range"
+                label="Part Due Date Range"
                 placeholder="Pick dates range"
-                value={dateRange}
+                value={partDateRange}
                 onChange={(val) =>
-                  setDateRange(val as [Date | null, Date | null])
+                  setPartDateRange(val as [Date | null, Date | null])
                 }
                 clearable
                 leftSection={<FaCalendarCheck size={14} />}
@@ -446,7 +449,7 @@ export default function PlantServiceOrdersTable() {
                           )?.filter((part) => {
                             if (!part.part_due_date) return false;
                             const pDate = dayjs(part.part_due_date).format(
-                              "YYYY-MM-DD"
+                              "YYYY-MM-DD",
                             );
                             return pDate === dateKey;
                           });
@@ -576,7 +579,7 @@ export default function PlantServiceOrdersTable() {
                                                   {
                                                     partId: part.id,
                                                     location: val,
-                                                  }
+                                                  },
                                                 );
                                               }
                                             }}
@@ -642,7 +645,7 @@ export default function PlantServiceOrdersTable() {
         opened={pdfModalOpen}
         onClose={() => setPdfModalOpen(false)}
         data={tableData}
-        dateRange={dateRange}
+        dateRange={partDateRange}
       />
     </Box>
   );
