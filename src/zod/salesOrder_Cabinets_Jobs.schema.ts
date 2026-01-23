@@ -56,6 +56,7 @@ export const MasterOrderSchema = z.object({
   is_woodtop_required: z.boolean().default(false).optional(),
   is_custom_cab_required: z.boolean().default(false).optional(),
   is_cod: z.boolean({ error: "Select Yes/No" }),
+  payment_received: z.boolean().nullable().optional(),
 });
 
 export type MasterOrderInput = z.infer<typeof MasterOrderSchema>;

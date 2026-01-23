@@ -187,6 +187,7 @@ export default function NewSale() {
       is_woodtop_required: false,
       is_custom_cab_required: false,
       is_cod: undefined as unknown as boolean,
+      payment_received: undefined as unknown as boolean,
       flooring_type: "",
       flooring_clearance: "",
       cabinet: {
@@ -482,6 +483,7 @@ export default function NewSale() {
         is_woodtop_required,
         is_custom_cab_required,
         is_cod,
+        payment_received,
       } = values;
       if (stage === "SOLD" && !manual_job_base) {
         throw new Error("Job Base Number is required for Sold jobs.");
@@ -537,6 +539,7 @@ export default function NewSale() {
         is_woodtop_required: is_woodtop_required,
         is_custom_cab_required: is_custom_cab_required,
         is_cod: is_cod,
+        payment_received: payment_received,
       };
 
       const { data: transactionResult, error: rpcError } = await supabase.rpc(
@@ -1602,20 +1605,33 @@ export default function NewSale() {
                   </Group>
                 </Fieldset>
                 <Fieldset legend="Financials" variant="filled" bg={"white"}>
-                  <Radio.Group
-                    label="Payment Required Before Delivery (COD)"
-                    withAsterisk
-                    value={String(form.values.is_cod ?? "")}
-                    onChange={(val) =>
-                      form.setFieldValue("is_cod", val === "true")
-                    }
-                    error={form.errors.is_cod}
-                  >
-                    <Group mt="xs" style={{ marginBottom: 10 }}>
-                      <Radio value="true" label="Yes" color="#4a00e0" />
-                      <Radio value="false" label="No" color="#4a00e0" />
+                  {form.values.order_type != "Multi Fam" && (
+                    <Group gap={50}>
+                      <Radio.Group
+                        label="Payment Required Before Delivery (COD)"
+                        withAsterisk
+                        value={String(form.values.is_cod ?? "")}
+                        onChange={(val) =>
+                          form.setFieldValue("is_cod", val === "true")
+                        }
+                        error={form.errors.is_cod}
+                      >
+                        <Group mt="xs" style={{ marginBottom: 10 }}>
+                          <Radio value="true" label="Yes" color="#4a00e0" />
+                          <Radio value="false" label="No" color="#4a00e0" />
+                        </Group>
+                      </Radio.Group>
+                      <Collapse in={!!form.values.is_cod}>
+                        <Switch
+                          label="Payment Received"
+                          color="#4a00e0"
+                          {...form.getInputProps(`payment_received`, {
+                            type: "checkbox",
+                          })}
+                        />
+                      </Collapse>
                     </Group>
-                  </Radio.Group>
+                  )}
                   <Grid align="flex-end">
                     <Grid.Col span={3}>
                       <NumberInput

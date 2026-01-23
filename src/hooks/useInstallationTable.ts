@@ -92,7 +92,6 @@ export function useInstallationTable({
           nullsFirst: true,
         });
         query = query.order("job_number", { ascending: true });
-        query = query.order("ship_status_sort_order", { ascending: false });
       }
 
       const from = pagination.pageIndex * pagination.pageSize;

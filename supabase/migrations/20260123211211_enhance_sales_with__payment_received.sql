@@ -1,0 +1,1 @@
+alter table public.sales_orders add payment_received boolean default false;

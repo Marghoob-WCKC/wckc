@@ -88,7 +88,7 @@ export default function SalesTable() {
 
   const setInputFilterValue = (
     id: string,
-    value: string | undefined | null | [Date | null, Date | null]
+    value: string | undefined | null | [Date | null, Date | null],
   ) => {
     setInputFilters((prev) => {
       const existing = prev.filter((f) => f.id !== id);
@@ -132,7 +132,7 @@ export default function SalesTable() {
             break;
           case "site_address":
             query = query.or(
-              `shipping_street.ilike.%${value}%,shipping_city.ilike.%${value}%,shipping_province.ilike.%${value}%,shipping_zip.ilike.%${value}%`
+              `shipping_street.ilike.%${value}%,shipping_city.ilike.%${value}%,shipping_province.ilike.%${value}%,shipping_zip.ilike.%${value}%`,
             );
             break;
           case "ship_schedule":
@@ -140,28 +140,28 @@ export default function SalesTable() {
             if (startShip)
               query = query.gte(
                 "ship_schedule",
-                dayjs(startShip).startOf("day").toISOString()
+                dayjs(startShip).startOf("day").toISOString(),
               );
             if (endShip)
               query = query.lte(
                 "ship_schedule",
-                dayjs(endShip).endOf("day").toISOString()
+                dayjs(endShip).endOf("day").toISOString(),
               );
             break;
           case "created_at":
             const [startCreate, endCreate] = value as [
               Date | null,
-              Date | null
+              Date | null,
             ];
             if (startCreate)
               query = query.gte(
                 "created_at",
-                dayjs(startCreate).startOf("day").toISOString()
+                dayjs(startCreate).startOf("day").toISOString(),
               );
             if (endCreate)
               query = query.lte(
                 "created_at",
-                dayjs(endCreate).endOf("day").toISOString()
+                dayjs(endCreate).endOf("day").toISOString(),
               );
             break;
         }
@@ -228,7 +228,7 @@ export default function SalesTable() {
     () => [
       columnHelper.accessor("job_number", {
         header: "Job Number",
-        size: 100,
+        size: 80,
         cell: (info) => {
           if (info.getValue()) {
             return (
@@ -279,17 +279,33 @@ export default function SalesTable() {
           const clientName = info.getValue();
 
           return (
-            <Text size="sm" fw={500}>
-              {projectName && (
-                <>
-                  <Text span fs="italic" fw={600}>
-                    {projectName}
-                  </Text>
-                  {" - "}
-                </>
-              )}
-              {clientName || "—"}
-            </Text>
+            <Tooltip
+              label={
+                <Text size="sm" fw={500}>
+                  {projectName && (
+                    <>
+                      <Text span fs="italic" fw={600}>
+                        {projectName}
+                      </Text>
+                      {" - "}
+                    </>
+                  )}
+                  {clientName || "—"}
+                </Text>
+              }
+            >
+              <Text size="sm" fw={500} truncate="end">
+                {projectName && (
+                  <>
+                    <Text span fs="italic" fw={600}>
+                      {projectName}
+                    </Text>
+                    {" - "}
+                  </>
+                )}
+                {clientName || "—"}
+              </Text>
+            </Tooltip>
           );
         },
       }),
@@ -314,7 +330,7 @@ export default function SalesTable() {
               </Text>
             </Tooltip>
           ),
-        }
+        },
       ),
       columnHelper.accessor("cabinet_box", {
         header: "Box",
@@ -327,7 +343,7 @@ export default function SalesTable() {
       }),
       columnHelper.accessor("cabinet_color", {
         header: "Color",
-        size: 100,
+        size: 120,
         cell: (info) => (
           <Tooltip label={info.getValue()} openDelay={300}>
             <Text size="sm" truncate>
@@ -358,7 +374,7 @@ export default function SalesTable() {
         },
       }),
     ],
-    [router]
+    [router],
   );
 
   const table = useReactTable({
@@ -497,7 +513,7 @@ export default function SalesTable() {
                 value={
                   (getInputFilterValue("ship_schedule") as [
                     Date | null,
-                    Date | null
+                    Date | null,
                   ]) || [null, null]
                 }
                 onChange={(value) => {
@@ -513,7 +529,7 @@ export default function SalesTable() {
                 value={
                   (getInputFilterValue("created_at") as [
                     Date | null,
-                    Date | null
+                    Date | null,
                   ]) || [null, null]
                 }
                 onChange={(value) => {
@@ -531,7 +547,7 @@ export default function SalesTable() {
                     : undefined;
                   setInputFilterValue("my_jobs", val);
                   const otherFilters = inputFilters.filter(
-                    (f) => f.id !== "my_jobs"
+                    (f) => f.id !== "my_jobs",
                   );
                   const newActiveFilters = val
                     ? [...otherFilters, { id: "my_jobs", value: val }]
@@ -713,7 +729,7 @@ export default function SalesTable() {
                       <Group gap="xs" wrap="nowrap">
                         {flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                         {isSorted === "asc" && <FaSortUp size={12} />}
                         {isSorted === "desc" && <FaSortDown size={12} />}
@@ -746,7 +762,7 @@ export default function SalesTable() {
                   onClick={() =>
                     window.open(
                       `/dashboard/sales/editsale/${row.original.id}`,
-                      "_blank"
+                      "_blank",
                     )
                   }
                 >
@@ -761,7 +777,7 @@ export default function SalesTable() {
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </Table.Td>
                   ))}

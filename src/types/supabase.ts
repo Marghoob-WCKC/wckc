@@ -1337,6 +1337,7 @@ export type Database = {
           layout_date: string | null
           markout_date: string | null
           order_type: string | null
+          payment_received: boolean | null
           project_name: string | null
           review_date: string | null
           sales_order_number: string | null
@@ -1384,6 +1385,7 @@ export type Database = {
           layout_date?: string | null
           markout_date?: string | null
           order_type?: string | null
+          payment_received?: boolean | null
           project_name?: string | null
           review_date?: string | null
           sales_order_number?: string | null
@@ -1431,6 +1433,7 @@ export type Database = {
           layout_date?: string | null
           markout_date?: string | null
           order_type?: string | null
+          payment_received?: boolean | null
           project_name?: string | null
           review_date?: string | null
           sales_order_number?: string | null
@@ -2094,13 +2097,13 @@ export type Database = {
           job_id: number | null
           job_number: string | null
           partially_shipped: boolean | null
+          payment_received: boolean | null
           prod_id: number | null
           project_name: string | null
           rush: boolean | null
           sales_order_id: number | null
           ship_schedule: string | null
           ship_status: Database["public"]["Enums"]["ShippingStatus"] | null
-          ship_status_sort_order: number | null
           shipping_client_name: string | null
           site_address: string | null
           wrap_date: string | null

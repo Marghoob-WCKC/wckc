@@ -148,6 +148,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
       is_woodtop_required: false,
       is_custom_cab_required: false,
       is_cod: false,
+      payment_received: false,
       flooring_type: "",
       flooring_clearance: "",
       cabinet: {
@@ -380,6 +381,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
         is_woodtop_required: salesOrderData.is_woodtop_required ?? false,
         is_custom_cab_required: salesOrderData.is_custom_cab_required ?? false,
         is_cod: salesOrderData.is_cod ?? false,
+        payment_received: salesOrderData.payment_received ?? false,
         flooring_type: salesOrderData.flooring_type || "",
         flooring_clearance: salesOrderData.flooring_clearance || "",
         cabinet: {
@@ -534,6 +536,7 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
             is_woodtop_required: values.is_woodtop_required,
             is_custom_cab_required: values.is_custom_cab_required,
             is_cod: values.is_cod,
+            payment_received: values.payment_received,
             flooring_type: values.flooring_type,
             flooring_clearance: values.flooring_clearance,
             ...values.shipping,
@@ -1438,20 +1441,33 @@ export default function EditSale({ salesOrderId }: EditSaleProps) {
                 </Fieldset>
 
                 <Fieldset legend="Financials" variant="filled" bg={"white"}>
-                  <Radio.Group
-                    label="Payment Required Before Delivery (COD)"
-                    withAsterisk
-                    value={String(form.values.is_cod ?? "")}
-                    onChange={(val) =>
-                      form.setFieldValue("is_cod", val === "true")
-                    }
-                    error={form.errors.is_cod}
-                  >
-                    <Group mt="xs" style={{ marginBottom: 10 }}>
-                      <Radio value="true" label="Yes" color="#4a00e0" />
-                      <Radio value="false" label="No" color="#4a00e0" />
+                  {form.values.order_type != "Multi Fam" && (
+                    <Group gap={50}>
+                      <Radio.Group
+                        label="Payment Required Before Delivery (COD)"
+                        withAsterisk
+                        value={String(form.values.is_cod ?? "")}
+                        onChange={(val) =>
+                          form.setFieldValue("is_cod", val === "true")
+                        }
+                        error={form.errors.is_cod}
+                      >
+                        <Group mt="xs" style={{ marginBottom: 10 }}>
+                          <Radio value="true" label="Yes" color="#4a00e0" />
+                          <Radio value="false" label="No" color="#4a00e0" />
+                        </Group>
+                      </Radio.Group>
+                      <Collapse in={!!form.values.is_cod}>
+                        <Switch
+                          label="Payment Received"
+                          color="#4a00e0"
+                          {...form.getInputProps(`payment_received`, {
+                            type: "checkbox",
+                          })}
+                        />
+                      </Collapse>
                     </Group>
-                  </Radio.Group>
+                  )}
                   <Grid align="flex-end">
                     <Grid.Col span={3}>
                       <NumberInput

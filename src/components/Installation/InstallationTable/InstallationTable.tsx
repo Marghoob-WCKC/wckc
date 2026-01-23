@@ -322,18 +322,28 @@ export default function InstallationTable({
               </Tooltip>
             )}
             {info.row.original.is_cod && (
-              <Tooltip label="Payment Required Before Delivery">
+              <Tooltip
+                label={
+                  info.row.original.payment_received
+                    ? "COD : Received"
+                    : "COD : Pending"
+                }
+              >
                 <Badge
                   style={{ cursor: "pointer" }}
                   size="xs"
                   radius="100%"
                   styles={{ root: { padding: 3, marginLeft: 3 } }}
                   variant="gradient"
-                  gradient={{
-                    from: "#00470cff",
-                    to: "#009917ff",
-                    deg: 135,
-                  }}
+                  gradient={
+                    info.row.original.payment_received
+                      ? {
+                          from: "#00470cff",
+                          to: "#009917ff",
+                          deg: 135,
+                        }
+                      : { from: "#a30000ff", to: "#d60000ff", deg: 135 }
+                  }
                 >
                   <FaDollarSign size={10} color="white" />
                 </Badge>
