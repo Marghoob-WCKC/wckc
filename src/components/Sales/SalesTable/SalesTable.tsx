@@ -42,6 +42,7 @@ import {
   FaSortUp,
   FaHome,
   FaCheckCircle,
+  FaFileExcel,
 } from "react-icons/fa";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -60,6 +61,7 @@ import {
 } from "@/theme";
 import { useUser } from "@clerk/nextjs";
 import { usePermissions } from "@/hooks/usePermissions";
+import { exportToExcel } from "@/utils/exportToExcel";
 
 dayjs.extend(utc);
 type SalesTableView = Views<"sales_table_view">;
@@ -69,6 +71,7 @@ export default function SalesTable() {
   const router = useRouter();
   const { supabase, isAuthenticated } = useSupabase();
   const { user } = useUser();
+  const [exportLoading, setExportLoading] = useState(false);
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -84,6 +87,131 @@ export default function SalesTable() {
   const handleJobClick = (id: number) => {
     setDrawerJobId(id);
     openDrawer();
+  };
+
+  const handleExportExcel = async () => {
+    setExportLoading(true);
+    try {
+      const jobs = await fetchAllSales();
+
+      if (!jobs || jobs.length === 0) {
+        setExportLoading(false);
+        return;
+      }
+
+      const jobIds = jobs
+        .map((j) => j.job_id)
+        .filter((id) => id !== null) as number[];
+
+      let invoicesMap: Record<number, string[]> = {};
+      if (jobIds.length > 0) {
+        const { data: invoices, error: invError } = await supabase
+          .from("invoices")
+          .select("job_id, invoice_number")
+          .in("job_id", jobIds);
+
+        if (invError) throw invError;
+
+        invoices?.forEach((inv) => {
+          if (inv.job_id && inv.invoice_number) {
+            if (!invoicesMap[inv.job_id]) invoicesMap[inv.job_id] = [];
+            invoicesMap[inv.job_id].push(inv.invoice_number);
+          }
+        });
+      }
+
+      const excelData = jobs.map((job) => {
+        const invoiceNumbers = invoicesMap[job.job_id!]?.join(", ") || "";
+        const address = [
+          job.shipping_street,
+          job.shipping_city,
+          job.shipping_province,
+          job.shipping_zip,
+        ]
+          .filter(Boolean)
+          .join(", ");
+
+        return {
+          "Ship Date": job.ship_schedule
+            ? dayjs(job.ship_schedule).format("YYYY-MM-DD")
+            : "",
+          "Job #": job.job_number,
+          "Invoice #": invoiceNumbers,
+          Client: job.shipping_client_name,
+          Address: address,
+          "Price (pre-GST)": job.total || 0,
+          Percentage: "",
+          Commission: 0,
+        };
+      });
+
+      const shipScheduleFilter = activeFilters.find(
+        (f) => f.id === "ship_schedule",
+      )?.value as [Date | null, Date | null] | undefined;
+      const designerFilter = activeFilters.find((f) => f.id === "designerName")
+        ?.value as string | undefined;
+      const myJobsFilter = activeFilters.find((f) => f.id === "my_jobs")
+        ?.value as string | undefined;
+
+      let dateRangeStr = "All Dates";
+      if (
+        shipScheduleFilter &&
+        Array.isArray(shipScheduleFilter) &&
+        (shipScheduleFilter[0] || shipScheduleFilter[1])
+      ) {
+        const start = shipScheduleFilter[0]
+          ? dayjs(shipScheduleFilter[0]).format("YYYY-MM-DD")
+          : "Start";
+        const end = shipScheduleFilter[1]
+          ? dayjs(shipScheduleFilter[1]).format("YYYY-MM-DD")
+          : "End";
+        dateRangeStr = `${start} to ${end}`;
+      }
+
+      let designerStr = "";
+      if (myJobsFilter) {
+        designerStr = myJobsFilter;
+      } else if (designerFilter) {
+        designerStr = designerFilter;
+      }
+
+      const customHeaders = [
+        [
+          "Ship Date Range:",
+          dateRangeStr,
+          "",
+          "",
+          `Designer: ${designerStr}`,
+          "",
+          "",
+        ],
+      ];
+
+      const merges = [
+        { s: { r: 0, c: 1 }, e: { r: 0, c: 3 } },
+        { s: { r: 0, c: 4 }, e: { r: 0, c: 6 } },
+      ];
+
+      exportToExcel(excelData, "Sales_Export", {
+        customHeaders,
+        merges,
+        onSheetCreated: (worksheet, range, utils, firstDataRow) => {
+          for (let R = firstDataRow; R <= range.e.r; ++R) {
+            const cellRef = utils.encode_cell({ c: 7, r: R });
+            const rowNum = R + 1;
+            worksheet[cellRef] = {
+              ...worksheet[cellRef],
+              t: "n",
+              f: `IF(G${rowNum}<>"", F${rowNum}*G${rowNum}%, "")`,
+            };
+          }
+        },
+      });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   const setInputFilterValue = (
@@ -190,7 +318,13 @@ export default function SalesTable() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const { data, isLoading, isError, error } = useSalesTable({
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchAll: fetchAllSales,
+  } = useSalesTable({
     pagination,
     columnFilters: activeFilters,
     sorting,
@@ -268,7 +402,7 @@ export default function SalesTable() {
       }),
       columnHelper.accessor("designer", {
         header: "Designer",
-        size: 80,
+        size: 60,
       }),
       columnHelper.accessor("shipping_client_name", {
         id: "clientlastName",
@@ -322,7 +456,7 @@ export default function SalesTable() {
         {
           id: "shippingAddress",
           header: "Site Address",
-          size: 300,
+          size: 250,
           cell: (info) => (
             <Tooltip label={info.getValue()} openDelay={300}>
               <Text size="sm" truncate>
@@ -334,7 +468,7 @@ export default function SalesTable() {
       ),
       columnHelper.accessor("cabinet_box", {
         header: "Box",
-        size: 50,
+        size: 40,
         cell: (info) => (
           <Text size="sm" truncate>
             {info.getValue() || "—"}
@@ -437,19 +571,52 @@ export default function SalesTable() {
             </Text>
           </Stack>
         </Group>
-        {permission.canEditSales && (
-          <Button
-            onClick={() => router.push("/dashboard/sales/newsale")}
-            leftSection={<FaPlus size={14} />}
-            style={{
-              background: linearGradients.primary,
-              color: "white",
-              border: "none",
-            }}
+        <Group>
+          <Tooltip
+            label="Add ship date range to enable export"
+            disabled={
+              !!activeFilters.find(
+                (f) =>
+                  f.id === "ship_schedule" &&
+                  Array.isArray(f.value) &&
+                  (f.value[0] || f.value[1]),
+              )
+            }
           >
-            New Order
-          </Button>
-        )}
+            <span>
+              <Button
+                onClick={handleExportExcel}
+                loading={exportLoading}
+                disabled={
+                  !activeFilters.find(
+                    (f) =>
+                      f.id === "ship_schedule" &&
+                      Array.isArray(f.value) &&
+                      (f.value[0] || f.value[1]),
+                  )
+                }
+                leftSection={<FaFileExcel size={14} />}
+                variant="outline"
+                color="green"
+              >
+                Export Excel
+              </Button>
+            </span>
+          </Tooltip>
+          {permission.canEditSales && (
+            <Button
+              onClick={() => router.push("/dashboard/sales/newsale")}
+              leftSection={<FaPlus size={14} />}
+              style={{
+                background: linearGradients.primary,
+                color: "white",
+                border: "none",
+              }}
+            >
+              New Order
+            </Button>
+          )}
+        </Group>
       </Group>
 
       <Accordion variant="contained" radius="md" mb="md" w={"100%"}>

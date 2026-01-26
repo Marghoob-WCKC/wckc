@@ -1,13 +1,42 @@
 import * as XLSX from "xlsx-js-style";
 import dayjs from "dayjs";
 
-export const exportToExcel = (data: any[], fileName: string) => {
+export const exportToExcel = (
+  data: any[],
+  fileName: string,
+  options?: {
+    onSheetCreated?: (
+      worksheet: any,
+      range: any,
+      utils: typeof XLSX.utils,
+      firstDataRow: number,
+    ) => void;
+    customHeaders?: string[][];
+    merges?: XLSX.Range[];
+  },
+) => {
   if (!data || data.length === 0) {
     console.warn("No data to export");
     return;
   }
 
-  const worksheet = XLSX.utils.json_to_sheet(data);
+  const headerOffset = options?.customHeaders
+    ? options.customHeaders.length
+    : 0;
+  const origin = headerOffset > 0 ? `A${headerOffset + 1}` : "A1";
+
+  const worksheet = XLSX.utils.json_to_sheet(data, { origin } as any);
+
+  if (options?.customHeaders) {
+    XLSX.utils.sheet_add_aoa(worksheet, options.customHeaders, {
+      origin: "A1",
+    });
+  }
+
+  if (options?.merges) {
+    if (!worksheet["!merges"]) worksheet["!merges"] = [];
+    worksheet["!merges"].push(...options.merges);
+  }
 
   const headerColor = "4A00E0";
   const stripeColor = "F3F4F6";
@@ -15,7 +44,7 @@ export const exportToExcel = (data: any[], fileName: string) => {
 
   const baseStyle = {
     font: { name: "Calibri", sz: 11 },
-    alignment: { vertical: "center", wrapText: true },
+    alignment: { vertical: "center", wrapText: false },
     border: {
       top: borderStyle,
       bottom: borderStyle,
@@ -39,32 +68,63 @@ export const exportToExcel = (data: any[], fileName: string) => {
   const range = XLSX.utils.decode_range(worksheet["!ref"] || "A1");
   const colWidths: { wch: number }[] = [];
 
+  const startRow = headerOffset;
+
   for (let C = range.s.c; C <= range.e.c; ++C) {
     let maxWidth = 12;
 
-    for (let R = range.s.r; R <= range.e.r; ++R) {
+    for (let R = 0; R <= range.e.r; ++R) {
       const cellAddress = XLSX.utils.encode_cell({ c: C, r: R });
       const cell = worksheet[cellAddress];
 
       if (cell) {
-        if (R === 0) {
+        if (R < startRow) {
+          cell.s = {
+            font: { name: "Calibri", sz: 12, bold: true },
+            alignment: { vertical: "center", horizontal: "left" },
+          };
+        } else if (R === startRow) {
           cell.s = headerStyle;
         } else {
-          cell.s = R % 2 === 0 ? stripeStyle : baseStyle;
+          cell.s = (R - startRow) % 2 === 0 ? stripeStyle : baseStyle;
         }
 
-        if (cell.v) {
+        if (cell.v != null) {
           const cellLength = String(cell.v).length;
           if (cellLength > maxWidth) maxWidth = cellLength;
         }
       }
     }
-    colWidths.push({ wch: maxWidth + 2 });
+    colWidths.push({ wch: maxWidth });
   }
 
   worksheet["!cols"] = colWidths;
 
-  worksheet["!autofilter"] = { ref: XLSX.utils.encode_range(range) };
+  worksheet["!autofilter"] = {
+    ref: XLSX.utils.encode_range({
+      s: { r: headerOffset, c: 0 },
+      e: range.e,
+    }),
+  };
+
+  if (options?.onSheetCreated) {
+    options.onSheetCreated(worksheet, range, XLSX.utils, headerOffset + 1);
+  }
+
+  worksheet["!margins"] = {
+    left: 0.25,
+    right: 0.25,
+    top: 0.75,
+    bottom: 0.75,
+    header: 0.3,
+    footer: 0.3,
+  };
+  worksheet["!pageSetup"] = {
+    orientation: "landscape",
+    paperSize: 1,
+    fitToPage: true,
+    fitToWidth: 1,
+  };
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Report");

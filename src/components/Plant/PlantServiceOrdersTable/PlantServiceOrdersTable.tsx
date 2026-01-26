@@ -215,7 +215,6 @@ export default function PlantServiceOrdersTable() {
           if (!part.part_due_date) return;
           const d = dayjs(part.part_due_date).format("YYYY-MM-DD");
 
-          // Check if this date is within the active partDateRange filter
           if (partDateRange[0] && partDateRange[1]) {
             const pDate = dayjs(part.part_due_date);
             const start = dayjs(partDateRange[0]).startOf("day");

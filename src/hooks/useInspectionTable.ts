@@ -7,20 +7,27 @@ import {
 } from "@tanstack/react-table";
 
 interface UseInspectionTableParams {
-  pagination: PaginationState;
+  pagination?: PaginationState;
   columnFilters: ColumnFiltersState;
   sorting: SortingState;
+  fetchAll?: boolean;
 }
 
 export function useInspectionTable({
   pagination,
   columnFilters,
   sorting,
+  fetchAll = false,
 }: UseInspectionTableParams) {
   const { supabase, isAuthenticated } = useSupabase();
 
   return useQuery({
-    queryKey: ["inspection_table_view", pagination, columnFilters, sorting],
+    queryKey: [
+      "inspection_table_view",
+      fetchAll ? "all" : pagination,
+      columnFilters,
+      sorting,
+    ],
     queryFn: async () => {
       let query = supabase
         .from("inspection_table_view" as any)
@@ -44,10 +51,10 @@ export function useInspectionTable({
           case "installer_company":
             query = query.or(
               `installer_company.ilike.%${String(
-                value
+                value,
               )}%,installer_first_name.ilike.%${String(
-                value
-              )}%,installer_last_name.ilike.%${String(value)}%`
+                value,
+              )}%,installer_last_name.ilike.%${String(value)}%`,
             );
             break;
           case "inspection_date":
@@ -85,12 +92,15 @@ export function useInspectionTable({
         const { id, desc } = sorting[0];
         query = query.order(id, { ascending: !desc });
       } else {
-        query = query.order("installation_date", { ascending: true });
+        query = query.order("inspection_date", { ascending: true });
+        query = query.order("job_number", { ascending: true });
       }
 
-      const from = pagination.pageIndex * pagination.pageSize;
-      const to = from + pagination.pageSize - 1;
-      query = query.range(from, to);
+      if (!fetchAll && pagination) {
+        const from = pagination.pageIndex * pagination.pageSize;
+        const to = from + pagination.pageSize - 1;
+        query = query.range(from, to);
+      }
 
       const { data, count, error } = await query;
 
@@ -104,6 +114,5 @@ export function useInspectionTable({
       };
     },
     enabled: isAuthenticated,
-    placeholderData: (previousData) => previousData,
   });
 }

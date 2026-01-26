@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   createColumnHelper,
   getCoreRowModel,
+  getPaginationRowModel,
   useReactTable,
   flexRender,
   PaginationState,
@@ -77,6 +78,7 @@ type InspectionTableView = {
   installer_first_name: string | null;
   installer_last_name: string | null;
   rush: boolean;
+  all_installation_ids?: number[];
 };
 
 export default function InspectionTable() {
@@ -87,11 +89,11 @@ export default function InspectionTable() {
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 16,
+    pageSize: 50,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const defaultStartDate = dayjs().subtract(1, "month").format("YYYY-MM-DD");
+  const defaultStartDate = dayjs().subtract(1, "year").format("YYYY-MM-DD");
   const defaultFilters: ColumnFiltersState = [
     { id: "installation_date", value: [defaultStartDate, null] },
   ];
@@ -105,35 +107,68 @@ export default function InspectionTable() {
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
 
-  const [selectedInstallId, setSelectedInstallId] = useState<number | null>(
-    null
-  );
+  const [selectedInstallIds, setSelectedInstallIds] = useState<number[]>([]);
+  const [ungroup, setUngroup] = useState(false);
 
   const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [completionDateInput, setCompletionDateInput] = useState<Date | null>(
-    new Date()
+    new Date(),
   );
   const [isCurrentlyCompleted, setIsCurrentlyCompleted] = useState(false);
 
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [scheduleDateInput, setScheduleDateInput] = useState<Date | null>(null);
 
-  const { data, isLoading, isError, error } = useInspectionTable({
+  const { data, isLoading, isError, error, isFetching } = useInspectionTable({
     pagination,
     columnFilters: activeFilters,
     sorting,
   });
 
-  const tableData = (data?.data as InspectionTableView[]) || [];
+  const tableData = useMemo(() => {
+    const rows = (data?.data as InspectionTableView[]) || [];
+
+    if (ungroup) {
+      return rows;
+    }
+
+    const groups = new Map<string, InspectionTableView>();
+
+    rows.forEach((row) => {
+      const baseJobNumber = row.job_number.split("-")[0];
+      const key = `${baseJobNumber}|${row.installation_date}|${row.inspection_date}`;
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          ...row,
+          job_number: baseJobNumber,
+          all_installation_ids: [row.installation_id],
+        });
+      } else {
+        const group = groups.get(key)!;
+        if (group.all_installation_ids) {
+          group.all_installation_ids.push(row.installation_id);
+        }
+      }
+    });
+
+    return Array.from(groups.values());
+  }, [data, ungroup]);
   const totalCount = data?.count || 0;
   const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
   const updateCompletionMutation = useMutation({
-    mutationFn: async ({ id, date }: { id: number; date: string | null }) => {
+    mutationFn: async ({
+      ids,
+      date,
+    }: {
+      ids: number[];
+      date: string | null;
+    }) => {
       const { error } = await supabase
         .from("installation")
         .update({ inspection_completed: date })
-        .eq("installation_id", id);
+        .in("installation_id", ids);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -144,7 +179,7 @@ export default function InspectionTable() {
       });
       queryClient.invalidateQueries({ queryKey: ["inspection_table_view"] });
       setCompletionModalOpen(false);
-      setSelectedInstallId(null);
+      setSelectedInstallIds([]);
     },
     onError: (err: any) => {
       notifications.show({
@@ -156,11 +191,17 @@ export default function InspectionTable() {
   });
 
   const updateScheduleMutation = useMutation({
-    mutationFn: async ({ id, date }: { id: number; date: string | null }) => {
+    mutationFn: async ({
+      ids,
+      date,
+    }: {
+      ids: number[];
+      date: string | null;
+    }) => {
       const { error } = await supabase
         .from("installation")
         .update({ inspection_date: date })
-        .eq("installation_id", id);
+        .in("installation_id", ids);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -171,7 +212,7 @@ export default function InspectionTable() {
       });
       queryClient.invalidateQueries({ queryKey: ["inspection_table_view"] });
       setScheduleModalOpen(false);
-      setSelectedInstallId(null);
+      setSelectedInstallIds([]);
     },
     onError: (err: any) => {
       notifications.show({
@@ -189,7 +230,7 @@ export default function InspectionTable() {
 
   const setInputFilterValue = (
     id: string,
-    value: string | undefined | null
+    value: string | undefined | null,
   ) => {
     setInputFilters((prev) => {
       const existing = prev.filter((f) => f.id !== id);
@@ -214,7 +255,8 @@ export default function InspectionTable() {
   };
 
   const handleCompletionClick = (row: InspectionTableView) => {
-    setSelectedInstallId(row.installation_id);
+    const ids = row.all_installation_ids || [row.installation_id];
+    setSelectedInstallIds(ids);
 
     if (row.inspection_completed) {
       setCompletionDateInput(parseIsoToLocalDate(row.inspection_completed));
@@ -228,36 +270,37 @@ export default function InspectionTable() {
   };
 
   const handleScheduleClick = (row: InspectionTableView) => {
-    setSelectedInstallId(row.installation_id);
+    const ids = row.all_installation_ids || [row.installation_id];
+    setSelectedInstallIds(ids);
     setScheduleDateInput(parseIsoToLocalDate(row.inspection_date));
     setScheduleModalOpen(true);
   };
 
   const confirmCompletionDate = () => {
-    if (selectedInstallId && completionDateInput) {
+    if (selectedInstallIds.length > 0 && completionDateInput) {
       updateCompletionMutation.mutate({
-        id: selectedInstallId,
+        ids: selectedInstallIds,
         date: dayjs(completionDateInput).format("YYYY-MM-DD"),
       });
     }
   };
 
   const handleMarkIncomplete = () => {
-    if (selectedInstallId) {
+    if (selectedInstallIds.length > 0) {
       updateCompletionMutation.mutate({
-        id: selectedInstallId,
+        ids: selectedInstallIds,
         date: null,
       });
     }
   };
 
   const confirmScheduleDate = () => {
-    if (selectedInstallId) {
+    if (selectedInstallIds.length > 0) {
       const dateStr = scheduleDateInput
         ? dayjs(scheduleDateInput).format("YYYY-MM-DD")
         : null;
       updateScheduleMutation.mutate({
-        id: selectedInstallId,
+        ids: selectedInstallIds,
         date: dateStr,
       });
     }
@@ -337,7 +380,7 @@ export default function InspectionTable() {
     }),
     columnHelper.accessor("installation_date", {
       header: "Install Date",
-      size: 130,
+      size: 100,
       cell: (info) => {
         const date = info.getValue();
         if (!date)
@@ -392,8 +435,8 @@ export default function InspectionTable() {
       },
     }),
     columnHelper.accessor("inspection_completed", {
-      header: "Status",
-      size: 160,
+      header: " Inspection Complete",
+      size: 190,
       cell: (info) => {
         const completedDate = info.getValue();
         const isCompleted = !!completedDate;
@@ -405,7 +448,7 @@ export default function InspectionTable() {
             size="xs"
             radius="sm"
             fullWidth
-            justify={isCompleted ? "space-between" : "center"}
+            justify={"center"}
             leftSection={isCompleted ? <FaCheckCircle size={12} /> : undefined}
             disabled={!permissions.canEditInspections}
             onClick={(e) => {
@@ -414,7 +457,7 @@ export default function InspectionTable() {
             }}
             loading={
               updateCompletionMutation.isPending &&
-              selectedInstallId === info.row.original.installation_id
+              selectedInstallIds.includes(info.row.original.installation_id)
             }
           >
             {isCompleted
@@ -445,9 +488,18 @@ export default function InspectionTable() {
 
   if (isLoading) {
     return (
-      <Center h={400}>
-        <Loader />
-      </Center>
+      <ScrollArea
+        style={{
+          flex: 1,
+          minHeight: 0,
+          padding: rem(10),
+        }}
+        type="auto"
+      >
+        <Center h={400}>
+          <Loader />
+        </Center>
+      </ScrollArea>
     );
   }
 
@@ -542,7 +594,7 @@ export default function InspectionTable() {
                 }
                 onChange={(val) => {
                   const formatted = val.map((d) =>
-                    d ? dayjs(d).format("YYYY-MM-DD") : null
+                    d ? dayjs(d).format("YYYY-MM-DD") : null,
                   );
                   setInputFilterValue("installation_date", formatted as any);
                 }}
@@ -561,19 +613,25 @@ export default function InspectionTable() {
                 }
                 onChange={(val) => {
                   const formatted = val.map((d) =>
-                    d ? dayjs(d).format("YYYY-MM-DD") : null
+                    d ? dayjs(d).format("YYYY-MM-DD") : null,
                   );
                   setInputFilterValue("inspection_date", formatted as any);
                 }}
                 valueFormat="YYYY-MM-DD"
                 onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
               />
-              <Group style={{ alignItems: "flex-end", paddingBottom: 6 }}>
+              <Group
+                style={{
+                  alignItems: "flex-end",
+                  paddingBottom: 6,
+                }}
+                gap={40}
+              >
                 <Switch
                   label="Unscheduled"
                   size="md"
                   checked={inputFilters.some(
-                    (f) => f.id === "unscheduled" && f.value === true
+                    (f) => f.id === "unscheduled" && f.value === true,
                   )}
                   onChange={(event) => {
                     const checked = event.currentTarget.checked;
@@ -582,7 +640,7 @@ export default function InspectionTable() {
                     setInputFilterValue("unscheduled", val as any);
 
                     const otherFilters = inputFilters.filter(
-                      (f) => f.id !== "unscheduled"
+                      (f) => f.id !== "unscheduled",
                     );
                     const newActiveFilters = checked
                       ? [...otherFilters, { id: "unscheduled", value: true }]
@@ -597,7 +655,7 @@ export default function InspectionTable() {
                     track: {
                       cursor: "pointer",
                       background: inputFilters.some(
-                        (f) => f.id === "unscheduled" && f.value === true
+                        (f) => f.id === "unscheduled" && f.value === true,
                       )
                         ? "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)"
                         : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
@@ -606,7 +664,7 @@ export default function InspectionTable() {
                     },
                     thumb: {
                       background: inputFilters.some(
-                        (f) => f.id === "unscheduled" && f.value === true
+                        (f) => f.id === "unscheduled" && f.value === true,
                       )
                         ? "#6e54ffff"
                         : "#d1d1d1ff",
@@ -617,7 +675,7 @@ export default function InspectionTable() {
                   label="Incomplete"
                   size="md"
                   checked={inputFilters.some(
-                    (f) => f.id === "incomplete" && f.value === true
+                    (f) => f.id === "incomplete" && f.value === true,
                   )}
                   onChange={(event) => {
                     const checked = event.currentTarget.checked;
@@ -626,7 +684,7 @@ export default function InspectionTable() {
                     setInputFilterValue("incomplete", val as any);
 
                     const otherFilters = inputFilters.filter(
-                      (f) => f.id !== "incomplete"
+                      (f) => f.id !== "incomplete",
                     );
                     const newActiveFilters = checked
                       ? [...otherFilters, { id: "incomplete", value: true }]
@@ -641,7 +699,7 @@ export default function InspectionTable() {
                     track: {
                       cursor: "pointer",
                       background: inputFilters.some(
-                        (f) => f.id === "incomplete" && f.value === true
+                        (f) => f.id === "incomplete" && f.value === true,
                       )
                         ? "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)"
                         : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
@@ -650,7 +708,7 @@ export default function InspectionTable() {
                     },
                     thumb: {
                       background: inputFilters.some(
-                        (f) => f.id === "incomplete" && f.value === true
+                        (f) => f.id === "incomplete" && f.value === true,
                       )
                         ? "#6e54ffff"
                         : "#d1d1d1ff",
@@ -658,6 +716,31 @@ export default function InspectionTable() {
                   }}
                 />
               </Group>
+              <Switch
+                label="Ungroup"
+                size="md"
+                checked={ungroup}
+                onChange={(event) => setUngroup(event.currentTarget.checked)}
+                thumbIcon={<FaCheckCircle />}
+                styles={{
+                  root: {
+                    display: "flex",
+                    alignItems: "flex-end",
+                    paddingBottom: 6,
+                  },
+                  track: {
+                    cursor: "pointer",
+                    background: ungroup
+                      ? "linear-gradient(135deg, #6c63ff 0%, #4a00e0 100%)"
+                      : "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)",
+                    color: "white",
+                    border: "none",
+                  },
+                  thumb: {
+                    background: ungroup ? "#6e54ffff" : "#d1d1d1ff",
+                  },
+                }}
+              />
             </SimpleGrid>
 
             <Group justify="flex-end" mt="md">
@@ -719,7 +802,7 @@ export default function InspectionTable() {
                   >
                     {flexRender(
                       header.column.columnDef.header,
-                      header.getContext()
+                      header.getContext(),
                     )}
                     <span className="inline-block ml-1">
                       {header.column.getIsSorted() === "asc" && <FaSortUp />}
@@ -744,11 +827,13 @@ export default function InspectionTable() {
                 <Table.Tr
                   key={row.id}
                   style={{ cursor: "pointer" }}
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/installation/${row.original.job_id}`
-                    )
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(
+                      `/dashboard/installation/${row.original.job_id}`,
+                      "_blank",
+                    );
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <Table.Td
@@ -762,7 +847,7 @@ export default function InspectionTable() {
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </Table.Td>
                   ))}
@@ -812,26 +897,15 @@ export default function InspectionTable() {
             : "Confirm Inspection Completion"
         }
         centered
-        size="sm"
+        size="lg"
       >
         <Stack>
-          <Text size="sm" c="dimmed">
-            {isCurrentlyCompleted
-              ? "Modify the date or mark as incomplete."
-              : "Select the date the inspection was completed."}
-          </Text>
-          <DateInput
-            label="Completion Date"
-            placeholder="YYYY-MM-DD"
-            value={completionDateInput}
-            onChange={(val: any) =>
-              setCompletionDateInput(val ? dayjs(val).toDate() : null)
-            }
-            valueFormat="YYYY-MM-DD"
-            allowDeselect={false}
-            data-autofocus
-          />
-          <Group justify="space-between" mt="md">
+          <Group justify="space-between" px={20}>
+            <Text size="sm" c="dimmed">
+              {isCurrentlyCompleted
+                ? "Modify the date or mark as incomplete."
+                : "Select the date the inspection was completed."}
+            </Text>
             {isCurrentlyCompleted ? (
               <Button
                 variant="light"
@@ -845,7 +919,18 @@ export default function InspectionTable() {
             ) : (
               <div />
             )}
-
+          </Group>
+          <DateInput
+            label="Completion Date"
+            placeholder="YYYY-MM-DD"
+            value={completionDateInput}
+            onChange={(val: any) =>
+              setCompletionDateInput(val ? dayjs(val).toDate() : null)
+            }
+            valueFormat="YYYY-MM-DD"
+            allowDeselect={false}
+          />
+          <Group justify="space-between" mt="md">
             <Group>
               <Button
                 variant="default"
@@ -855,7 +940,8 @@ export default function InspectionTable() {
               </Button>
               <Button
                 onClick={confirmCompletionDate}
-                color="green"
+                variant="gradient"
+                gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
                 loading={updateCompletionMutation.isPending}
               >
                 Confirm
@@ -885,7 +971,6 @@ export default function InspectionTable() {
             }
             valueFormat="YYYY-MM-DD"
             clearable
-            data-autofocus
           />
           <Group justify="flex-end" mt="md">
             <Button
@@ -896,7 +981,8 @@ export default function InspectionTable() {
             </Button>
             <Button
               onClick={confirmScheduleDate}
-              color="blue"
+              variant="gradient"
+              gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
               loading={updateScheduleMutation.isPending}
             >
               Save Date
