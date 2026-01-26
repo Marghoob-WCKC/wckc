@@ -168,6 +168,9 @@ export default function BuilderSummaryReport() {
           "Order Date": item.created_at
             ? dayjs(item.created_at).format("YYYY-MM-DD")
             : "-",
+          "Placement Date": item.placement_date
+            ? dayjs(item.placement_date).format("YYYY-MM-DD")
+            : "-",
           "Ship Status": shipStatus,
           "Shipping Date": item.ship_schedule
             ? dayjs(item.ship_schedule).format("YYYY-MM-DD")
@@ -191,13 +194,13 @@ export default function BuilderSummaryReport() {
         dateRangeStr = `Ship Date: ${start} to ${end}`;
       }
 
-      const customHeaders = [[builderHeader, dateRangeStr, "", "", "", ""]];
+      const customHeaders = [[builderHeader, dateRangeStr, "", "", "", "", ""]];
 
       exportToExcel(excelData, "Builder_Summary_Report", {
         customHeaders,
         merges: [
           { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
-          { s: { r: 0, c: 2 }, e: { r: 0, c: 5 } },
+          { s: { r: 0, c: 2 }, e: { r: 0, c: 6 } },
         ],
       });
     } catch (e) {
@@ -229,6 +232,11 @@ export default function BuilderSummaryReport() {
         </Table.Td>
         <Table.Td>
           {item.created_at ? dayjs(item.created_at).format("YYYY-MM-DD") : "-"}
+        </Table.Td>
+        <Table.Td>
+          {item.placement_date
+            ? dayjs(item.placement_date).format("YYYY-MM-DD")
+            : "-"}
         </Table.Td>
         <Table.Td>
           <Badge color={shipStatusColor} variant="light">
@@ -386,6 +394,7 @@ export default function BuilderSummaryReport() {
                     <Table.Th>Job #</Table.Th>
                     <Table.Th>Address</Table.Th>
                     <Table.Th>Order Date</Table.Th>
+                    <Table.Th>Placement Date</Table.Th>
                     <Table.Th>Ship Status</Table.Th>
                     <Table.Th>Shipping Date</Table.Th>
                     <Table.Th>Ship Date Status</Table.Th>

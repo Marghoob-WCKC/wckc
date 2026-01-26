@@ -2098,6 +2098,7 @@ export type Database = {
           job_number: string | null
           partially_shipped: boolean | null
           payment_received: boolean | null
+          placement_date: string | null
           prod_id: number | null
           project_name: string | null
           rush: boolean | null
