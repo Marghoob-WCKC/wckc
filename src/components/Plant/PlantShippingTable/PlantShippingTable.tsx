@@ -1108,8 +1108,7 @@ export default function PlantShippingTable() {
           }}
         />
       )}
-      {}
-      <Modal
+             <Modal
         opened={warehouseUncheckModalOpen}
         onClose={() => setWarehouseUncheckModalOpen(false)}
         title="Update Warehouse Status"

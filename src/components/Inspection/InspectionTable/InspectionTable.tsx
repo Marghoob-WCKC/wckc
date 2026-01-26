@@ -33,6 +33,9 @@ import {
   Anchor,
   Modal,
   Switch,
+  Card,
+  Badge,
+  Divider,
 } from "@mantine/core";
 import {
   FaSearch,
@@ -764,7 +767,168 @@ export default function InspectionTable() {
         </Accordion.Item>
       </Accordion>
 
-      <ScrollArea
+            <ScrollArea hiddenFrom="md" style={{ flex: 1 }}>
+        <Stack gap="md" pb={80}>
+          {table.getRowModel().rows.length === 0 ? (
+            <Center h={100}>
+              <Text c="dimmed">No inspections found.</Text>
+            </Center>
+          ) : (
+            table.getRowModel().rows.map((row) => (
+              <Card key={row.id} withBorder shadow="sm" radius="md">
+                <Stack gap="xs">
+                  <Group justify="space-between">
+                    <Anchor
+                      component="button"
+                      fw={700}
+                      size="lg"
+                      c="#6f00ffff"
+                      onClick={() => handleJobClick(row.original.job_id)}
+                    >
+                      Job {row.original.job_number}
+                    </Anchor>
+                    {row.original.rush && (
+                      <Badge color="red" variant="filled">
+                        RUSH
+                      </Badge>
+                    )}
+                  </Group>
+
+                  <Group gap="xs">
+                    <Text size="sm" c="dimmed" w={80}>
+                      Client:
+                    </Text>
+                    <Text size="sm" fw={500}>
+                      {row.original.shipping_client_name || "—"}
+                    </Text>
+                  </Group>
+
+                  <Group gap="xs" align="flex-start">
+                    <Text size="sm" c="dimmed" w={80}>
+                      Address:
+                    </Text>
+                    <Text size="sm" fw={500} style={{ flex: 1 }}>
+                      {row.original.site_address || "—"}
+                    </Text>
+                  </Group>
+
+                  <Group gap="xs">
+                    <Text size="sm" c="dimmed" w={80}>
+                      Installer:
+                    </Text>
+                    <Box>
+                      {!row.original.installer_id &&
+                      !row.original.installer_first_name ? (
+                        <Text c="orange" size="sm">
+                          Unassigned
+                        </Text>
+                      ) : (
+                        <Group gap={4}>
+                          <Text size="sm" fw={500}>
+                            {row.original.installer_first_name}{" "}
+                            {row.original.installer_last_name}
+                          </Text>
+                          {row.original.installer_company && (
+                            <Text size="xs" c="dimmed">
+                              ({row.original.installer_company})
+                            </Text>
+                          )}
+                        </Group>
+                      )}
+                    </Box>
+                  </Group>
+
+                  <Group gap="xs">
+                    <Text size="sm" c="dimmed" w={80}>
+                      Install Date:
+                    </Text>
+                    <Text size="sm" fw={500}>
+                      {row.original.installation_date
+                        ? dayjs
+                            .utc(row.original.installation_date)
+                            .format("MMM D, YYYY")
+                        : "TBD"}
+                    </Text>
+                  </Group>
+
+                  <Divider my={2} />
+                  <Center>
+                    <Text>Inspection</Text>
+                  </Center>
+                  <SimpleGrid cols={2} spacing="sm">
+                    <Button
+                      variant={
+                        row.original.inspection_date ? "subtle" : "light"
+                      }
+                      color={row.original.inspection_date ? "dark" : "blue"}
+                      size="sm"
+                      radius="sm"
+                      fullWidth
+                      disabled={!permissions.canEditInspections}
+                      leftSection={
+                        <FaCalendarAlt size={12} style={{ opacity: 0.7 }} />
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleScheduleClick(row.original);
+                      }}
+                      style={{
+                        fontSize: 13,
+                        border: row.original.inspection_date
+                          ? "1px solid #dee2e6"
+                          : undefined,
+                      }}
+                    >
+                      {row.original.inspection_date
+                        ? dayjs
+                            .utc(row.original.inspection_date)
+                            .format("MMM D, YYYY")
+                        : "Schedule"}
+                    </Button>
+
+                    <Button
+                      variant={
+                        row.original.inspection_completed ? "light" : "default"
+                      }
+                      color={
+                        row.original.inspection_completed ? "green" : "gray"
+                      }
+                      size="sm"
+                      loading={
+                        updateCompletionMutation.isPending &&
+                        selectedInstallIds.includes(
+                          row.original.installation_id,
+                        )
+                      }
+                      radius="sm"
+                      fullWidth
+                      leftSection={
+                        row.original.inspection_completed ? (
+                          <FaCheckCircle size={12} />
+                        ) : undefined
+                      }
+                      disabled={!permissions.canEditInspections}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCompletionClick(row.original);
+                      }}
+                    >
+                      {row.original.inspection_completed
+                        ? dayjs
+                            .utc(row.original.inspection_completed)
+                            .format("MMM D, YYYY")
+                        : "Mark Done"}
+                    </Button>
+                  </SimpleGrid>
+                </Stack>
+              </Card>
+            ))
+          )}
+        </Stack>
+      </ScrollArea>
+
+            <ScrollArea
+        visibleFrom="md"
         style={{
           flex: 1,
           minHeight: 0,
@@ -862,7 +1026,7 @@ export default function InspectionTable() {
         style={{
           position: "fixed",
           bottom: 0,
-          left: rem(250),
+          left: 0,
           right: 0,
           padding: "1rem 0",
           background: "white",
@@ -872,10 +1036,13 @@ export default function InspectionTable() {
           justifyContent: "center",
           alignItems: "center",
         }}
+        pl={{ md: rem(250) }}
       >
         <Pagination
           color="#4A00E0"
           withEdges
+          siblings={0}
+          size="sm"
           total={table.getPageCount()}
           value={table.getState().pagination.pageIndex + 1}
           onChange={(page) => table.setPageIndex(page - 1)}
