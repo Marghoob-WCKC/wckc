@@ -21,6 +21,7 @@ import {
   TbActivity,
   TbChecklist,
   TbFileAnalytics,
+  TbBuilding,
 } from "react-icons/tb";
 import { useRouter } from "next/navigation";
 import { colors, gradients, linearGradients } from "@/theme";
@@ -79,6 +80,13 @@ const reports = [
     icon: TbChecklist,
     gradient: gradients.service,
     path: "/dashboard/reports/jobstatusreport",
+  },
+  {
+    title: "Builder Summary",
+    description: "Export summary of builder jobs and shipping status.",
+    icon: TbBuilding,
+    gradient: gradients.primary,
+    path: "/dashboard/reports/buildersummary",
   },
 ];
 
