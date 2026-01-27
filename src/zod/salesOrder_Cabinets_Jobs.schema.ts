@@ -30,33 +30,45 @@ export const ShippingSchema = z.object({
   shipping_email_2: z.string().optional(),
 });
 
-export const MasterOrderSchema = z.object({
-  date_sold: z.string().nullable(),
-  designer: z.string().optional(),
-  client_id: z.number().min(1, "Client is required"),
-  stage: z.enum(["QUOTE", "SOLD"]),
-  total: z.number().min(0),
-  deposit: z.number().min(0),
-  comments: z.string().optional(),
-  install: z.boolean({
-    error: "Select Yes/No",
-  }),
-  delivery_type: z.string({ error: "Delivery Type is required" }),
-  order_type: z.string({ error: "Order Type is required" }),
-  flooring_type: z.string().optional(),
-  flooring_clearance: z.string().optional(),
-  cabinet: CabinetSpecsSchema,
-  shipping: ShippingSchema,
-  parent_job_number_input: z.string().optional().nullable(),
-  manual_job_base: z.string().optional(),
-  manual_job_suffix: z.string().optional(),
-  is_active: z.boolean().default(true).optional(),
-  is_memo: z.boolean().default(false).optional(),
-  is_canopy_required: z.boolean().default(false).optional(),
-  is_woodtop_required: z.boolean().default(false).optional(),
-  is_custom_cab_required: z.boolean().default(false).optional(),
-  is_cod: z.boolean({ error: "Select Yes/No" }),
-  payment_received: z.boolean().nullable().optional(),
-});
+export const MasterOrderSchema = z
+  .object({
+    date_sold: z.string().nullable(),
+    designer: z.string().optional(),
+    client_id: z.number().min(1, "Client is required"),
+    stage: z.enum(["QUOTE", "SOLD"]),
+    total: z.number().min(0),
+    deposit: z.number().min(0),
+    comments: z.string().optional(),
+    install: z.boolean({
+      error: "Select Yes/No",
+    }),
+    delivery_type: z.string({ error: "Delivery Type is required" }),
+    order_type: z.string({ error: "Order Type is required" }),
+    flooring_type: z.string().optional(),
+    flooring_clearance: z.string().optional(),
+    cabinet: CabinetSpecsSchema,
+    shipping: ShippingSchema,
+    parent_job_number_input: z.string().optional().nullable(),
+    manual_job_base: z.string().optional(),
+    manual_job_suffix: z.string().optional(),
+    is_active: z.boolean().default(true).optional(),
+    is_memo: z.boolean().default(false).optional(),
+    is_canopy_required: z.boolean().default(false).optional(),
+    is_woodtop_required: z.boolean().default(false).optional(),
+    is_custom_cab_required: z.boolean().default(false).optional(),
+    is_cod: z.boolean().nullable().optional(),
+    payment_received: z.boolean().nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.order_type !== "Multi Fam") {
+      if (data.is_cod === undefined || data.is_cod === null) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Select Yes/No for COD",
+          path: ["is_cod"],
+        });
+      }
+    }
+  });
 
 export type MasterOrderInput = z.infer<typeof MasterOrderSchema>;
