@@ -523,20 +523,25 @@ export default function InspectionTable() {
         height: "calc(100vh - 45px)",
       }}
     >
-      <Group mb="md">
+      <Group mb="md" wrap="nowrap">
         <ThemeIcon
-          size={50}
+          w={{ base: 40, md: 50 }}
+          h={{ base: 40, md: 50 }}
           radius="md"
           variant="gradient"
           gradient={{ from: "#8E2DE2", to: "#4A00E0", deg: 135 }}
         >
-          <FaClipboardCheck size={26} />
+          <FaClipboardCheck size={20} />
         </ThemeIcon>
         <Stack gap={0}>
-          <Title order={2} style={{ color: "#343a40" }}>
+          <Title
+            order={2}
+            fz={{ base: 20, md: 26 }}
+            style={{ color: "#343a40" }}
+          >
             Inspection Manager
           </Title>
-          <Text size="sm" c="dimmed">
+          <Text fz={{ base: 10, md: "sm" }} c="dimmed" lineClamp={1}>
             Track and verify job inspections
           </Text>
         </Stack>
@@ -561,6 +566,7 @@ export default function InspectionTable() {
               <TextInput
                 label="Client"
                 placeholder="Name"
+                visibleFrom="md"
                 value={getInputFilterValue("shipping_client_name")}
                 onChange={(e) =>
                   setInputFilterValue("shipping_client_name", e.target.value)
@@ -579,6 +585,7 @@ export default function InspectionTable() {
               <TextInput
                 label="Installer"
                 placeholder="Company or Name"
+                visibleFrom="md"
                 value={getInputFilterValue("installer_company") as string}
                 onChange={(e) =>
                   setInputFilterValue("installer_company", e.target.value)
@@ -591,6 +598,7 @@ export default function InspectionTable() {
                 label="Installation Date"
                 placeholder="Filter Range"
                 clearable
+                visibleFrom="md"
                 value={
                   (inputFilters.find((f) => f.id === "installation_date")
                     ?.value as [Date | null, Date | null]) || [null, null]
@@ -610,6 +618,7 @@ export default function InspectionTable() {
                 label="Inspection Date"
                 placeholder="Filter Range"
                 clearable
+                visibleFrom="md"
                 value={
                   (inputFilters.find((f) => f.id === "inspection_date")
                     ?.value as [Date | null, Date | null]) || [null, null]
@@ -633,6 +642,7 @@ export default function InspectionTable() {
                 <Switch
                   label="Unscheduled"
                   size="md"
+                  visibleFrom="md"
                   checked={inputFilters.some(
                     (f) => f.id === "unscheduled" && f.value === true,
                   )}
@@ -722,6 +732,7 @@ export default function InspectionTable() {
               <Switch
                 label="Ungroup"
                 size="md"
+                visibleFrom="md"
                 checked={ungroup}
                 onChange={(event) => setUngroup(event.currentTarget.checked)}
                 thumbIcon={<FaCheckCircle />}
@@ -746,7 +757,28 @@ export default function InspectionTable() {
               />
             </SimpleGrid>
 
-            <Group justify="flex-end" mt="md">
+            {/* Mobile Actions */}
+            <Stack hiddenFrom="md" mt="md">
+              <Button
+                variant="filled"
+                color="blue"
+                fullWidth
+                leftSection={<FaSearch size={14} />}
+                onClick={handleApplyFilters}
+                style={{
+                  background:
+                    "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)",
+                }}
+              >
+                Apply Filters
+              </Button>
+              <Button variant="default" fullWidth onClick={handleClearFilters}>
+                Clear Filters
+              </Button>
+            </Stack>
+
+            {/* Desktop Actions */}
+            <Group justify="flex-end" mt="md" visibleFrom="md">
               <Button variant="default" onClick={handleClearFilters}>
                 Clear Filters
               </Button>
@@ -767,7 +799,7 @@ export default function InspectionTable() {
         </Accordion.Item>
       </Accordion>
 
-            <ScrollArea hiddenFrom="md" style={{ flex: 1 }}>
+      <ScrollArea hiddenFrom="md" style={{ flex: 1 }}>
         <Stack gap="md" pb={80}>
           {table.getRowModel().rows.length === 0 ? (
             <Center h={100}>
@@ -855,7 +887,7 @@ export default function InspectionTable() {
                   <Center>
                     <Text>Inspection</Text>
                   </Center>
-                  <SimpleGrid cols={2} spacing="sm">
+                  <Stack>
                     <Button
                       variant={
                         row.original.inspection_date ? "subtle" : "light"
@@ -919,7 +951,7 @@ export default function InspectionTable() {
                             .format("MMM D, YYYY")
                         : "Mark Done"}
                     </Button>
-                  </SimpleGrid>
+                  </Stack>
                 </Stack>
               </Card>
             ))
@@ -927,7 +959,7 @@ export default function InspectionTable() {
         </Stack>
       </ScrollArea>
 
-            <ScrollArea
+      <ScrollArea
         visibleFrom="md"
         style={{
           flex: 1,
