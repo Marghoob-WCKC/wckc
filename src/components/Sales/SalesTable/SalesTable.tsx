@@ -504,7 +504,7 @@ export default function SalesTable() {
         size: 70,
         cell: (info) => {
           const date = info.getValue<string>();
-          return date ? dayjs.utc(date).format("YYYY-MM-DD") : "—";
+          return date ? dayjs(date).format("YYYY-MM-DD") : "—";
         },
       }),
     ],
