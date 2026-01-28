@@ -28,7 +28,7 @@ import {
   Stack,
   ThemeIcon,
   Title,
-  SimpleGrid,
+  Grid,
   Anchor,
   Switch,
   Tooltip,
@@ -62,6 +62,7 @@ import {
 import { useUser } from "@clerk/nextjs";
 import { usePermissions } from "@/hooks/usePermissions";
 import { exportToExcel } from "@/utils/exportToExcel";
+import { TbCurrencyDollar } from "react-icons/tb";
 
 dayjs.extend(utc);
 type SalesTableView = Views<"sales_table_view">;
@@ -368,7 +369,7 @@ export default function SalesTable() {
             return (
               <Anchor
                 component="button"
-                size="sm"
+                size="xs"
                 fw={600}
                 w="100%"
                 style={{ textAlign: "left" }}
@@ -379,7 +380,9 @@ export default function SalesTable() {
                   if (jobId) handleJobClick(jobId);
                 }}
               >
-                <Text fw={600}>{info.getValue()}</Text>
+                <Text size="xs" fw={600}>
+                  {info.getValue()}
+                </Text>
               </Anchor>
             );
           } else {
@@ -395,6 +398,7 @@ export default function SalesTable() {
             style={{ cursor: "inherit" }}
             color={info.getValue() === "SOLD" ? "green" : "blue"}
             variant="light"
+            size="xs"
           >
             {info.getValue()}
           </Badge>
@@ -403,6 +407,11 @@ export default function SalesTable() {
       columnHelper.accessor("designer", {
         header: "Designer",
         size: 60,
+        cell: (info) => (
+          <Text size="xs" truncate>
+            {info.getValue() || "—"}
+          </Text>
+        ),
       }),
       columnHelper.accessor("shipping_client_name", {
         id: "clientlastName",
@@ -415,10 +424,10 @@ export default function SalesTable() {
           return (
             <Tooltip
               label={
-                <Text size="sm" fw={500}>
+                <Text size="xs" fw={500}>
                   {projectName && (
                     <>
-                      <Text span fs="italic" fw={600}>
+                      <Text span fs="italic" fw={600} size="xs">
                         {projectName}
                       </Text>
                       {" - "}
@@ -428,10 +437,10 @@ export default function SalesTable() {
                 </Text>
               }
             >
-              <Text size="sm" fw={500} truncate="end">
+              <Text size="xs" fw={500} truncate="end">
                 {projectName && (
                   <>
-                    <Text span fs="italic" fw={600}>
+                    <Text span fs="italic" fw={600} size="xs">
                       {projectName}
                     </Text>
                     {" - "}
@@ -459,7 +468,7 @@ export default function SalesTable() {
           size: 250,
           cell: (info) => (
             <Tooltip label={info.getValue()} openDelay={300}>
-              <Text size="sm" truncate>
+              <Text size="xs" truncate>
                 {info.getValue()}
               </Text>
             </Tooltip>
@@ -470,7 +479,7 @@ export default function SalesTable() {
         header: "Box",
         size: 40,
         cell: (info) => (
-          <Text size="sm" truncate>
+          <Text size="xs" truncate>
             {info.getValue() || "—"}
           </Text>
         ),
@@ -480,7 +489,7 @@ export default function SalesTable() {
         size: 120,
         cell: (info) => (
           <Tooltip label={info.getValue()} openDelay={300}>
-            <Text size="sm" truncate>
+            <Text size="xs" truncate>
               {info.getValue() || "—"}
             </Text>
           </Tooltip>
@@ -489,14 +498,22 @@ export default function SalesTable() {
       columnHelper.accessor("total", {
         header: "Price",
         size: 70,
-        cell: (info) => `$${(info.getValue() as number)?.toFixed(2) || "0.00"}`,
+        cell: (info) => (
+          <Text size="xs">
+            {`$${(info.getValue() as number)?.toFixed(2) || "0.00"}`}
+          </Text>
+        ),
       }),
       columnHelper.accessor("ship_schedule", {
         header: "Ship Date",
         size: 70,
         cell: (info) => {
           const date = info.getValue<string>();
-          return date ? dayjs.utc(date).format("YYYY-MM-DD") : "(TBD)";
+          return (
+            <Text size="xs">
+              {date ? dayjs.utc(date).format("YYYY-MM-DD") : "(TBD)"}
+            </Text>
+          );
         },
       }),
       columnHelper.accessor("created_at", {
@@ -504,7 +521,11 @@ export default function SalesTable() {
         size: 70,
         cell: (info) => {
           const date = info.getValue<string>();
-          return date ? dayjs(date).format("YYYY-MM-DD") : "—";
+          return (
+            <Text size="xs">
+              {date ? dayjs(date).format("YYYY-MM-DD") : "—"}
+            </Text>
+          );
         },
       }),
     ],
@@ -545,29 +566,34 @@ export default function SalesTable() {
 
   return (
     <Box
+      fz="xs"
       style={{
         display: "flex",
         flexDirection: "column",
-        padding: rem(20),
+
+        paddingLeft: rem(20),
+        paddingRight: rem(20),
+        paddingBottom: rem(5),
+        paddingTop: rem(20),
         height: "calc(100vh - 45px)",
       }}
     >
       <Group mb="md" justify="space-between">
         <Group>
           <ThemeIcon
-            size={50}
+            size={30}
             radius="md"
             variant="gradient"
             gradient={gradients.primary}
           >
-            <FaHome size={26} />
+            <TbCurrencyDollar size={18} />
           </ThemeIcon>
           <Stack gap={0}>
-            <Title order={2} style={{ color: colors.gray.title }}>
+            <Title size="xl" style={{ color: colors.gray.title }}>
               Sales
             </Title>
-            <Text size="sm" c="dimmed">
-              Track sales
+            <Text size="xs" c="dimmed">
+              Manage quotes, active jobs, and project details
             </Text>
           </Stack>
         </Group>
@@ -619,139 +645,181 @@ export default function SalesTable() {
         </Group>
       </Group>
 
-      <Accordion variant="contained" radius="md" mb="md" w={"100%"}>
+      <Accordion variant="contained" radius="md" mb="xs">
         <Accordion.Item value="search-filters">
-          <Accordion.Control icon={<FaSearch size={16} />}>
+          <Accordion.Control
+            icon={<FaSearch size={13} />}
+            style={{ fontSize: 13 }}
+            styles={{
+              label: {
+                padding: 6,
+              },
+            }}
+          >
             Search Filters
           </Accordion.Control>
-          <Accordion.Panel>
-            <SimpleGrid cols={4} mt="sm" spacing="xs">
-              <TextInput
-                label="Job Number"
-                placeholder="e.g. 202401"
-                value={(getInputFilterValue("job_number") as string) || ""}
-                onChange={(e) =>
-                  setInputFilterValue("job_number", e.target.value)
-                }
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              />
-              <TextInput
-                label="Client Name"
-                placeholder="Search Client..."
-                value={(getInputFilterValue("clientlastName") as string) || ""}
-                onChange={(e) =>
-                  setInputFilterValue("clientlastName", e.target.value)
-                }
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              />
-              <TextInput
-                label="Project Name"
-                placeholder="Search Project..."
-                value={(getInputFilterValue("projectName") as string) || ""}
-                onChange={(e) =>
-                  setInputFilterValue("projectName", e.target.value)
-                }
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              />
-              <TextInput
-                label="Designer Name"
-                placeholder="Search Designer..."
-                value={(getInputFilterValue("designerName") as string) || ""}
-                onChange={(e) =>
-                  setInputFilterValue("designerName", e.target.value)
-                }
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              />
-              <TextInput
-                label="Site Address"
-                placeholder="Search Site Address..."
-                value={(getInputFilterValue("site_address") as string) || ""}
-                onChange={(e) =>
-                  setInputFilterValue("site_address", e.target.value)
-                }
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              />
-              <DatePickerInput
-                type="range"
-                allowSingleDateInRange
-                label="Ship Date"
-                placeholder="Filter by Date Range"
-                clearable
-                value={
-                  (getInputFilterValue("ship_schedule") as [
-                    Date | null,
-                    Date | null,
-                  ]) || [null, null]
-                }
-                onChange={(value) => {
-                  setInputFilterValue("ship_schedule", value as any);
-                }}
-              />
-              <DatePickerInput
-                type="range"
-                allowSingleDateInRange
-                label="Created Date"
-                placeholder="Filter by Date Range"
-                clearable
-                value={
-                  (getInputFilterValue("created_at") as [
-                    Date | null,
-                    Date | null,
-                  ]) || [null, null]
-                }
-                onChange={(value) => {
-                  setInputFilterValue("created_at", value as any);
-                }}
-              />
-              <Switch
-                label="My Jobs"
-                size="md"
-                thumbIcon={<FaCheckCircle size={8} />}
-                checked={!!getInputFilterValue("my_jobs")}
-                onChange={(e) => {
-                  const val = e.currentTarget.checked
-                    ? user?.username
-                    : undefined;
-                  setInputFilterValue("my_jobs", val);
-                  const otherFilters = inputFilters.filter(
-                    (f) => f.id !== "my_jobs",
-                  );
-                  const newActiveFilters = val
-                    ? [...otherFilters, { id: "my_jobs", value: val }]
-                    : otherFilters;
+          <Accordion.Panel styles={{ content: { padding: 8 } }}>
+            <Grid columns={24} gutter="xs">
+              <Grid.Col span={{ base: 24, sm: 8, md: 2 }}>
+                <TextInput
+                  size="xs"
+                  label="Job Number"
+                  placeholder="e.g. 202401"
+                  value={(getInputFilterValue("job_number") as string) || ""}
+                  onChange={(e) =>
+                    setInputFilterValue("job_number", e.target.value)
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 24, sm: 8, md: 4 }}>
+                <TextInput
+                  size="xs"
+                  label="Client Name"
+                  placeholder="Search Client..."
+                  value={
+                    (getInputFilterValue("clientlastName") as string) || ""
+                  }
+                  onChange={(e) =>
+                    setInputFilterValue("clientlastName", e.target.value)
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 24, sm: 8, md: 3 }}>
+                <TextInput
+                  size="xs"
+                  label="Project Name"
+                  placeholder="Search Project..."
+                  value={(getInputFilterValue("projectName") as string) || ""}
+                  onChange={(e) =>
+                    setInputFilterValue("projectName", e.target.value)
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 24, sm: 8, md: 3 }}>
+                <TextInput
+                  size="xs"
+                  label="Designer Name"
+                  placeholder="Search Designer..."
+                  value={(getInputFilterValue("designerName") as string) || ""}
+                  onChange={(e) =>
+                    setInputFilterValue("designerName", e.target.value)
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 24, sm: 8, md: 4 }}>
+                <TextInput
+                  size="xs"
+                  label="Site Address"
+                  placeholder="Search Site Address..."
+                  value={(getInputFilterValue("site_address") as string) || ""}
+                  onChange={(e) =>
+                    setInputFilterValue("site_address", e.target.value)
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 24, sm: 8, md: 3 }}>
+                <DatePickerInput
+                  size="xs"
+                  type="range"
+                  allowSingleDateInRange
+                  label="Ship Date"
+                  placeholder="Filter by Date Range"
+                  clearable
+                  value={
+                    (getInputFilterValue("ship_schedule") as [
+                      Date | null,
+                      Date | null,
+                    ]) || [null, null]
+                  }
+                  onChange={(value) => {
+                    setInputFilterValue("ship_schedule", value as any);
+                  }}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 24, sm: 8, md: 3 }}>
+                <DatePickerInput
+                  size="xs"
+                  type="range"
+                  allowSingleDateInRange
+                  label="Created Date"
+                  placeholder="Filter by Date Range"
+                  clearable
+                  value={
+                    (getInputFilterValue("created_at") as [
+                      Date | null,
+                      Date | null,
+                    ]) || [null, null]
+                  }
+                  onChange={(value) => {
+                    setInputFilterValue("created_at", value as any);
+                  }}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 24, sm: 8, md: 2 }}>
+                <Switch
+                  label="My Jobs"
+                  size="sm"
+                  thumbIcon={<FaCheckCircle size={8} />}
+                  checked={!!getInputFilterValue("my_jobs")}
+                  onChange={(e) => {
+                    const val = e.currentTarget.checked
+                      ? user?.username
+                      : undefined;
+                    setInputFilterValue("my_jobs", val);
+                    const otherFilters = inputFilters.filter(
+                      (f) => f.id !== "my_jobs",
+                    );
+                    const newActiveFilters = val
+                      ? [...otherFilters, { id: "my_jobs", value: val }]
+                      : otherFilters;
 
-                  setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-                  setActiveFilters(newActiveFilters);
-                }}
-                styles={{
-                  root: {
-                    display: "flex",
-                    alignItems: "flex-end",
-                    paddingBottom: "6px",
-                  },
-                  track: {
-                    cursor: "pointer",
-                    background: getInputFilterValue("my_jobs")
-                      ? linearGradients.primary
-                      : undefined,
-                  },
-                  thumb: {
-                    background: getInputFilterValue("my_jobs")
-                      ? linearGradients.primary
-                      : undefined,
-                  },
-                }}
-              />
-            </SimpleGrid>
+                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                    setActiveFilters(newActiveFilters);
+                  }}
+                  styles={{
+                    root: {
+                      display: "flex",
+                      alignItems: "center",
+                      paddingTop: "28px",
+                    },
+                    label: {
+                      fontSize: 12,
+                    },
+                    track: {
+                      cursor: "pointer",
+                      background: getInputFilterValue("my_jobs")
+                        ? linearGradients.primary
+                        : undefined,
+                    },
+                    thumb: {
+                      background: getInputFilterValue("my_jobs")
+                        ? linearGradients.primary
+                        : undefined,
+                    },
+                  }}
+                />
+              </Grid.Col>
+            </Grid>
 
-            <Group justify="flex-end">
-              <Button variant="default" color="gray" onClick={clearFilters}>
+            <Group justify="flex-end" mt="sm">
+              <Button
+                variant="default"
+                color="gray"
+                size="xs"
+                onClick={clearFilters}
+              >
                 Clear Filters
               </Button>
               <Button
                 variant="filled"
                 color="blue"
-                leftSection={<FaSearch size={14} />}
+                size="xs"
+                leftSection={<FaSearch size={12} />}
                 onClick={handleSearch}
                 style={{
                   background: linearGradients.primary,
@@ -764,7 +832,7 @@ export default function SalesTable() {
         </Accordion.Item>
       </Accordion>
 
-      <Group mb="md" align="center" style={{ width: "100%" }}>
+      <Group mb="2" align="center" style={{ width: "100%" }}>
         <Group wrap="wrap">
           {[
             {
@@ -804,7 +872,7 @@ export default function SalesTable() {
                 key={item.key}
                 variant={isActive ? "filled" : "light"}
                 radius="xl"
-                size="sm"
+                size="xs"
                 onClick={() => setStageFilter(item.key)}
                 style={{
                   cursor: "pointer",
@@ -818,7 +886,7 @@ export default function SalesTable() {
                 px={12}
               >
                 <Group gap={6}>
-                  <Text fw={600} size="sm">
+                  <Text fw={600} size="xs">
                     {item.label}
                   </Text>
 
@@ -826,7 +894,7 @@ export default function SalesTable() {
                     autoContrast
                     variant="filled"
                     radius="xl"
-                    size="sm"
+                    size="xs"
                     style={{
                       cursor: "inherit",
                       background: "white",
@@ -859,7 +927,10 @@ export default function SalesTable() {
         style={{
           flex: 1,
           minHeight: 0,
-          padding: rem(10),
+          paddingLeft: rem(10),
+          paddingRight: rem(10),
+          paddingBottom: rem(2),
+          paddingTop: rem(5),
         }}
         styles={{
           thumb: {
@@ -941,6 +1012,7 @@ export default function SalesTable() {
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                       }}
+                      p="4"
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -961,7 +1033,7 @@ export default function SalesTable() {
           bottom: 0,
           left: rem(250),
           right: 0,
-          padding: "1rem 0",
+          padding: "0.3rem 0",
           background: "white",
           borderTop: "1px solid #eee",
           zIndex: 100,

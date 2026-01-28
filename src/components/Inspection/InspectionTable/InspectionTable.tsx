@@ -757,7 +757,7 @@ export default function InspectionTable() {
               />
             </SimpleGrid>
 
-            {/* Mobile Actions */}
+            {}
             <Stack hiddenFrom="md" mt="md">
               <Button
                 variant="filled"
@@ -777,7 +777,7 @@ export default function InspectionTable() {
               </Button>
             </Stack>
 
-            {/* Desktop Actions */}
+            {}
             <Group justify="flex-end" mt="md" visibleFrom="md">
               <Button variant="default" onClick={handleClearFilters}>
                 Clear Filters
